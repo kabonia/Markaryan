@@ -1,0 +1,14 @@
+#!/bin/sh
+# Runs the calculation and plan tests (macOS with Xcode, or Linux with a Swift toolchain).
+set -e
+cd "$(dirname "$0")/.."
+OUT="${TMPDIR:-/tmp}"
+CORE=Markaryan/Core
+PLAN_FILES="$CORE/Calculator.swift $CORE/PlanGeometry.swift $CORE/DesignProposal.swift $CORE/RoomKind.swift $CORE/FloorPlan.swift $CORE/OfflineDesigner.swift"
+
+swiftc -swift-version 5 -O "$CORE/Calculator.swift" Tests/main.swift -o "$OUT/markaryan-calc-tests"
+"$OUT/markaryan-calc-tests"
+
+# shellcheck disable=SC2086
+swiftc -swift-version 5 -O $PLAN_FILES Tests/Plan/main.swift -o "$OUT/markaryan-plan-tests"
+"$OUT/markaryan-plan-tests"
