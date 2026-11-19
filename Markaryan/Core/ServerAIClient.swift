@@ -47,13 +47,42 @@ enum AIServerConfig {
     }
 }
 
+/// A picture engine on the server (Nano Banana Pro, GPT Image, FLUX…).
+struct ImageEngine: Decodable, Hashable, Identifiable {
+    let id: String
+    let title: String
+}
+
+/// A photoreal picture and the engine that made it.
+struct RenderedImage {
+    let image: UIImage
+    let engine: String
+    let title: String
+}
+
 /// What the server can do right now (and how much of today's limit is left).
 struct AICapabilities: Decodable {
     var chat = false
     var vision = false
     var imageGenerate = false
+    /// Old engine names ("flux", "gpt") that app versions up to 1.2 understand.
     var imageEdit: [String] = []
+    /// Picture engines in the server's order: the first answers when no engine is chosen.
+    var imageEngines: [ImageEngine] = []
     var providers: [String] = []
+
+    init() {}
+    private enum CodingKeys: String, CodingKey { case chat, vision, imageGenerate, imageEdit, imageEngines, providers }
+    /// Lenient: an older server without some fields still works.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        chat = (try? c.decode(Bool.self, forKey: .chat)) ?? false
+        vision = (try? c.decode(Bool.self, forKey: .vision)) ?? false
+        imageGenerate = (try? c.decode(Bool.self, forKey: .imageGenerate)) ?? false
+        imageEdit = (try? c.decode([String].self, forKey: .imageEdit)) ?? []
+        imageEngines = (try? c.decode([ImageEngine].self, forKey: .imageEngines)) ?? []
+        providers = (try? c.decode([String].self, forKey: .providers)) ?? []
+    }
 }
 
 /// Client of the АртСтрой AI server (GigaChat / YandexGPT behind it, keys only on the server).
@@ -161,20 +190,32 @@ struct ServerAIClient: AIEngine {
         return try JSONDecoder().decode(AICapabilities.self, from: data)
     }
 
-    /// Photoreal edit of the exact 3D render on the server ("flux" or "gpt").
-    func editImage(_ image: UIImage, prompt: String, engine: String) async throws -> UIImage {
+    /// Photoreal edit of an image (the exact 3D render or a photo) on the server.
+    /// `engine`: "auto" — the server's engines in order, the next one when one fails; an engine id — only that engine.
+    func editImage(_ image: UIImage, prompt: String, engine: String = "auto") async throws -> RenderedImage {
         let maxSide: CGFloat = 1536
         let scale = min(1, maxSide / max(image.size.width, image.size.height))
         let size = CGSize(width: max(1, image.size.width * scale), height: max(1, image.size.height * scale))
         let format = UIGraphicsImageRendererFormat.default(); format.scale = 1
         let resized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
         guard let jpeg = resized.jpegData(compressionQuality: 0.88) else { throw ClaudeError.api("Не удалось подготовить изображение.") }
-        let json = try await post("v1/ai/image-edit", ["image": jpeg.base64EncodedString(), "prompt": prompt, "engine": engine, "size": "1536x1152"])
+        let shape = Self.shape(of: image)
+        let json = try await post("v1/ai/image-edit", ["image": jpeg.base64EncodedString(), "prompt": prompt, "engine": engine, "size": shape.size, "aspectRatio": shape.ratio])
         guard let base64 = json["image"] as? String, let data = Data(base64Encoded: base64), let result = UIImage(data: data) else { throw ClaudeError.badResponse }
-        return result
+        let id = json["engine"] as? String ?? engine
+        return RenderedImage(image: result, engine: id, title: json["title"] as? String ?? id)
     }
 
-    /// Picture by description (Kandinsky / YandexART on the server).
+    /// Nearest standard aspect ratio of the picture and the matching output size (multiples of 16).
+    static func shape(of image: UIImage) -> (ratio: String, size: String) {
+        let ratio = Double(image.size.width / max(1, image.size.height))
+        let options: [(Double, String, String)] = [(1, "1:1", "1024x1024"), (4.0 / 3, "4:3", "1536x1152"), (3.0 / 4, "3:4", "1152x1536"),
+                                                   (3.0 / 2, "3:2", "1536x1024"), (2.0 / 3, "2:3", "1024x1536"), (16.0 / 9, "16:9", "1536x864"), (9.0 / 16, "9:16", "864x1536")]
+        let best = options.min { abs(log($0.0 / ratio)) < abs(log($1.0 / ratio)) }!
+        return (best.1, best.2)
+    }
+
+    /// Picture by description (the server's picture engines, or Kandinsky / Alice AI ART).
     func generateImage(prompt: String) async throws -> UIImage {
         let json = try await post("v1/ai/image", ["prompt": prompt])
         guard let base64 = json["image"] as? String, let data = Data(base64Encoded: base64), let result = UIImage(data: data) else { throw ClaudeError.badResponse }

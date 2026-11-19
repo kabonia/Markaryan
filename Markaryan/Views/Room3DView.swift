@@ -61,6 +61,25 @@ enum Room3DBuilder {
         }
     }
 
+    /// Procedural porcelain tiles for the floor: 4 × 4 tiles with grout lines and a slight shade per tile.
+    static func tileTexture(base: UIColor) -> UIImage {
+        let size = CGSize(width: 512, height: 512)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
+            base.getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
+            UIColor(hue: hue, saturation: sat * 0.6, brightness: max(0, min(1, bri * 0.82)), alpha: 1).setFill() // grout
+            context.fill(CGRect(origin: .zero, size: size))
+            let tile: CGFloat = 128, joint: CGFloat = 3
+            for row in 0..<4 {
+                for column in 0..<4 {
+                    let shade = CGFloat((row * 3 + column * 5) % 4) * 0.012
+                    UIColor(hue: hue, saturation: sat, brightness: max(0, min(1, bri - 0.02 + shade)), alpha: 1).setFill()
+                    context.fill(CGRect(x: CGFloat(column) * tile + joint / 2, y: CGFloat(row) * tile + joint / 2, width: tile - joint, height: tile - joint))
+                }
+            }
+        }
+    }
+
     private static func box(_ w: CGFloat, _ h: CGFloat, _ d: CGFloat, _ m: SCNMaterial, at position: SCNVector3, chamfer: CGFloat = 0.01) -> SCNNode {
         let geometry = SCNBox(width: max(0.01, w), height: max(0.01, h), length: max(0.01, d), chamferRadius: min(chamfer, min(w, h, d) / 2))
         geometry.materials = [m]
@@ -307,7 +326,7 @@ enum Room3DBuilder {
     static func scene(plan: FloorPlan, proposal original: DesignProposal?, mode: Room3DViewMode = .interior, viewpoint: Int = 0, shot: InteriorShot? = nil) -> SCNScene {
         let scene = SCNScene()
         // Items are always placed inside the scanned outline (no furniture behind a wall).
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         // Interior: dark neutral background — a bright "sky" seen through a corner gap makes the image AI invent windows.
         scene.background.contents = mode == .interior ? UIColor(white: 0.18, alpha: 1) : UIColor(red: 0.90, green: 0.90, blue: 0.89, alpha: 1)
         scene.lightingEnvironment.contents = UIColor(white: 0.6, alpha: 1)
@@ -328,10 +347,13 @@ enum Room3DBuilder {
         path.flatness = 0.01
         let floorShape = SCNShape(path: path, extrusionDepth: 0.04)
         let floorMaterial = material(.white, roughness: 0.55)
-        floorMaterial.diffuse.contents = woodTexture(base: floorBase)
+        // The floor of the concept: porcelain tiles (bathroom, kitchen, stone) or wooden planks — the photo AI keeps what it sees.
+        let tiledFloor = DrawingsPDF.isTiledFloor(RoomKind.detect(plan: plan, proposal: proposal), proposal?.floor)
+        floorMaterial.diffuse.contents = tiledFloor ? tileTexture(base: floorBase) : woodTexture(base: floorBase)
         floorMaterial.diffuse.wrapS = .repeat; floorMaterial.diffuse.wrapT = .repeat
-        // SCNShape maps the texture once over the whole floor: repeat it so one tile ≈ 1.6 m (planks ≈ 20 cm wide).
-        let tiles = Float(max(1, max(b.maxX - b.minX, b.maxY - b.minY) / 1.6))
+        // SCNShape maps the texture once over the whole floor: repeat it so one texture ≈ 1.6 m of planks (≈ 20 cm wide)
+        // or 2.4 m of tiles (4 × 600 mm).
+        let tiles = Float(max(1, max(b.maxX - b.minX, b.maxY - b.minY) / (tiledFloor ? 2.4 : 1.6)))
         floorMaterial.diffuse.contentsTransform = SCNMatrix4MakeScale(tiles, tiles, 1)
         floorShape.materials = [floorMaterial]
         let floor = SCNNode(geometry: floorShape)
@@ -375,9 +397,12 @@ enum Room3DBuilder {
         glass.emission.intensity = 0.8
         let frame = material(UIColor(white: 0.98, alpha: 1), roughness: 0.5)
         for window in plan.windows {
-            let top = min(window.height > 0.3 ? 0.85 + window.height : 2.2, height - 0.1)
-            if let node = segmentNode(window, height: top - 0.85, baseY: 0.85, thickness: 0.15, materialValue: glass) { scene.rootNode.addChildNode(node) }
-            if let node = segmentNode(window, height: 0.05, baseY: 0.82, thickness: 0.3, materialValue: frame) { scene.rootNode.addChildNode(node) }
+            // Sill height as scanned (French windows start low), 0.85 m when the scan did not say.
+            let sill = CGFloat(max(0, window.elevation ?? 0.85))
+            let top = min(window.height > 0.3 ? sill + CGFloat(window.height) : 2.2, height - 0.1)
+            if top - sill > 0.05, let node = segmentNode(window, height: top - sill, baseY: sill, thickness: 0.15, materialValue: glass) { scene.rootNode.addChildNode(node) }
+            // Window board under the glass; a French window down to the floor has none.
+            if sill > 0.1, sill < height - 0.05, let node = segmentNode(window, height: 0.05, baseY: sill - 0.03, thickness: 0.3, materialValue: frame) { scene.rootNode.addChildNode(node) }
         }
         let doorMaterial = material(UIColor(red: 0.62, green: 0.48, blue: 0.34, alpha: 1), roughness: 0.55)
         for door in plan.doors where door.kind == .door {
@@ -496,11 +521,6 @@ enum Room3DBuilder {
 }
 
 extension Room3DBuilder {
-    /// Renders the eye-level interior off screen (the user never sees the boxes — it only feeds the photo AI).
-    static func interiorSnapshot(plan: FloorPlan, proposal: DesignProposal?, viewpoint: Int) -> UIImage? {
-        snapshot(plan: plan, proposal: proposal, mode: .interior, viewpoint: viewpoint)
-    }
-
     /// Off-screen render of any view (used as the base for FLUX and for the presentation).
     /// Auto-exposure: the frame is measured and re-exposed until it is neither burnt out nor too dark.
     static func snapshot(plan: FloorPlan, proposal: DesignProposal?, mode: Room3DViewMode, viewpoint: Int = 0, shot: InteriorShot? = nil, size: CGSize = CGSize(width: 1536, height: 1152), autoExposure: Bool = true) -> UIImage? {
@@ -534,7 +554,7 @@ extension Room3DBuilder {
     /// Real camera shots of THIS room, chosen by its type: from the entrance, at the main zones and from the far corner.
     /// The camera never stands inside furniture or a wall.
     static func interiorShots(plan: FloorPlan, proposal original: DesignProposal?) -> [InteriorShot] {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let b = plan.bounds
         let center = PlanPoint(x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2)
@@ -686,25 +706,7 @@ struct Room3DView: View {
     @State private var scene: SCNScene?
     @State private var controller = Room3DController()
     @State private var shareFile: SharedFile?
-    @State private var isRendering = false
-    @State private var photoResult: PhotoResult?
-    @State private var error: String?
     @State private var mode: Room3DViewMode = .interior
-
-    struct PhotoResult: Identifiable { let id = UUID(); let image: UIImage }
-
-    private var fluxPrompt: String {
-        var parts = ["Turn this 3D interior render into a photorealistic professional interior design photograph."]
-        parts.append("Keep exactly the same camera angle, room geometry, walls, doors, windows and the position, size and colour of every piece of furniture.")
-        parts.append("Make every surface real: textured paint or decorative plaster on walls, real wood floor, upholstered fabric, natural stone countertops, metal handles, curtains on windows, decor, books, plants and soft lighting.")
-        if let proposal {
-            if !proposal.renderPromptEnglish.isEmpty { parts.append(proposal.renderPromptEnglish) }
-            if !proposal.finishesEnglish.isEmpty { parts.append(proposal.finishesEnglish) }
-            if !proposal.palette.isEmpty { parts.append("Colour palette: \(proposal.palette.joined(separator: ", ")).") }
-        }
-        parts.append("Soft natural daylight, realistic materials and textures, professional interior photography, 24mm lens, high detail, no text.")
-        return parts.joined(separator: " ")
-    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -717,7 +719,6 @@ struct Room3DView: View {
                 Spacer()
                 Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(.white.opacity(0.85))
                     .padding(.horizontal, 12).padding(.vertical, 7).background(.ultraThinMaterial, in: Capsule())
-                if let error { Text(error).font(.caption).foregroundStyle(.white).padding(10).background(Theme.danger.opacity(0.85), in: RoundedRectangle(cornerRadius: 12)) }
                 HStack(spacing: 10) {
                     Button { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode) } label: { SecondaryActionLabel(title: "Сбросить вид", icon: "arrow.counterclockwise") }
                     Button { share() } label: { SecondaryActionLabel(title: "Поделиться", icon: "square.and.arrow.up") }
@@ -733,25 +734,8 @@ struct Room3DView: View {
         .navigationTitle(proposal?.title ?? plan.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
-        .sheet(item: $photoResult) { result in NavigationStack { RenderResultView(image: result.image, title: proposal?.title ?? plan.name) } }
         .task { if scene == nil { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode); store.track("room_3d_open") } }
         .onChange(of: mode) { _, newMode in scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: newMode) }
-    }
-
-    private func renderPhoto() {
-        guard let snapshot = controller.snapshot() else { return }
-        error = nil
-        isRendering = true
-        UIApplication.shared.isIdleTimerDisabled = true
-        Task {
-            do {
-                let image = try await store.fluxRender(snapshot, prompt: fluxPrompt)
-                photoResult = PhotoResult(image: image)
-                Haptics.success()
-            } catch { self.error = error.localizedDescription; Haptics.warning() }
-            isRendering = false
-            UIApplication.shared.isIdleTimerDisabled = false
-        }
     }
 
     private func share() {
