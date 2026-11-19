@@ -246,10 +246,7 @@ struct FloorPlanDetailView: View {
     @State private var error: String?
     @State private var modelURL: URL?
     @State private var shareFile: SharedFile?
-    @State private var renderImage: UIImage?
     @State private var isRendering = false
-    @State private var photos: [UIImage] = []
-    @State private var viewpoint = 0
     @State private var progressText: String?
     @State private var presentation: PresentationResult?
 
@@ -308,7 +305,6 @@ struct FloorPlanDetailView: View {
             Button("Удалить", role: .destructive) { if let plan { store.deletePlan(plan) }; dismiss() }
         }
         .onAppear { if selectedProposal == nil { selectedProposal = plan?.proposals.last?.id } }
-        .onChange(of: selectedProposal) { _, _ in photos = []; viewpoint = 0 }
     }
 
     private func content(_ plan: FloorPlan) -> some View {
@@ -454,10 +450,6 @@ struct FloorPlanDetailView: View {
                     }.padding(.top, 8)
                 }.tint(Theme.orange)
             }
-            if let renderImage {
-                Image(uiImage: renderImage).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Button { shareImage(renderImage) } label: { SecondaryActionLabel(title: "Поделиться визуализацией", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-            }
             if let presentation, presentation.proposalID == proposal.id {
                 Text("ДИЗАЙН‑ПРЕЗЕНТАЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -555,28 +547,11 @@ struct FloorPlanDetailView: View {
                     store.savePlan(updated)
                 }
                 withAnimation(.snappy) { selectedProposal = result.id }
-                renderImage = nil
                 Haptics.success()
             } catch { self.error = error.localizedDescription; Haptics.warning() }
             isGenerating = false
             UIApplication.shared.isIdleTimerDisabled = false
         }
-    }
-
-    /// Finished interior photo: the 3D layout is rendered off screen and FLUX turns it into a real photo.
-    private func makePhoto(_ proposal: DesignProposal, plan: FloorPlan) async {
-        let current = viewpoint
-        viewpoint += 1
-        isRendering = true
-        error = nil
-        UIApplication.shared.isIdleTimerDisabled = true
-        defer { isRendering = false; UIApplication.shared.isIdleTimerDisabled = false }
-        do {
-            let photo = try await store.interiorPhoto(plan: plan, proposal: proposal, viewpoint: current)
-            withAnimation(.snappy) { photos.insert(photo, at: 0) }
-            _ = try? store.addProjectPhoto(photo, caption: "Фото интерьера: \(proposal.title)")
-            Haptics.success()
-        } catch { self.error = error.localizedDescription; Haptics.warning() }
     }
 
     /// Full design presentation: measured plan, layout plan, exact 3D model (top + isometric),
@@ -676,16 +651,6 @@ struct FloorPlanDetailView: View {
             if score >= GeometryCheck.threshold, RenderQuality.isUsable(picture) { return (picture, score, engine) }
         }
         return nil
-    }
-
-    private func render(_ proposal: DesignProposal, plan: FloorPlan) async {
-        isRendering = true
-        defer { isRendering = false }
-        let brief = "\(proposal.renderPrompt) Помещение \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м. Стиль: \(proposal.style). Расстановка как на приложенном плане сверху; вид изнутри комнаты, фотореализм."
-        do {
-            renderImage = try await store.createVisualization(style: "space", brief: brief, source: planImage(plan, proposal: proposal))
-            Haptics.success()
-        } catch { self.error = error.localizedDescription }
     }
 
     private func drawingsURL(_ plan: FloorPlan) -> URL? {

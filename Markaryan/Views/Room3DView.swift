@@ -496,11 +496,6 @@ enum Room3DBuilder {
 }
 
 extension Room3DBuilder {
-    /// Renders the eye-level interior off screen (the user never sees the boxes — it only feeds the photo AI).
-    static func interiorSnapshot(plan: FloorPlan, proposal: DesignProposal?, viewpoint: Int) -> UIImage? {
-        snapshot(plan: plan, proposal: proposal, mode: .interior, viewpoint: viewpoint)
-    }
-
     /// Off-screen render of any view (used as the base for FLUX and for the presentation).
     /// Auto-exposure: the frame is measured and re-exposed until it is neither burnt out nor too dark.
     static func snapshot(plan: FloorPlan, proposal: DesignProposal?, mode: Room3DViewMode, viewpoint: Int = 0, shot: InteriorShot? = nil, size: CGSize = CGSize(width: 1536, height: 1152), autoExposure: Bool = true) -> UIImage? {
@@ -686,25 +681,7 @@ struct Room3DView: View {
     @State private var scene: SCNScene?
     @State private var controller = Room3DController()
     @State private var shareFile: SharedFile?
-    @State private var isRendering = false
-    @State private var photoResult: PhotoResult?
-    @State private var error: String?
     @State private var mode: Room3DViewMode = .interior
-
-    struct PhotoResult: Identifiable { let id = UUID(); let image: UIImage }
-
-    private var fluxPrompt: String {
-        var parts = ["Turn this 3D interior render into a photorealistic professional interior design photograph."]
-        parts.append("Keep exactly the same camera angle, room geometry, walls, doors, windows and the position, size and colour of every piece of furniture.")
-        parts.append("Make every surface real: textured paint or decorative plaster on walls, real wood floor, upholstered fabric, natural stone countertops, metal handles, curtains on windows, decor, books, plants and soft lighting.")
-        if let proposal {
-            if !proposal.renderPromptEnglish.isEmpty { parts.append(proposal.renderPromptEnglish) }
-            if !proposal.finishesEnglish.isEmpty { parts.append(proposal.finishesEnglish) }
-            if !proposal.palette.isEmpty { parts.append("Colour palette: \(proposal.palette.joined(separator: ", ")).") }
-        }
-        parts.append("Soft natural daylight, realistic materials and textures, professional interior photography, 24mm lens, high detail, no text.")
-        return parts.joined(separator: " ")
-    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -717,7 +694,6 @@ struct Room3DView: View {
                 Spacer()
                 Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(.white.opacity(0.85))
                     .padding(.horizontal, 12).padding(.vertical, 7).background(.ultraThinMaterial, in: Capsule())
-                if let error { Text(error).font(.caption).foregroundStyle(.white).padding(10).background(Theme.danger.opacity(0.85), in: RoundedRectangle(cornerRadius: 12)) }
                 HStack(spacing: 10) {
                     Button { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode) } label: { SecondaryActionLabel(title: "Сбросить вид", icon: "arrow.counterclockwise") }
                     Button { share() } label: { SecondaryActionLabel(title: "Поделиться", icon: "square.and.arrow.up") }
@@ -733,25 +709,8 @@ struct Room3DView: View {
         .navigationTitle(proposal?.title ?? plan.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
-        .sheet(item: $photoResult) { result in NavigationStack { RenderResultView(image: result.image, title: proposal?.title ?? plan.name) } }
         .task { if scene == nil { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode); store.track("room_3d_open") } }
         .onChange(of: mode) { _, newMode in scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: newMode) }
-    }
-
-    private func renderPhoto() {
-        guard let snapshot = controller.snapshot() else { return }
-        error = nil
-        isRendering = true
-        UIApplication.shared.isIdleTimerDisabled = true
-        Task {
-            do {
-                let image = try await store.fluxRender(snapshot, prompt: fluxPrompt)
-                photoResult = PhotoResult(image: image)
-                Haptics.success()
-            } catch { self.error = error.localizedDescription; Haptics.warning() }
-            isRendering = false
-            UIApplication.shared.isIdleTimerDisabled = false
-        }
     }
 
     private func share() {

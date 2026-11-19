@@ -993,38 +993,8 @@ enum WorkOrderError: LocalizedError {
         return result
     }
 
-    static let interiorViewpoints = [
-        "standing in the doorway at eye level, looking into the room so the main zone and the longest wall are visible",
-        "standing in the far corner at eye level, looking back towards the entrance and the kitchen or storage wall",
-        "a close, detailed view of the kitchen or the most detailed functional zone",
-        "standing by the window at eye level, looking into the room towards the seating or sleeping zone"
-    ]
-
-    /// Finished interior photo of the AI concept: Claude writes a precise visual description of the room
-    /// (geometry, furniture positions, appliances, materials, colours, light), FLUX.2 renders the photo.
-    func interiorPhoto(plan: FloorPlan, proposal: DesignProposal, viewpoint: Int) async throws -> UIImage {
-        let view = Self.interiorViewpoints[abs(viewpoint) % Self.interiorViewpoints.count]
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
-        let concept = (try? encoder.encode(proposal)).flatMap { String(data: $0, encoding: .utf8) } ?? proposal.summary
-        var prompt = "Photorealistic interior design photograph, \(proposal.style) style. \(proposal.renderPromptEnglish) \(proposal.finishesEnglish)"
-        if let claude = claudeClient {
-            let system = """
-            You are a senior architectural visualizer. Write ONE prompt in English (max 1300 characters) for an image model that must produce a finished, photorealistic interior design photograph of this exact room.
-            The floor, walls and ceiling must be described FIRST and precisely, using the concept's floor/walls/ceiling finishes (material, colour, laying pattern, skirting, mouldings, ceiling levels, shadow gap, cornice, spotlights, tracks, hidden LED lines); the camera must show part of the ceiling and the floor so all three are visible; demand straight, even lines and clean junctions.
-            Describe: room size and ceiling height; camera position (\(view)); what is on the left, right and back walls from that viewpoint; every important piece of furniture with its real look; for kitchens list real appliances (built-in oven, induction cooktop, range hood, sink with faucet, fridge, dishwasher) and cabinet fronts, handles, countertop; doors and windows with curtains; materials and textures; colour palette translated from hex to colour names; lighting (natural daylight plus warm fixtures); small decor details (books, vases, plants, art, cushions, rug, tableware).
-            End with: professional interior photography, wide-angle 20mm lens, ultra realistic, sharp, magazine quality, no people, no text.
-            Output only the prompt.
-            """
-            let user = "Room plan (meters, x right, y down): \(plan.aiDescription.prefix(6000))\n\nDesign concept: \(concept.prefix(6000))"
-            if let written = try? await claude.complete(system: system, turns: [ClaudeTurn(role: .user, text: user)], maxTokens: 900) {
-                prompt = written.trimmingCharacters(in: .whitespacesAndNewlines) + " " + proposal.finishesEnglish
-            }
-        }
-        return try await fluxGenerate(prompt: prompt)
-    }
-
-    /// AI interior concept for a plan. Claude returns strict JSON through tool use; without a key
-    /// the АртСтрой server assistant is asked for the same JSON and the answer is parsed.
+    /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds)
+    /// returns strict JSON by the schema; without a working AI the built‑in designer makes the concept on the iPhone.
     func generateDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String) async throws -> DesignProposal {
         let room = RoomKind.keyword(purpose) ?? RoomKind.fromScan(plan) ?? .living
         let request = """
@@ -1050,32 +1020,20 @@ enum WorkOrderError: LocalizedError {
     }
 
     private func aiDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String, request: String, decoder: JSONDecoder) async throws -> DesignProposal {
-        if let claude = claudeClient {
-            let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: request, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-            var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).fitted(to: plan)
-            if proposal.furniture.isEmpty {
-                // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
-                let retry = request + "\n\nВАЖНО: в прошлом ответе массив furniture был пустым или с ошибками. Обязательно заполни furniture: у каждого предмета name, kind, x, y, width, depth, rotation — числа в метрах, внутри контура комнаты."
-                let again = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: retry, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-                if let decoded = try? decoder.decode(DesignProposal.self, from: again) {
-                    let second = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
-                    if !second.furniture.isEmpty { proposal = second }
-                }
+        guard let claude = claudeClient else { throw ClaudeError.noKey }
+        let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: request, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
+        var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).fitted(to: plan)
+        if proposal.furniture.isEmpty {
+            // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
+            let retry = request + "\n\nВАЖНО: в прошлом ответе массив furniture был пустым или с ошибками. Обязательно заполни furniture: у каждого предмета name, kind, x, y, width, depth, rotation — числа в метрах, внутри контура комнаты."
+            let again = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: retry, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
+            if let decoded = try? decoder.decode(DesignProposal.self, from: again) {
+                let second = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
+                if !second.furniture.isEmpty { proposal = second }
             }
-            guard !proposal.furniture.isEmpty else { throw ClaudeError.api("ИИ не прислал расстановку. Нажмите «Создать» ещё раз.") }
-            track("design_ai")
-            registerMeaningfulAction()
-            return proposal
         }
-        let jsonRequest = request + "\n\nОтветь ТОЛЬКО одним JSON-объектом без пояснений с полями: title, style, summary, roomPurpose, zones[{name,x,y,width,depth}], furniture[{name,kind,x,y,width,depth,rotation}], palette[hex], materials[{name,where,amount}], lighting, tips[], budgetMin, budgetMax, renderPrompt."
-        let reply = try await askAssistant(question: jsonRequest, context: .general)
-        guard let start = reply.answer.firstIndex(of: "{"), let end = reply.answer.lastIndex(of: "}"), start < end,
-              let decoded = try? decoder.decode(DesignProposal.self, from: Data(reply.answer[start...end].utf8)) else {
-            throw ClaudeError.api("Сервер ответил текстом без расстановки. Попробуйте ещё раз через минуту.")
-        }
-        let proposal = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
-        guard !proposal.furniture.isEmpty else { throw ClaudeError.api("Сервер ответил без расстановки. Попробуйте ещё раз через минуту.") }
-        track("design_server")
+        guard !proposal.furniture.isEmpty else { throw ClaudeError.api("ИИ не прислал расстановку. Нажмите «Создать» ещё раз.") }
+        track("design_ai")
         registerMeaningfulAction()
         return proposal
     }
