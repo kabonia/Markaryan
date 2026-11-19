@@ -1,0 +1,96 @@
+name: TestFlight — сборка и загрузка
+
+# Запуск: Actions → «TestFlight — сборка и загрузка» → Run workflow.
+# Номер сборки = номер запуска этого workflow, версия — MARKETING_VERSION из проекта.
+# Нужны секреты репозитория (Settings → Secrets and variables → Actions):
+#   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API (роль Admin: подпись в облаке Apple);
+#   ASC_KEY_P8 — содержимое файла AuthKey_….p8 целиком;
+#   AI_SERVER_PLIST — содержимое настоящего Markaryan/AIServer.plist целиком.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      AI_SERVER_PLIST: ${{ secrets.AI_SERVER_PLIST }}
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Проверка секретов
+        run: |
+          missing=""
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 AI_SERVER_PLIST; do
+            if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Не заданы секреты репозитория:$missing (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Настоящий AIServer.plist из секрета
+        run: |
+          printf '%s\n' "$AI_SERVER_PLIST" > Markaryan/AIServer.plist
+          plutil -lint Markaryan/AIServer.plist
+
+      - name: Ключ App Store Connect API
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      - name: Тесты калькуляторов и планировок
+        run: sh Tests/run.sh
+
+      - name: Архив (Release)
+        run: |
+          set -o pipefail
+          xcodebuild -project Markaryan.xcodeproj -scheme Markaryan -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Markaryan.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            archive | tail -60
+
+      - name: Загрузка в TestFlight
+        run: |
+          set -o pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>method</key><string>app-store-connect</string>
+          <key>destination</key><string>upload</string>
+          <key>teamID</key><string>QFKA6588C4</string>
+          <key>signingStyle</key><string>automatic</string>
+          <key>uploadSymbols</key><true/>
+          <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Markaryan.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -40
+          version=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/Markaryan.xcarchive/Info.plist")
+          echo "АртСтрой $version ($BUILD_NUMBER) загружен в App Store Connect. В TestFlight появится после обработки Apple, обычно за 5–30 минут." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Убрать ключи с машины
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc" Markaryan/AIServer.plist
