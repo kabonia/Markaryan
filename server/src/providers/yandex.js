@@ -1,7 +1,7 @@
-// Yandex AI Studio: YandexGPT through the OpenAI‑compatible API, Qwen for photos, YandexART for pictures.
+// Yandex AI Studio: YandexGPT through the OpenAI‑compatible API, Qwen for photos, Alice AI ART for pictures.
 // Docs: https://aistudio.yandex.ru/docs/ru/ai-studio/
 import { config } from '../config.js';
-import { ApiError, request, readJSON, readSSE, parseLooseJSON, sleep } from '../util.js';
+import { ApiError, request, readJSON, readSSE, parseLooseJSON } from '../util.js';
 
 let workingBase = null;
 const modelURI = (name) => (name.includes('://') ? name : `gpt://${config.yandex.folderId}/${name}`);
@@ -77,33 +77,15 @@ export async function json({ system, messages, schema, name = 'result', maxToken
   return parseLooseJSON(result?.choices?.[0]?.message?.content ?? '');
 }
 
-/** YandexART: asynchronous generation, polled until ready. Returns base64 JPEG. */
-export async function generateImage({ prompt, width = 4, height = 3 }) {
-  const art = config.yandex.artModel.includes('://') ? config.yandex.artModel : `art://${config.yandex.folderId}/${config.yandex.artModel}`;
-  const start = await request(`${config.yandex.nativeBase}/foundationModels/v1/imageGenerationAsync`, {
-    method: 'POST', headers: headers(),
-    body: JSON.stringify({
-      modelUri: art,
-      generationOptions: { mimeType: 'image/jpeg', aspectRatio: { widthRatio: String(width), heightRatio: String(height) } },
-      messages: [{ text: String(prompt).slice(0, 500), weight: '1' }],
-    }),
-  }, 30_000);
-  const operation = await readJSON(start);
-  if (!start.ok || !operation.id) throw failure(start.status, operation);
-  const deadline = Date.now() + 120_000;
-  while (Date.now() < deadline) {
-    await sleep(2500);
-    const poll = await request(`${config.yandex.nativeBase}/operations/${operation.id}`, { headers: headers() }, 20_000);
-    const state = await readJSON(poll);
-    if (!poll.ok) throw failure(poll.status, state);
-    if (state.done) {
-      if (state.error) throw new ApiError(502, `YandexART: ${state.error.message || 'не удалось создать изображение'}`);
-      const image = state.response?.image;
-      if (!image) throw new ApiError(502, 'YandexART не вернул изображение.');
-      return image;
-    }
-  }
-  throw new ApiError(504, 'YandexART не успел за 2 минуты. Попробуйте ещё раз.', { retryable: true });
+/** Alice AI ART through the OpenAI-compatible Images API (synchronous; the old async Image Generation API is retired). */
+export async function generateImage({ prompt, size = '1024x1024' }) {
+  const model = config.yandex.artModel.includes('://') ? config.yandex.artModel : `art://${config.yandex.folderId}/${config.yandex.artModel}`;
+  const response = await call('/images/generations', { model, prompt: String(prompt).slice(0, 500), size });
+  const result = await readJSON(response);
+  if (!response.ok) throw failure(response.status, result);
+  const image = result?.data?.[0]?.b64_json;
+  if (!image) throw new ApiError(502, 'Alice AI ART не вернул изображение. Попробуйте изменить описание.');
+  return image;
 }
 
 export const supportsVision = () => Boolean(config.yandex.visionModel);

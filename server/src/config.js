@@ -23,6 +23,16 @@ export const config = {
     effort: env.OPENROUTER_EFFORT || '',
     /** deny — only providers that do not store prompts (photos and plans of clients). */
     dataCollection: (env.OPENROUTER_DATA_COLLECTION || '').toLowerCase(),
+    /** Image models for the photoreal render, in order: the first answers, the next ones step in when it fails. */
+    imageModels: (env.OPENROUTER_IMAGE_MODELS || 'google/gemini-3-pro-image,openai/gpt-image-2.6-sunburst,black-forest-labs/flux-3-image')
+      .split(',').map((s) => s.trim()).filter(Boolean),
+  },
+
+  /** Picture engines in order: openrouter (its image models), openai, bfl — each only when its key is set. */
+  images: {
+    order: (env.IMAGE_ENGINES || 'openrouter,openai,bfl').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+    /** 1K, 2K or 4K for models that take a resolution (Nano Banana: the same price for 1K and 2K). */
+    resolution: (env.IMAGE_RESOLUTION || '2K').toUpperCase(),
   },
 
   gigachat: {
@@ -40,15 +50,23 @@ export const config = {
     folderId: env.YANDEX_FOLDER_ID || '',
     model: env.YANDEX_MODEL || 'yandexgpt/latest',
     visionModel: env.YANDEX_VISION_MODEL || 'qwen3.6-35b-a3b',
-    artModel: env.YANDEX_ART_MODEL || 'yandex-art/latest',
+    artModel: env.YANDEX_ART_MODEL || 'aliceai-image-art-3.0',
     bases: (env.YANDEX_BASE || 'https://ai.api.cloud.yandex.net/v1,https://llm.api.cloud.yandex.net/v1')
       .split(',').map((s) => s.trim().replace(/\/$/, '')).filter(Boolean),
-    nativeBase: env.YANDEX_NATIVE_BASE || 'https://llm.api.cloud.yandex.net',
   },
 
-  /** Optional photoreal engines for editing the exact 3D render. */
-  bfl: { apiKey: env.BFL_API_KEY || '', model: env.BFL_MODEL || 'flux-kontext-max' },
-  openai: { apiKey: env.OPENAI_API_KEY || '', imageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2' },
+  /** Optional direct picture engines (without OpenRouter). Addresses can point to a proxy abroad. */
+  bfl: {
+    apiKey: env.BFL_API_KEY || '',
+    model: env.BFL_MODEL || 'flux-3-image',
+    base: (env.BFL_BASE || 'https://api.bfl.ai/v1').trim().replace(/\/$/, ''),
+    pollMs: int('BFL_POLL_MS', 1500),
+  },
+  openai: {
+    apiKey: env.OPENAI_API_KEY || '',
+    imageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst',
+    base: (env.OPENAI_BASE || 'https://api.openai.com/v1').trim().replace(/\/$/, ''),
+  },
 
   /** Daily limits per installation (X-Install-ID) and per IP address. */
   limits: {
