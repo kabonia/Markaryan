@@ -40,7 +40,8 @@ enum RoomKind: String, CaseIterable {
     }
 
     static func detect(plan: FloorPlan?, proposal: DesignProposal?) -> RoomKind {
-        // 1) what the user chose, 2) the AI title, 3) the scan, 4) the items themselves
+        // 0) fixed when the concept was placed, 1) what the user chose, 2) the AI title, 3) the scan, 4) the items themselves
+        if let stored = proposal?.roomKind.flatMap(RoomKind.init(rawValue:)) { return stored }
         if let chosen = keyword(proposal?.roomPurpose ?? "") ?? keyword(proposal?.title ?? "") { return chosen }
         if let plan, let scanned = fromScan(plan) { return scanned }
         let models = (proposal?.furniture ?? []).map(\.model)

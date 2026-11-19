@@ -15,7 +15,7 @@ struct FloorPlanCanvas: View {
     private let ink = Color(red: 0.13, green: 0.15, blue: 0.14)
 
     var body: some View {
-        let proposal = self.proposal?.fitted(to: plan)
+        let proposal = self.proposal?.placed(in: plan)
         return Canvas { context, size in
             let b = plan.bounds
             let margin: CGFloat = compact ? 10 : 34
@@ -563,7 +563,7 @@ struct FloorPlanDetailView: View {
         defer { isRendering = false; progressText = nil; UIApplication.shared.isIdleTimerDisabled = false }
 
         // Every item inside the scanned outline; the room type decides titles, shots and what the AI may draw.
-        let proposal = original.fitted(to: plan)
+        let proposal = original.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
 
         progressText = "Строим точную 3D‑модель по скану…"

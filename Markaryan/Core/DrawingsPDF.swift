@@ -44,7 +44,7 @@ enum DrawingsPDF {
     // MARK: Entry point
 
     static func render(plan: FloorPlan, proposal original: DesignProposal?, projectName: String) throws -> URL {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let safe = plan.name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "помещение" : safe).pdf")
@@ -848,7 +848,7 @@ enum DrawingsPDF {
 
     /// Engineering plan for the presentation (only when there are fixtures to connect).
     static func engineeringPicture(plan: FloorPlan, proposal original: DesignProposal?, size: CGSize = CGSize(width: 540, height: 470)) -> (image: UIImage, points: [ConnectionPoint])? {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let points = connections(plan: plan, proposal: proposal, room: room)
         guard !points.isEmpty else { return nil }
@@ -873,7 +873,7 @@ enum DrawingsPDF {
 
     /// Clean architectural plan: without furniture — measured plan with three dimension chains; with furniture — layout with positions.
     static func planPicture(plan: FloorPlan, proposal original: DesignProposal?, furniture: Bool, size: CGSize = CGSize(width: 540, height: 470)) -> UIImage {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let b = plan.bounds
         let widthM = max(0.5, b.maxX - b.minX), depthM = max(0.5, b.maxY - b.minY)
         let margin = mm(furniture ? 20 : 32)

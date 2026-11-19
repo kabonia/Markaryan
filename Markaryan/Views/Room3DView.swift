@@ -307,7 +307,7 @@ enum Room3DBuilder {
     static func scene(plan: FloorPlan, proposal original: DesignProposal?, mode: Room3DViewMode = .interior, viewpoint: Int = 0, shot: InteriorShot? = nil) -> SCNScene {
         let scene = SCNScene()
         // Items are always placed inside the scanned outline (no furniture behind a wall).
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         // Interior: dark neutral background — a bright "sky" seen through a corner gap makes the image AI invent windows.
         scene.background.contents = mode == .interior ? UIColor(white: 0.18, alpha: 1) : UIColor(red: 0.90, green: 0.90, blue: 0.89, alpha: 1)
         scene.lightingEnvironment.contents = UIColor(white: 0.6, alpha: 1)
@@ -529,7 +529,7 @@ extension Room3DBuilder {
     /// Real camera shots of THIS room, chosen by its type: from the entrance, at the main zones and from the far corner.
     /// The camera never stands inside furniture or a wall.
     static func interiorShots(plan: FloorPlan, proposal original: DesignProposal?) -> [InteriorShot] {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let b = plan.bounds
         let center = PlanPoint(x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2)

@@ -143,4 +143,46 @@ for (purpose, plan) in [("Спальня", bedroom), ("Санузел", bathroom
     check(proposal.budgetMax > proposal.budgetMin && proposal.budgetMin > 0, "Offline budget: \(purpose)")
 }
 
+// MARK: Concepts are placed once and keep their room type
+
+let legacyPlanJSON = #"""
+{"id":"7A4F0B6E-1111-4C3B-9C49-3D2E1F0A5B6C","name":"Санузел","createdAt":700000000,"source":"lidar","ceilingHeight":2.6,
+ "segments":[{"id":"7A4F0B6E-2222-4C3B-9C49-3D2E1F0A5B6C","kind":"wall","start":{"x":0,"y":0},"end":{"x":2,"y":0},"height":2.6},
+             {"id":"7A4F0B6E-3333-4C3B-9C49-3D2E1F0A5B6C","kind":"wall","start":{"x":2,"y":0},"end":{"x":2,"y":1.7},"height":2.6},
+             {"id":"7A4F0B6E-4444-4C3B-9C49-3D2E1F0A5B6C","kind":"wall","start":{"x":2,"y":1.7},"end":{"x":0,"y":1.7},"height":2.6},
+             {"id":"7A4F0B6E-5555-4C3B-9C49-3D2E1F0A5B6C","kind":"wall","start":{"x":0,"y":1.7},"end":{"x":0,"y":0},"height":2.6}],
+ "proposals":[{"title":"Старая концепция","roomPurpose":"Санузел",
+   "furniture":[{"name":"Унитаз","kind":"toilet","x":150,"y":40,"width":40,"depth":55,"rotation":0},{"name":"Диван","kind":"sofa","x":100,"y":100,"width":200,"depth":90,"rotation":0}]}]}
+"""#
+let legacyPlan = try JSONDecoder().decode(FloorPlan.self, from: Data(legacyPlanJSON.utf8))
+check(legacyPlan.objects.isEmpty && legacyPlan.floorPolygon.isEmpty && legacyPlan.apartmentID == nil, "Old plan without optional keys still loads")
+let migrated = legacyPlan.proposals[0]
+check(migrated.layoutVersion == 1 && migrated.roomKind == "bathroom", "Old concept is placed once while loading")
+check(migrated.furniture.count == 1, "Old concept loses items that do not belong in the room")
+near(migrated.furniture[0].width, 0.4, "Old concept is converted to metres while loading")
+let placedTwice = migrated.placed(in: legacyPlan)
+check(placedTwice.furniture == migrated.furniture && placedTwice.layoutVersion == 1, "Placing again changes nothing")
+let saved = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(legacyPlan))
+check(saved.proposals[0].furniture == migrated.furniture && saved.proposals[0].roomKind == "bathroom", "Placed concept survives saving")
+var relabelled = migrated
+relabelled.roomPurpose = "Гостиная"
+check(RoomKind.detect(plan: legacyPlan, proposal: relabelled) == .bathroom, "Stored room type wins over later guesses")
+
+// MARK: Apartment foundation: every normalised room knows where it sits in the scan
+
+let rawPoints = [turned(0, 0), turned(5, 0), turned(5, 3), turned(0, 3)]
+if let local = FloorPlanBuilder.fromContour(rawPoints, name: "Комната"), let placement = local.placement {
+    for (point, raw) in zip(local.floorPolygon, rawPoints) {
+        let back = placement.apply(point)
+        near(back.x, Double(raw.x), "Placement maps back to scan x", 0.0005)
+        near(back.y, Double(raw.z), "Placement maps back to scan y", 0.0005)
+    }
+    let restored = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(local))
+    check(restored.placement == placement, "Placement survives saving")
+} else { check(false, "Contour plan has a placement") }
+var withApartment = bedroom
+withApartment.apartmentID = UUID()
+let reloadedApartment = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(withApartment))
+check(reloadedApartment.apartmentID == withApartment.apartmentID, "Apartment link survives saving")
+
 print("PASS: \(passed) plan and design checks")

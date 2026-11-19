@@ -18,6 +18,10 @@ struct FloorPlan: Codable, Identifiable {
     var ceilingHeight: Double
     var modelFilename: String?
     var proposals: [DesignProposal] = []
+    /// Apartment this room belongs to (several rooms scanned in one session). Nil for a separate room.
+    var apartmentID: UUID? = nil
+    /// Where the room sits in the scan (and apartment) coordinates; set when the plan is normalised.
+    var placement: PlanPlacement? = nil
 
     var walls: [PlanSegment] { segments.filter { $0.kind == .wall } }
     var doors: [PlanSegment] { segments.filter { $0.kind == .door || $0.kind == .opening } }
@@ -96,14 +100,38 @@ struct FloorPlan: Codable, Identifiable {
     }
 }
 
+extension FloorPlan {
+    /// Lenient reading of saved plans. Concepts saved before 1.3 (raw AI coordinates) are fitted into the room
+    /// once here and keep their room type, so the plan, the 3D model and the drawings no longer redo it on every render.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        source = try c.decode(Source.self, forKey: .source)
+        segments = try c.decode([PlanSegment].self, forKey: .segments)
+        objects = try c.decodeIfPresent([PlanObject].self, forKey: .objects) ?? []
+        floorPolygon = try c.decodeIfPresent([PlanPoint].self, forKey: .floorPolygon) ?? []
+        ceilingHeight = try c.decode(Double.self, forKey: .ceilingHeight)
+        modelFilename = try c.decodeIfPresent(String.self, forKey: .modelFilename)
+        apartmentID = try c.decodeIfPresent(UUID.self, forKey: .apartmentID)
+        placement = try c.decodeIfPresent(PlanPlacement.self, forKey: .placement)
+        let saved = try c.decodeIfPresent([DesignProposal].self, forKey: .proposals) ?? []
+        proposals = []
+        proposals = saved.map { $0.placed(in: self) }
+    }
+}
+
 // MARK: - Building plans
 
 enum FloorPlanBuilder {
     /// Normalises raw points: rotates so the longest wall is horizontal, then moves the plan to the origin with a small margin.
+    /// The transform back to the scan coordinates is kept in `placement` (rooms of one apartment share those coordinates).
     static func normalize(_ plan: FloorPlan) -> FloorPlan {
         var plan = plan
+        var angle = 0.0
         if let longest = plan.walls.max(by: { $0.length < $1.length }) {
-            let angle = -atan2(longest.end.y - longest.start.y, longest.end.x - longest.start.x)
+            angle = -atan2(longest.end.y - longest.start.y, longest.end.x - longest.start.x)
             let cosA = cos(angle), sinA = sin(angle)
             func rotate(_ p: PlanPoint) -> PlanPoint { PlanPoint(x: p.x * cosA - p.y * sinA, y: p.x * sinA + p.y * cosA) }
             plan.segments = plan.segments.map { var s = $0; s.start = rotate(s.start); s.end = rotate(s.end); return s }
@@ -115,6 +143,7 @@ enum FloorPlanBuilder {
         plan.segments = plan.segments.map { var s = $0; s.start = s.start + shift; s.end = s.end + shift; return s }
         plan.floorPolygon = plan.floorPolygon.map { $0 + shift }
         plan.objects = plan.objects.map { var o = $0; o.center = o.center + shift; return o }
+        plan.placement = (plan.placement ?? .identity).undoing(rotation: angle, thenShift: shift)
         return plan
     }
 

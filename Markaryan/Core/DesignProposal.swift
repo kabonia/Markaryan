@@ -155,6 +155,11 @@ struct DesignProposal: Codable, Identifiable {
     var floor: DesignFinish
     var walls: DesignFinish
     var ceiling: DesignFinish
+    /// Room type fixed once when the concept is placed (`RoomKind` raw value). Nil in concepts saved before 1.3.
+    var roomKind: String? = nil
+    /// How the furniture got its coordinates: nil — raw AI answer, not checked yet;
+    /// 1 — AI coordinates fitted into the room (`fitted(to:)`); 2 — placed by the layout engine.
+    var layoutVersion: Int? = nil
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -167,7 +172,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion
     }
 
     init(from decoder: Decoder) throws {
@@ -192,12 +197,24 @@ struct DesignProposal: Codable, Identifiable {
         floor = (try? c.decode(DesignFinish.self, forKey: .floor)) ?? DesignFinish()
         walls = (try? c.decode(DesignFinish.self, forKey: .walls)) ?? DesignFinish()
         ceiling = (try? c.decode(DesignFinish.self, forKey: .ceiling)) ?? DesignFinish()
+        roomKind = (try? c.decode(String.self, forKey: .roomKind)).flatMap { RoomKind(rawValue: $0)?.rawValue }
+        layoutVersion = try? c.decode(Int.self, forKey: .layoutVersion)
     }
 }
 
 // MARK: - Fitting the AI layout into the scanned room
 
 extension DesignProposal {
+    /// The concept ready to show: an old or fresh AI layout is fitted into the room once and gets its room type;
+    /// a concept that is already placed comes back unchanged (cheap enough to call on every render).
+    func placed(in plan: FloorPlan) -> DesignProposal {
+        guard layoutVersion == nil else { return self }
+        var copy = fitted(to: plan)
+        copy.layoutVersion = 1
+        if copy.roomKind == nil { copy.roomKind = RoomKind.detect(plan: plan, proposal: copy).rawValue }
+        return copy
+    }
+
     /// Guarantees that every item is inside the real room: fixes centimetre/millimetre answers,
     /// limits sizes and moves items that cross a wall back inside the floor outline.
     func fitted(to plan: FloorPlan) -> DesignProposal {

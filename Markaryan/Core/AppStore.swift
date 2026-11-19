@@ -1007,7 +1007,7 @@ enum WorkOrderError: LocalizedError {
         let decoder = JSONDecoder()
         // Without a working AI (no key, disabled account, no internet) the built‑in designer makes the project on the iPhone.
         func offline() throws -> DesignProposal {
-            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes)?.fitted(to: plan) else {
+            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes)?.placed(in: plan) else {
                 throw ClaudeError.api("Не удалось расставить предметы в этом помещении. Проверьте скан.")
             }
             track("design_offline")
@@ -1022,13 +1022,13 @@ enum WorkOrderError: LocalizedError {
     private func aiDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String, request: String, decoder: JSONDecoder) async throws -> DesignProposal {
         guard let claude = claudeClient else { throw ClaudeError.noKey }
         let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: request, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-        var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).fitted(to: plan)
+        var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).placed(in: plan)
         if proposal.furniture.isEmpty {
             // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
             let retry = request + "\n\nВАЖНО: в прошлом ответе массив furniture был пустым или с ошибками. Обязательно заполни furniture: у каждого предмета name, kind, x, y, width, depth, rotation — числа в метрах, внутри контура комнаты."
             let again = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: retry, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
             if let decoded = try? decoder.decode(DesignProposal.self, from: again) {
-                let second = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
+                let second = Self.stamped(decoded, purpose: purpose).placed(in: plan)
                 if !second.furniture.isEmpty { proposal = second }
             }
         }
@@ -1039,10 +1039,12 @@ enum WorkOrderError: LocalizedError {
     }
 
     /// The room type the user chose always wins over what the AI wrote (a bathroom stays a bathroom).
+    /// Layout fields from an AI answer are never trusted: the concept is always fitted into the room.
     private static func stamped(_ proposal: DesignProposal, purpose: String) -> DesignProposal {
-        guard let chosen = RoomKind.keyword(purpose), RoomKind.keyword(proposal.roomPurpose) != chosen else { return proposal }
         var copy = proposal
-        copy.roomPurpose = purpose
+        copy.layoutVersion = nil
+        copy.roomKind = nil
+        if let chosen = RoomKind.keyword(purpose), RoomKind.keyword(proposal.roomPurpose) != chosen { copy.roomPurpose = purpose }
         return copy
     }
 
