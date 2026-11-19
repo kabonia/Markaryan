@@ -403,4 +403,172 @@ check(calculations[0].kind == .tiles && calculations[0].values["area"] == "12.00
 check(calculations[2].kind == .paint && calculations[2].values["area"] == "37.80" && calculations[2].values["openings"] == "3.44", "Walls: perimeter × height, openings apart")
 check(calculations[5].values["openings"] == "0" && calculations[5].values["area"] == "12.00", "Ceiling has no openings")
 
+// MARK: Editing the plan by hand
+
+func wallNumber(_ plan: FloorPlan, containing id: UUID) -> Int? {
+    PlanWalls.numbered(plan).first { ($0.doors + $0.windows).contains { $0.segment.id == id } }?.number
+}
+let bedroomWindow = bedroom.windows[0], bedroomDoor = bedroom.doors[0]
+check(PlanWalls.numbered(bedroom).first { $0.number == 3 }.map { $0.start == PlanPoint(x: 0, y: 0) && $0.end == PlanPoint(x: 4, y: 0) } == true, "Wall 3 of the bedroom is the top wall")
+var withChest = designed
+withChest.proposals[0].furniture.append(DesignFurniture(name: "Комод", kind: "storage", x: 3.4, y: 2.0, width: 1.0, depth: 0.45, rotation: 90, height: 0.85))
+withChest.proposals[0].furniture.append(DesignFurniture(name: "Пуф", kind: "chair", x: 1.0, y: 2.0, width: 0.4, depth: 0.4, rotation: 0))
+let longer = try PlanEditor.setWallLength(withChest, wall: 3, to: 4.5)
+near(longer.area, 13.5, "Longer wall: the room grows")
+near(longer.width, 4.5, "Longer wall: the far side moved")
+check(longer.editedAt != nil, "An edited plan remembers when")
+check(PlanWalls.numbered(longer).allSatisfy { abs($0.direction.x * $0.direction.y) < 1e-9 }, "Longer wall: corners stay square")
+let movedWindow = longer.windows[0]
+near(min(movedWindow.start.x, movedWindow.end.x), 2.0, "The window keeps its distance to the nearer corner")
+near(max(movedWindow.start.x, movedWindow.end.x), 3.2, "The window keeps its width")
+check(longer.doors[0].start.distance(to: bedroomDoor.start) < 1e-9 && longer.doors[0].end.distance(to: bedroomDoor.end) < 1e-9, "The door near the corner that stays does not move")
+let chest = longer.proposals[0].furniture.first { $0.name == "Комод" }!, pouf = longer.proposals[0].furniture.first { $0.name == "Пуф" }!
+near(chest.x, 3.9, "Furniture in the far half moves with the wall")
+near(pouf.x, 1.0, "Furniture in the near half stays")
+let shorter = try PlanEditor.setWallLength(bedroom, wall: 3, to: 3.0)
+near(shorter.area, 9, "Shorter wall: the room shrinks")
+near(min(shorter.windows[0].start.x, shorter.windows[0].end.x), 0.5, "The window slides with the corner it is near")
+check(LayoutSpace(plan: shorter).walls.count == 4, "The shortened room still has four walls")
+do { _ = try PlanEditor.setWallLength(bedroom, wall: 3, to: 0.2); check(false, "A 20 cm wall is refused") } catch { check(error as? PlanEditor.EditError != nil, "A 20 cm wall is refused") }
+do { _ = try PlanEditor.setWallLength(bedroom, wall: 3, to: 0.6); check(false, "A wall too short for its door is refused") } catch { check((error as? PlanEditor.EditError).map { if case .opening = $0 { return true } else { return false } } == true, "A wall too short for its door is refused: \(error)") }
+do { _ = try PlanEditor.setWallLength(bedroom, wall: 9, to: 3); check(false, "Unknown wall") } catch { check(error as? PlanEditor.EditError == .noWall, "Unknown wall is refused") }
+let wider = try PlanEditor.setWallLength(lShaped, wall: 1, to: 6)
+near(wider.area, 18, "L-shaped room: the top wall grows the right wing")
+let narrower = try PlanEditor.setWallLength(lShaped, wall: 1, to: 3.5)
+near(narrower.area, 13, "L-shaped room: the right wing can shrink")
+do { _ = try PlanEditor.setWallLength(lShaped, wall: 1, to: 2.5); check(false, "A wall turned inside out is refused") } catch { check(error as? PlanEditor.EditError == .outline, "A wall turned inside out is refused") }
+let sameLength = try PlanEditor.setWallLength(bedroom, wall: 3, to: 4.0)
+check(sameLength.editedAt == nil, "The same length changes nothing")
+
+let lower = try PlanEditor.setCeilingHeight(bedroom, to: 2.2)
+check(lower.ceilingHeight == 2.2 && lower.walls.allSatisfy { $0.height == 2.2 }, "Ceiling height goes to the walls")
+near(lower.windows[0].height, 1.3, "A window that would reach the ceiling gets lower")
+near(lower.doors[0].height, 2.05, "A door that fits keeps its height")
+do { _ = try PlanEditor.setCeilingHeight(bedroom, to: 1.5); check(false, "Too low ceiling") } catch { check(true, "A 1.5 m ceiling is refused") }
+
+let windowSpec = PlanEditor.spec(of: bedroomWindow.id, in: bedroom)
+check(windowSpec == PlanEditor.OpeningSpec(kind: .window, wall: 3, from: 1.5, width: 1.2, height: 1.5, sill: 0.85), "Window as the editor shows it: \(String(describing: windowSpec))")
+let doorSpec = PlanEditor.spec(of: bedroomDoor.id, in: bedroom)!
+check(doorSpec.wall == 1 && doorSpec.hingeAtEnd, "Door on wall 1, hinged at the far end of the opening")
+near(doorSpec.from, 2.2, "Door position from the start of wall 1")
+near(doorSpec.width, 0.8, "Door width")
+let added = try PlanEditor.addOpening(bedroom, .window(wall: 2, from: 0.9))
+check(added.plan.windows.count == 2 && wallNumber(added.plan, containing: added.id) == 2, "A window is added to wall 2")
+check(PlanEditor.spec(of: added.id, in: added.plan) == .window(wall: 2, from: 0.9), "The added window reads back as it was asked")
+func refused(_ spec: PlanEditor.OpeningSpec, _ name: String) {
+    do { _ = try PlanEditor.addOpening(bedroom, spec); check(false, name) } catch { check(error is PlanEditor.EditError, name) }
+}
+refused(.window(wall: 3, from: 2.0), "A window over another window is refused")
+refused(PlanEditor.OpeningSpec(kind: .window, wall: 2, from: 0.5, width: 1.0, height: 2.0, sill: 0.85), "A window above the ceiling is refused")
+refused(.window(wall: 3, from: 3.5), "A window past the end of the wall is refused")
+refused(PlanEditor.OpeningSpec(kind: .door, wall: 2, from: 0.5, width: 0.2, height: 2.0, sill: 0), "A 20 cm door is refused")
+var flipped = doorSpec
+flipped.from = 0.5; flipped.hingeAtEnd = false
+let movedDoor = try PlanEditor.updateOpening(bedroom, id: bedroomDoor.id, to: flipped)
+check(movedDoor.doors.count == 1 && movedDoor.doors[0].id == bedroomDoor.id, "Updating keeps the same door")
+check(movedDoor.doorSwing(movedDoor.doors[0]).hinge == PlanPoint(x: 3.5, y: 3), "The door moved and hangs on the other side")
+check(PlanEditor.removeOpening(bedroom, id: bedroomWindow.id).windows.isEmpty, "A window is removed")
+if let contourRoom = FloorPlanBuilder.fromContour([turned(0, 0), turned(5, 0), turned(5, 3), turned(0, 3)], name: "Контур") {
+    let withDoor = try PlanEditor.addOpening(contourRoom, .door(wall: 1, from: 1))
+    check(withDoor.plan.doors.count == 1 && !LayoutSpace(plan: withDoor.plan).entrances.isEmpty, "An AR contour plan gets a door")
+} else { check(false, "Contour plan for doors") }
+
+let skewed = room("Кривая", [(0, 0), (4, 0.15), (4.1, 3), (0, 3)])
+var skewedDesign = skewed
+skewedDesign.proposals = [pair]
+skewedDesign.proposals[0].furniture = [DesignFurniture(name: "Комод", kind: "storage", x: 2, y: 0.33, width: 1, depth: 0.45, rotation: atan2(0.15, 4) * 180 / .pi, height: 0.85)]
+let straight = try PlanEditor.straightened(skewedDesign)
+check(straight.corners == 3, "Three corners of the skewed room moved, got \(straight.corners)")
+check(straight.plan.walls.allSatisfy { abs($0.start.x - $0.end.x) < 1e-9 || abs($0.start.y - $0.end.y) < 1e-9 }, "Straightened walls run along the axes")
+check(PlanMath.isSimple(straight.plan.floorPolygon) && straight.plan.floorPolygon.count == 4, "Straightened outline is a simple quadrangle")
+let squaredChest = straight.plan.proposals[0].furniture[0]
+check(abs(squaredChest.rotation) < 0.01 || abs(squaredChest.rotation - 360) < 0.01, "Furniture turns with its wall: \(squaredChest.rotation)")
+near(squaredChest.y - straight.plan.floorPolygon.map(\.y).min()!, 0.33 - 0.075, "Furniture keeps its distance from the wall", 0.03)
+let alreadySquare = try PlanEditor.straightened(bedroom)
+check(alreadySquare.corners == 0, "A square room has nothing to straighten")
+let notched = room("Почти прямая", [(0, 0), (2, 0.01), (4, 0), (4, 3), (0, 3)])
+let merged = try PlanEditor.straightened(notched)
+check(merged.plan.floorPolygon.count == 4 && merged.corners >= 1, "A corner that is almost straight disappears")
+let triangle = try PlanEditor.straightened(room("Треугольник", [(0, 0), (4, 0), (4, 3)]))
+check(triangle.corners == 0, "A slanted wall far from the axes stays")
+do { _ = try PlanEditor.straightened(noPolygon); check(false, "No outline") } catch { check(true, "A plan without a floor outline is not straightened") }
+check(PlanMath.isSimple([PlanPoint(x: 0, y: 0), PlanPoint(x: 2, y: 0), PlanPoint(x: 2, y: 2), PlanPoint(x: 0, y: 2)]), "A square is simple")
+check(!PlanMath.isSimple([PlanPoint(x: 0, y: 0), PlanPoint(x: 2, y: 2), PlanPoint(x: 2, y: 0), PlanPoint(x: 0, y: 2)]), "A bow tie is not")
+
+check(PlanEditor.parseMeters("3,42") == 3.42 && PlanEditor.parseMeters("3.42 м") == 3.42, "Metres with a comma or a point")
+check(PlanEditor.parseMeters("342") == 3.42 && PlanEditor.parseMeters("80 см") == 0.8 && PlanEditor.parseMeters("3420") == 3.42, "Centimetres and millimetres")
+check(PlanEditor.parseMeters("") == nil && PlanEditor.parseMeters("абв") == nil, "Not a number")
+
+let savedEdit = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(longer))
+check(savedEdit.editedAt != nil, "The edit time survives saving")
+
+// MARK: Moving furniture by hand
+
+check(FurnitureEditor.normalized(-90) == 270 && FurnitureEditor.normalized(450) == 90 && FurnitureEditor.normalized(360) == 0, "Angles in 0..<360")
+let dresser = DesignFurniture(name: "Комод", kind: "storage", x: 2, y: 1.5, width: 1.0, depth: 0.45, rotation: 0, height: 0.85)
+let atTop = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 0.35), walls: bedroomWalls)
+near(atTop.y, 0.305, "Near a wall the item stands flush with it")
+check(atTop.rotation == 0 && atTop.wall == 3, "Back to the top wall")
+let inCorner = FurnitureEditor.move(dresser, to: PlanPoint(x: 0.6, y: 0.35), walls: bedroomWalls)
+near(inCorner.x, 0.58, "Near the end of the wall it slides into the corner")
+near(inCorner.y, 0.305, "…and stays flush with the wall")
+let inMiddle = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 1.6), walls: bedroomWalls)
+check(inMiddle.x == 2 && inMiddle.y == 1.6 && inMiddle.wall == nil, "In the middle of the room the item goes where the finger is")
+let free = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 0.35), walls: bedroomWalls, snap: false)
+check(free.y == 0.35 && free.wall == nil, "Without snapping nothing is adjusted")
+let mirror = FurnitureEditor.move(DesignFurniture(name: "Зеркало", kind: "mirror", x: 0, y: 0, width: 0.6, depth: 0.03, rotation: 45), to: PlanPoint(x: 2, y: 1.2), walls: bedroomWalls)
+near(mirror.y, 0.095, "A mirror always hangs on the nearest wall")
+check(mirror.rotation == 0, "A mirror faces the room")
+let movedRug = FurnitureEditor.move(DesignFurniture(name: "Ковёр", kind: "decor", x: 0, y: 0, width: 2, depth: 1.4, rotation: 10), to: PlanPoint(x: 1.1, y: 0.8), walls: bedroomWalls)
+check(movedRug.x == 1.1 && movedRug.y == 0.8 && movedRug.rotation == 10, "A rug goes exactly where it is put")
+let quarter = FurnitureEditor.rotated(atTop, by: 90, walls: bedroomWalls)
+check(quarter.rotation == 90 && quarter.wall == 3, "A quarter turn at a wall keeps the item at the wall")
+near(quarter.y, 0.58, "…flush with its other side")
+let slanted = FurnitureEditor.rotated(atTop, by: 15, walls: bedroomWalls)
+check(slanted.rotation == 15 && slanted.wall == nil && slanted.y == atTop.y, "A small turn is free")
+
+let bedIndex = pair.furniture.firstIndex { $0.model == "bed" }!
+check(FurnitureEditor.item(at: PlanPoint(x: bed.x, y: bed.y), in: pair.furniture) == bedIndex, "A finger on the bed picks the bed")
+let stand = pair.furniture.firstIndex { $0.name == "Тумба" }!
+check(FurnitureEditor.item(at: PlanPoint(x: pair.furniture[stand].x, y: pair.furniture[stand].y), in: pair.furniture) == stand, "A finger on a nightstand picks it")
+let withRug = [DesignFurniture(name: "Ковёр", kind: "decor", x: 2, y: 1.5, width: 2, depth: 1.4, rotation: 0), DesignFurniture(name: "Стул", kind: "chair", x: 2, y: 1.5, width: 0.45, depth: 0.5, rotation: 0)]
+check(FurnitureEditor.item(at: PlanPoint(x: 2, y: 1.5), in: withRug) == 1, "A chair on a rug is picked before the rug")
+check(FurnitureEditor.item(at: PlanPoint(x: 3.9, y: 2.9), in: withRug) == nil, "An empty spot picks nothing")
+
+let wardrobe = FurnitureEditor.placeNew(FurnitureCatalog.all.first { $0.name == "Шкаф" }!.item, plan: bedroom, furniture: pair.furniture)
+let wardrobeSpace = LayoutSpace(plan: bedroom)
+check(wardrobe.wall != nil && wardrobeSpace.isInside(wardrobe.footprint) && !wardrobeSpace.blocksDoor(wardrobe), "A new wardrobe stands at a free wall")
+check(!pair.furniture.filter(\.blocksFloor).contains { $0.footprint.grown(by: -0.01).overlaps(wardrobe.footprint.grown(by: -0.01)) }, "…without standing on other furniture")
+let newRug = FurnitureEditor.placeNew(FurnitureCatalog.all.first { $0.name == "Ковёр" }!.item, plan: bedroom, furniture: [])
+check(abs(newRug.x - 2) < 0.1 && abs(newRug.y - 1.5) < 0.1, "A rug goes to the middle of the room: \(newRug.x), \(newRug.y)")
+let huge = FurnitureEditor.placeNew(DesignFurniture(name: "Диван 5 м", kind: "sofa", x: 0, y: 0, width: 5, depth: 1, rotation: 0), plan: bedroom, furniture: [])
+check(huge.x == 2 && huge.y == 1.5, "An item that fits nowhere waits in the middle")
+
+let bathroomCatalog = FurnitureCatalog.entries(for: .bathroom)
+check(bathroomCatalog.first?.name == "Унитаз" && !bathroomCatalog.contains { $0.kind == "sofa" }, "Bathroom catalogue: its own items first, no sofa")
+check(!FurnitureCatalog.entries(for: .kitchen).contains { $0.kind == "sink" }, "Kitchen catalogue follows the room rules")
+check(FurnitureCatalog.all.first { $0.name == "Торшер" }!.item.model == "floorlamp" && FurnitureCatalog.all.first { $0.name == "Подвесной светильник" }!.item.model == "pendant"
+      && FurnitureCatalog.all.first { $0.name == "Водонагреватель" }!.item.model == "boiler", "Catalogue items are drawn as what they are")
+check(Set(FurnitureCatalog.all.map(\.id)).count == FurnitureCatalog.all.count, "Catalogue names are unique")
+
+let overlapping = [DesignFurniture(name: "Шкаф", kind: "storage", x: 2, y: 0.4, width: 1.8, depth: 0.6, rotation: 0), DesignFurniture(name: "Комод", kind: "storage", x: 2.3, y: 0.5, width: 1, depth: 0.45, rotation: 0)]
+check(LayoutCheck.issues(plan: bedroom, furniture: overlapping).contains { $0.kind == .overlap && $0.items == [0, 1] }, "A problem names the items it is about")
+
+let viewport = PlanViewport(plan: bedroom, width: 400, height: 300, margin: 0)
+let corner = viewport.screen(PlanPoint(x: 4, y: 3))
+check(corner.x == 400 && corner.y == 300 && viewport.plan(x: 200, y: 150) == PlanPoint(x: 2, y: 1.5), "Plan and screen map onto each other")
+let framed = PlanViewport(plan: lShaped, width: 600, height: 380, margin: 34)
+let there = framed.screen(PlanPoint(x: 1.3, y: 2.7)), back = framed.plan(x: there.x, y: there.y)
+near(back.x, 1.3, "Screen to plan and back: x", 1e-9)
+near(back.y, 2.7, "Screen to plan and back: y", 1e-9)
+
+var stale = designed
+stale.proposals[0].presentation = SavedPresentation(createdAt: Date(timeIntervalSinceReferenceDate: 800_000_000), folder: "x", pdf: "a.pdf", pictures: [], engine: nil)
+stale.proposals[0].editedAt = Date(timeIntervalSinceReferenceDate: 800_000_100)
+let staleFlow = PlanFlow(plan: stale, proposal: stale.proposals[0], hasPresentation: true, canRender: true)
+check(staleFlow.presentationOutdated && !staleFlow.done.contains(.result), "A presentation made before an edit is out of date")
+check(staleFlow.main(on: .result) == PlanMainButton(action: .buildPresentation, title: "Обновить презентацию", icon: "arrow.triangle.2.circlepath"), "…and the result offers to update it")
+stale.proposals[0].editedAt = Date(timeIntervalSinceReferenceDate: 700_000_000)
+check(!PlanFlow(plan: stale, proposal: stale.proposals[0], hasPresentation: true, canRender: true).presentationOutdated, "An older edit does not matter")
+
 print("PASS: \(passed) plan and design checks")

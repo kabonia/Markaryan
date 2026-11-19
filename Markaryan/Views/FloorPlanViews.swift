@@ -16,15 +16,16 @@ struct FloorPlanCanvas: View {
     private let paper = Color(red: 0.97, green: 0.96, blue: 0.93)
     private let ink = Color(red: 0.13, green: 0.15, blue: 0.14)
 
+    /// Space around the plan inside the canvas (the editors use the same to hit what is drawn).
+    static func margin(compact: Bool) -> Double { compact ? 10 : 34 }
+
     var body: some View {
         let proposal = self.proposal?.placed(in: plan)
         return Canvas { context, size in
             let b = plan.bounds
-            let margin: CGFloat = compact ? 10 : 34
-            let scale = min((size.width - margin * 2) / CGFloat(max(0.5, b.maxX - b.minX)), (size.height - margin * 2) / CGFloat(max(0.5, b.maxY - b.minY)))
-            let offsetX = (size.width - CGFloat(b.maxX - b.minX) * scale) / 2
-            let offsetY = (size.height - CGFloat(b.maxY - b.minY) * scale) / 2
-            func p(_ point: PlanPoint) -> CGPoint { CGPoint(x: offsetX + CGFloat(point.x - b.minX) * scale, y: offsetY + CGFloat(point.y - b.minY) * scale) }
+            let viewport = PlanViewport(plan: plan, width: Double(size.width), height: Double(size.height), margin: Self.margin(compact: compact))
+            let scale = CGFloat(viewport.scale)
+            func p(_ point: PlanPoint) -> CGPoint { let s = viewport.screen(point); return CGPoint(x: s.x, y: s.y) }
             func pt(_ x: Double, _ y: Double) -> CGPoint { p(PlanPoint(x: x, y: y)) }
 
             context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(paper))

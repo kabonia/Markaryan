@@ -226,6 +226,8 @@ struct DesignProposal: Codable, Identifiable {
     var layoutNotes: [String] = []
     /// The client presentation made for this concept (files on the iPhone), so it opens again without new renders.
     var presentation: SavedPresentation? = nil
+    /// Last time the furniture was moved by hand; a presentation made before it is out of date.
+    var editedAt: Date? = nil
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -238,7 +240,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation, editedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -267,6 +269,7 @@ struct DesignProposal: Codable, Identifiable {
         layoutVersion = try? c.decode(Int.self, forKey: .layoutVersion)
         layoutNotes = (try? c.decode([String].self, forKey: .layoutNotes)) ?? []
         presentation = try? c.decode(SavedPresentation.self, forKey: .presentation)
+        editedAt = try? c.decode(Date.self, forKey: .editedAt)
     }
 }
 

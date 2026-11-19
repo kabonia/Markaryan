@@ -5,6 +5,8 @@ struct LayoutIssue: Hashable {
     enum Kind: String { case outside, overlap, door, front, passage, window }
     let kind: Kind
     let message: String
+    /// Indices of the items it is about (in the list that was checked), so an editor can mark them.
+    var items: [Int] = []
 }
 
 /// Free space a piece of equipment needs in front of it to be used (metres).
@@ -265,34 +267,37 @@ enum LayoutCheck {
 
     static func issues(space: LayoutSpace, furniture: [DesignFurniture]) -> [LayoutIssue] {
         var issues: [LayoutIssue] = []
-        let floor = furniture.filter(\.blocksFloor)
-        for item in floor where !space.isInside(item.footprint) {
-            issues.append(LayoutIssue(kind: .outside, message: "«\(item.name)» выходит за стену"))
+        let floor = furniture.indices.filter { furniture[$0].blocksFloor }
+        for i in floor where !space.isInside(furniture[i].footprint) {
+            issues.append(LayoutIssue(kind: .outside, message: "«\(furniture[i].name)» выходит за стену", items: [i]))
         }
-        for i in floor.indices {
-            for j in floor.indices where j > i && floor[i].footprint.grown(by: -0.01).overlaps(floor[j].footprint.grown(by: -0.01)) {
-                issues.append(LayoutIssue(kind: .overlap, message: "«\(floor[i].name)» и «\(floor[j].name)» стоят друг на друге"))
+        for (n, i) in floor.enumerated() {
+            for j in floor[(n + 1)...] where furniture[i].footprint.grown(by: -0.01).overlaps(furniture[j].footprint.grown(by: -0.01)) {
+                issues.append(LayoutIssue(kind: .overlap, message: "«\(furniture[i].name)» и «\(furniture[j].name)» стоят друг на друге", items: [i, j]))
             }
         }
-        for item in furniture where space.blocksDoor(item) {
-            issues.append(LayoutIssue(kind: .door, message: "«\(item.name)» мешает открыть дверь"))
+        for i in furniture.indices where space.blocksDoor(furniture[i]) {
+            issues.append(LayoutIssue(kind: .door, message: "«\(furniture[i].name)» мешает открыть дверь", items: [i]))
         }
-        for item in floor {
+        for i in floor {
+            let item = furniture[i]
             guard let zone = space.frontZone(of: item) else { continue }
             let core = zone.grown(by: -0.01)
-            let blocked = !space.isInside(zone) || floor.contains { other in other != item && !LayoutRules.isMovable(other) && other.footprint.overlaps(core) }
-            if blocked { issues.append(LayoutIssue(kind: .front, message: "Перед «\(item.name)» меньше \(format(LayoutRules.frontClearance(item))) м свободного места")) }
+            let blockers = floor.filter { j in j != i && furniture[j] != item && !LayoutRules.isMovable(furniture[j]) && furniture[j].footprint.overlaps(core) }
+            if !space.isInside(zone) || !blockers.isEmpty {
+                issues.append(LayoutIssue(kind: .front, message: "Перед «\(item.name)» меньше \(format(LayoutRules.frontClearance(item))) м свободного места", items: [i] + blockers))
+            }
         }
         let reach = space.reach(furniture)
         if reach.entranceBlocked {
             issues.append(LayoutIssue(kind: .passage, message: "От входа нет прохода шириной \(format(LayoutRules.passage)) м"))
         } else {
             for index in reach.unreachable {
-                issues.append(LayoutIssue(kind: .passage, message: "К «\(furniture[index].name)» нет прохода шириной \(format(LayoutRules.passage)) м"))
+                issues.append(LayoutIssue(kind: .passage, message: "К «\(furniture[index].name)» нет прохода шириной \(format(LayoutRules.passage)) м", items: [index]))
             }
         }
-        for item in floor where space.blocksWindow(item) {
-            issues.append(LayoutIssue(kind: .window, message: "«\(item.name)» закрывает окно"))
+        for i in floor where space.blocksWindow(furniture[i]) {
+            issues.append(LayoutIssue(kind: .window, message: "«\(furniture[i].name)» закрывает окно", items: [i]))
         }
         return issues
     }
