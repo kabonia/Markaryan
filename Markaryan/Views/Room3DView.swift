@@ -61,6 +61,25 @@ enum Room3DBuilder {
         }
     }
 
+    /// Procedural porcelain tiles for the floor: 4 × 4 tiles with grout lines and a slight shade per tile.
+    static func tileTexture(base: UIColor) -> UIImage {
+        let size = CGSize(width: 512, height: 512)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
+            base.getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
+            UIColor(hue: hue, saturation: sat * 0.6, brightness: max(0, min(1, bri * 0.82)), alpha: 1).setFill() // grout
+            context.fill(CGRect(origin: .zero, size: size))
+            let tile: CGFloat = 128, joint: CGFloat = 3
+            for row in 0..<4 {
+                for column in 0..<4 {
+                    let shade = CGFloat((row * 3 + column * 5) % 4) * 0.012
+                    UIColor(hue: hue, saturation: sat, brightness: max(0, min(1, bri - 0.02 + shade)), alpha: 1).setFill()
+                    context.fill(CGRect(x: CGFloat(column) * tile + joint / 2, y: CGFloat(row) * tile + joint / 2, width: tile - joint, height: tile - joint))
+                }
+            }
+        }
+    }
+
     private static func box(_ w: CGFloat, _ h: CGFloat, _ d: CGFloat, _ m: SCNMaterial, at position: SCNVector3, chamfer: CGFloat = 0.01) -> SCNNode {
         let geometry = SCNBox(width: max(0.01, w), height: max(0.01, h), length: max(0.01, d), chamferRadius: min(chamfer, min(w, h, d) / 2))
         geometry.materials = [m]
@@ -328,10 +347,13 @@ enum Room3DBuilder {
         path.flatness = 0.01
         let floorShape = SCNShape(path: path, extrusionDepth: 0.04)
         let floorMaterial = material(.white, roughness: 0.55)
-        floorMaterial.diffuse.contents = woodTexture(base: floorBase)
+        // The floor of the concept: porcelain tiles (bathroom, kitchen, stone) or wooden planks — the photo AI keeps what it sees.
+        let tiledFloor = DrawingsPDF.isTiledFloor(RoomKind.detect(plan: plan, proposal: proposal), proposal?.floor)
+        floorMaterial.diffuse.contents = tiledFloor ? tileTexture(base: floorBase) : woodTexture(base: floorBase)
         floorMaterial.diffuse.wrapS = .repeat; floorMaterial.diffuse.wrapT = .repeat
-        // SCNShape maps the texture once over the whole floor: repeat it so one tile ≈ 1.6 m (planks ≈ 20 cm wide).
-        let tiles = Float(max(1, max(b.maxX - b.minX, b.maxY - b.minY) / 1.6))
+        // SCNShape maps the texture once over the whole floor: repeat it so one texture ≈ 1.6 m of planks (≈ 20 cm wide)
+        // or 2.4 m of tiles (4 × 600 mm).
+        let tiles = Float(max(1, max(b.maxX - b.minX, b.maxY - b.minY) / (tiledFloor ? 2.4 : 1.6)))
         floorMaterial.diffuse.contentsTransform = SCNMatrix4MakeScale(tiles, tiles, 1)
         floorShape.materials = [floorMaterial]
         let floor = SCNNode(geometry: floorShape)
@@ -375,9 +397,12 @@ enum Room3DBuilder {
         glass.emission.intensity = 0.8
         let frame = material(UIColor(white: 0.98, alpha: 1), roughness: 0.5)
         for window in plan.windows {
-            let top = min(window.height > 0.3 ? 0.85 + window.height : 2.2, height - 0.1)
-            if let node = segmentNode(window, height: top - 0.85, baseY: 0.85, thickness: 0.15, materialValue: glass) { scene.rootNode.addChildNode(node) }
-            if let node = segmentNode(window, height: 0.05, baseY: 0.82, thickness: 0.3, materialValue: frame) { scene.rootNode.addChildNode(node) }
+            // Sill height as scanned (French windows start low), 0.85 m when the scan did not say.
+            let sill = CGFloat(max(0, window.elevation ?? 0.85))
+            let top = min(window.height > 0.3 ? sill + CGFloat(window.height) : 2.2, height - 0.1)
+            if top - sill > 0.05, let node = segmentNode(window, height: top - sill, baseY: sill, thickness: 0.15, materialValue: glass) { scene.rootNode.addChildNode(node) }
+            // Window board under the glass; a French window down to the floor has none.
+            if sill > 0.1, sill < height - 0.05, let node = segmentNode(window, height: 0.05, baseY: sill - 0.03, thickness: 0.3, materialValue: frame) { scene.rootNode.addChildNode(node) }
         }
         let doorMaterial = material(UIColor(red: 0.62, green: 0.48, blue: 0.34, alpha: 1), roughness: 0.55)
         for door in plan.doors where door.kind == .door {

@@ -22,6 +22,8 @@ struct PlanSegment: Codable, Identifiable {
     var start: PlanPoint
     var end: PlanPoint
     var height: Double
+    /// Metres from the floor to the bottom of a window or door, as the scan measured it; nil — unknown (window sill 0.85).
+    var elevation: Double? = nil
     var length: Double { start.distance(to: end) }
 }
 

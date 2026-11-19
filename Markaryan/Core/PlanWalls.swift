@@ -46,7 +46,13 @@ enum PlanWalls {
             if !wall.doors.isEmpty {
                 item["doors"] = wall.doors.map { ["type": $0.segment.kind == .door ? "дверь" : "проём без двери", "from": r($0.from), "to": r($0.to)] as [String: Any] }
             }
-            if !wall.windows.isEmpty { item["windows"] = wall.windows.map { ["from": r($0.from), "to": r($0.to)] as [String: Any] } }
+            if !wall.windows.isEmpty {
+                item["windows"] = wall.windows.map { window -> [String: Any] in
+                    var value: [String: Any] = ["from": r(window.from), "to": r(window.to), "height": r(window.segment.height)]
+                    if let sill = window.segment.elevation { value["sill"] = r(sill) }
+                    return value
+                }
+            }
             return item
         }
         let objects: [[String: Any]] = plan.objects.map { object in

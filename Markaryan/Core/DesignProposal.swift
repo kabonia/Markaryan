@@ -158,6 +158,20 @@ enum FixtureModel {
     }
 }
 
+/// A finished client presentation: the PDF and its pictures in Application Support/MarkaryanPresentations/<folder>.
+struct SavedPresentation: Codable, Hashable {
+    struct Picture: Codable, Hashable {
+        var title: String
+        var file: String
+    }
+    var createdAt = Date()
+    var folder: String
+    var pdf: String
+    var pictures: [Picture]
+    /// Picture engine that made the photoreal views (nil — only the exact 3D model).
+    var engine: String?
+}
+
 struct DesignMaterial: Codable, Hashable {
     var name: String
     var `where`: String
@@ -210,6 +224,8 @@ struct DesignProposal: Codable, Identifiable {
     var layoutVersion: Int? = nil
     /// What the layout engine could not do as asked (item made smaller, did not fit…), for the client.
     var layoutNotes: [String] = []
+    /// The client presentation made for this concept (files on the iPhone), so it opens again without new renders.
+    var presentation: SavedPresentation? = nil
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -222,7 +238,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation
     }
 
     init(from decoder: Decoder) throws {
@@ -250,6 +266,7 @@ struct DesignProposal: Codable, Identifiable {
         roomKind = (try? c.decode(String.self, forKey: .roomKind)).flatMap { RoomKind(rawValue: $0)?.rawValue }
         layoutVersion = try? c.decode(Int.self, forKey: .layoutVersion)
         layoutNotes = (try? c.decode([String].self, forKey: .layoutNotes)) ?? []
+        presentation = try? c.decode(SavedPresentation.self, forKey: .presentation)
     }
 }
 

@@ -258,11 +258,28 @@ struct FloorPlanDetailView: View {
     @State private var isRendering = false
     @State private var progressText: String?
     @State private var presentation: PresentationResult?
+    @State private var isComparing = false
+    @State private var comparison: EngineComparison?
 
     struct PresentationResult {
         let proposalID: UUID
         let pdf: URL
         let images: [(title: String, image: UIImage)]
+    }
+
+    /// Owner only: the same exact render through every picture engine.
+    struct EngineComparison: Identifiable {
+        struct Result: Identifiable {
+            let id: String
+            let title: String
+            let image: UIImage?
+            let score: Double?
+            let seconds: Double
+            let error: String?
+        }
+        let id = UUID()
+        let reference: UIImage
+        let results: [Result]
     }
     @State private var openedPhoto: PhotoSheetItem?
 
@@ -304,6 +321,7 @@ struct FloorPlanDetailView: View {
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
         .sheet(item: $openedPhoto) { item in NavigationStack { RenderResultView(image: item.image, title: proposal?.title ?? plan?.name ?? "Интерьер") } }
+        .sheet(item: $comparison) { item in NavigationStack { EngineComparisonView(comparison: item) } }
         .quickLookPreview($modelURL)
         .alert("Название плана", isPresented: $showRename) {
             TextField("Например, гостиная", text: $newName)
@@ -313,7 +331,11 @@ struct FloorPlanDetailView: View {
         .confirmationDialog("Удалить план и все концепции?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Удалить", role: .destructive) { if let plan { store.deletePlan(plan) }; dismiss() }
         }
-        .onAppear { if selectedProposal == nil { selectedProposal = plan?.proposals.last?.id } }
+        .onAppear {
+            if selectedProposal == nil { selectedProposal = plan?.proposals.last?.id }
+            loadSavedPresentation()
+        }
+        .onChange(of: selectedProposal) { _, _ in loadSavedPresentation() }
     }
 
     private func content(_ plan: FloorPlan) -> some View {
@@ -485,7 +507,7 @@ struct FloorPlanDetailView: View {
                     Button { shareFile = SharedFile(url: presentation.pdf) } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
                 }
             }
-            if store.photoEngineAvailable || store.usesAIServer {
+            if store.photorealAvailable || store.usesAIServer {
                 Button { Task { await buildPresentation(proposal, plan: plan) } } label: {
                     HStack(spacing: 10) {
                         if isRendering { ProgressView().tint(.black) } else { Image(systemName: "rectangle.stack.badge.play") }
@@ -497,7 +519,14 @@ struct FloorPlanDetailView: View {
                 .buttonStyle(PremiumPressStyle())
                 .disabled(isRendering)
                 if !isRendering && presentation?.proposalID != proposal.id {
-                    Text("Обмерный план с размерами, план расстановки, точная 3D‑модель сверху и в объёме, виды комнаты и фотореализм (только если совпадает с моделью) — в одной PDF‑презентации. Около 1–2 минут.").font(.caption).foregroundStyle(Theme.muted)
+                    Text("Обмерный план с размерами, план расстановки, точная 3D‑модель сверху и в объёме, виды комнаты и фотореализм (только если совпадает с моделью) — в одной PDF‑презентации. Около 1–2 минут. Презентация сохраняется на iPhone.").font(.caption).foregroundStyle(Theme.muted)
+                }
+                if store.ownerUnlocked && store.imageEngines.count > 1 {
+                    Button { Task { await compareEngines(proposal, plan: plan) } } label: {
+                        SecondaryActionLabel(title: isComparing ? "Сравниваем движки… 1–3 мин" : "Сравнить движки рендера (владелец)", icon: "square.grid.2x2")
+                    }
+                    .buttonStyle(PremiumPressStyle())
+                    .disabled(isComparing || isRendering)
                 }
             }
             NavigationLink { AIAssistantView(context: assistantContext(proposal, plan: plan)) } label: {
@@ -610,7 +639,7 @@ struct FloorPlanDetailView: View {
 
         var interiors: [(title: String, image: UIImage)] = []
         for (index, item) in exact.enumerated() {
-            if let photo = photos[index] { interiors.append((title: "\(item.title) · фотореализм (\(photo.engine))", image: photo.image)) }
+            if let photo = photos[index] { interiors.append((title: "\(item.title) · фотореализм (\(photo.title))", image: photo.image)) }
             interiors.append((title: "\(item.title) · точная 3D‑модель", image: item.image))
         }
         let rejected = exact.indices.filter { photos[$0] == nil }.count
@@ -626,47 +655,89 @@ struct FloorPlanDetailView: View {
             if let top { gallery.append((title: "3D‑план сверху · точная модель", image: top)) }
             if let iso { gallery.append((title: "Объёмный вид · точная модель", image: iso)) }
             gallery += interiors
-            for item in gallery { _ = try? store.addProjectPhoto(item.image, caption: "\(proposal.title): \(item.title)") }
-            withAnimation(.snappy) { presentation = PresentationResult(proposalID: original.id, pdf: url, images: gallery) }
+            // Kept with the concept: next time the plan opens with this presentation, without new renders.
+            var pdf = url
+            if let saved = try? store.savePresentation(pdf: url, pictures: gallery, engine: photos.compactMap { $0?.title }.first, proposalID: original.id, planID: plan.id),
+               let file = store.presentationFile(saved, saved.pdf) {
+                pdf = file
+            }
+            withAnimation(.snappy) { presentation = PresentationResult(proposalID: original.id, pdf: pdf, images: gallery) }
             store.track("design_presentation")
             if proposal.furniture.isEmpty {
                 error = "В этой концепции ИИ не прислал расстановку — в презентации только обмерный план и пустая комната. Нажмите «Ещё вариант дизайна»."
-            } else if rejected > 0 && (store.fluxAvailable || store.gptImageAvailable) {
+            } else if rejected > 0 && store.photorealAvailable {
                 error = "ИИ‑фото не прошли проверку геометрии: \(rejected). В презентации вместо них точная 3D‑модель — стены и расстановка гарантированно как в скане."
             }
             Haptics.success()
-            modelURL = url
+            modelURL = pdf
         } catch { self.error = "Не удалось собрать PDF: \(error.localizedDescription)" }
     }
 
-    /// Photoreal version from FLUX Kontext and GPT Image 2 in parallel; each is checked against the exact render
-    /// (geometry + exposure) and the one closest to the model wins. Nil if neither passes.
-    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> (image: UIImage, engine: String)? {
-        guard let reference else { return nil }
-        async let flux = candidate(engine: "FLUX", reference: reference, prompt: prompt)
-        async let gpt = candidate(engine: "GPT", reference: reference, prompt: prompt)
-        let results = await [flux, gpt].compactMap { $0 }
-        guard let best = results.max(by: { $0.score < $1.score }) else {
-            store.track("geometry_rejected")
-            return nil
-        }
-        store.track(best.engine == "GPT" ? "photo_winner_gpt" : "photo_winner_flux")
-        return (best.image, best.engine)
-    }
-
-    /// Up to 2 attempts with one engine; returns the best image that passed the checks.
-    private func candidate(engine: String, reference: UIImage, prompt: String) async -> (image: UIImage, score: Double, engine: String)? {
-        let available = engine == "GPT" ? store.gptImageAvailable : store.fluxAvailable
-        guard available else { return nil }
+    /// Photoreal version of one exact render: the server's engine (the next one if it fails), checked against the render
+    /// (geometry and exposure). One more try if the check fails; nil — the exact 3D model goes into the presentation instead.
+    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> (image: UIImage, title: String)? {
+        guard let reference, store.photorealAvailable else { return nil }
         for _ in 0..<2 {
-            let picture: UIImage?
-            if engine == "GPT" { picture = try? await store.gptRender(reference, prompt: prompt) }
-            else { picture = try? await store.fluxRender(reference, prompt: prompt, model: .max) }
-            guard let picture else { continue }
-            let score = GeometryCheck.score(reference: reference, candidate: picture)
-            if score >= GeometryCheck.threshold, RenderQuality.isUsable(picture) { return (picture, score, engine) }
+            guard let rendered = try? await store.photorealRender(reference, prompt: prompt) else { continue }
+            let score = GeometryCheck.score(reference: reference, candidate: rendered.image)
+            if score >= GeometryCheck.threshold, RenderQuality.isUsable(rendered.image) {
+                store.track("photo_accepted")
+                return (rendered.image, rendered.title)
+            }
+            store.track("geometry_rejected")
         }
         return nil
+    }
+
+    /// The presentation saved with the selected concept (PDF and pictures on the iPhone).
+    private func loadSavedPresentation() {
+        guard let proposal else { presentation = nil; return }
+        guard presentation?.proposalID != proposal.id else { return }
+        guard let saved = proposal.presentation, let pdf = store.presentationFile(saved, saved.pdf) else { presentation = nil; return }
+        let images = saved.pictures.compactMap { picture -> (title: String, image: UIImage)? in
+            guard let url = store.presentationFile(saved, picture.file), let image = UIImage(contentsOfFile: url.path) else { return nil }
+            return (title: picture.title, image: image)
+        }
+        presentation = PresentationResult(proposalID: proposal.id, pdf: pdf, images: images)
+    }
+
+    /// Owner only: the same exact render through every picture engine, with the geometry score and the time —
+    /// to choose the engine on real scans.
+    private func compareEngines(_ original: DesignProposal, plan: FloorPlan) async {
+        isComparing = true
+        error = nil
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { isComparing = false; UIApplication.shared.isIdleTimerDisabled = false }
+        await store.refreshAICapabilities()
+        let proposal = original.placed(in: plan)
+        guard let shot = Room3DBuilder.interiorShots(plan: plan, proposal: proposal).first,
+              let reference = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .interior, shot: shot, size: CGSize(width: 2048, height: 1536)) else {
+            error = "Не удалось построить кадр 3D‑модели для сравнения."
+            return
+        }
+        let prompt = Room3DBuilder.photoPrompt(proposal: proposal, itemsEnglish: OfflineDesigner.englishNames(proposal.furniture), plan: plan)
+        let engines = store.imageEngines
+        let results = await withTaskGroup(of: EngineComparison.Result.self) { group -> [EngineComparison.Result] in
+            for engine in engines {
+                group.addTask { await renderForComparison(engine, reference: reference, prompt: prompt) }
+            }
+            var collected: [EngineComparison.Result] = []
+            for await result in group { collected.append(result) }
+            return collected
+        }
+        store.track("engine_comparison")
+        comparison = EngineComparison(reference: reference, results: engines.compactMap { engine in results.first { $0.id == engine.id } })
+    }
+
+    private func renderForComparison(_ engine: ImageEngine, reference: UIImage, prompt: String) async -> EngineComparison.Result {
+        let started = Date()
+        do {
+            let rendered = try await store.photorealRender(reference, prompt: prompt, engine: engine.id)
+            let score = GeometryCheck.score(reference: reference, candidate: rendered.image)
+            return EngineComparison.Result(id: engine.id, title: engine.title, image: rendered.image, score: score, seconds: Date().timeIntervalSince(started), error: nil)
+        } catch {
+            return EngineComparison.Result(id: engine.id, title: engine.title, image: nil, score: nil, seconds: Date().timeIntervalSince(started), error: error.localizedDescription)
+        }
     }
 
     private func drawingsURL(_ plan: FloorPlan) -> URL? {
@@ -709,6 +780,51 @@ struct FloorPlanDetailView: View {
             if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
         }
         return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
+    }
+}
+
+/// Owner only: one exact render of the room through every picture engine — to choose the engine on real scans.
+struct EngineComparisonView: View {
+    @Environment(\.dismiss) private var dismiss
+    let comparison: FloorPlanDetailView.EngineComparison
+    @State private var opened: FloorPlanDetailView.PhotoSheetItem?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Один и тот же кадр точной 3D‑модели через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от \(Int((GeometryCheck.threshold * 100).rounded())) %.")
+                    .font(.footnote).foregroundStyle(Theme.muted)
+                Text("ТОЧНАЯ 3D‑МОДЕЛЬ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Image(uiImage: comparison.reference).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                ForEach(comparison.results) { result in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(result.title).font(.headline)
+                            Spacer()
+                            Text(String(format: "%.0f с", result.seconds)).font(.caption).foregroundStyle(Theme.muted).monospacedDigit()
+                        }
+                        if let image = result.image {
+                            Image(uiImage: image).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .onTapGesture { opened = FloorPlanDetailView.PhotoSheetItem(image: image) }
+                        }
+                        if let score = result.score {
+                            Label("Совпадение с моделью: \(Int((score * 100).rounded())) %", systemImage: score >= GeometryCheck.threshold ? "checkmark.seal.fill" : "xmark.seal")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(score >= GeometryCheck.threshold ? Theme.success : Theme.danger)
+                        }
+                        if let error = result.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+                    }
+                    .padding(14)
+                    .panelCard(16)
+                }
+            }
+            .padding(20)
+        }
+        .background(Theme.background)
+        .navigationTitle("Сравнение движков")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Сравнение движков") } }
     }
 }
 

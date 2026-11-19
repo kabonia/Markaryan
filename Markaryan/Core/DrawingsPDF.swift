@@ -1051,8 +1051,9 @@ enum DrawingsPDF {
                 guard distance(opening.start) < 0.25, distance(opening.end) < 0.25 else { continue }
                 let s0 = max(0, min(along(opening.start), along(opening.end))), s1v = min(wall.length, max(along(opening.start), along(opening.end)))
                 guard s1v - s0 > 0.1 else { continue }
-                let bottom: Double = opening.kind == .window ? 0.85 : 0
-                let top: Double = opening.kind == .window ? min(height - 0.2, 0.85 + max(0.6, opening.height)) : min(height - 0.1, 2.1)
+                // Window sill as scanned (0.85 m when unknown), kept low enough for the window to show.
+                let bottom: Double = opening.kind == .window ? min(max(0, opening.elevation ?? 0.85), height - 0.5) : 0
+                let top: Double = opening.kind == .window ? min(height - 0.2, bottom + max(0.6, opening.height)) : min(height - 0.1, opening.height > 1.5 ? opening.height : 2.1)
                 let o = CGRect(x: rect.minX + CGFloat(s0) * ppm, y: rect.maxY - CGFloat(top) * ppm, width: CGFloat(s1v - s0) * ppm, height: CGFloat(top - bottom) * ppm)
                 cg.setFillColor(UIColor.white.cgColor); cg.fill(o)
                 cg.setLineWidth(s2); cg.stroke(o)

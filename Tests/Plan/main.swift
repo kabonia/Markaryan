@@ -347,4 +347,30 @@ let lenient = try JSONDecoder().decode(DesignBrief.self, from: Data(#"{"items":[
 check(lenient.items.count == 1 && lenient.items[0].placement == .wall && lenient.items[0].count == 2 && lenient.items[0].relation == .none, "Brief decoding is lenient")
 near(lenient.items[0].width, 1.2, "Missing size becomes a typical size")
 
+// MARK: Scanned window sills and saved presentations
+
+check(legacyPlan.segments.allSatisfy { $0.elevation == nil }, "Old segments load without a sill height")
+var frenchWindow = segment(.window, 1.5, 0, 2.7, 0, height: 2.2)
+frenchWindow.elevation = 0.1
+let sunroom = rectangle("Гостиная", 4, 3, doors: [segment(.door, 1, 3, 1.8, 3, height: 2.05)], windows: [frenchWindow])
+let reloadedSunroom = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(sunroom))
+check(reloadedSunroom.windows.first?.elevation == 0.1, "Scanned sill height survives saving")
+func aiWindows(_ plan: FloorPlan) -> [[String: Any]] {
+    guard let json = try? JSONSerialization.jsonObject(with: Data(PlanWalls.aiDescription(plan).utf8)) as? [String: Any],
+          let walls = json["walls"] as? [[String: Any]] else { return [] }
+    return walls.flatMap { ($0["windows"] as? [[String: Any]]) ?? [] }
+}
+let sunroomWindows = aiWindows(sunroom), bedroomWindows = aiWindows(bedroom)
+check(sunroomWindows.count == 1 && sunroomWindows[0]["sill"] as? Double == 0.1 && sunroomWindows[0]["height"] as? Double == 2.2, "AI description: scanned sill and window height")
+check(bedroomWindows.count == 1 && bedroomWindows[0]["sill"] == nil, "AI description: no sill when the scan did not measure it")
+
+check(migrated.presentation == nil, "Old concepts have no saved presentation")
+var presented = migrated
+presented.presentation = SavedPresentation(createdAt: Date(timeIntervalSinceReferenceDate: 800_000_000), folder: presented.id.uuidString, pdf: "presentation.pdf",
+                                           pictures: [.init(title: "Вид 1", file: "picture-1.jpg")], engine: "openrouter:google/gemini-3-pro-image")
+let reloadedPresented = try JSONDecoder().decode(DesignProposal.self, from: JSONEncoder().encode(presented))
+check(reloadedPresented.presentation == presented.presentation, "Saved presentation survives saving")
+let forged = try aiDesign(#"{"title":"x","presentation":{"createdAt":0,"folder":"../../Documents","pdf":"a.pdf","pictures":[]},"items":[]}"#, bedroom, "Спальня")
+check(forged.presentation == nil, "An AI answer cannot point at files on the iPhone")
+
 print("PASS: \(passed) plan and design checks")

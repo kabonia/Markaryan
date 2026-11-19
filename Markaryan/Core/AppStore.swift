@@ -887,6 +887,9 @@ enum WorkOrderError: LocalizedError {
     }
     func deletePlan(_ plan: FloorPlan) {
         if let url = planModelURL(plan) { try? FileManager.default.removeItem(at: url) }
+        if let folder = try? Self.presentationsFolder() {
+            for proposal in plan.proposals { try? FileManager.default.removeItem(at: folder.appendingPathComponent(proposal.id.uuidString, isDirectory: true)) }
+        }
         floorPlans.removeAll { $0.id == plan.id }
     }
     static func planModelFolder() throws -> URL {
@@ -897,6 +900,44 @@ enum WorkOrderError: LocalizedError {
     func planModelURL(_ plan: FloorPlan) -> URL? {
         guard let name = plan.modelFilename, let folder = try? Self.planModelFolder() else { return nil }
         let url = folder.appendingPathComponent(name)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    // MARK: Saved presentations (the PDF and pictures of a concept, kept on the iPhone)
+
+    static func presentationsFolder() throws -> URL {
+        let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("MarkaryanPresentations", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
+
+    /// Keeps a finished presentation with its concept: opening the plan again shows it without paying for new renders.
+    @discardableResult
+    func savePresentation(pdf: URL, pictures: [(title: String, image: UIImage)], engine: String?, proposalID: UUID, planID: UUID) throws -> SavedPresentation {
+        let folderName = proposalID.uuidString
+        let folder = try Self.presentationsFolder().appendingPathComponent(folderName, isDirectory: true)
+        try? FileManager.default.removeItem(at: folder)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: pdf, to: folder.appendingPathComponent(pdf.lastPathComponent))
+        var saved: [SavedPresentation.Picture] = []
+        for (index, picture) in pictures.enumerated() {
+            guard let data = picture.image.jpegData(compressionQuality: 0.85) else { continue }
+            let name = "picture-\(index + 1).jpg"
+            try data.write(to: folder.appendingPathComponent(name), options: [.atomic, .completeFileProtection])
+            saved.append(SavedPresentation.Picture(title: picture.title, file: name))
+        }
+        let record = SavedPresentation(folder: folderName, pdf: pdf.lastPathComponent, pictures: saved, engine: engine)
+        if var plan = floorPlans.first(where: { $0.id == planID }), let index = plan.proposals.firstIndex(where: { $0.id == proposalID }) {
+            plan.proposals[index].presentation = record
+            savePlan(plan)
+        }
+        return record
+    }
+
+    /// A file of a saved presentation, if it is still on the iPhone.
+    func presentationFile(_ record: SavedPresentation, _ name: String) -> URL? {
+        guard let folder = try? Self.presentationsFolder() else { return nil }
+        let url = folder.appendingPathComponent(record.folder, isDirectory: true).appendingPathComponent(name)
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
@@ -938,11 +979,17 @@ enum WorkOrderError: LocalizedError {
         return (points, result.note ?? "", result.kind ?? "other", result.objectName ?? "")
     }
 
-    // MARK: FLUX photorealism
+    // MARK: Pictures: photoreal render of the exact 3D model, pictures by description
 
-    var fluxAvailable: Bool { aiCapabilities.imageEdit.contains("flux") || FluxClient.isConfigured }
+    /// Picture engines on the server, in its order (the first answers when no engine is chosen).
+    var imageEngines: [ImageEngine] { aiCapabilities.imageEngines }
 
-    /// FLUX understands English best: Claude translates the brief when it is available.
+    /// Something can turn the exact 3D render into a photo: the server, or a key in the owner's debug build.
+    var photorealAvailable: Bool {
+        !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || FluxClient.isConfigured || OpenAIImageClient.isConfigured
+    }
+
+    /// Image models understand English best: the AI translates the brief when it is available.
     func englishPrompt(_ text: String) async -> String {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, clean.range(of: "[А-Яа-яЁё]", options: .regularExpression) != nil, let claude = claudeClient else { return clean }
@@ -950,47 +997,50 @@ enum WorkOrderError: LocalizedError {
         return translated?.trimmingCharacters(in: .whitespacesAndNewlines) ?? clean
     }
 
-    /// Photorealistic version of an image (3D render or photo) with FLUX.1 Kontext.
-    func fluxRender(_ image: UIImage, prompt: String, model: FluxClient.Model = .pro) async throws -> UIImage {
-        if let base = AIServerConfig.baseURL, aiCapabilities.imageEdit.contains("flux") {
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: "flux")
-            track("flux_render_server")
+    /// Photoreal version of an image (the exact 3D render or a photo of the site).
+    /// `engine`: nil — the server's first engine, the next one when it fails; an engine id — only that engine (owner comparison).
+    func photorealRender(_ image: UIImage, prompt: String, engine: String? = nil) async throws -> RenderedImage {
+        if let base = AIServerConfig.baseURL, !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty {
+            // A server before 1.3 knows only "flux" and "gpt".
+            let chosen = engine ?? (aiCapabilities.imageEngines.isEmpty ? aiCapabilities.imageEdit.first ?? "auto" : "auto")
+            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen)
+            track("photoreal_server")
             registerMeaningfulAction()
             return result
         }
-        guard let key = FluxClient.configuredKey else { throw FluxClient.FluxError.message("Добавьте ключ FLUX в FluxKey.plist.") }
-        let result = try await FluxClient(apiKey: key, model: model).edit(image, prompt: prompt)
-        track("flux_render")
-        registerMeaningfulAction()
-        return result
-    }
-
-    var gptImageAvailable: Bool { aiCapabilities.imageEdit.contains("gpt") || OpenAIImageClient.isConfigured }
-    /// Any photoreal engine configured (FLUX and/or GPT Image).
-    var photoEngineAvailable: Bool { fluxAvailable || gptImageAvailable }
-
-    /// Photorealistic version of the exact render with OpenAI GPT Image 2.
-    func gptRender(_ image: UIImage, prompt: String) async throws -> UIImage {
-        if let base = AIServerConfig.baseURL, aiCapabilities.imageEdit.contains("gpt") {
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: "gpt")
-            track("gpt_render_server")
+        // Owner's debug builds with keys in the app.
+        if let key = FluxClient.configuredKey {
+            let picture = try await FluxClient(apiKey: key, model: .max).edit(image, prompt: prompt)
+            track("flux_render")
             registerMeaningfulAction()
-            return result
+            return RenderedImage(image: picture, engine: "local:flux-kontext-max", title: "FLUX Kontext Max")
         }
-        guard let key = OpenAIImageClient.configuredKey else { throw OpenAIImageClient.OpenAIImageError.message("Добавьте ключ OpenAI в OpenAIKey.plist.") }
-        let result = try await OpenAIImageClient(apiKey: key).edit(image, prompt: prompt)
-        track("gpt_render")
-        registerMeaningfulAction()
-        return result
+        if let key = OpenAIImageClient.configuredKey {
+            let picture = try await OpenAIImageClient(apiKey: key).edit(image, prompt: prompt)
+            track("gpt_render")
+            registerMeaningfulAction()
+            return RenderedImage(image: picture, engine: "local:gpt-image", title: "GPT Image")
+        }
+        throw ClaudeError.api("Фотореализм не подключён: на сервере ИИ нет движков картинок.")
     }
 
-    /// Text-to-image with FLUX.2 (no source photo).
-    func fluxGenerate(prompt: String) async throws -> UIImage {
-        guard let key = FluxClient.configuredKey else { throw FluxClient.FluxError.message("Добавьте ключ FLUX в FluxKey.plist.") }
-        let result = try await FluxClient(apiKey: key).generate(prompt: prompt)
+    /// Photoreal pictures by description: the server's picture engines, or a FLUX key in the owner's debug build.
+    var picturesByDescriptionAvailable: Bool { !aiCapabilities.imageEngines.isEmpty || FluxClient.isConfigured }
+
+    /// Picture by description, without a source photo: the server's picture engines (or Kandinsky / Alice AI ART);
+    /// FLUX.2 with a key in the owner's debug build.
+    func pictureByDescription(_ prompt: String) async throws -> UIImage {
+        if let base = AIServerConfig.baseURL, aiCapabilities.imageGenerate || !aiCapabilities.imageEngines.isEmpty {
+            let picture = try await ServerAIClient(base: base).generateImage(prompt: prompt)
+            track("picture_server")
+            registerMeaningfulAction()
+            return picture
+        }
+        guard let key = FluxClient.configuredKey else { throw ClaudeError.api("Картинки по описанию не подключены на сервере ИИ.") }
+        let picture = try await FluxClient(apiKey: key).generate(prompt: prompt)
         track("flux_generate")
         registerMeaningfulAction()
-        return result
+        return picture
     }
 
     /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds) chooses

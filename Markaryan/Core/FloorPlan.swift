@@ -144,13 +144,20 @@ enum FloorPlanBuilder {
     @available(iOS 17.0, *)
     static func fromRoom(_ room: CapturedRoom, name: String, modelFilename: String?) -> FloorPlan {
         func flat(_ v: simd_float4) -> PlanPoint { PlanPoint(x: Double(v.x), y: Double(v.z)) }
+        // Floor level (the scan's origin is wherever the iPhone started): the floor surface, else the lowest bottom edge of the walls.
+        let floorLevel = room.floors.first.map { $0.transform.columns.3.y } ?? room.walls.map { $0.transform.columns.3.y - $0.dimensions.y / 2 }.min() ?? 0
         func segment(_ surface: CapturedRoom.Surface, kind: PlanSegment.Kind) -> PlanSegment {
             let center = surface.transform.columns.3
             let axis = simd_normalize(simd_float3(surface.transform.columns.0.x, 0, surface.transform.columns.0.z))
             let half = surface.dimensions.x / 2
             let start = simd_float4(center.x - axis.x * half, 0, center.z - axis.z * half, 1)
             let end = simd_float4(center.x + axis.x * half, 0, center.z + axis.z * half, 1)
-            return PlanSegment(kind: kind, start: flat(start), end: flat(end), height: Double(surface.dimensions.y))
+            var result = PlanSegment(kind: kind, start: flat(start), end: flat(end), height: Double(surface.dimensions.y))
+            if kind != .wall {
+                // Real height of the window sill (or of the door threshold) from the scan.
+                result.elevation = min(3, max(0, Double(center.y - surface.dimensions.y / 2 - floorLevel)))
+            }
+            return result
         }
         var segments: [PlanSegment] = room.walls.map { segment($0, kind: .wall) }
         segments += room.doors.map { segment($0, kind: .door) }

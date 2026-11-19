@@ -1102,16 +1102,16 @@ struct AIVisionStudioView: View {
         Task {
             do {
                 let wishes = brief.trimmingCharacters(in: .whitespacesAndNewlines)
-                if store.fluxAvailable {
-                    // FLUX Kontext edits a photo: the source photo is required.
+                if let source, store.photorealAvailable {
+                    // The server's picture engines edit the source photo.
                     let english = await store.englishPrompt(wishes.isEmpty ? style.subtitle : wishes)
-                    if let source {
-                        let prompt = "Transform this photo into a professional photorealistic architectural visualization. \(english). Keep the same camera angle, perspective and main geometry of the scene. Natural daylight, realistic materials and textures, high detail, magazine-quality architectural photography."
-                        result = try await store.fluxRender(source, prompt: prompt)
-                    } else {
-                        let prompt = "Professional photorealistic architectural visualization: \(english). Realistic materials, natural daylight, every detail rendered, magazine-quality architectural photography, wide-angle lens, no people, no text."
-                        result = try await store.fluxGenerate(prompt: prompt)
-                    }
+                    let prompt = "Transform this photo into a professional photorealistic architectural visualization. \(english). Keep the same camera angle, perspective and main geometry of the scene. Natural daylight, realistic materials and textures, high detail, magazine-quality architectural photography."
+                    result = try await store.photorealRender(source, prompt: prompt).image
+                } else if source == nil, store.picturesByDescriptionAvailable {
+                    // No photo: a picture by description from the same engines.
+                    let english = await store.englishPrompt(wishes.isEmpty ? style.subtitle : wishes)
+                    let prompt = "Professional photorealistic architectural visualization: \(english). Realistic materials, natural daylight, every detail rendered, magazine-quality architectural photography, wide-angle lens, no people, no text."
+                    result = try await store.pictureByDescription(prompt)
                 } else {
                     result = try await store.createVisualization(style: style.rawValue, brief: wishes, source: source)
                 }
