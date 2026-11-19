@@ -28,6 +28,8 @@
 		AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */; };
 		AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */; };
 		AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */; };
+		AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */; };
+		AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */; };
 		AA1000000000000000000D03 /* Markaryan/Core/RoomKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */; };
 		AA1000000000000000000D02 /* Markaryan/Core/DesignProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */; };
 		AA1000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */; };
@@ -73,6 +75,8 @@
 		AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/OnboardingView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ClaudeClient.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FloorPlan.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutCheck.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanWalls.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/RoomKind.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignProposal.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanGeometry.swift; sourceTree = "<group>"; };
@@ -132,6 +136,8 @@
 				AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */,
 				AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */,
 				AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */,
+				AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */,
+				AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */,
 				AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */,
 				AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */,
 				AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */,
@@ -283,6 +289,8 @@
 				AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */,
 				AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */,
 				AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */,
+				AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */,
+				AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */,
 				AA1000000000000000000D03 /* Markaryan/Core/RoomKind.swift in Sources */,
 				AA1000000000000000000D02 /* Markaryan/Core/DesignProposal.swift in Sources */,
 				AA1000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift in Sources */,

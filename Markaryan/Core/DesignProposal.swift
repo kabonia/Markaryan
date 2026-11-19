@@ -45,6 +45,12 @@ struct DesignFurniture: Codable, Hashable {
     var depth: Double
     /// Degrees, clockwise.
     var rotation: Double
+    /// Metres, when known (the layout engine keeps tall items away from windows).
+    var height: Double? = nil
+    /// Number of the wall the item stands against (`PlanWalls` numbering), when it does.
+    var wall: Int? = nil
+    /// Zone of the room the item belongs to («Кухня», «Гостиная»…), when the concept has zones.
+    var zone: String? = nil
 }
 
 extension DesignFurniture {
@@ -58,12 +64,54 @@ extension DesignFurniture {
         self.init(name: name, kind: (try? c.decode(String.self, forKey: .kind))?.lowercased() ?? "decor", x: x, y: y,
                   width: max(0.03, flexibleDouble(c, .width) ?? 0.6), depth: max(0.03, flexibleDouble(c, .depth) ?? 0.6),
                   rotation: flexibleDouble(c, .rotation) ?? 0)
+        height = flexibleDouble(c, .height).flatMap { $0 > 0 ? $0 : nil }
+        wall = try? c.decode(Int.self, forKey: .wall)
+        zone = (try? c.decode(String.self, forKey: .zone)).flatMap { $0.isEmpty ? nil : $0 }
     }
 
     /// Exact model to draw (toilet, sink, shower…) — the AI often gives a generic kind.
     var model: String { FixtureModel.resolve(kind: kind, name: name) }
     /// Mounted on a wall or the ceiling: does not block the floor.
     var isMounted: Bool { ["mirror", "towel", "boiler", "sconce", "pendant", "hiddenlight", "accessory"].contains(model) }
+    /// Hangs from the ceiling or is built into it.
+    var isCeiling: Bool { ["pendant", "hiddenlight"].contains(model) }
+    /// Lies on the floor (rugs, play mats): furniture may stand on it. The 3D model draws every decor item this way.
+    var isFlat: Bool {
+        let n = name.lowercased()
+        return model == "decor" || n.contains("ковёр") || n.contains("ковер") || n.contains("коврик")
+    }
+    /// Takes floor space that people and other furniture cannot use.
+    var blocksFloor: Bool { !isMounted && !isFlat }
+    /// Footprint as a turned rectangle.
+    var footprint: PlanRect { PlanRect(center: PlanPoint(x: x, y: y), width: width, depth: depth, rotation: rotation * .pi / 180) }
+    /// The side people use (local +y), as a unit vector.
+    var front: PlanPoint { footprint.axisY }
+    /// Height in metres: given by the AI, or the same typical heights the 3D model uses.
+    var estimatedHeight: Double {
+        if let height { return height }
+        let n = name.lowercased()
+        switch model {
+        case "storage":
+            if n.contains("тумб") || n.contains("комод") || n.contains("обувниц") { return 0.85 }
+            if n.contains("полк") { return 0.4 }
+            return n.contains("пенал") ? 1.85 : 2.2
+        case "kitchen": return 2.2 // wall cabinets above the counter
+        case "appliance": return n.contains("холод") || n.contains("колонн") || n.contains("духов") ? 2.0 : 0.85
+        case "shower": return 2.0
+        case "tv": return 1.1
+        case "bed": return 1.0
+        case "sofa": return 0.85
+        case "table", "desk": return 0.75
+        case "chair": return 0.9
+        case "toilet": return 0.82
+        case "sink": return 0.9
+        case "bathtub": return 0.56
+        case "washer": return 0.85
+        case "plant": return 1.1
+        case "floorlamp": return 1.7
+        default: return isFlat ? 0.02 : 0.5
+        }
+    }
     /// Corners of the footprint in plan coordinates.
     var corners: [PlanPoint] {
         let angle = rotation * .pi / 180, c = cos(angle), s = sin(angle)
@@ -160,6 +208,8 @@ struct DesignProposal: Codable, Identifiable {
     /// How the furniture got its coordinates: nil — raw AI answer, not checked yet;
     /// 1 — AI coordinates fitted into the room (`fitted(to:)`); 2 — placed by the layout engine.
     var layoutVersion: Int? = nil
+    /// What the layout engine could not do as asked (item made smaller, did not fit…), for the client.
+    var layoutNotes: [String] = []
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -172,7 +222,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes
     }
 
     init(from decoder: Decoder) throws {
@@ -199,6 +249,7 @@ struct DesignProposal: Codable, Identifiable {
         ceiling = (try? c.decode(DesignFinish.self, forKey: .ceiling)) ?? DesignFinish()
         roomKind = (try? c.decode(String.self, forKey: .roomKind)).flatMap { RoomKind(rawValue: $0)?.rawValue }
         layoutVersion = try? c.decode(Int.self, forKey: .layoutVersion)
+        layoutNotes = (try? c.decode([String].self, forKey: .layoutNotes)) ?? []
     }
 }
 

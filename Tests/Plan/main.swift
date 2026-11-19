@@ -185,4 +185,56 @@ withApartment.apartmentID = UUID()
 let reloadedApartment = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(withApartment))
 check(reloadedApartment.apartmentID == withApartment.apartmentID, "Apartment link survives saving")
 
+// MARK: Turned rectangles and polygons
+
+let square = PlanRect(center: PlanPoint(x: 0, y: 0), width: 1, depth: 1, rotation: 0)
+check(!square.overlaps(PlanRect(center: PlanPoint(x: 1, y: 0), width: 1, depth: 1, rotation: 0)), "Touching rectangles do not overlap")
+check(square.overlaps(PlanRect(center: PlanPoint(x: 0.9, y: 0.3), width: 1, depth: 1, rotation: 0)), "Overlapping rectangles")
+check(square.overlaps(PlanRect(center: PlanPoint(x: 1.2, y: 0), width: 1, depth: 1, rotation: .pi / 4)), "A turned corner pokes in")
+check(!square.overlaps(PlanRect(center: PlanPoint(x: 1.25, y: 0), width: 1, depth: 1, rotation: .pi / 4)), "A turned rectangle just clear")
+near(square.distance(to: PlanPoint(x: 1.5, y: 0)), 1, "Distance to a rectangle side")
+near(square.distance(to: PlanPoint(x: 1.5, y: 1.5)), 2.squareRoot(), "Distance to a rectangle corner")
+check(square.crosses(PlanPoint(x: -2, y: 0), PlanPoint(x: 2, y: 0)), "A line through the rectangle")
+let uShape = [(0.0, 0.0), (4.0, 0.0), (4.0, 3.0), (3.0, 3.0), (3.0, 1.0), (1.0, 1.0), (1.0, 3.0), (0.0, 3.0)].map { PlanPoint(x: $0.0, y: $0.1) }
+check(PlanMath.polygon(uShape, contains: PlanRect(center: PlanPoint(x: 2, y: 0.5), width: 3, depth: 0.6, rotation: 0)), "Rectangle inside the U")
+check(!PlanMath.polygon(uShape, contains: PlanRect(center: PlanPoint(x: 2, y: 2.25), width: 3, depth: 0.5, rotation: 0)), "Corners inside the U but the middle crosses the gap")
+check(PlanMath.signedArea2(uShape) > 0, "Clockwise on screen has a positive area")
+
+// MARK: Walls numbered clockwise from the entrance
+
+let bedroomWalls = PlanWalls.numbered(bedroom)
+check(bedroomWalls.map(\.number) == [1, 2, 3, 4], "Four numbered walls")
+check(bedroomWalls[0].doors.count == 1 && bedroomWalls[0].start == PlanPoint(x: 4, y: 3) && bedroomWalls[0].end == PlanPoint(x: 0, y: 3), "Wall 1 has the entrance, walked right to left")
+near(bedroomWalls[0].doors[0].from, 2.2, "Door position along wall 1")
+near(bedroomWalls[0].doors[0].to, 3.0, "Door end along wall 1")
+check(bedroomWalls[1].start == PlanPoint(x: 0, y: 3) && bedroomWalls[2].start == PlanPoint(x: 0, y: 0) && bedroomWalls[3].start == PlanPoint(x: 4, y: 0), "Then left, top and right walls")
+check(bedroomWalls[2].windows.count == 1 && bedroomWalls[2].normal == PlanPoint(x: 0, y: 1), "Window on the top wall, normal into the room")
+near(bedroomWalls[2].itemRotation, 0, "Item against the top wall faces down")
+near(abs(bedroomWalls[0].itemRotation), 180, "Item against the entrance wall faces up")
+check(bedroomWalls.allSatisfy { bedroom.contains($0.point($0.length / 2, offset: 0.2)) }, "Every normal points into the room")
+let lWalls = PlanWalls.numbered(lShaped)
+check(lWalls.map { Int(($0.length * 10).rounded()) } == [50, 20, 20, 20, 30, 40], "L-shaped room: top wall first, then clockwise")
+check(lWalls.allSatisfy { lShaped.contains($0.point($0.length / 2, offset: 0.2)) }, "L-shaped room: normals into the room")
+
+// MARK: Layout check
+
+func item(_ name: String, _ kind: String, _ x: Double, _ y: Double, _ width: Double, _ depth: Double, _ rotation: Double = 0) -> DesignFurniture {
+    DesignFurniture(name: name, kind: kind, x: x, y: y, width: width, depth: depth, rotation: rotation)
+}
+let goodBedroom = [
+    item("Кровать 1600×2000", "bed", 1.6, 1.08, 1.6, 2.0),
+    item("Шкаф 1200", "storage", 3.62, 2.35, 1.2, 0.6, 90)
+]
+check(LayoutCheck.issues(plan: bedroom, furniture: goodBedroom).isEmpty, "A good bedroom has no issues: \(LayoutCheck.issues(plan: bedroom, furniture: goodBedroom).map(\.message))")
+func kinds(_ furniture: [DesignFurniture], in plan: FloorPlan = bedroom) -> Set<LayoutIssue.Kind> { Set(LayoutCheck.issues(plan: plan, furniture: furniture).map(\.kind)) }
+check(kinds(goodBedroom + [item("Стол", "desk", 2.0, 1.0, 1.2, 0.6)]).contains(.overlap), "Overlap is found")
+check(kinds(goodBedroom + [item("Комод", "storage", 1.4, 2.65, 0.8, 0.45, 180)]).contains(.door), "Item in the door swing is found")
+check(kinds([item("Шкаф", "storage", 4.2, 1.5, 1.2, 0.6, 90)]).contains(.outside), "Item behind a wall is found")
+check(kinds([item("Шкаф под окном", "storage", 2.1, 0.38, 1.2, 0.6)]).contains(.window), "Tall item in front of a window is found")
+check(!kinds([item("Комод под окном", "storage", 2.1, 0.305, 1.0, 0.45)]).contains(.window), "Low chest under a window is fine")
+let wall = [item("Стеллаж через всю комнату", "storage", 2.0, 1.8, 3.84, 0.4), item("Кровать", "bed", 2.0, 0.6, 1.4, 1.0, 90)]
+check(LayoutCheck.issues(plan: bedroom, furniture: wall).contains { $0.kind == .passage && $0.message.contains("Кровать") }, "Item cut off from the entrance is found")
+check(kinds([item("Шкаф у двери", "storage", 1.4, 2.6, 1.6, 0.6, 180)]).contains(.passage), "Blocked entrance is found")
+check(kinds([item("Кухня", "kitchen", 2.0, 0.38, 2.4, 0.6), item("Остров", "table", 2.0, 1.2, 1.6, 0.6)]).contains(.front), "Too little room in front of a kitchen is found")
+
 print("PASS: \(passed) plan and design checks")
