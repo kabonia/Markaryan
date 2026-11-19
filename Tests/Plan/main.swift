@@ -604,4 +604,79 @@ let loopBody = WallBody(plan: noPolygon)
 check(loopBody.outline.count == 4 && loopBody.pieces.count == 6, "Without a floor outline the walls themselves make the loop")
 check(LayoutRules.wallGap < 0.05, "Furniture stands just off the inner face of the wall")
 
+// MARK: Electrics
+
+let bedroomPower = ElectricPlanner.plan(for: designed, proposal: pair, room: .bedroom)
+check(bedroomPower.switches.count == 1 && bedroomPower.switches[0].height == ElectricPlanner.switchHeight, "One switch by the bedroom door at 0.9 m")
+near(bedroomPower.switches[0].position.x, 1.95, "The switch is at the latch side, 15 cm from the door")
+near(bedroomPower.switches[0].position.y, 3, "…on the door's wall")
+check(bedroomPower.points.contains { $0.purpose == "у кровати" && $0.kind == .doubleSocket && $0.height == 0.7 }, "A double socket by the bed, even with the bed in a corner")
+let bedRoom = rectangle("Спальня", 4, 3.5, doors: [segment(.door, 3.0, 3.5, 3.8, 3.5, height: 2.05)], windows: [segment(.window, 1.0, 0, 2.2, 0, height: 1.5)])
+var bedLayout = pair
+bedLayout.furniture = [DesignFurniture(name: "Кровать", kind: "bed", x: 1.055, y: 1.75, width: 1.6, depth: 2.05, rotation: 270),
+                       DesignFurniture(name: "Прикроватная тумба", kind: "storage", x: 0.23, y: 0.705, width: 0.45, depth: 0.4, rotation: 270, height: 0.55),
+                       DesignFurniture(name: "Прикроватная тумба", kind: "storage", x: 0.23, y: 2.795, width: 0.45, depth: 0.4, rotation: 270, height: 0.55)]
+let bedSockets = ElectricPlanner.plan(for: bedRoom, proposal: bedLayout, room: .bedroom).points.filter { $0.purpose == "у кровати" }
+check(bedSockets.count == 2 && bedSockets.allSatisfy { abs($0.position.x) < 1e-6 && $0.kind == .doubleSocket && $0.height == 0.7 }, "Double sockets above both nightstands, on the head wall")
+check(bedSockets.map(\.position.y).sorted().enumerated().allSatisfy { index, y in abs(y - [0.75, 2.75][index]) < 0.06 }, "…at the sides of the bed head: \(bedSockets.map(\.position.y))")
+check(bedroomPower.sockets.filter { $0.height < 1.5 }.count >= 4, "At least one socket per 4 m of the perimeter: \(bedroomPower.sockets.count)")
+check(bedroomPower.sockets.allSatisfy { s in !(abs(s.position.y - 3) < 1e-6 && s.position.x > 0.9 && s.position.x < 1.9) && !(abs(s.position.y) < 1e-6 && s.position.x > 1.4 && s.position.x < 2.8) }, "No socket in the door or under the window")
+check(bedroomPower.lights.count == 6 && bedroomPower.lights.allSatisfy { bedroom.contains($0.position) }, "Six ceiling lights inside the room")
+check(bedroomPower.circuits.map(\.title) == ["Освещение", "Розетки"] && bedroomPower.circuits[1].breaker.contains("УЗО"), "Lighting and socket circuits, sockets through an RCD")
+check(bedroomPower.sockets.allSatisfy { s in bedroomWalls.contains { PlanMath.distance(s.position, toSegment: $0.start, $0.end) < 1e-6 } }, "Sockets sit on the walls")
+
+let bathDesign = OfflineDesigner.propose(plan: bigBathroom, style: "Современный", purpose: "Ванная", wishes: "ванна, стиральная машина")!
+let bathPower = ElectricPlanner.plan(for: bigBathroom, proposal: bathDesign, room: .bathroom)
+check(bathPower.switches.count == 1 && !bigBathroom.contains(bathPower.switches[0].position), "The bathroom switch is outside, by the door")
+check(!bathPower.sockets.isEmpty && bathPower.sockets.allSatisfy { $0.kind == .wetSocket }, "Bathroom sockets are IP44")
+let bath = bathDesign.furniture.first { $0.model == "bathtub" }!
+check(bathPower.sockets.allSatisfy { bath.footprint.distance(to: $0.position) >= 0.55 }, "No socket within 0.6 m of the bath")
+check(bathPower.circuits.contains { $0.title == "Стиральная машина" && $0.breaker.contains("УЗО") }, "The washer has its own RCD circuit")
+check(bathPower.notes.contains { $0.contains("IP44") }, "Bathroom notes mention IP44")
+
+let kitchenDesign = OfflineDesigner.propose(plan: kitchen, style: "Современный", purpose: "Кухня", wishes: "")!
+let kitchenPower = ElectricPlanner.plan(for: kitchen, proposal: kitchenDesign, room: .kitchen)
+check(kitchenPower.count(.powerSocket) == 1 && kitchenPower.circuits.contains { $0.title == "Варочная панель" && $0.breaker == "C32" }, "A 32 A socket and circuit for the hob")
+check(kitchenPower.points.filter { $0.purpose == "над столешницей" && $0.height == 1.1 }.count >= 2, "Work sockets above the worktop")
+check(kitchenPower.points.contains { $0.purpose == "холодильник" }, "A socket for the fridge")
+check(kitchenPower.notes.contains { $0.contains("3×6") }, "The hob cable is in the notes")
+
+let livingDesign = OfflineDesigner.propose(plan: lLiving, style: "Современный", purpose: "Гостиная", wishes: "")!
+let livingPower = ElectricPlanner.plan(for: lLiving, proposal: livingDesign, room: .living)
+check(livingPower.sockets.filter { $0.height < 1.5 }.count >= Int((lLiving.perimeter / 4).rounded(.up)), "Living room: the perimeter rule")
+check(livingPower.count(.tvBlock) == 1, "A TV block behind the TV")
+let hallDesign = OfflineDesigner.propose(plan: hall, style: "Современный", purpose: "Прихожая", wishes: "")!
+check(ElectricPlanner.plan(for: hall, proposal: hallDesign, room: .hall).points.contains { $0.purpose == "у входа" && $0.kind == .socket }, "A socket by the entrance of the hall")
+check(ElectricPlanner.spotLights(room("Кладовка", [(0, 0), (1.2, 0), (1.2, 1.0), (0, 1.0)])).count == 1, "A small room gets one light in the middle")
+check(ElectricPlanner.plan(for: bedroom, proposal: nil, room: .bedroom).sockets.count >= 4, "Without a concept the room still gets its sockets")
+
+// MARK: Tiles
+
+check(TileSize.parse("Керамогранит 600×1200, матовый") == TileSize(width: 0.6, length: 1.2), "Tile size in millimetres from a finish")
+check(TileSize.parse("плитка 30x60 см") == TileSize(width: 0.3, length: 0.6) && TileSize.parse("кафель 20х20") == TileSize(width: 0.2, length: 0.2), "Tile size in centimetres")
+check(TileSize.parse("мрамор") == nil, "No size in the finish")
+func finish(_ material: String) -> DesignFinish { var value = DesignFinish(); value.material = material; return value }
+check(TileLayout.isTiled(.bathroom, nil) && !TileLayout.isTiled(.living, finish("Ламинат")) && TileLayout.isTiled(.kitchen, finish("Керамогранит")), "Which floors are tiled")
+let floorTiles = TileLayout.floor(bedroom)
+let laidArea = floorTiles.pieces.reduce(0) { $0 + abs(PlanMath.signedArea2($1.polygon)) / 2 }
+check(laidArea > 11.85 && laidArea <= 12 + 1e-9, "The tiles cover the floor less the joints: \(laidArea)")
+check(floorTiles.whole + floorTiles.cut == floorTiles.pieces.count && floorTiles.whole >= 20, "Whole and cut tiles: \(floorTiles.whole) + \(floorTiles.cut)")
+check((floorTiles.narrowestCut ?? 1) >= 0.2, "No sliver cuts: the narrowest is \(floorTiles.narrowestCut ?? 0) m")
+check(floorTiles.toBuy == Int((Double(floorTiles.pieces.count) * 1.1).rounded(.up)) && abs(floorTiles.buyArea - Double(floorTiles.toBuy) * 0.36) < 1e-9, "Tiles to buy with a 10 % reserve")
+check(floorTiles.pieces.allSatisfy { $0.polygon.allSatisfy { p in p.x >= -1e-9 && p.x <= 4 + 1e-9 && p.y >= -1e-9 && p.y <= 3 + 1e-9 } }, "Tiles stay inside the room")
+let lTiles = TileLayout.floor(lShaped)
+let lArea = lTiles.pieces.reduce(0) { $0 + abs(PlanMath.signedArea2($1.polygon)) / 2 }
+check(lArea > 15.8 && lArea <= 16 + 1e-9 && (lTiles.narrowestCut ?? 1) >= 0.1, "L-shaped floor is tiled without slivers: \(lArea), \(lTiles.narrowestCut ?? 0)")
+check(lTiles.pieces.allSatisfy { piece in lShaped.contains(piece.polygon.reduce(PlanPoint(x: 0, y: 0)) { $0 + $1 } * (1 / Double(piece.polygon.count))) }, "Every L-floor tile lies in the room")
+let wallTiles = TileLayout.wall(length: 2.6, height: 2.7, holes: [(0.4, 0, 1.2, 2.0)])
+let wallArea = wallTiles.pieces.reduce(0) { total, piece in
+    let p = piece.polygon
+    return total + (p[1].x - p[0].x) * (p[2].y - p[1].y)
+}
+near(wallTiles.area, 2.6 * 2.7 - 0.8 * 2.0, "Wall area without the door")
+check(wallTiles.pieces.allSatisfy { $0.polygon[0].y >= 0 && $0.polygon[2].y <= 2.7 + 1e-9 } && wallTiles.pieces.contains { abs($0.polygon[0].y) < 1e-9 && $0.whole }, "Wall rows start from the floor with whole tiles")
+check(wallArea > wallTiles.area, "Cut pieces around the door are counted")
+check(!wallTiles.pieces.contains { p in p.polygon[0].x >= 0.4 && p.polygon[1].x <= 1.2 && p.polygon[2].y <= 2.0 }, "No tile inside the door opening")
+check(TileLayout.positiveRemainder(-0.1, 0.602) > 0.5, "Remainder is positive")
+
 print("PASS: \(passed) plan and design checks")
