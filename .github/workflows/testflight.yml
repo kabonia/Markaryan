@@ -126,6 +126,24 @@ jobs:
           fi
           app=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1]))["data"]; print(d[0]["attributes"]["name"] if d else "")' "$RUNNER_TEMP/asc/answer.json")
           if [ -z "$app" ]; then
+            # Из какой команды ключ — только «да/нет» и количество, без названий чужих приложений (журнал публичный).
+            api "bundleIds?limit=200&fields%5BbundleIds%5D=identifier,seedId" >/dev/null
+            cp "$RUNNER_TEMP/asc/answer.json" "$RUNNER_TEMP/asc/bundles.json"
+            api "apps?limit=200&fields%5Bapps%5D=bundleId" >/dev/null
+            python3 - "$RUNNER_TEMP/asc/bundles.json" "$RUNNER_TEMP/asc/answer.json" <<'PY'
+          import json, re, sys
+          def data(path):
+              try:
+                  return json.load(open(path)).get("data") or []
+              except Exception:
+                  return []
+          bundles, apps = data(sys.argv[1]), data(sys.argv[2])
+          teams = {b["attributes"].get("seedId") for b in bundles if b.get("attributes")}
+          ours = lambda s: re.search(r"sochiart|markaryan", s or "", re.I)
+          print("Команда ключа — QFKA6588C4:", "да" if "QFKA6588C4" in teams else ("нет" if teams else "не удалось узнать"))
+          print("Приложений в команде ключа:", len(apps), "; идентификаторов:", len(bundles))
+          print("Похожие на АртСтрой:", ", ".join(sorted({a["attributes"]["bundleId"] for a in apps if ours(a["attributes"].get("bundleId"))} | {b["attributes"]["identifier"] for b in bundles if ours(b["attributes"].get("identifier"))})) or "нет")
+          PY
             echo "::error::Ключ рабочий, но в его команде нет приложения $BUNDLE_ID. Похоже, ключ создан в другой команде (аккаунте разработчика), а проект подписывается командой QFKA6588C4."
             exit 1
           fi
