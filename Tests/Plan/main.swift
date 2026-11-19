@@ -679,4 +679,60 @@ check(wallArea > wallTiles.area, "Cut pieces around the door are counted")
 check(!wallTiles.pieces.contains { p in p.polygon[0].x >= 0.4 && p.polygon[1].x <= 1.2 && p.polygon[2].y <= 2.0 }, "No tile inside the door opening")
 check(TileLayout.positiveRemainder(-0.1, 0.602) > 0.5, "Remainder is positive")
 
+// MARK: DXF for CAD
+
+struct DXFEntity { let type: String; let layer: String; let values: [(Int, String)]
+    func value(_ code: Int) -> String? { values.first { $0.0 == code }?.1 }
+}
+func dxfPairs(_ text: String) -> [(Int, String)] {
+    let lines = text.components(separatedBy: "\r\n")
+    var pairs: [(Int, String)] = []
+    var index = 0
+    while index + 1 < lines.count {
+        if let code = Int(lines[index].trimmingCharacters(in: .whitespaces)) { pairs.append((code, lines[index + 1])) }
+        index += 2
+    }
+    return pairs
+}
+func dxfEntities(_ pairs: [(Int, String)]) -> [DXFEntity] {
+    guard let start = pairs.firstIndex(where: { $0.0 == 2 && $0.1 == "ENTITIES" }) else { return [] }
+    var result: [DXFEntity] = []
+    var current: (String, [(Int, String)])?
+    for pair in pairs[(start + 1)...] {
+        if pair.0 == 0 {
+            if let current { result.append(DXFEntity(type: current.0, layer: current.1.first { $0.0 == 8 }?.1 ?? "", values: current.1)) }
+            if pair.1 == "ENDSEC" { break }
+            current = (pair.1, [])
+        } else { current?.1.append(pair) }
+    }
+    return result
+}
+check(DXFWriter.number(1500) == "1500" && DXFWriter.number(12.34) == "12.3" && DXFWriter.number(-0.0001) == "0", "DXF numbers in millimetres")
+check(DXFWriter.clean("1600×2000 \u{2011} м²") == "1600x2000 - м2", "Characters CP1251 lacks are replaced")
+let bedroomDXF = PlanDXF.writer(plan: designed, proposal: pair, room: .bedroom)
+let dxfText = bedroomDXF.document
+let pairs = dxfPairs(dxfText)
+check(pairs.contains { $0.0 == 1 && $0.1 == "AC1009" } && pairs.contains { $0.0 == 3 && $0.1 == "ANSI_1251" }, "DXF R12 in Windows-1251")
+check(dxfText.hasSuffix("0\r\nEOF\r\n"), "DXF ends with EOF")
+let layerNames = Set(pairs.indices.compactMap { i in i > 0 && pairs[i - 1] == (0, "LAYER") && pairs[i].0 == 2 ? pairs[i].1 : nil })
+check(layerNames == Set(PlanDXF.layers.map(\.name)) && layerNames.count == 11, "Every layer is declared: \(layerNames.sorted())")
+let entities = dxfEntities(pairs)
+check(entities.filter { $0.type == "LINE" && $0.layer == PlanDXF.Layer.walls }.count == 16, "Wall faces and jambs: \(entities.filter { $0.type == "LINE" && $0.layer == PlanDXF.Layer.walls }.count)")
+check(entities.filter { $0.type == "SOLID" && $0.layer == PlanDXF.Layer.wallFill }.count == 6, "Wall fill")
+check(entities.contains { $0.type == "LINE" && $0.layer == PlanDXF.Layer.walls && $0.value(10) == "0" && $0.value(20) == "0" && $0.value(11) == "1500" && $0.value(21) == "0" }, "The inner face of the top wall up to the window, in millimetres")
+check(entities.contains { $0.type == "LINE" && $0.value(20) == "-3000" }, "y is flipped: the bottom wall is at -3000")
+check(entities.contains { $0.type == "ARC" && $0.layer == PlanDXF.Layer.doors && $0.value(40) == "800" }, "The door swing is an arc of the door width")
+check(entities.filter { $0.type == "POLYLINE" && $0.layer == PlanDXF.Layer.furniture }.count == pair.furniture.count, "Every item of the concept is a polyline")
+check([PlanDXF.Layer.sockets, PlanDXF.Layer.switches, PlanDXF.Layer.lights].allSatisfy { layer in entities.contains { $0.layer == layer } }, "Electrics are on their layers")
+check(!entities.contains { $0.layer == PlanDXF.Layer.tiles }, "No tiles on a bedroom floor")
+check(entities.contains { $0.type == "TEXT" && $0.value(1) == "Спальня" }, "The room name is on the plan")
+check(dxfEntities(dxfPairs(PlanDXF.writer(plan: bigBathroom, proposal: bathDesign, room: .bathroom).document)).contains { $0.layer == PlanDXF.Layer.tiles }, "Bathroom floor tiles are on their layer")
+let dxfData = bedroomDXF.data
+check(String(data: dxfData, encoding: .windowsCP1251) == dxfText && dxfData.count == dxfText.unicodeScalars.count, "The file is Windows-1251, one byte a character")
+let socketArcs = entities.filter { $0.type == "ARC" && $0.layer == PlanDXF.Layer.sockets }
+check(!socketArcs.isEmpty && socketArcs.allSatisfy { arc in
+    guard let start = Double(arc.value(50) ?? ""), let end = Double(arc.value(51) ?? "") else { return false }
+    return abs((end - start) - 180) < 0.5
+}, "Socket symbols are half circles")
+
 print("PASS: \(passed) plan and design checks")

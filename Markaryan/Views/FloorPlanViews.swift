@@ -488,12 +488,14 @@ struct FloorPlanDetailView: View {
         mainButton(flow.main(on: .result), plan: plan)
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
-            Text("Обмерный план с размерами, план расстановки, точки сантехники, полы, потолок и свет, ведомость отделки — листы А3 со штампом, в масштабе.")
+            Text("Обмерный план, план расстановки, точки сантехники, полы и раскладка плитки, потолок, электрика, развёртки и ведомость отделки — листы А3 со штампом, в масштабе.")
                 .font(.caption).foregroundStyle(Theme.muted)
             HStack(spacing: 10) {
                 Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
                 Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "Сохранить PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
             }
+            Button { shareDXF(plan) } label: { SecondaryActionLabel(title: "DXF для AutoCAD, nanoCAD, ArchiCAD", icon: "square.and.arrow.up") }
+                .buttonStyle(PremiumPressStyle())
         }
         if flow.main(on: .result).action != .orderRenovation {
             Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
@@ -887,6 +889,15 @@ struct FloorPlanDetailView: View {
         guard let url = drawingsURL(plan) else { return }
         store.track("drawings_share")
         shareFile = SharedFile(url: url)
+    }
+
+    /// The plan for CAD: walls, openings, furniture, electrics and tiles on separate layers, in millimetres.
+    private func shareDXF(_ plan: FloorPlan) {
+        do {
+            let url = try PlanDXF.file(plan: plan, proposal: proposal, room: RoomKind.detect(plan: plan, proposal: proposal))
+            store.track("drawings_dxf")
+            shareFile = SharedFile(url: url)
+        } catch { self.error = "Не удалось сделать DXF: \(error.localizedDescription)" }
     }
 
     private func sharePlan(_ plan: FloorPlan) {
