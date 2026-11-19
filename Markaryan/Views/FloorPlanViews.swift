@@ -292,6 +292,11 @@ struct FloorPlanDetailView: View {
     @State private var stepChosen = false
     @State private var show3D = false
     @State private var showOrder = false
+    @State private var editPlan = false
+    @State private var furnitureTarget: FurnitureTarget?
+
+    /// The concept whose furniture is being moved by hand.
+    struct FurnitureTarget: Identifiable { let id: UUID }
 
     private var plan: FloorPlan? { store.floorPlans.first { $0.id == planID } }
     private var proposal: DesignProposal? {
@@ -339,6 +344,8 @@ struct FloorPlanDetailView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $editPlan) { NavigationStack { PlanEditorView(planID: planID) } }
+        .fullScreenCover(item: $furnitureTarget) { target in NavigationStack { FurnitureEditorView(planID: planID, proposalID: target.id) } }
         .navigationDestination(isPresented: $showOrder) {
             if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
         }
@@ -396,6 +403,8 @@ struct FloorPlanDetailView: View {
             PlanStat(value: "\(plan.doors.count)", title: "Двери")
         }
         mainButton(flow.main(on: .measure), plan: plan)
+        Button { editPlan = true } label: { SecondaryActionLabel(title: "Исправить план: стены, двери, окна", icon: "pencil.and.ruler") }
+            .buttonStyle(PremiumPressStyle())
         NavigationLink { PlanMaterialsView(plan: plan) } label: {
             HStack(spacing: 12) {
                 Image(systemName: "function").font(.title3).foregroundStyle(Theme.orange).frame(width: 30)
@@ -411,7 +420,7 @@ struct FloorPlanDetailView: View {
             .panelCard(16)
         }
         .buttonStyle(PremiumCardPressStyle())
-        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR и не содержит окон и дверей. Для точной планировки используйте iPhone с лидаром.")
+        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR. Окна и двери добавьте в «Исправить план»; для точной планировки нужен iPhone с лидаром.")
     }
 
     /// Step 2: the concepts — the layout on the plan, finishes and budget; then the presentation.
@@ -436,6 +445,10 @@ struct FloorPlanDetailView: View {
             mainButton(flow.main(on: .design), plan: plan)
         }
         if let proposal {
+            if !proposal.furniture.isEmpty {
+                Button { furnitureTarget = FurnitureTarget(id: proposal.id) } label: { SecondaryActionLabel(title: "Передвинуть мебель", icon: "hand.draw") }
+                    .buttonStyle(PremiumPressStyle())
+            }
             if !isGenerating && flow.main(on: .design).action != .createDesign {
                 Button { showDesignSheet = true } label: { SecondaryActionLabel(title: "Ещё вариант дизайна", icon: "wand.and.stars") }
                     .buttonStyle(PremiumPressStyle())
@@ -453,6 +466,10 @@ struct FloorPlanDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("КОНЦЕПЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
                 Text(proposal.title).font(.title3.bold())
+            }
+            if flow.presentationOutdated {
+                Label("План или мебель изменены после презентации — обновите её.", systemImage: "exclamationmark.arrow.triangle.2.circlepath")
+                    .font(.footnote).foregroundStyle(Theme.orange)
             }
             if let presentation, presentation.proposalID == proposal.id {
                 presentationGallery(presentation)
