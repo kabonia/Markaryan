@@ -1,233 +1,91 @@
 import Foundation
 
 /// Built‑in designer: works on the iPhone without any AI or internet.
-/// Places real‑size furniture / fixtures against the walls of the scanned room by rules
-/// (door swing and passages kept free, items never cross walls or each other),
-/// and picks finishes, palette, materials and budget from the chosen style.
+/// Chooses real‑size furniture and fixtures for the room type and the client's wishes, says where they belong
+/// (against a wall, in a corner, next to the bed…) and lets `LayoutEngine` place them by the same rules as AI concepts;
+/// finishes, palette, materials and budget come from the chosen style.
 enum OfflineDesigner {
-    // MARK: Templates
+    // MARK: What goes into the room
 
-    private struct Template {
-        let name: String
-        let kind: String
-        let width: Double
-        let depth: Double
-        /// Free space needed in front of the item.
-        var clearance: Double = 0.6
-        /// Prefer a room corner (shower, wardrobe…).
-        var corner = false
-        /// +1 far from the door, −1 near the door, 0 indifferent.
-        var door: Double = 0
-        /// Optional: the item is skipped if it does not fit.
-        var optional = false
-        /// Mounted on the wall: no floor clearance needed.
-        var mounted = false
-    }
-
-    private static func templates(_ room: RoomKind, plan: FloorPlan, wishes: String, purpose: String) -> [Template] {
+    private static func items(_ room: RoomKind, plan: FloorPlan, wishes: String, purpose: String) -> [DesignBrief.Item] {
         let w = wishes.lowercased(), p = purpose.lowercased()
         let area = plan.area
+        let narrow = min(plan.width, plan.depth)
+        var list: [DesignBrief.Item] = []
+        /// Adds an item and returns its number in the brief (from 1) for relations.
+        @discardableResult
+        func add(_ name: String, _ kind: String, _ width: Double, _ depth: Double, _ placement: DesignBrief.Placement = .wall,
+                 relation: DesignBrief.Relation = .none, to target: Int = 0, prefer: DesignBrief.Preference = .none,
+                 optional: Bool = false, count: Int = 1, zone: String = "") -> Int {
+            list.append(DesignBrief.Item(name: name, kind: kind, width: width, depth: depth, count: count, placement: placement,
+                                         relation: relation, target: target, prefer: prefer, optional: optional, zone: zone))
+            return list.count
+        }
         switch room {
         case .bathroom:
-            var list: [Template] = []
             let wantsBath = w.contains("ванн") && !w.contains("без ванн")
-            if wantsBath { list.append(Template(name: "Ванна акриловая 1700×750", kind: "bathtub", width: 1.7, depth: 0.75, clearance: 0.6, corner: true, door: 1)) }
-            if !wantsBath { list.append(Template(name: "Душевая зона с трапом и стеклянной перегородкой", kind: "shower", width: 0.9, depth: 0.9, clearance: 0.6, corner: true, door: 1)) }
-            list.append(Template(name: "Унитаз подвесной на инсталляции", kind: "toilet", width: 0.4, depth: 0.55, clearance: 0.6, door: 0.5))
-            list.append(Template(name: "Тумба с раковиной 600 и зеркало", kind: "sink", width: 0.6, depth: 0.47, clearance: 0.7, door: -0.6))
-            if area >= 3.8 && !w.contains("без стирал") { list.append(Template(name: "Стиральная машина", kind: "washer", width: 0.6, depth: 0.6, clearance: 0.6, optional: true)) }
-            list.append(Template(name: "Полотенцесушитель водяной", kind: "towel", width: 0.5, depth: 0.1, clearance: 0, optional: true, mounted: true))
-            if area >= 4.5 { list.append(Template(name: "Шкаф‑пенал", kind: "storage", width: 0.4, depth: 0.35, clearance: 0.5, optional: true)) }
-            return list
-        case .kitchen:
-            return [
-                Template(name: "Кухонный гарнитур с мойкой и варочной панелью", kind: "kitchen", width: min(3.0, max(1.8, sqrt(area) * 0.9)), depth: 0.6, clearance: 0.9, corner: true, door: 0.6),
-                Template(name: "Холодильник", kind: "appliance", width: 0.6, depth: 0.65, clearance: 0.9, optional: true),
-                Template(name: "Обеденный стол", kind: "table", width: area > 10 ? 1.2 : 0.9, depth: 0.8, clearance: 0.7, door: 0.3, optional: true),
-                Template(name: "Растение в кашпо", kind: "plant", width: 0.4, depth: 0.4, clearance: 0.2, corner: true, optional: true)
-            ]
-        case .bedroom:
-            return [
-                Template(name: area > 11 ? "Кровать 1600×2000" : "Кровать 1400×2000", kind: "bed", width: area > 11 ? 1.6 : 1.4, depth: 2.05, clearance: 0.7, door: 0.8),
-                Template(name: "Шкаф для одежды", kind: "storage", width: area > 12 ? 1.8 : 1.2, depth: 0.6, clearance: 0.8, corner: true, optional: true),
-                Template(name: "Прикроватная тумба", kind: "storage", width: 0.45, depth: 0.4, clearance: 0.3, optional: true),
-                Template(name: "Рабочий стол", kind: "desk", width: 1.2, depth: 0.6, clearance: 0.8, optional: true),
-                Template(name: "Растение в кашпо", kind: "plant", width: 0.4, depth: 0.4, clearance: 0.2, corner: true, optional: true)
-            ]
-        case .kids:
-            return [
-                Template(name: "Кровать 900×2000", kind: "bed", width: 0.9, depth: 2.05, clearance: 0.7, corner: true, door: 0.8),
-                Template(name: "Письменный стол", kind: "desk", width: 1.2, depth: 0.6, clearance: 0.8),
-                Template(name: "Шкаф", kind: "storage", width: 1.2, depth: 0.6, clearance: 0.8, corner: true, optional: true),
-                Template(name: "Стеллаж для игрушек", kind: "storage", width: 0.8, depth: 0.35, clearance: 0.6, optional: true),
-                Template(name: "Игровой коврик", kind: "decor", width: 1.4, depth: 1.0, clearance: 0, optional: true, mounted: true)
-            ]
-        case .office:
-            return [
-                Template(name: "Рабочий стол", kind: "desk", width: 1.4, depth: 0.7, clearance: 0.9, door: 0.5),
-                Template(name: "Стеллаж", kind: "storage", width: 1.2, depth: 0.4, clearance: 0.7, corner: true, optional: true),
-                Template(name: "Кресло для отдыха", kind: "chair", width: 0.8, depth: 0.8, clearance: 0.5, optional: true),
-                Template(name: "Растение в кашпо", kind: "plant", width: 0.4, depth: 0.4, clearance: 0.2, corner: true, optional: true)
-            ]
-        case .hall:
-            return [
-                Template(name: "Шкаф‑купе", kind: "storage", width: min(1.8, max(1.0, sqrt(area))), depth: 0.6, clearance: 0.8, corner: true),
-                Template(name: "Обувница", kind: "storage", width: 0.8, depth: 0.35, clearance: 0.6, optional: true),
-                Template(name: "Банкетка", kind: "chair", width: 0.8, depth: 0.4, clearance: 0.6, optional: true),
-                Template(name: "Зеркало в полный рост", kind: "mirror", width: 0.6, depth: 0.03, clearance: 0, optional: true, mounted: true)
-            ]
-        case .living:
-            var list: [Template] = []
-            if p.contains("кухн") || p.contains("студи") {
-                list.append(Template(name: "Кухонный гарнитур с мойкой и варочной панелью", kind: "kitchen", width: min(3.0, max(1.8, sqrt(area) * 0.6)), depth: 0.6, clearance: 0.9, corner: true, door: 0.4))
-                list.append(Template(name: "Обеденный стол", kind: "table", width: 1.2, depth: 0.8, clearance: 0.7, optional: true))
+            let compact = narrow < 1.7 || area < 4
+            if wantsBath {
+                add("Ванна акриловая 1700×750", "bathtub", 1.7, 0.75, .corner, prefer: .farFromDoor)
+            } else {
+                add(compact ? "Душевая зона 800×800 с трапом" : "Душевая зона с трапом и стеклянной перегородкой", "shower", compact ? 0.8 : 0.9, compact ? 0.8 : 0.9, .corner, prefer: .farFromDoor)
             }
-            list += [
-                Template(name: area > 18 ? "Диван 2400" : "Диван 2000", kind: "sofa", width: area > 18 ? 2.4 : 2.0, depth: 0.95, clearance: 0.9, door: 0.6),
-                Template(name: "ТВ‑зона с тумбой", kind: "tv", width: 1.6, depth: 0.45, clearance: 1.6, optional: true),
-                Template(name: "Стеллаж для хранения", kind: "storage", width: 1.2, depth: 0.4, clearance: 0.7, corner: true, optional: true),
-                Template(name: "Растение в кашпо", kind: "plant", width: 0.45, depth: 0.45, clearance: 0.2, corner: true, optional: true)
-            ]
-            if area < 9 { list.removeAll { $0.kind == "table" } }
-            return list
-        }
-    }
-
-    // MARK: Geometry
-
-    private struct WallSide {
-        let start: PlanPoint
-        let direction: PlanPoint   // unit vector along the wall
-        let normal: PlanPoint      // unit vector into the room
-        let length: Double
-    }
-
-    private static func sides(_ plan: FloorPlan) -> [WallSide] {
-        plan.walls.compactMap { wall in
-            let dx = wall.end.x - wall.start.x, dy = wall.end.y - wall.start.y
-            let length = hypot(dx, dy)
-            guard length > 0.5 else { return nil }
-            let u = PlanPoint(x: dx / length, y: dy / length)
-            var n = PlanPoint(x: -u.y, y: u.x)
-            let mid = PlanPoint(x: (wall.start.x + wall.end.x) / 2, y: (wall.start.y + wall.end.y) / 2)
-            if !plan.contains(PlanPoint(x: mid.x + n.x * 0.3, y: mid.y + n.y * 0.3)) { n = PlanPoint(x: -n.x, y: -n.y) }
-            guard plan.contains(PlanPoint(x: mid.x + n.x * 0.3, y: mid.y + n.y * 0.3)) else { return nil }
-            return WallSide(start: wall.start, direction: u, normal: n, length: length)
-        }
-    }
-
-    /// Points of a footprint (corners, edge middles, centre) used for overlap tests.
-    private static func samples(_ item: DesignFurniture) -> [PlanPoint] {
-        let c = item.corners
-        var points = c + [PlanPoint(x: item.x, y: item.y)]
-        for i in 0..<4 { let a = c[i], b = c[(i + 1) % 4]; points.append(PlanPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)) }
-        return points
-    }
-
-    private static func overlaps(_ a: DesignFurniture, _ b: DesignFurniture, margin: Double) -> Bool {
-        samples(a).contains { b.covers($0, margin: margin) } || samples(b).contains { a.covers($0, margin: margin) }
-    }
-
-    // MARK: Placement
-
-    private static func place(_ templates: [Template], plan: FloorPlan) -> [DesignFurniture] {
-        let walls = sides(plan)
-        let doors = plan.doors
-        let swings = doors.map { door -> (center: PlanPoint, radius: Double) in
-            let mid = PlanPoint(x: (door.start.x + door.end.x) / 2, y: (door.start.y + door.end.y) / 2)
-            return (mid, max(0.7, door.length) + 0.25)
-        }
-        let doorMid = swings.first?.center
-        let b = plan.bounds
-        let span = max(1, hypot(b.maxX - b.minX, b.maxY - b.minY))
-        var placed: [DesignFurniture] = []
-        var fronts: [DesignFurniture] = [] // clearance zones in front of placed items
-
-        for template in templates {
-            var best: (item: DesignFurniture, front: DesignFurniture?, score: Double)?
-            for wall in walls where wall.length >= template.width + 0.05 {
-                var t = template.width / 2 + 0.02
-                while t <= wall.length - template.width / 2 - 0.02 {
-                    let offset = template.depth / 2 + 0.08
-                    let center = PlanPoint(x: wall.start.x + wall.direction.x * t + wall.normal.x * offset,
-                                           y: wall.start.y + wall.direction.y * t + wall.normal.y * offset)
-                    let rotation = atan2(-wall.normal.x, wall.normal.y) * 180 / .pi
-                    let item = DesignFurniture(name: template.name, kind: template.kind, x: center.x, y: center.y, width: template.width, depth: template.depth, rotation: rotation)
-                    defer { t += 0.05 }
-                    // inside the room (with a small margin from the walls)
-                    guard item.corners.allSatisfy({ corner in
-                        plan.contains(PlanPoint(x: corner.x + (center.x - corner.x) * 0.02, y: corner.y + (center.y - corner.y) * 0.02))
-                    }) else { continue }
-                    // not in a door swing
-                    if !template.mounted || template.kind == "towel" {
-                        if samples(item).contains(where: { point in swings.contains { point.distance(to: $0.center) < $0.radius } }) { continue }
-                    }
-                    // no overlap with items and their passages
-                    if placed.contains(where: { overlaps(item, $0, margin: 0.02) }) { continue }
-                    if !template.mounted && fronts.contains(where: { overlaps(item, $0, margin: 0) }) { continue }
-                    // own passage in front must be inside the room and free
-                    var front: DesignFurniture?
-                    if template.clearance > 0 {
-                        let zone = DesignFurniture(name: "", kind: "zone", x: center.x + wall.normal.x * (template.depth / 2 + template.clearance / 2),
-                                                   y: center.y + wall.normal.y * (template.depth / 2 + template.clearance / 2),
-                                                   width: max(0.5, template.width * 0.8), depth: template.clearance, rotation: rotation)
-                        if !plan.contains(PlanPoint(x: zone.x, y: zone.y)) { continue }
-                        if placed.contains(where: { overlaps(zone, $0, margin: 0) }) { continue }
-                        front = zone
-                    }
-                    // score: corner preference, door preference, long walls
-                    var score = 0.0
-                    if template.corner { score -= min(t - template.width / 2, wall.length - t - template.width / 2) * 2 }
-                    if let doorMid, template.door != 0 { score += template.door * center.distance(to: doorMid) / span * 3 }
-                    score += wall.length * 0.05
-                    // keep the washer away from a shower / bath (electrical zone 2)
-                    if template.kind == "washer", placed.contains(where: { ["shower", "bathtub"].contains($0.kind) && $0.covers(center, margin: 0.6 + template.width / 2) }) { score -= 5 }
-                    if score > (best?.score ?? -.infinity) { best = (item, front, score) }
+            add("Унитаз подвесной на инсталляции", "toilet", 0.4, 0.55, prefer: .water)
+            let sink = add(compact ? "Тумба с раковиной 500 и зеркало" : "Тумба с раковиной 600 и зеркало", "sink", compact ? 0.5 : 0.6, compact ? 0.42 : 0.47, prefer: .water)
+            if area >= 3.8 && !w.contains("без стирал") { add("Стиральная машина", "washer", 0.6, 0.6, relation: .nextTo, to: sink, optional: true) }
+            add("Полотенцесушитель водяной", "towel", 0.5, 0.1, .mounted, prefer: .water, optional: true)
+            if area >= 4.5 { add("Шкаф‑пенал", "storage", 0.4, 0.35, optional: true) }
+        case .kitchen:
+            let run = add("Кухонный гарнитур с мойкой и варочной панелью", "kitchen", min(3.0, max(1.8, area.squareRoot() * 0.9)), 0.6, .corner)
+            add("Холодильник", "appliance", 0.6, 0.65, relation: .nextTo, to: run, optional: true)
+            if area >= 6 {
+                let table = add("Обеденный стол", "table", area > 10 ? 1.2 : 0.9, 0.8, .free, optional: true)
+                add("Стул", "chair", 0.45, 0.5, relation: .around, to: table, optional: true, count: area > 10 ? 4 : 2)
+            }
+            add("Растение в кашпо", "plant", 0.4, 0.4, .corner, optional: true)
+        case .bedroom:
+            let bedWidth = area > 11 ? 1.6 : 1.4
+            let bed = add(bedWidth > 1.5 ? "Кровать 1600×2000" : "Кровать 1400×2000", "bed", bedWidth, 2.05, prefer: .farFromDoor)
+            add("Прикроватная тумба", "storage", 0.45, 0.4, relation: .nextTo, to: bed, optional: true, count: 2)
+            add("Шкаф для одежды", "storage", area > 12 ? 1.8 : 1.2, 0.6, .corner, optional: true)
+            let desk = add("Рабочий стол", "desk", 1.2, 0.6, prefer: .window, optional: true)
+            add("Рабочее кресло", "chair", 0.55, 0.55, relation: .front, to: desk, optional: true)
+            add("Растение в кашпо", "plant", 0.4, 0.4, .corner, optional: true)
+        case .kids:
+            add("Кровать 900×2000", "bed", 0.9, 2.05, .corner, prefer: .farFromDoor)
+            let desk = add("Письменный стол", "desk", 1.2, 0.6, prefer: .window)
+            add("Рабочее кресло", "chair", 0.5, 0.5, relation: .front, to: desk)
+            add("Шкаф", "storage", 1.2, 0.6, .corner, optional: true)
+            add("Стеллаж для игрушек", "storage", 0.8, 0.35, optional: true)
+            add("Игровой коврик", "decor", 1.4, 1.0, .free, optional: true)
+        case .office:
+            let desk = add("Рабочий стол", "desk", 1.4, 0.7, prefer: .window)
+            add("Рабочее кресло", "chair", 0.55, 0.55, relation: .front, to: desk)
+            add("Стеллаж", "storage", 1.2, 0.4, .corner, optional: true)
+            add("Кресло для отдыха", "chair", 0.8, 0.8, .corner, optional: true)
+            add("Растение в кашпо", "plant", 0.4, 0.4, .corner, optional: true)
+        case .hall:
+            add("Шкаф‑купе", "storage", min(1.8, max(1.0, area.squareRoot())), 0.6, .corner)
+            let shoes = add("Обувница", "storage", 0.8, 0.35, prefer: .door, optional: true)
+            add("Банкетка", "chair", 0.8, 0.4, relation: .nextTo, to: shoes, optional: true)
+            add("Зеркало в полный рост", "mirror", 0.6, 0.03, .mounted, prefer: .door, optional: true)
+        case .living:
+            let withKitchen = p.contains("кухн") || p.contains("студи")
+            let zone = withKitchen ? "Гостиная" : ""
+            if withKitchen {
+                add("Кухонный гарнитур с мойкой и варочной панелью", "kitchen", min(3.0, max(1.8, area.squareRoot() * 0.6)), 0.6, .corner, zone: "Кухня")
+                if area >= 9 {
+                    let table = add("Обеденный стол", "table", 1.2, 0.8, .free, optional: true, zone: "Кухня")
+                    add("Стул", "chair", 0.45, 0.5, relation: .around, to: table, optional: true, count: 4, zone: "Кухня")
                 }
             }
-            if let best {
-                placed.append(best.item)
-                if let front = best.front { fronts.append(front) }
-            }
+            let sofa = add(area > 18 ? "Диван 2400" : "Диван 2000", "sofa", area > 18 ? 2.4 : 2.0, 0.95, zone: zone)
+            add("Журнальный столик", "table", 1.0, 0.55, relation: .front, to: sofa, optional: true, zone: zone)
+            add("ТВ‑зона с тумбой", "tv", 1.6, 0.45, relation: .opposite, to: sofa, optional: true, zone: zone)
+            add("Стеллаж для хранения", "storage", 1.2, 0.4, .corner, optional: true, zone: zone)
+            add("Растение в кашпо", "plant", 0.45, 0.45, .corner, optional: true, zone: zone)
         }
-        // Bedside tables next to the bed, coffee table in front of the sofa, chairs at the table.
-        return companions(placed, plan: plan)
-    }
-
-    private static func companions(_ items: [DesignFurniture], plan: FloorPlan) -> [DesignFurniture] {
-        var result = items
-        func free(_ item: DesignFurniture) -> Bool {
-            item.corners.allSatisfy { plan.contains($0) } && !result.contains { overlaps(item, $0, margin: 0.02) }
-        }
-        func offset(_ base: DesignFurniture, along: Double, out: Double) -> PlanPoint {
-            let a = base.rotation * .pi / 180
-            return PlanPoint(x: base.x + along * cos(a) - out * sin(a), y: base.y + along * sin(a) + out * cos(a))
-        }
-        if let sofa = items.first(where: { $0.kind == "sofa" }) {
-            let p = offset(sofa, along: 0, out: sofa.depth / 2 + 0.55)
-            let table = DesignFurniture(name: "Журнальный столик", kind: "table", x: p.x, y: p.y, width: 1.0, depth: 0.55, rotation: sofa.rotation)
-            if free(table) { result.append(table) }
-        }
-        if let bed = items.first(where: { $0.kind == "bed" }), bed.width >= 1.3, !result.contains(where: { $0.name == "Прикроватная тумба" }) {
-            for side in [-1.0, 1.0] {
-                let p = offset(bed, along: side * (bed.width / 2 + 0.27), out: -bed.depth / 2 + 0.22)
-                let stand = DesignFurniture(name: "Прикроватная тумба", kind: "storage", x: p.x, y: p.y, width: 0.45, depth: 0.4, rotation: bed.rotation)
-                if free(stand) { result.append(stand) }
-            }
-        }
-        for table in items where table.kind == "table" {
-            for side in [-1.0, 1.0] {
-                let p = offset(table, along: 0, out: side * (table.depth / 2 + 0.3))
-                let chair = DesignFurniture(name: "Стул", kind: "chair", x: p.x, y: p.y, width: 0.45, depth: 0.5, rotation: table.rotation + (side > 0 ? 180 : 0))
-                if free(chair) { result.append(chair) }
-            }
-        }
-        if let desk = items.first(where: { $0.kind == "desk" }) {
-            let p = offset(desk, along: 0, out: desk.depth / 2 + 0.3)
-            let chair = DesignFurniture(name: "Рабочее кресло", kind: "chair", x: p.x, y: p.y, width: 0.55, depth: 0.55, rotation: desk.rotation + 180)
-            if free(chair) { result.append(chair) }
-        }
-        return result
+        return list
     }
 
     // MARK: Style
@@ -312,7 +170,6 @@ enum OfflineDesigner {
     static func propose(plan: FloorPlan, style styleName: String, purpose: String, wishes: String) -> DesignProposal? {
         let room = RoomKind.keyword(purpose) ?? RoomKind.fromScan(plan) ?? .living
         let s = style(styleName, room: room)
-        let items = place(templates(room, plan: plan, wishes: wishes, purpose: purpose), plan: plan)
         let area = plan.area
         let wallArea = plan.netWallArea
         func r(_ v: Double) -> Double { (v * 10).rounded() / 10 }
@@ -336,14 +193,13 @@ enum OfflineDesigner {
         let tips: [String] = room == .bathroom
             ? ["Проверьте расстояние до стояка: унитаз ставьте у стены со стояком.", "Розетку стиральной машины — с УЗО, не ближе 0,6 м от душа.", "Трап и уклон пола делайте до укладки плитки.", "Вентиляцию с обратным клапаном ставьте над душем или унитазом."]
             : ["Проходы оставлены не уже 0,7 м, зона открывания двери свободна.", "Розетки планируйте по расстановке мебели до чистовой отделки.", "Размеры проверьте рулеткой перед заказом мебели."]
-        let names = items.map(\.name).joined(separator: ", ")
         let body: [String: Any] = [
             "title": "\(styleName): \(room.purposeTitle.lowercased())",
             "style": styleName,
-            "summary": "Концепция собрана встроенным дизайнером АртСтроя по скану: \(names.isEmpty ? "расстановка без мебели" : names.lowercased()). Все предметы стоят вдоль стен, дверь открывается свободно, проходы не уже 0,6–0,9 м. Отделка — в стиле «\(styleName)».",
+            "summary": "",
             "roomPurpose": purpose.isEmpty ? room.purposeTitle : purpose,
             "zones": [],
-            "furniture": items.map { ["name": $0.name, "kind": $0.kind, "x": $0.x, "y": $0.y, "width": $0.width, "depth": $0.depth, "rotation": $0.rotation] as [String: Any] },
+            "furniture": [] as [Any],
             "palette": s.palette,
             "materials": materials,
             "lighting": lighting,
@@ -356,8 +212,12 @@ enum OfflineDesigner {
             "walls": ["material": s.walls.0, "color": s.walls.1, "details": s.walls.2, "english": s.walls.3],
             "ceiling": ["material": s.ceiling.0, "color": s.ceiling.1, "details": s.ceiling.2, "english": s.ceiling.3]
         ]
-        guard let data = try? JSONSerialization.data(withJSONObject: body) else { return nil }
-        return try? JSONDecoder().decode(DesignProposal.self, from: data)
+        guard let data = try? JSONSerialization.data(withJSONObject: body), let base = try? JSONDecoder().decode(DesignProposal.self, from: data) else { return nil }
+        let brief = DesignBrief(items: items(room, plan: plan, wishes: wishes, purpose: purpose))
+        var proposal = DesignComposer.compose(base, brief: brief, plan: plan, room: room)
+        let names = proposal.furniture.map(\.name).joined(separator: ", ")
+        proposal.summary = "Концепция собрана встроенным дизайнером АртСтроя по скану: \(names.isEmpty ? "расстановка без мебели" : names.lowercased()). Предметы расставлены по правилам: дверь открывается свободно, проходы не уже 0,7 м, перед сантехникой и кухней есть место. Отделка — в стиле «\(styleName)»."
+        return proposal
     }
 
     /// English names for photo prompts when no AI translator is available.

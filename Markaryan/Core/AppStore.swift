@@ -196,12 +196,30 @@ struct PriceLine: Codable, Identifiable {
     var basis: String
     /// Nil keeps compatibility with the first price files and means that the line belongs to a house estimate.
     var appliesTo: [String]? = nil
+    // Market range from the price collection (P25 / P75 of real offers) and how many offers it rests on.
+    var materialLow: Double? = nil
+    var materialHigh: Double? = nil
+    var laborLow: Double? = nil
+    var laborHigh: Double? = nil
+    var materialSources: Int? = nil
+    var laborSources: Int? = nil
+    /// "material" / "labor": which side of the line has market data for the chosen city. Empty: base guide price.
+    var marketData: [String]? = nil
+    var lowData: Bool? = nil
     var id: String { code }
     var scopes: [String] { appliesTo ?? ["house"] }
+    var hasMarketData: Bool { !(marketData ?? []).isEmpty }
 }
 struct PriceBook: Codable {
     var updatedAt: Date
     var lines: [PriceLine]
+    /// City the market prices were collected for; nil — built-in base guide prices.
+    var city: String? = nil
+    /// city / region / nearby / national / import
+    var coverage: String? = nil
+    var distanceKm: Double? = nil
+    var method: String? = nil
+    var marketLineCount: Int { lines.filter(\.hasMarketData).count }
     static let `default` = PriceBook(updatedAt: .now, lines: [
         PriceLine(code: "survey", section: "Подготовка", title: "Выезд, геодезия и разметка", unit: "компл.", materialRate: 0, laborRate: 35_000, quantityPerSquareMeter: 0, basis: "fixed"),
         PriceLine(code: "temporary", section: "Подготовка", title: "Временное электроснабжение и бытовка", unit: "компл.", materialRate: 70_000, laborRate: 20_000, quantityPerSquareMeter: 0, basis: "fixed"),
@@ -440,6 +458,12 @@ enum WorkOrderError: LocalizedError {
     @Published var workOrders: [WorkOrder] = []
     @Published var workOrdersLoading = false
     @Published var lastPriceSync: Date? { didSet { UserDefaults.standard.set(lastPriceSync, forKey: "lastPriceSync") } }
+    /// City for market prices and partner contractors.
+    @Published var userRegion: UserRegion? { didSet { scheduleSave(userRegion, key: "userRegion") } }
+    @Published var showRegionPicker = false
+    @Published private(set) var regionDetecting = false
+    @Published private(set) var locationDenied = false
+    private let locationService = LocationService()
     /// Number of meaningful results (saved calculation, PDF, sent request). Used to ask for an App Store rating at a good moment.
     @Published private(set) var meaningfulActions = UserDefaults.standard.integer(forKey: "meaningfulActions")
     private let workOrdersDeviceID: String
@@ -478,7 +502,10 @@ enum WorkOrderError: LocalizedError {
         aiPreference = AIPreference(rawValue: UserDefaults.standard.string(forKey: "aiPreference") ?? "") ?? .auto
         claudeModel = ClaudeModel(rawValue: UserDefaults.standard.string(forKey: "claudeModel") ?? "") ?? .sonnet
         hasClaudeKey = ClaudeClient.currentKey != nil
+        userRegion = Self.read("userRegion")
         priceBook = Self.read("priceBook") ?? .default
+        // Prices saved by older versions came from the company price list: start from the base guide instead.
+        if priceBook.coverage == nil { priceBook = .default }
         let savedServerURL = UserDefaults.standard.string(forKey: "priceServerURL")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         priceServerURL = savedServerURL.isEmpty ? Self.productionServerURL : savedServerURL
         priceAlert = UserDefaults.standard.string(forKey: "priceAlert")
@@ -654,7 +681,7 @@ enum WorkOrderError: LocalizedError {
     }
     var projectCity: String {
         let city = passport.address.trimmingCharacters(in: .whitespacesAndNewlines)
-        return city.isEmpty ? Brand.city : city
+        return city.isEmpty ? (userRegion?.city ?? Brand.city) : city
     }
     var projectProgress: Double {
         milestones.isEmpty ? 0 : Double(milestones.filter(\.completed).count) / Double(milestones.count)
@@ -726,31 +753,119 @@ enum WorkOrderError: LocalizedError {
 
     func importPriceBook(from url: URL) throws {
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-        let book = try decoder.decode(PriceBook.self, from: Data(contentsOf: url))
+        var book = try decoder.decode(PriceBook.self, from: Data(contentsOf: url))
         guard !book.lines.isEmpty else { throw PriceBookError.empty }
+        book.coverage = "import"
         applyPriceBook(book)
         priceSyncMessage = "Прайс обновлён: \(book.lines.count) позиций."
     }
 
+    // MARK: Region and market prices
+
+    /// Server with market prices and partners: the platform AI server, else the configured server.
+    private func marketURL(_ path: String, query: [URLQueryItem] = []) -> URL? {
+        let base = AIServerConfig.marketURL?.absoluteString ?? serverBase
+        guard base.lowercased().hasPrefix("http"), var components = URLComponents(string: base + path) else { return nil }
+        if !query.isEmpty { components.queryItems = query }
+        return components.url
+    }
+    private var regionQuery: [URLQueryItem] {
+        guard let region = userRegion else { return [] }
+        var items = [URLQueryItem(name: "city", value: region.city), URLQueryItem(name: "region", value: region.region)]
+        if let lat = region.latitude, let lon = region.longitude {
+            items += [URLQueryItem(name: "lat", value: String(format: "%.2f", lat)), URLQueryItem(name: "lon", value: String(format: "%.2f", lon))]
+        }
+        return items
+    }
+
+    /// Asks for the city once: from location if allowed, otherwise opens the manual city choice.
+    func ensureRegion() async {
+        guard userRegion == nil, !regionDetecting else { return }
+        if !(await detectRegion()) { showRegionPicker = true }
+    }
+
+    @discardableResult
+    func detectRegion() async -> Bool {
+        regionDetecting = true
+        defer { regionDetecting = false; locationDenied = locationService.isDenied }
+        guard let location = await locationService.currentLocation(), let region = await LocationService.region(for: location) else { return false }
+        setRegion(region)
+        return true
+    }
+
+    func setRegion(_ region: UserRegion) {
+        guard region != userRegion else { return }
+        userRegion = region
+        track("region_\(region.source.rawValue)")
+        Task { await refreshPriceBook(silent: true) }
+    }
+
     /// - Parameter silent: background refresh (launch) never shows alerts; only a manual refresh reports the result.
     func refreshPriceBook(silent: Bool = false) async {
-        guard let url = serverURL("/v1/public/price-book") else {
-            if !silent { priceSyncMessage = "Укажите адрес сервера в настройках прайса." }
+        guard let region = userRegion else {
+            if !silent { showRegionPicker = true }
+            return
+        }
+        guard let url = marketURL("/v1/market/price-book", query: regionQuery) else {
+            if !silent { priceSyncMessage = "Сервер рыночных цен не настроен." }
             return
         }
         do {
             var request = URLRequest(url: url)
             request.timeoutInterval = silent ? 8 : 20
             let (data, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw PriceBookError.server }
+            guard let http = response as? HTTPURLResponse else { throw PriceBookError.server }
+            if http.statusCode == 404 {
+                useBasePrices(for: region)
+                if !silent { priceSyncMessage = "Для города \(region.city) рыночные цены пока не собраны. Смета посчитана по базовым ориентирам." }
+                return
+            }
+            guard (200...299).contains(http.statusCode) else { throw PriceBookError.server }
             let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-            let book = try decoder.decode(PriceBook.self, from: data)
-            guard !book.lines.isEmpty else { throw PriceBookError.empty }
+            let market = try decoder.decode(PriceBook.self, from: data)
+            guard !market.lines.isEmpty else { throw PriceBookError.empty }
+            // Market lines replace the base guide line by line; lines without market data stay as a marked guide.
+            let byCode = Dictionary(market.lines.map { ($0.code, $0) }, uniquingKeysWith: { first, _ in first })
+            let baseCodes = Set(PriceBook.default.lines.map(\.code))
+            var book = market
+            book.lines = PriceBook.default.lines.map { base in
+                guard var line = byCode[base.code] else { return base }
+                // A side without market data (e.g. only material offers were found) keeps the base guide rate.
+                let sides = line.marketData ?? []
+                if !sides.contains("material") { line.materialRate = base.materialRate; line.materialLow = nil; line.materialHigh = nil }
+                if !sides.contains("labor") { line.laborRate = base.laborRate; line.laborLow = nil; line.laborHigh = nil }
+                return line
+            } + market.lines.filter { !baseCodes.contains($0.code) }
             applyPriceBook(book)
-            if !silent { priceSyncMessage = "Получен актуальный прайс: \(book.updatedAt.formatted(date: .abbreviated, time: .shortened))." }
+            if !silent { priceSyncMessage = "Рыночные цены: \(book.city ?? region.city), \(book.marketLineCount) из \(book.lines.count) позиций, от \(book.updatedAt.formatted(date: .abbreviated, time: .omitted))." }
         } catch {
-            if !silent { priceSyncMessage = "Не удалось обновить прайс: \(error.localizedDescription)" }
+            // Never keep prices of another city after the city was changed.
+            if priceBook.city != nil, priceBook.city != region.city, priceBook.coverage != "nearby" { useBasePrices(for: region) }
+            if !silent { priceSyncMessage = "Не удалось обновить цены: \(error.localizedDescription)" }
         }
+    }
+
+    private func useBasePrices(for _: UserRegion) {
+        var book = PriceBook.default
+        book.coverage = "base"
+        priceBook = book
+        lastPriceSync = .now
+    }
+
+    // MARK: Partner contractors (advertising)
+
+    func partners(category: String) async -> [Partner] {
+        guard userRegion != nil, let url = marketURL("/v1/partners", query: regionQuery + [URLQueryItem(name: "category", value: category)]) else { return [] }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        guard let result = try? await session.data(for: request), (result.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode(PartnersResponse.self, from: result.0).partners) ?? []
+    }
+
+    /// Views and clicks are counted per partner for advertising reports.
+    func partnerEvent(_ partnerID: String, _ type: String) {
+        guard let url = marketURL("/v1/partners/\(partnerID)/events"), let body = try? JSONSerialization.data(withJSONObject: ["type": type]) else { return }
+        Task { _ = try? await postJSON(url, body: body, timeout: 10) }
     }
 
     private func applyPriceBook(_ book: PriceBook) {
@@ -887,6 +1002,9 @@ enum WorkOrderError: LocalizedError {
     }
     func deletePlan(_ plan: FloorPlan) {
         if let url = planModelURL(plan) { try? FileManager.default.removeItem(at: url) }
+        if let folder = try? Self.presentationsFolder() {
+            for proposal in plan.proposals { try? FileManager.default.removeItem(at: folder.appendingPathComponent(proposal.id.uuidString, isDirectory: true)) }
+        }
         floorPlans.removeAll { $0.id == plan.id }
     }
     static func planModelFolder() throws -> URL {
@@ -897,6 +1015,44 @@ enum WorkOrderError: LocalizedError {
     func planModelURL(_ plan: FloorPlan) -> URL? {
         guard let name = plan.modelFilename, let folder = try? Self.planModelFolder() else { return nil }
         let url = folder.appendingPathComponent(name)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    // MARK: Saved presentations (the PDF and pictures of a concept, kept on the iPhone)
+
+    static func presentationsFolder() throws -> URL {
+        let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("MarkaryanPresentations", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
+
+    /// Keeps a finished presentation with its concept: opening the plan again shows it without paying for new renders.
+    @discardableResult
+    func savePresentation(pdf: URL, pictures: [(title: String, image: UIImage)], engine: String?, proposalID: UUID, planID: UUID) throws -> SavedPresentation {
+        let folderName = proposalID.uuidString
+        let folder = try Self.presentationsFolder().appendingPathComponent(folderName, isDirectory: true)
+        try? FileManager.default.removeItem(at: folder)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: pdf, to: folder.appendingPathComponent(pdf.lastPathComponent))
+        var saved: [SavedPresentation.Picture] = []
+        for (index, picture) in pictures.enumerated() {
+            guard let data = picture.image.jpegData(compressionQuality: 0.85) else { continue }
+            let name = "picture-\(index + 1).jpg"
+            try data.write(to: folder.appendingPathComponent(name), options: [.atomic, .completeFileProtection])
+            saved.append(SavedPresentation.Picture(title: picture.title, file: name))
+        }
+        let record = SavedPresentation(folder: folderName, pdf: pdf.lastPathComponent, pictures: saved, engine: engine)
+        if var plan = floorPlans.first(where: { $0.id == planID }), let index = plan.proposals.firstIndex(where: { $0.id == proposalID }) {
+            plan.proposals[index].presentation = record
+            savePlan(plan)
+        }
+        return record
+    }
+
+    /// A file of a saved presentation, if it is still on the iPhone.
+    func presentationFile(_ record: SavedPresentation, _ name: String) -> URL? {
+        guard let folder = try? Self.presentationsFolder() else { return nil }
+        let url = folder.appendingPathComponent(record.folder, isDirectory: true).appendingPathComponent(name)
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
@@ -938,11 +1094,17 @@ enum WorkOrderError: LocalizedError {
         return (points, result.note ?? "", result.kind ?? "other", result.objectName ?? "")
     }
 
-    // MARK: FLUX photorealism
+    // MARK: Pictures: photoreal render of the exact 3D model, pictures by description
 
-    var fluxAvailable: Bool { aiCapabilities.imageEdit.contains("flux") || FluxClient.isConfigured }
+    /// Picture engines on the server, in its order (the first answers when no engine is chosen).
+    var imageEngines: [ImageEngine] { aiCapabilities.imageEngines }
 
-    /// FLUX understands English best: Claude translates the brief when it is available.
+    /// Something can turn the exact 3D render into a photo: the server, or a key in the owner's debug build.
+    var photorealAvailable: Bool {
+        !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || FluxClient.isConfigured || OpenAIImageClient.isConfigured
+    }
+
+    /// Image models understand English best: the AI translates the brief when it is available.
     func englishPrompt(_ text: String) async -> String {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, clean.range(of: "[А-Яа-яЁё]", options: .regularExpression) != nil, let claude = claudeClient else { return clean }
@@ -950,94 +1112,67 @@ enum WorkOrderError: LocalizedError {
         return translated?.trimmingCharacters(in: .whitespacesAndNewlines) ?? clean
     }
 
-    /// Photorealistic version of an image (3D render or photo) with FLUX.1 Kontext.
-    func fluxRender(_ image: UIImage, prompt: String, model: FluxClient.Model = .pro) async throws -> UIImage {
-        if let base = AIServerConfig.baseURL, aiCapabilities.imageEdit.contains("flux") {
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: "flux")
-            track("flux_render_server")
+    /// Photoreal version of an image (the exact 3D render or a photo of the site).
+    /// `engine`: nil — the server's first engine, the next one when it fails; an engine id — only that engine (owner comparison).
+    func photorealRender(_ image: UIImage, prompt: String, engine: String? = nil) async throws -> RenderedImage {
+        if let base = AIServerConfig.baseURL, !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty {
+            // A server before 1.3 knows only "flux" and "gpt".
+            let chosen = engine ?? (aiCapabilities.imageEngines.isEmpty ? aiCapabilities.imageEdit.first ?? "auto" : "auto")
+            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen)
+            track("photoreal_server")
             registerMeaningfulAction()
             return result
         }
-        guard let key = FluxClient.configuredKey else { throw FluxClient.FluxError.message("Добавьте ключ FLUX в FluxKey.plist.") }
-        let result = try await FluxClient(apiKey: key, model: model).edit(image, prompt: prompt)
-        track("flux_render")
-        registerMeaningfulAction()
-        return result
-    }
-
-    var gptImageAvailable: Bool { aiCapabilities.imageEdit.contains("gpt") || OpenAIImageClient.isConfigured }
-    /// Any photoreal engine configured (FLUX and/or GPT Image).
-    var photoEngineAvailable: Bool { fluxAvailable || gptImageAvailable }
-
-    /// Photorealistic version of the exact render with OpenAI GPT Image 2.
-    func gptRender(_ image: UIImage, prompt: String) async throws -> UIImage {
-        if let base = AIServerConfig.baseURL, aiCapabilities.imageEdit.contains("gpt") {
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: "gpt")
-            track("gpt_render_server")
+        // Owner's debug builds with keys in the app.
+        if let key = FluxClient.configuredKey {
+            let picture = try await FluxClient(apiKey: key, model: .max).edit(image, prompt: prompt)
+            track("flux_render")
             registerMeaningfulAction()
-            return result
+            return RenderedImage(image: picture, engine: "local:flux-kontext-max", title: "FLUX Kontext Max")
         }
-        guard let key = OpenAIImageClient.configuredKey else { throw OpenAIImageClient.OpenAIImageError.message("Добавьте ключ OpenAI в OpenAIKey.plist.") }
-        let result = try await OpenAIImageClient(apiKey: key).edit(image, prompt: prompt)
-        track("gpt_render")
-        registerMeaningfulAction()
-        return result
+        if let key = OpenAIImageClient.configuredKey {
+            let picture = try await OpenAIImageClient(apiKey: key).edit(image, prompt: prompt)
+            track("gpt_render")
+            registerMeaningfulAction()
+            return RenderedImage(image: picture, engine: "local:gpt-image", title: "GPT Image")
+        }
+        throw ClaudeError.api("Фотореализм не подключён: на сервере ИИ нет движков картинок.")
     }
 
-    /// Text-to-image with FLUX.2 (no source photo).
-    func fluxGenerate(prompt: String) async throws -> UIImage {
-        guard let key = FluxClient.configuredKey else { throw FluxClient.FluxError.message("Добавьте ключ FLUX в FluxKey.plist.") }
-        let result = try await FluxClient(apiKey: key).generate(prompt: prompt)
+    /// Photoreal pictures by description: the server's picture engines, or a FLUX key in the owner's debug build.
+    var picturesByDescriptionAvailable: Bool { !aiCapabilities.imageEngines.isEmpty || FluxClient.isConfigured }
+
+    /// Picture by description, without a source photo: the server's picture engines (or Kandinsky / Alice AI ART);
+    /// FLUX.2 with a key in the owner's debug build.
+    func pictureByDescription(_ prompt: String) async throws -> UIImage {
+        if let base = AIServerConfig.baseURL, aiCapabilities.imageGenerate || !aiCapabilities.imageEngines.isEmpty {
+            let picture = try await ServerAIClient(base: base).generateImage(prompt: prompt)
+            track("picture_server")
+            registerMeaningfulAction()
+            return picture
+        }
+        guard let key = FluxClient.configuredKey else { throw ClaudeError.api("Картинки по описанию не подключены на сервере ИИ.") }
+        let picture = try await FluxClient(apiKey: key).generate(prompt: prompt)
         track("flux_generate")
         registerMeaningfulAction()
-        return result
+        return picture
     }
 
-    static let interiorViewpoints = [
-        "standing in the doorway at eye level, looking into the room so the main zone and the longest wall are visible",
-        "standing in the far corner at eye level, looking back towards the entrance and the kitchen or storage wall",
-        "a close, detailed view of the kitchen or the most detailed functional zone",
-        "standing by the window at eye level, looking into the room towards the seating or sleeping zone"
-    ]
-
-    /// Finished interior photo of the AI concept: Claude writes a precise visual description of the room
-    /// (geometry, furniture positions, appliances, materials, colours, light), FLUX.2 renders the photo.
-    func interiorPhoto(plan: FloorPlan, proposal: DesignProposal, viewpoint: Int) async throws -> UIImage {
-        let view = Self.interiorViewpoints[abs(viewpoint) % Self.interiorViewpoints.count]
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
-        let concept = (try? encoder.encode(proposal)).flatMap { String(data: $0, encoding: .utf8) } ?? proposal.summary
-        var prompt = "Photorealistic interior design photograph, \(proposal.style) style. \(proposal.renderPromptEnglish) \(proposal.finishesEnglish)"
-        if let claude = claudeClient {
-            let system = """
-            You are a senior architectural visualizer. Write ONE prompt in English (max 1300 characters) for an image model that must produce a finished, photorealistic interior design photograph of this exact room.
-            The floor, walls and ceiling must be described FIRST and precisely, using the concept's floor/walls/ceiling finishes (material, colour, laying pattern, skirting, mouldings, ceiling levels, shadow gap, cornice, spotlights, tracks, hidden LED lines); the camera must show part of the ceiling and the floor so all three are visible; demand straight, even lines and clean junctions.
-            Describe: room size and ceiling height; camera position (\(view)); what is on the left, right and back walls from that viewpoint; every important piece of furniture with its real look; for kitchens list real appliances (built-in oven, induction cooktop, range hood, sink with faucet, fridge, dishwasher) and cabinet fronts, handles, countertop; doors and windows with curtains; materials and textures; colour palette translated from hex to colour names; lighting (natural daylight plus warm fixtures); small decor details (books, vases, plants, art, cushions, rug, tableware).
-            End with: professional interior photography, wide-angle 20mm lens, ultra realistic, sharp, magazine quality, no people, no text.
-            Output only the prompt.
-            """
-            let user = "Room plan (meters, x right, y down): \(plan.aiDescription.prefix(6000))\n\nDesign concept: \(concept.prefix(6000))"
-            if let written = try? await claude.complete(system: system, turns: [ClaudeTurn(role: .user, text: user)], maxTokens: 900) {
-                prompt = written.trimmingCharacters(in: .whitespacesAndNewlines) + " " + proposal.finishesEnglish
-            }
-        }
-        return try await fluxGenerate(prompt: prompt)
-    }
-
-    /// AI interior concept for a plan. Claude returns strict JSON through tool use; without a key
-    /// the АртСтрой server assistant is asked for the same JSON and the answer is parsed.
+    /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds) chooses
+    /// the items, their real sizes and where they belong (wall, corner, next to what) and writes the finishes;
+    /// `LayoutEngine` places everything by the rules. Without a working AI the built‑in designer does the same on the iPhone.
     func generateDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String) async throws -> DesignProposal {
-        let room = RoomKind.keyword(purpose) ?? RoomKind.fromScan(plan) ?? .living
+        let room = DesignComposer.room(plan: plan, purpose: purpose)
         let request = """
         Помещение: \(purpose). Стиль: \(style).
         \(room.rulesRussian)
         Пожелания клиента: \(wishes.isEmpty ? "нет, предложи лучший вариант" : wishes)
-        План помещения (JSON): \(plan.aiDescription)
-        Предложи концепцию дизайна и расстановку мебели строго в координатах этого плана. На картинке — тот же план сверху.
+        План помещения (JSON): \(PlanWalls.aiDescription(plan))
+        На картинке — тот же план сверху, номера стен в кружках. Выбери состав мебели и оборудования с реальными размерами и привязками к стенам и друг к другу — координаты не нужны, расстановку по правилам сделает приложение.
         """
-        let decoder = JSONDecoder()
         // Without a working AI (no key, disabled account, no internet) the built‑in designer makes the project on the iPhone.
         func offline() throws -> DesignProposal {
-            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes)?.fitted(to: plan) else {
+            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes) else {
                 throw ClaudeError.api("Не удалось расставить предметы в этом помещении. Проверьте скан.")
             }
             track("design_offline")
@@ -1045,47 +1180,26 @@ enum WorkOrderError: LocalizedError {
             return proposal
         }
         guard claudeClient != nil else { return try offline() }
-        do { return try await aiDesign(for: plan, planImage: planImage, style: style, purpose: purpose, wishes: wishes, request: request, decoder: decoder) }
+        do { return try await aiDesign(for: plan, planImage: planImage, purpose: purpose, request: request) }
         catch { return try offline() }
     }
 
-    private func aiDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String, request: String, decoder: JSONDecoder) async throws -> DesignProposal {
-        if let claude = claudeClient {
-            let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: request, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-            var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).fitted(to: plan)
-            if proposal.furniture.isEmpty {
-                // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
-                let retry = request + "\n\nВАЖНО: в прошлом ответе массив furniture был пустым или с ошибками. Обязательно заполни furniture: у каждого предмета name, kind, x, y, width, depth, rotation — числа в метрах, внутри контура комнаты."
-                let again = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: retry, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-                if let decoded = try? decoder.decode(DesignProposal.self, from: again) {
-                    let second = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
-                    if !second.furniture.isEmpty { proposal = second }
-                }
-            }
-            guard !proposal.furniture.isEmpty else { throw ClaudeError.api("ИИ не прислал расстановку. Нажмите «Создать» ещё раз.") }
-            track("design_ai")
-            registerMeaningfulAction()
-            return proposal
+    private func aiDesign(for plan: FloorPlan, planImage: UIImage?, purpose: String, request: String) async throws -> DesignProposal {
+        guard let claude = claudeClient else { throw ClaudeError.noKey }
+        func ask(_ text: String) async throws -> DesignProposal {
+            let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: text, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна: мебель и оборудование с привязками к стенам, отделка, свет и бюджет", schema: ClaudePrompts.designSchema, maxTokens: 16000)
+            return try DesignComposer.proposal(from: data, plan: plan, purpose: purpose)
         }
-        let jsonRequest = request + "\n\nОтветь ТОЛЬКО одним JSON-объектом без пояснений с полями: title, style, summary, roomPurpose, zones[{name,x,y,width,depth}], furniture[{name,kind,x,y,width,depth,rotation}], palette[hex], materials[{name,where,amount}], lighting, tips[], budgetMin, budgetMax, renderPrompt."
-        let reply = try await askAssistant(question: jsonRequest, context: .general)
-        guard let start = reply.answer.firstIndex(of: "{"), let end = reply.answer.lastIndex(of: "}"), start < end,
-              let decoded = try? decoder.decode(DesignProposal.self, from: Data(reply.answer[start...end].utf8)) else {
-            throw ClaudeError.api("Сервер ответил текстом без расстановки. Попробуйте ещё раз через минуту.")
+        var proposal = try await ask(request)
+        if proposal.furniture.isEmpty {
+            // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
+            let retry = request + "\n\nВАЖНО: в прошлом ответе не было предметов или ни один не поместился. Обязательно заполни items реальными предметами с размерами в метрах, которые помещаются в эту комнату."
+            if let second = try? await ask(retry), !second.furniture.isEmpty { proposal = second }
         }
-        let proposal = Self.stamped(decoded, purpose: purpose).fitted(to: plan)
-        guard !proposal.furniture.isEmpty else { throw ClaudeError.api("Сервер ответил без расстановки. Попробуйте ещё раз через минуту.") }
-        track("design_server")
+        guard !proposal.furniture.isEmpty else { throw ClaudeError.api("ИИ не прислал расстановку. Нажмите «Создать» ещё раз.") }
+        track("design_ai")
         registerMeaningfulAction()
         return proposal
-    }
-
-    /// The room type the user chose always wins over what the AI wrote (a bathroom stays a bathroom).
-    private static func stamped(_ proposal: DesignProposal, purpose: String) -> DesignProposal {
-        guard let chosen = RoomKind.keyword(purpose), RoomKind.keyword(proposal.roomPurpose) != chosen else { return proposal }
-        var copy = proposal
-        copy.roomPurpose = purpose
-        return copy
     }
 
     func createVisualization(style: String, brief: String, source: UIImage?) async throws -> UIImage {

@@ -9,9 +9,31 @@ export const config = {
   port: int('PORT', 8080),
   /** Optional shared token the app sends in X-App-Token (filters random bots; real protection = limits below). */
   appToken: env.APP_TOKEN || '',
-  /** Order of text providers: the first that works answers, the next is the fallback. */
-  providers: (env.AI_PROVIDERS || 'gigachat,yandex').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  /** Order of text providers: the first that works answers, the next is the fallback. Providers without keys are skipped. */
+  providers: (env.AI_PROVIDERS || 'openrouter,gigachat,yandex').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   dataDir: env.DATA_DIR || './data',
+
+  /** OpenRouter (or another OpenAI-compatible gateway): the first model answers, the others are automatic fallbacks. */
+  openrouter: {
+    apiKey: env.OPENROUTER_API_KEY || '',
+    base: (env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1').trim().replace(/\/$/, ''),
+    models: (env.OPENROUTER_MODELS || 'anthropic/claude-opus-5.5,openai/gpt-6.2-astra,google/gemini-4-carbon')
+      .split(',').map((s) => s.trim()).filter(Boolean),
+    /** low | medium | high | xhigh | max; empty — high for designs and photo counting, medium for chat. */
+    effort: env.OPENROUTER_EFFORT || '',
+    /** deny — only providers that do not store prompts (photos and plans of clients). */
+    dataCollection: (env.OPENROUTER_DATA_COLLECTION || '').toLowerCase(),
+    /** Image models for the photoreal render, in order: the first answers, the next ones step in when it fails. */
+    imageModels: (env.OPENROUTER_IMAGE_MODELS || 'google/gemini-3-pro-image,openai/gpt-image-2.6-sunburst,black-forest-labs/flux-3-image')
+      .split(',').map((s) => s.trim()).filter(Boolean),
+  },
+
+  /** Picture engines in order: openrouter (its image models), openai, bfl — each only when its key is set. */
+  images: {
+    order: (env.IMAGE_ENGINES || 'openrouter,openai,bfl').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+    /** 1K, 2K or 4K for models that take a resolution (Nano Banana: the same price for 1K and 2K). */
+    resolution: (env.IMAGE_RESOLUTION || '2K').toUpperCase(),
+  },
 
   gigachat: {
     authKey: env.GIGACHAT_AUTH_KEY || '',
@@ -28,15 +50,23 @@ export const config = {
     folderId: env.YANDEX_FOLDER_ID || '',
     model: env.YANDEX_MODEL || 'yandexgpt/latest',
     visionModel: env.YANDEX_VISION_MODEL || 'qwen3.6-35b-a3b',
-    artModel: env.YANDEX_ART_MODEL || 'yandex-art/latest',
+    artModel: env.YANDEX_ART_MODEL || 'aliceai-image-art-3.0',
     bases: (env.YANDEX_BASE || 'https://ai.api.cloud.yandex.net/v1,https://llm.api.cloud.yandex.net/v1')
       .split(',').map((s) => s.trim().replace(/\/$/, '')).filter(Boolean),
-    nativeBase: env.YANDEX_NATIVE_BASE || 'https://llm.api.cloud.yandex.net',
   },
 
-  /** Optional photoreal engines for editing the exact 3D render. */
-  bfl: { apiKey: env.BFL_API_KEY || '', model: env.BFL_MODEL || 'flux-kontext-max' },
-  openai: { apiKey: env.OPENAI_API_KEY || '', imageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2' },
+  /** Optional direct picture engines (without OpenRouter). Addresses can point to a proxy abroad. */
+  bfl: {
+    apiKey: env.BFL_API_KEY || '',
+    model: env.BFL_MODEL || 'flux-3-image',
+    base: (env.BFL_BASE || 'https://api.bfl.ai/v1').trim().replace(/\/$/, ''),
+    pollMs: int('BFL_POLL_MS', 1500),
+  },
+  openai: {
+    apiKey: env.OPENAI_API_KEY || '',
+    imageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst',
+    base: (env.OPENAI_BASE || 'https://api.openai.com/v1').trim().replace(/\/$/, ''),
+  },
 
   /** Daily limits per installation (X-Install-ID) and per IP address. */
   limits: {
@@ -53,5 +83,6 @@ export const config = {
   maxBodyBytes: int('MAX_BODY_MB', 16) * 1024 * 1024,
 };
 
+export const hasOpenRouter = () => Boolean(config.openrouter.apiKey && config.openrouter.models.length);
 export const hasGigaChat = () => Boolean(config.gigachat.authKey);
 export const hasYandex = () => Boolean(config.yandex.apiKey && config.yandex.folderId);

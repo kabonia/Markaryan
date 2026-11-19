@@ -53,17 +53,6 @@ struct AICenterTabView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                NavigationLink { PerformersHubView() } label: {
-                    ToolFeatureCard(
-                        icon: "person.3.fill",
-                        eyebrow: "СОГЛАСОВАНИЕ РАБОТ",
-                        title: "Исполнители онлайн",
-                        subtitle: "Отправьте смету, проект или визуализацию. Ответы и согласование — в чате заявки.",
-                        accent: Theme.orange
-                    )
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
                 Button { store.showAR = true } label: {
                     ToolFeatureCard(
                         icon: "viewfinder",

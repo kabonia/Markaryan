@@ -13,7 +13,7 @@ struct RoomScanView: View {
     @State private var name = ""
     @State private var error: String?
 
-    enum Phase { case intro, scanning, processing, naming }
+    enum Phase { case intro, scanning, processing }
 
     private var isSupported: Bool {
         #if canImport(RoomPlan)
@@ -53,8 +53,6 @@ struct RoomScanView: View {
                 case .processing:
                     HStack(spacing: 12) { ProgressView(); Text("Собираем стены, проёмы и мебель…").font(.subheadline) }
                         .padding(18).background(.ultraThinMaterial, in: Capsule()).padding(.bottom, 30)
-                case .naming:
-                    EmptyView()
                 }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12)).padding(.bottom, 20) }
             }

@@ -1,0 +1,37 @@
+# city=Сочи
+# region=Краснодарский край
+# lat=43.585
+# lon=39.723
+# scope=city
+# Собрано 2026-11-19 поиском по сайтам заводов, металлобаз, сервисов аренды техники и бирж мастеров.
+# Не включены явно устаревшие прайсы (бетон 2 980–3 400 ₽/м³, щебень 250–500 ₽/м³ на тех же сайтах, что и текущие цены). Авито не учтён: сайт закрыт для автоматического сбора.
+code,kind,price,source,url,date
+concrete,material,6400,beton-sochi23 (М300),https://beton-sochi23.ru/tovarnyj/m300/,2026-11-19
+concrete,material,6500,beton-sochi23 (М350),https://beton-sochi23.ru/tovarnyj/m350/,2026-11-19
+concrete,material,5100,eurobetonplus (М350 известняк),https://sochi.eurobetonplus.ru/tovarnyj/m350/#izv,2026-11-19
+concrete,material,6400,eurobetonplus (М350 гранит),https://sochi.eurobetonplus.ru/tovarnyj/m350/#granit,2026-11-19
+rebar,material,42.5,Металл Маркет (А500С 12/16),https://www.metall.market/page/armatura/,2026-11-19
+rebar,material,45,База Металлопроката (2ГИС),https://2gis.ru/sochi/firm/70000001028045193/tab/prices,2026-11-19
+rebar,material,50,Металлопрокат Сочи,https://metallprokat.com/,2026-11-19
+rebar,material,53,Исток (Ф16),https://www.istoksochi.ru/catalog/metalloprokat_1/armatura/#16,2026-11-19
+rebar,material,54,Исток (Ф12),https://www.istoksochi.ru/catalog/metalloprokat_1/armatura/#12,2026-11-19
+pump,labor,10400,perevozka24 (объявление),https://perevozka24.com/sochi-23/arenda-spetstehniki-betononasosy#1,2026-11-19
+pump,labor,18000,perevozka24 (объявление),https://perevozka24.com/sochi-23/arenda-spetstehniki-betononasosy#2,2026-11-19
+pump,labor,14000,1betononasos (26 м),https://sochi.1betononasos.ru/,2026-11-19
+pump,labor,24000,прайс БН 36 м (смена 8 ч),https://betonmonolit.ru/abn-avtobetononasos.html#36,2026-11-19
+pump,labor,40000,прайс БН 57 м (смена 8 ч),https://betonmonolit.ru/abn-avtobetononasos.html#57,2026-11-19
+pump,labor,32500,обзор цен (25–40 тыс./смена),https://selomoe.ru/sad/skolko-stoit-arenda-betononasosa-v-sochi-i-kogda-eto-nuzhno.html,2026-11-19
+sand,material,900,zabor.bz (известняк 20-40 с доставкой),https://zabor.bz/izvestnyakovyj_shcheben_20_na_40_dostavkoj/sochi,2026-11-19
+sand,material,1086,zabor.bz (верх диапазона),https://zabor.bz/shcheben_20_na_20/sochi,2026-11-19
+sand,material,1500,scheben-rf (гравийный 20-40),https://sochi.scheben-rf.ru/,2026-11-19
+sand,material,2100,объявление (гранитный),https://sochi.regtorg.ru/goods/scheben/,2026-11-19
+gazeboBase,material,900,zabor.bz (известняк 20-40 с доставкой),https://zabor.bz/izvestnyakovyj_shcheben_20_na_40_dostavkoj/sochi,2026-11-19
+gazeboBase,material,1086,zabor.bz (верх диапазона),https://zabor.bz/shcheben_20_na_20/sochi,2026-11-19
+gazeboBase,material,1500,scheben-rf (гравийный 20-40),https://sochi.scheben-rf.ru/,2026-11-19
+gazeboBase,material,2100,объявление (гранитный),https://sochi.regtorg.ru/goods/scheben/,2026-11-19
+gazeboConcrete,material,6400,beton-sochi23 (М300),https://beton-sochi23.ru/tovarnyj/m300/,2026-11-19
+gazeboConcrete,material,6500,beton-sochi23 (М350),https://beton-sochi23.ru/tovarnyj/m350/,2026-11-19
+gazeboConcrete,material,5100,eurobetonplus (М350 известняк),https://sochi.eurobetonplus.ru/tovarnyj/m350/#izv,2026-11-19
+gazeboConcrete,material,6400,eurobetonplus (М350 гранит),https://sochi.eurobetonplus.ru/tovarnyj/m350/#granit,2026-11-19
+gazeboConcrete,material,5900,beton-sochi23.ru,https://beton-sochi23.ru/tovarnyj/,2026-11-19
+gazeboConcrete,material,6000,СпектрБетон Сочи,https://sochi.spektrbeton.ru/,2026-11-19

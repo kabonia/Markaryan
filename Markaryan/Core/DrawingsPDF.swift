@@ -44,7 +44,7 @@ enum DrawingsPDF {
     // MARK: Entry point
 
     static func render(plan: FloorPlan, proposal original: DesignProposal?, projectName: String) throws -> URL {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let safe = plan.name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "помещение" : safe).pdf")
@@ -67,7 +67,8 @@ enum DrawingsPDF {
         let ppm = 1000 / scale * 72 / 25.4
         let t = Transform(scale: scale, origin: CGPoint(x: field.midX - CGFloat(widthM) * ppm / 2, y: field.midY - CGFloat(depthM) * ppm / 2), minX: b.minX, minY: b.minY)
 
-        let walls = plan.walls.filter { $0.length > 0.05 }
+        // Same numbering as the AI uses (clockwise from the entrance); each wall runs left to right as seen from inside.
+        let walls = PlanWalls.numbered(plan).map { side -> PlanSegment in var wall = side.segment; wall.start = side.start; wall.end = side.end; return wall }
         let doors = plan.doors, windows = plan.windows
         let roomName = plan.name
 
@@ -848,7 +849,7 @@ enum DrawingsPDF {
 
     /// Engineering plan for the presentation (only when there are fixtures to connect).
     static func engineeringPicture(plan: FloorPlan, proposal original: DesignProposal?, size: CGSize = CGSize(width: 540, height: 470)) -> (image: UIImage, points: [ConnectionPoint])? {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let points = connections(plan: plan, proposal: proposal, room: room)
         guard !points.isEmpty else { return nil }
@@ -873,7 +874,7 @@ enum DrawingsPDF {
 
     /// Clean architectural plan: without furniture — measured plan with three dimension chains; with furniture — layout with positions.
     static func planPicture(plan: FloorPlan, proposal original: DesignProposal?, furniture: Bool, size: CGSize = CGSize(width: 540, height: 470)) -> UIImage {
-        let proposal = original?.fitted(to: plan)
+        let proposal = original?.placed(in: plan)
         let b = plan.bounds
         let widthM = max(0.5, b.maxX - b.minX), depthM = max(0.5, b.maxY - b.minY)
         let margin = mm(furniture ? 20 : 32)
@@ -1050,8 +1051,9 @@ enum DrawingsPDF {
                 guard distance(opening.start) < 0.25, distance(opening.end) < 0.25 else { continue }
                 let s0 = max(0, min(along(opening.start), along(opening.end))), s1v = min(wall.length, max(along(opening.start), along(opening.end)))
                 guard s1v - s0 > 0.1 else { continue }
-                let bottom: Double = opening.kind == .window ? 0.85 : 0
-                let top: Double = opening.kind == .window ? min(height - 0.2, 0.85 + max(0.6, opening.height)) : min(height - 0.1, 2.1)
+                // Window sill as scanned (0.85 m when unknown), kept low enough for the window to show.
+                let bottom: Double = opening.kind == .window ? min(max(0, opening.elevation ?? 0.85), height - 0.5) : 0
+                let top: Double = opening.kind == .window ? min(height - 0.2, bottom + max(0.6, opening.height)) : min(height - 0.1, opening.height > 1.5 ? opening.height : 2.1)
                 let o = CGRect(x: rect.minX + CGFloat(s0) * ppm, y: rect.maxY - CGFloat(top) * ppm, width: CGFloat(s1v - s0) * ppm, height: CGFloat(top - bottom) * ppm)
                 cg.setFillColor(UIColor.white.cgColor); cg.fill(o)
                 cg.setLineWidth(s2); cg.stroke(o)

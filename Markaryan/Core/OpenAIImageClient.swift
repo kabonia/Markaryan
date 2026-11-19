@@ -1,11 +1,11 @@
 import Foundation
 import UIKit
 
-/// OpenAI GPT Image 2: photorealistic edit of the exact 3D render (POST /v1/images/edits, multipart, base64 answer).
-/// Used as the second engine next to FLUX Kontext; the geometry check decides which picture goes to the client.
+/// OpenAI GPT Image: photorealistic edit of the exact 3D render (POST /v1/images/edits, multipart, base64 answer).
+/// Only for the owner's debug builds with a key in the app; release builds go through the AI server.
 struct OpenAIImageClient {
     let apiKey: String
-    var model = "gpt-image-2"
+    var model = "gpt-image-2.6-sunburst"
 
     /// Key from the Keychain or OpenAIKey.plist (owner's own builds). Never in the code.
     static var configuredKey: String? {

@@ -25,9 +25,19 @@
 		A8D9C0E1F2A3B4C5D6E7F809 /* Markaryan/Views/PerformersHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */; };
 		AA10000000000000000000B1 /* Markaryan/Core/Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */; };
 		AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */; };
+		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
+		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
 		AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */; };
 		AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */; };
 		AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */; };
+		AA1000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */; };
+		AA1000000000000000000D08 /* Markaryan/Core/PlanFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */; };
+		AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */; };
+		AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */; };
+		AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */; };
+		AA1000000000000000000D03 /* Markaryan/Core/RoomKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */; };
+		AA1000000000000000000D02 /* Markaryan/Core/DesignProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */; };
+		AA1000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */; };
 		AA10000000000000000000B6 /* Markaryan/Views/RoomScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B6 /* Markaryan/Views/RoomScanView.swift */; };
 		AA10000000000000000000B7 /* Markaryan/Views/FloorPlanViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B7 /* Markaryan/Views/FloorPlanViews.swift */; };
 		AA10000000000000000000B8 /* Markaryan/Views/AIEngineSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B8 /* Markaryan/Views/AIEngineSettingsView.swift */; };
@@ -67,9 +77,19 @@
 		B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PerformersHubView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Brand.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/SiteWeather.swift; sourceTree = "<group>"; };
+		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
+		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/OnboardingView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ClaudeClient.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FloorPlan.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutEngine.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanFlow.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignBrief.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutCheck.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanWalls.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/RoomKind.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignProposal.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanGeometry.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B6 /* Markaryan/Views/RoomScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RoomScanView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B7 /* Markaryan/Views/FloorPlanViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/FloorPlanViews.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B8 /* Markaryan/Views/AIEngineSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/AIEngineSettingsView.swift; sourceTree = "<group>"; };
@@ -109,6 +129,8 @@
 				49AD955F8784D5FA0FDEC1F2 /* Markaryan/Core/MeasurementGeometry.swift */,
 				AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */,
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
+				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
+				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
 				AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */,
 				AA2000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift */,
 				AA2000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift */,
@@ -126,6 +148,14 @@
 				AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */,
 				AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */,
 				AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */,
+				AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */,
+				AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */,
+				AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */,
+				AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */,
+				AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */,
+				AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */,
+				AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */,
+				AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */,
 				AA20000000000000000000B6 /* Markaryan/Views/RoomScanView.swift */,
 				AA20000000000000000000B7 /* Markaryan/Views/FloorPlanViews.swift */,
 				AA20000000000000000000B8 /* Markaryan/Views/AIEngineSettingsView.swift */,
@@ -258,6 +288,8 @@
 				A8D9C0E1F2A3B4C5D6E7F809 /* Markaryan/Views/PerformersHubView.swift in Sources */,
 				AA10000000000000000000B1 /* Markaryan/Core/Brand.swift in Sources */,
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
+				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
+				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
 				AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */,
 				AA1000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift in Sources */,
 				AA1000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift in Sources */,
@@ -274,6 +306,14 @@
 				AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */,
 				AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */,
 				AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */,
+				AA1000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift in Sources */,
+				AA1000000000000000000D08 /* Markaryan/Core/PlanFlow.swift in Sources */,
+				AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */,
+				AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */,
+				AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */,
+				AA1000000000000000000D03 /* Markaryan/Core/RoomKind.swift in Sources */,
+				AA1000000000000000000D02 /* Markaryan/Core/DesignProposal.swift in Sources */,
+				AA1000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift in Sources */,
 				AA10000000000000000000B6 /* Markaryan/Views/RoomScanView.swift in Sources */,
 				AA10000000000000000000B7 /* Markaryan/Views/FloorPlanViews.swift in Sources */,
 				AA10000000000000000000B8 /* Markaryan/Views/AIEngineSettingsView.swift in Sources */,
@@ -292,6 +332,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "АртСтрой";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -317,6 +358,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "АртСтрой";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

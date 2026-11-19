@@ -1,0 +1,10 @@
+[Unit]
+Description=АртСтрой: сбор рыночных цен каждый день в 05:00 МСК
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 Europe/Moscow
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

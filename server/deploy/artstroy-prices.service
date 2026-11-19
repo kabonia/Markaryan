@@ -1,0 +1,16 @@
+[Unit]
+Description=АртСтрой: ежедневный сбор рыночных цен
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/artstroy-ai
+EnvironmentFile=/etc/artstroy-ai.env
+Environment=HOME=/root
+Environment=CLAUDE_BIN=/root/.local/bin/claude
+Environment=PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/node scripts/collect-prices.mjs
+StandardOutput=append:/opt/artstroy-ai/data/collect.log
+StandardError=append:/opt/artstroy-ai/data/collect.log
+TimeoutStartSec=4h

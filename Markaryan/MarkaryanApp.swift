@@ -134,6 +134,7 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $store.showRequest) { NavigationStack { RequestView() } }
+        .sheet(isPresented: $store.showRegionPicker) { RegionPickerView() }
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }
         .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 3 } }

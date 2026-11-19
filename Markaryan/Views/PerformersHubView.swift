@@ -11,7 +11,7 @@ struct PerformersHubView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "Исполнители онлайн", title: "Отправьте задачу —\nсогласуйте работы.")
+                SectionTitle(eyebrow: "Мои заявки и чаты", title: "Отправьте задачу —\nсогласуйте работы.")
                 Text("Прикрепите смету, описание проекта или визуализацию. Заявка попадёт в рабочий кабинет АртСтрой, а ответы будут в чате этой заявки.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
@@ -81,7 +81,7 @@ struct PerformersHubView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Исполнители")
+        .navigationTitle("Заявки")
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.refreshWorkOrders() }
         .refreshable { await store.refreshWorkOrders() }

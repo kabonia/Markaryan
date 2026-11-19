@@ -7,6 +7,8 @@ ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/russian_trusted_root_ca
     DATA_DIR=/app/data
 COPY package.json ./
 COPY src ./src
+COPY scripts ./scripts
+COPY market-prices ./market-prices
 RUN mkdir -p /app/data && chown -R node:node /app
 USER node
 EXPOSE 8080

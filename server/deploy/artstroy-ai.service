@@ -1,0 +1,14 @@
+# Сервер ИИ, рыночных цен и партнёров без Docker. Установка: README → «Подключение на сервере».
+[Unit]
+Description=АртСтрой: сервер ИИ, рыночных цен и партнёров
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/artstroy-ai
+EnvironmentFile=/etc/artstroy-ai.env
+ExecStart=/usr/local/bin/node src/index.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

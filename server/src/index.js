@@ -5,9 +5,10 @@ import { config } from './config.js';
 import { ApiError } from './util.js';
 import { consume, refund, remaining } from './limits.js';
 import * as ai from './ai.js';
-import { editEngines, fluxEdit, gptEdit } from './providers/images.js';
+import { imageEngines, legacyEditEngines, renderWithFallback, resolveEngines } from './providers/images.js';
 import * as hh from './hh.js';
 import * as avito from './avito.js';
+import * as market from './market.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -46,6 +47,8 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://local');
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { ok: true });
 
+  if (req.method === 'GET' && url.pathname === '/v1/market/price-book') return send(res, 200, market.priceBook(url));
+  if (url.pathname.startsWith('/v1/partners') || url.pathname.startsWith('/v1/admin/partners')) return handlePartners(req, res, url);
   if (url.pathname.startsWith('/v1/auth/hh/') || url.pathname.startsWith('/v1/hh/')) return handleHH(req, res, url);
   if (req.method === 'GET' && url.pathname === '/v1/market/vacancies') return handleMarketSearch(req, res, url);
   if (req.method === 'GET' && (url.pathname === '/v1/market/resumes' || url.pathname === '/v1/market/owner')) return handleResumeSearch(req, res, url);
@@ -58,7 +61,11 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
-    return send(res, 200, { chat: providers.length > 0, vision: providers.length > 0, imageGenerate: providers.length > 0, imageEdit: editEngines(), providers, remaining: remaining(installId) });
+    const engines = imageEngines().map(({ id, title }) => ({ id, title }));
+    return send(res, 200, {
+      chat: providers.length > 0, vision: providers.length > 0, imageGenerate: engines.length > 0 || ai.canGenerateImages(),
+      imageEdit: legacyEditEngines(), imageEngines: engines, providers, remaining: remaining(installId),
+    });
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
   const body = await readBody(req);
@@ -100,24 +107,41 @@ async function handle(req, res) {
   }
 
   if (url.pathname === '/v1/ai/image-edit') {
-    const engine = body.engine === 'gpt' ? 'gpt' : 'flux';
-    if (!editEngines().includes(engine)) throw new ApiError(400, 'Этот генератор не подключён на сервере.');
+    // "auto" (or nothing) — the engines in order with fallback; an engine id — only that one (comparing engines).
+    const requested = typeof body.engine === 'string' ? body.engine : 'auto';
+    const engines = resolveEngines(requested);
+    if (engines.length === 0) throw new ApiError(400, 'Этот генератор не подключён на сервере.');
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
     consume('imageEdit', installId, ip);
     try {
-      const image = engine === 'gpt' ? await gptEdit({ image: body.image, prompt: String(body.prompt || ''), size: body.size }) : await fluxEdit({ image: body.image, prompt: String(body.prompt || '') });
-      return send(res, 200, { image, engine });
+      const params = { image: body.image, prompt: String(body.prompt || ''), size: body.size, aspectRatio: aspectRatio(body.aspectRatio) };
+      const { image, engine } = await renderWithFallback(engines, params);
+      return send(res, 200, { image, engine: engine.id, title: engine.title });
     } catch (error) { refund('imageEdit', installId, ip); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image') {
     consume('image', installId, ip);
-    try { return send(res, 200, { image: await ai.generateImage({ prompt: String(body.prompt || '').slice(0, 3000) }) }); }
-    catch (error) { refund('image', installId, ip); throw error; }
+    const prompt = String(body.prompt || '').slice(0, 3000);
+    try {
+      // The photoreal engines draw best; Kandinsky or Alice AI ART when none is set up or all fail.
+      if (imageEngines().length > 0) {
+        try {
+          const { image, engine } = await renderWithFallback(imageEngines(), { prompt, aspectRatio: aspectRatio(body.aspectRatio) });
+          return send(res, 200, { image, engine: engine.id, title: engine.title });
+        } catch (error) {
+          if (!ai.canGenerateImages()) throw error;
+        }
+      }
+      return send(res, 200, { image: await ai.generateImage({ prompt }) });
+    } catch (error) { refund('image', installId, ip); throw error; }
   }
 
   return send(res, 404, { error: 'Не найдено' });
 }
+
+const RATIOS = new Set(['1:1', '4:3', '3:4', '3:2', '2:3', '16:9', '9:16', '5:4', '4:5']);
+const aspectRatio = (value) => (RATIOS.has(value) ? value : '4:3');
 
 function page(res, status, title, text) {
   const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>`
@@ -270,6 +294,21 @@ async function handleMarket(req, res, url, provider, slug, title) {
   return send(res, 404, { error: 'Не найдено' });
 }
 
+async function handlePartners(req, res, url) {
+  if (url.pathname === '/v1/admin/partners') {
+    market.checkAdmin(req);
+    if (req.method === 'GET') return send(res, 200, { partners: market.listPartners(), stats: market.partnerStats() });
+    if (req.method === 'PUT') return send(res, 200, market.savePartners((await readBody(req)).partners));
+  }
+  if (req.method === 'GET' && url.pathname === '/v1/partners') {
+    const q = (k) => url.searchParams.get(k);
+    return send(res, 200, { partners: market.partnersFor({ city: q('city'), region: q('region'), category: q('category') }) });
+  }
+  const event = url.pathname.match(/^\/v1\/partners\/([a-z0-9-]{2,40})\/events$/);
+  if (req.method === 'POST' && event) return send(res, 200, market.recordEvent(event[1], (await readBody(req)).type));
+  return send(res, 404, { error: 'Не найдено' });
+}
+
 const server = http.createServer((req, res) => {
   handle(req, res).catch((error) => {
     const status = error instanceof ApiError ? error.status : 500;
@@ -280,4 +319,4 @@ const server = http.createServer((req, res) => {
 });
 server.requestTimeout = 300_000;
 server.headersTimeout = 60_000;
-server.listen(config.port, () => console.log(`АртСтрой server on :${config.port}, AI: ${ai.activeProviders().join(', ') || 'нет ключей'}; image edit: ${editEngines().join(', ') || 'нет'}; hh.ru: ${hh.hhEnabled() ? 'настроен' : 'нет'}; Avito: ${avito.avitoEnabled() ? 'настроен' : 'нет'}`));
+server.listen(config.port, () => console.log(`АртСтрой server on :${config.port}, AI: ${ai.activeProviders().join(', ') || 'нет ключей'}; pictures: ${imageEngines().map((e) => e.title).join(', ') || 'нет'}; hh.ru: ${hh.hhEnabled() ? 'настроен' : 'нет'}; Avito: ${avito.avitoEnabled() ? 'настроен' : 'нет'}`));

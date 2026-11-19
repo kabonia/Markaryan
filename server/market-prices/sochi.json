@@ -1,0 +1,119 @@
+{
+ "city": "Сочи",
+ "region": "Краснодарский край",
+ "scope": "city",
+ "lat": 43.585,
+ "lon": 39.723,
+ "updatedAt": "2026-11-19T17:33:31Z",
+ "method": "Медиана предложений магазинов, маркетплейсов и бирж труда; выбросы отсечены по межквартильному размаху; предложения старше 30 дней не учитываются.",
+ "lines": [
+  {
+   "code": "sand",
+   "section": "Фундамент",
+   "title": "Песчано-щебёночное основание",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.25,
+   "basis": "area",
+   "materialRate": 1293,
+   "laborRate": 0,
+   "materialLow": 1040,
+   "materialHigh": 1650,
+   "materialSources": 4,
+   "marketData": [
+    "material"
+   ],
+   "lowData": false
+  },
+  {
+   "code": "concrete",
+   "section": "Фундамент",
+   "title": "Бетон для фундаментной плиты",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.3,
+   "basis": "area",
+   "materialRate": 6400,
+   "laborRate": 0,
+   "materialLow": 6400,
+   "materialHigh": 6450,
+   "materialSources": 3,
+   "marketData": [
+    "material"
+   ],
+   "lowData": false
+  },
+  {
+   "code": "rebar",
+   "section": "Фундамент",
+   "title": "Арматура и вязальная проволока",
+   "unit": "кг",
+   "quantityPerSquareMeter": 18,
+   "basis": "area",
+   "materialRate": 50,
+   "laborRate": 0,
+   "materialLow": 45,
+   "materialHigh": 53,
+   "materialSources": 5,
+   "marketData": [
+    "material"
+   ],
+   "lowData": false
+  },
+  {
+   "code": "pump",
+   "section": "Фундамент",
+   "title": "Бетононасос и техника",
+   "unit": "смена",
+   "quantityPerSquareMeter": 0,
+   "basis": "fixed",
+   "materialRate": 0,
+   "laborRate": 21000,
+   "laborLow": 15000,
+   "laborHigh": 30375,
+   "laborSources": 6,
+   "marketData": [
+    "labor"
+   ],
+   "lowData": false
+  },
+  {
+   "code": "gazeboBase",
+   "section": "Основание",
+   "title": "Щебёночное основание",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.18,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ],
+   "materialRate": 1293,
+   "laborRate": 0,
+   "materialLow": 1040,
+   "materialHigh": 1650,
+   "materialSources": 4,
+   "marketData": [
+    "material"
+   ],
+   "lowData": false
+  },
+  {
+   "code": "gazeboConcrete",
+   "section": "Основание",
+   "title": "Бетонные опоры",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.12,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ],
+   "materialRate": 6400,
+   "laborRate": 0,
+   "materialLow": 6000,
+   "materialHigh": 6400,
+   "materialSources": 5,
+   "marketData": [
+    "material"
+   ],
+   "lowData": false
+  }
+ ]
+}

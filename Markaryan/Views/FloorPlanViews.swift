@@ -10,12 +10,14 @@ struct FloorPlanCanvas: View {
     var proposal: DesignProposal?
     var showDimensions = true
     var compact = false
+    /// Wall numbers in circles (the picture sent to the AI: «стена 2» in its answer is the wall marked 2 here).
+    var wallNumbers = false
 
     private let paper = Color(red: 0.97, green: 0.96, blue: 0.93)
     private let ink = Color(red: 0.13, green: 0.15, blue: 0.14)
 
     var body: some View {
-        let proposal = self.proposal?.fitted(to: plan)
+        let proposal = self.proposal?.placed(in: plan)
         return Canvas { context, size in
             let b = plan.bounds
             let margin: CGFloat = compact ? 10 : 34
@@ -118,6 +120,13 @@ struct FloorPlanCanvas: View {
                     if (mid.x + normal.x - center.x) * normal.x + (mid.y + normal.y - center.y) * normal.y < 0 { normal = CGPoint(x: -normal.x, y: -normal.y) }
                     let label = CGPoint(x: mid.x + normal.x * 14, y: mid.y + normal.y * 14)
                     context.draw(Text(String(format: "%.2f м", wall.length).replacingOccurrences(of: ".", with: ",")).font(.system(size: 9, weight: .semibold).monospacedDigit()).foregroundColor(ink.opacity(0.8)), at: label)
+                }
+            }
+            if wallNumbers && !compact {
+                for wall in PlanWalls.numbered(plan) {
+                    let center = p(wall.point(wall.length / 2, offset: 0.32))
+                    context.fill(Path(ellipseIn: CGRect(x: center.x - 10, y: center.y - 10, width: 20, height: 20)), with: .color(ink))
+                    context.draw(Text("\(wall.number)").font(.system(size: 11, weight: .bold)).foregroundColor(paper), at: center)
                 }
             }
         }
@@ -246,17 +255,31 @@ struct FloorPlanDetailView: View {
     @State private var error: String?
     @State private var modelURL: URL?
     @State private var shareFile: SharedFile?
-    @State private var renderImage: UIImage?
     @State private var isRendering = false
-    @State private var photos: [UIImage] = []
-    @State private var viewpoint = 0
     @State private var progressText: String?
     @State private var presentation: PresentationResult?
+    @State private var isComparing = false
+    @State private var comparison: EngineComparison?
 
     struct PresentationResult {
         let proposalID: UUID
         let pdf: URL
         let images: [(title: String, image: UIImage)]
+    }
+
+    /// Owner only: the same exact render through every picture engine.
+    struct EngineComparison: Identifiable {
+        struct Result: Identifiable {
+            let id: String
+            let title: String
+            let image: UIImage?
+            let score: Double?
+            let seconds: Double
+            let error: String?
+        }
+        let id = UUID()
+        let reference: UIImage
+        let results: [Result]
     }
     @State private var openedPhoto: PhotoSheetItem?
 
@@ -264,12 +287,27 @@ struct FloorPlanDetailView: View {
     @State private var showRename = false
     @State private var newName = ""
     @State private var confirmDelete = false
+    @State private var step: PlanStep = .measure
+    @State private var stepChosen = false
+    @State private var show3D = false
+    @State private var showOrder = false
 
     private var plan: FloorPlan? { store.floorPlans.first { $0.id == planID } }
     private var proposal: DesignProposal? {
         guard let plan else { return nil }
         if let selectedProposal { return plan.proposals.first { $0.id == selectedProposal } }
         return nil
+    }
+
+    /// A presentation of the selected concept is on the iPhone.
+    private var hasPresentation: Bool {
+        guard let presentation, let proposal else { return false }
+        return presentation.proposalID == proposal.id
+    }
+    /// A presentation can be built: the AI server or picture keys in the owner's build.
+    private var canRender: Bool { store.photorealAvailable || store.usesAIServer }
+    private func planFlow(_ plan: FloorPlan) -> PlanFlow {
+        PlanFlow(plan: plan, proposal: proposal, hasPresentation: hasPresentation, canRender: canRender)
     }
 
     var body: some View {
@@ -280,14 +318,7 @@ struct FloorPlanDetailView: View {
         .background(Theme.background)
         .navigationTitle(plan?.name ?? "План")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button { newName = plan?.name ?? ""; showRename = true } label: { Label("Переименовать", systemImage: "pencil") }
-                    Button(role: .destructive) { confirmDelete = true } label: { Label("Удалить план", systemImage: "trash") }
-                } label: { Image(systemName: "ellipsis.circle") }
-            }
-        }
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { moreMenu } }
         .sheet(isPresented: $showDesignSheet) {
             NavigationStack {
                 DesignRequestSheet(suggested: plan.flatMap { suggestedRoom($0) }, reason: plan.flatMap { RoomKind.scanReason($0) }) { style, purpose, wishes in
@@ -298,6 +329,18 @@ struct FloorPlanDetailView: View {
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
         .sheet(item: $openedPhoto) { item in NavigationStack { RenderResultView(image: item.image, title: proposal?.title ?? plan?.name ?? "Интерьер") } }
+        .sheet(item: $comparison) { item in NavigationStack { EngineComparisonView(comparison: item) } }
+        .fullScreenCover(isPresented: $show3D) {
+            if let plan {
+                NavigationStack {
+                    Room3DView(plan: plan, proposal: step == .measure ? nil : proposal)
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Готово") { show3D = false } } }
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showOrder) {
+            if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
+        }
         .quickLookPreview($modelURL)
         .alert("Название плана", isPresented: $showRename) {
             TextField("Например, гостиная", text: $newName)
@@ -307,85 +350,238 @@ struct FloorPlanDetailView: View {
         .confirmationDialog("Удалить план и все концепции?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Удалить", role: .destructive) { if let plan { store.deletePlan(plan) }; dismiss() }
         }
-        .onAppear { if selectedProposal == nil { selectedProposal = plan?.proposals.last?.id } }
-        .onChange(of: selectedProposal) { _, _ in photos = []; viewpoint = 0 }
+        .onAppear {
+            if selectedProposal == nil { selectedProposal = plan?.proposals.last?.id }
+            loadSavedPresentation()
+            // Opens where the work stopped: the measurements, the concept or its presentation.
+            if !stepChosen, let plan {
+                step = planFlow(plan).initialStep
+                stepChosen = true
+            }
+        }
+        .onChange(of: selectedProposal) { _, _ in loadSavedPresentation() }
     }
 
     private func content(_ plan: FloorPlan) -> some View {
-        ScrollView {
+        let flow = planFlow(plan)
+        return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                FloorPlanCanvas(plan: plan, proposal: proposal)
-                    .aspectRatio(max(0.7, min(1.6, plan.width / max(0.5, plan.depth))), contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(alignment: .topLeading) {
-                        Text(plan.source == .lidar ? "ЛИДАР‑СКАН" : "КОНТУР AR").font(.caption2.weight(.bold)).tracking(1).padding(.horizontal, 8).padding(.vertical, 5)
-                            .background(.black.opacity(0.65), in: Capsule()).foregroundStyle(.white).padding(10)
-                    }
-                if !plan.proposals.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            chip("План", selected: selectedProposal == nil) { selectedProposal = nil }
-                            ForEach(plan.proposals) { item in chip(item.title, selected: selectedProposal == item.id) { selectedProposal = item.id } }
-                        }
-                    }
-                }
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    PlanStat(value: "\(CalculationEngine.format((plan.area * 10).rounded() / 10)) м²", title: "Площадь")
-                    PlanStat(value: "\(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м", title: "Периметр")
-                    PlanStat(value: "\(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м", title: "Потолок")
-                    PlanStat(value: "\(CalculationEngine.format(plan.netWallArea.rounded())) м²", title: "Стены")
-                    PlanStat(value: "\(plan.windows.count)", title: "Окна")
-                    PlanStat(value: "\(plan.doors.count)", title: "Двери")
-                }
-
-                if isGenerating {
-                    HStack(spacing: 12) {
-                        ProgressView().tint(Theme.orange)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("ИИ проектирует интерьер").font(.subheadline.weight(.semibold))
-                            Text("Обычно 30–90 секунд. Не сворачивайте приложение.").font(.caption).foregroundStyle(Theme.muted)
-                        }
-                    }
-                    .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
-                } else {
-                    PrimaryButton(title: plan.proposals.isEmpty ? "Создать дизайн по планировке" : "Ещё вариант дизайна", icon: "wand.and.stars") { showDesignSheet = true }
-                }
+                PlanStepBar(step: $step, done: flow.done)
                 if let error {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
-                    }
+                    Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
                 }
-                if let proposal { proposalCard(proposal, plan: plan) }
-
-                SectionTitle(eyebrow: "Посчитать отделку", title: "Материалы по этой комнате")
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    calcLink(.tiles, "Пол: плитка / ламинат", ["area": number(plan.area)])
-                    calcLink(.screed, "Стяжка пола", ["area": number(plan.area)])
-                    calcLink(.paint, "Покраска стен", ["area": number(plan.perimeter * plan.ceilingHeight), "openings": number(plan.openingsArea)])
-                    calcLink(.plaster, "Штукатурка стен", ["area": number(plan.perimeter * plan.ceilingHeight), "openings": number(plan.openingsArea)])
-                    calcLink(.drywall, "Гипсокартон на стены", ["area": number(plan.perimeter * plan.ceilingHeight), "openings": number(plan.openingsArea)])
-                    calcLink(.paint, "Покраска потолка", ["area": number(plan.area), "openings": "0"])
+                if isComparing {
+                    Label("Сравниваем движки рендера… 1–3 мин", systemImage: "hourglass").font(.footnote).foregroundStyle(Theme.muted)
                 }
-
-                SectionTitle(eyebrow: "Рабочая документация", title: "Чертежи как в ArchiCAD")
-                Text("Обмерный план с размерами, план расстановки, точки подключения сантехники, полы, потолок и светильники, ведомость отделки — листы А3 со штампом, в масштабе.").font(.caption).foregroundStyle(Theme.muted)
-                HStack(spacing: 10) {
-                    Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть чертежи", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
-                    Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "Сохранить PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
+                switch step {
+                case .measure: measureStep(plan, flow: flow)
+                case .design: designStep(plan, flow: flow)
+                case .result: resultStep(plan, flow: flow)
                 }
-                HStack(spacing: 10) {
-                    if let url = store.planModelURL(plan) {
-                        Button { modelURL = url } label: { SecondaryActionLabel(title: "3D‑модель", icon: "cube") }.buttonStyle(PremiumPressStyle())
-                    }
-                    Button { sharePlan(plan) } label: { SecondaryActionLabel(title: "Поделиться", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-                }
-                NavigationLink { CreateWorkOrderView(prefill: workOrder(plan)) } label: {
-                    Label("Ремонт этой комнаты под ключ", systemImage: "paperplane.fill").font(.headline).frame(maxWidth: .infinity).padding(16).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }.buttonStyle(PremiumPressStyle())
-                InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR и не содержит окон и дверей. Для точной планировки используйте iPhone с лидаром.")
             }
             .padding(20)
+        }
+    }
+
+    /// Step 1: the room as scanned — the plan with sizes and the numbers; materials are counted from here.
+    @ViewBuilder private func measureStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
+        planPicture(plan, proposal: nil)
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+            PlanStat(value: "\(CalculationEngine.format((plan.area * 10).rounded() / 10)) м²", title: "Площадь")
+            PlanStat(value: "\(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м", title: "Периметр")
+            PlanStat(value: "\(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м", title: "Потолок")
+            PlanStat(value: "\(CalculationEngine.format(plan.netWallArea.rounded())) м²", title: "Стены")
+            PlanStat(value: "\(plan.windows.count)", title: "Окна")
+            PlanStat(value: "\(plan.doors.count)", title: "Двери")
+        }
+        mainButton(flow.main(on: .measure), plan: plan)
+        NavigationLink { PlanMaterialsView(plan: plan) } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "function").font(.title3).foregroundStyle(Theme.orange).frame(width: 30)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Материалы и смета").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                    Text("Пол, стяжка, стены и потолок — размеры уже из плана").font(.caption).foregroundStyle(Theme.muted)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .panelCard(16)
+        }
+        .buttonStyle(PremiumCardPressStyle())
+        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR и не содержит окон и дверей. Для точной планировки используйте iPhone с лидаром.")
+    }
+
+    /// Step 2: the concepts — the layout on the plan, finishes and budget; then the presentation.
+    @ViewBuilder private func designStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
+        if plan.proposals.count > 1 {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(plan.proposals) { item in chip(item.title, selected: selectedProposal == item.id) { selectedProposal = item.id } }
+                }
+            }
+        }
+        if let proposal {
+            planPicture(plan, proposal: proposal)
+            proposalCard(proposal, plan: plan)
+        } else if !isGenerating {
+            Text("ИИ предложит зонирование, мебель, отделку, палитру и бюджет. Мебель приложение расставит по правилам: с проходами, свободной дверью и окнами.")
+                .font(.subheadline).foregroundStyle(Theme.muted)
+        }
+        if isGenerating {
+            generatingCard
+        } else {
+            mainButton(flow.main(on: .design), plan: plan)
+        }
+        if let proposal {
+            if !isGenerating && flow.main(on: .design).action != .createDesign {
+                Button { showDesignSheet = true } label: { SecondaryActionLabel(title: "Ещё вариант дизайна", icon: "wand.and.stars") }
+                    .buttonStyle(PremiumPressStyle())
+            }
+            NavigationLink { AIAssistantView(context: assistantContext(proposal, plan: plan)) } label: {
+                SecondaryActionLabel(title: "Обсудить концепцию с ИИ", icon: "bubble.left.and.text.bubble.right")
+            }
+            .buttonStyle(PremiumPressStyle())
+        }
+    }
+
+    /// Step 3: what goes to the client — the PDF presentation, the working drawings and the renovation request.
+    @ViewBuilder private func resultStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
+        if let proposal {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("КОНЦЕПЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text(proposal.title).font(.title3.bold())
+            }
+            if let presentation, presentation.proposalID == proposal.id {
+                presentationGallery(presentation)
+            } else if flow.conceptReady && flow.canRender && !isRendering {
+                Text("Обмерный план, план расстановки, точная 3D‑модель сверху и в объёме, три вида комнаты и фотореализм (только если совпадает с моделью) — в одной PDF‑презентации. Около 1–2 минут, сохраняется на iPhone.")
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
+        } else {
+            Text("Презентация строится по концепции дизайна. Чертежи и заявку на ремонт можно сделать и по одному обмеру.")
+                .font(.subheadline).foregroundStyle(Theme.muted)
+        }
+        mainButton(flow.main(on: .result), plan: plan)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            Text("Обмерный план с размерами, план расстановки, точки сантехники, полы, потолок и свет, ведомость отделки — листы А3 со штампом, в масштабе.")
+                .font(.caption).foregroundStyle(Theme.muted)
+            HStack(spacing: 10) {
+                Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
+                Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "Сохранить PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
+            }
+        }
+        if flow.main(on: .result).action != .orderRenovation {
+            Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
+                .buttonStyle(PremiumPressStyle())
+        }
+    }
+
+    private func presentationGallery(_ presentation: PresentationResult) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(Array(presentation.images.enumerated()), id: \.offset) { _, item in
+                        VStack(alignment: .leading, spacing: 5) {
+                            Image(uiImage: item.image).resizable().scaledToFill().frame(width: 250, height: 180).clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(2)
+                                .frame(width: 250, alignment: .leading)
+                        }
+                        .onTapGesture { openedPhoto = PhotoSheetItem(image: item.image) }
+                    }
+                }
+            }
+            HStack(spacing: 10) {
+                Button { modelURL = presentation.pdf } label: { SecondaryActionLabel(title: "Открыть PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
+                Button { shareFile = SharedFile(url: presentation.pdf) } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+            }
+        }
+    }
+
+    private func planPicture(_ plan: FloorPlan, proposal: DesignProposal?) -> some View {
+        FloorPlanCanvas(plan: plan, proposal: proposal)
+            .aspectRatio(max(0.7, min(1.6, plan.width / max(0.5, plan.depth))), contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(alignment: .topLeading) {
+                Text(plan.source == .lidar ? "ЛИДАР‑СКАН" : "КОНТУР AR").font(.caption2.weight(.bold)).tracking(1).padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(.black.opacity(0.65), in: Capsule()).foregroundStyle(.white).padding(10)
+            }
+    }
+
+    /// The one main button of a step.
+    private func mainButton(_ button: PlanMainButton, plan: FloorPlan) -> some View {
+        let busy = isRendering && button.action == .buildPresentation
+        let blocked = (button.action == .buildPresentation && (isRendering || isComparing)) || (button.action == .createDesign && isGenerating)
+        return Button { perform(button.action, plan: plan) } label: {
+            HStack(spacing: 10) {
+                if busy { ProgressView().tint(.black) } else { Image(systemName: button.icon) }
+                Text(busy ? (progressText ?? "Готовим презентацию…") : button.title).font(.headline).lineLimit(2)
+            }
+            .frame(maxWidth: .infinity).padding(16).foregroundStyle(.black)
+            .background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(PremiumPressStyle())
+        .disabled(blocked)
+    }
+
+    private func perform(_ action: PlanAction, plan: FloorPlan) {
+        Haptics.tap()
+        switch action {
+        case .createDesign:
+            showDesignSheet = true
+        case .goTo(let next):
+            withAnimation(.snappy) { step = next }
+        case .buildPresentation:
+            guard let proposal else { return }
+            withAnimation(.snappy) { step = .result }
+            Task { await buildPresentation(proposal, plan: plan) }
+        case .orderRenovation:
+            showOrder = true
+        }
+    }
+
+    private var generatingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView().tint(Theme.orange)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("ИИ проектирует интерьер").font(.subheadline.weight(.semibold))
+                Text("Обычно 30–90 секунд. Не сворачивайте приложение.").font(.caption).foregroundStyle(Theme.muted)
+            }
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
+    }
+
+    /// «Ещё»: what is needed now and then.
+    private var moreMenu: some View {
+        Menu {
+            Button { newName = plan?.name ?? ""; showRename = true } label: { Label("Переименовать", systemImage: "pencil") }
+            Button { show3D = true } label: { Label("3D‑просмотр комнаты", systemImage: "rotate.3d") }
+            if let plan, let url = store.planModelURL(plan) {
+                Button { modelURL = url } label: { Label("3D‑модель скана (USDZ)", systemImage: "cube") }
+            }
+            if let plan {
+                Button { sharePlan(plan) } label: { Label("Поделиться планом", systemImage: "square.and.arrow.up") }
+            }
+            if let plan, let proposal, hasPresentation, canRender {
+                Button { step = .result; Task { await buildPresentation(proposal, plan: plan) } } label: {
+                    Label("Пересобрать презентацию", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(isRendering)
+            }
+            if let plan, let proposal, store.ownerUnlocked, store.imageEngines.count > 1 {
+                Button { Task { await compareEngines(proposal, plan: plan) } } label: {
+                    Label("Сравнить движки рендера", systemImage: "square.grid.2x2")
+                }
+                .disabled(isComparing || isRendering)
+            }
+            Divider()
+            Button(role: .destructive) { confirmDelete = true } label: { Label("Удалить план", systemImage: "trash") }
+        } label: {
+            Label("Ещё", systemImage: "ellipsis.circle")
         }
     }
 
@@ -394,6 +590,13 @@ struct FloorPlanDetailView: View {
             Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text(proposal.title).font(.title3.bold())
             Text(proposal.summary).font(.subheadline).foregroundStyle(.white.opacity(0.88))
+            if !proposal.layoutNotes.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(proposal.layoutNotes, id: \.self) { note in
+                        Label(note, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.muted)
+                    }
+                }
+            }
             if !proposal.palette.isEmpty {
                 HStack(spacing: 8) {
                     ForEach(proposal.palette, id: \.self) { hex in
@@ -454,47 +657,6 @@ struct FloorPlanDetailView: View {
                     }.padding(.top, 8)
                 }.tint(Theme.orange)
             }
-            if let renderImage {
-                Image(uiImage: renderImage).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Button { shareImage(renderImage) } label: { SecondaryActionLabel(title: "Поделиться визуализацией", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-            }
-            if let presentation, presentation.proposalID == proposal.id {
-                Text("ДИЗАЙН‑ПРЕЗЕНТАЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(Array(presentation.images.enumerated()), id: \.offset) { _, item in
-                            VStack(alignment: .leading, spacing: 5) {
-                                Image(uiImage: item.image).resizable().scaledToFill().frame(width: 250, height: 180).clipped()
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
-                            }
-                            .onTapGesture { openedPhoto = PhotoSheetItem(image: item.image) }
-                        }
-                    }
-                }
-                HStack(spacing: 10) {
-                    Button { modelURL = presentation.pdf } label: { SecondaryActionLabel(title: "Открыть PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
-                    Button { shareFile = SharedFile(url: presentation.pdf) } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-                }
-            }
-            if store.photoEngineAvailable || store.usesAIServer {
-                Button { Task { await buildPresentation(proposal, plan: plan) } } label: {
-                    HStack(spacing: 10) {
-                        if isRendering { ProgressView().tint(.black) } else { Image(systemName: "rectangle.stack.badge.play") }
-                        Text(isRendering ? (progressText ?? "Готовим презентацию…") : (presentation?.proposalID == proposal.id ? "Новые варианты визуализаций" : "Создать дизайн‑презентацию")).font(.headline).lineLimit(2)
-                    }
-                    .frame(maxWidth: .infinity).padding(16).foregroundStyle(.black)
-                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .buttonStyle(PremiumPressStyle())
-                .disabled(isRendering)
-                if !isRendering && presentation?.proposalID != proposal.id {
-                    Text("Обмерный план с размерами, план расстановки, точная 3D‑модель сверху и в объёме, виды комнаты и фотореализм (только если совпадает с моделью) — в одной PDF‑презентации. Около 1–2 минут.").font(.caption).foregroundStyle(Theme.muted)
-                }
-            }
-            NavigationLink { AIAssistantView(context: assistantContext(proposal, plan: plan)) } label: {
-                SecondaryActionLabel(title: "Обсудить концепцию с ИИ", icon: "bubble.left.and.text.bubble.right")
-            }.buttonStyle(PremiumPressStyle())
         }
         .padding(18)
         .panelCard(20)
@@ -507,20 +669,6 @@ struct FloorPlanDetailView: View {
         }
     }
 
-    private func calcLink(_ kind: CalculationKind, _ title: String, _ values: [String: String]) -> some View {
-        NavigationLink { CalculatorView(kind: kind, initialValues: values, measurementNote: "Размеры взяты из плана комнаты. Перепроверьте их перед закупкой.") } label: {
-            HStack(spacing: 10) {
-                Image(systemName: kind.icon).foregroundStyle(Theme.orange)
-                Text(title).font(.caption.weight(.semibold)).foregroundStyle(.white).multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-            }
-            .padding(12).frame(maxWidth: .infinity, minHeight: 54, alignment: .leading).panelCard(14)
-        }
-        .buttonStyle(PremiumCardPressStyle())
-    }
-
-    private func number(_ value: Double) -> String { String(format: "%.2f", max(0, value)) }
-
     private func assistantContext(_ proposal: DesignProposal, plan: FloorPlan) -> AIAssistantContext {
         let lines = proposal.materials.enumerated().map { index, material in
             AIAssistantLine(id: "material-\(index)", section: "Материалы концепции", title: "\(material.name) (\(material.where))", quantity: 0, unit: material.amount, material: 0, labor: 0, total: 0)
@@ -528,10 +676,10 @@ struct FloorPlanDetailView: View {
         return AIAssistantContext(estimateType: "Дизайн: \(proposal.title)", objectName: plan.name, area: plan.area, floors: nil, reservePercent: nil, materialTotal: nil, laborTotal: nil, total: proposal.budgetMax > 0 ? proposal.budgetMax : nil, lines: lines)
     }
 
-    @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?) -> UIImage? {
+    @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?, wallNumbers: Bool = false) -> UIImage? {
         let ratio = max(0.7, min(1.6, plan.width / max(0.5, plan.depth)))
         let width: CGFloat = 1200
-        let renderer = ImageRenderer(content: FloorPlanCanvas(plan: plan, proposal: proposal).frame(width: width, height: width / ratio))
+        let renderer = ImageRenderer(content: FloorPlanCanvas(plan: plan, proposal: proposal, wallNumbers: wallNumbers).frame(width: width, height: width / ratio))
         renderer.scale = 1
         return renderer.uiImage
     }
@@ -545,8 +693,9 @@ struct FloorPlanDetailView: View {
         guard let plan else { return }
         error = nil
         isGenerating = true
+        withAnimation(.snappy) { step = .design }
         UIApplication.shared.isIdleTimerDisabled = true // the screen must not lock while the AI is working
-        let image = planImage(plan, proposal: nil)
+        let image = planImage(plan, proposal: nil, wallNumbers: true)
         Task {
             do {
                 let result = try await store.generateDesign(for: plan, planImage: image, style: style, purpose: purpose, wishes: wishes)
@@ -555,28 +704,11 @@ struct FloorPlanDetailView: View {
                     store.savePlan(updated)
                 }
                 withAnimation(.snappy) { selectedProposal = result.id }
-                renderImage = nil
                 Haptics.success()
             } catch { self.error = error.localizedDescription; Haptics.warning() }
             isGenerating = false
             UIApplication.shared.isIdleTimerDisabled = false
         }
-    }
-
-    /// Finished interior photo: the 3D layout is rendered off screen and FLUX turns it into a real photo.
-    private func makePhoto(_ proposal: DesignProposal, plan: FloorPlan) async {
-        let current = viewpoint
-        viewpoint += 1
-        isRendering = true
-        error = nil
-        UIApplication.shared.isIdleTimerDisabled = true
-        defer { isRendering = false; UIApplication.shared.isIdleTimerDisabled = false }
-        do {
-            let photo = try await store.interiorPhoto(plan: plan, proposal: proposal, viewpoint: current)
-            withAnimation(.snappy) { photos.insert(photo, at: 0) }
-            _ = try? store.addProjectPhoto(photo, caption: "Фото интерьера: \(proposal.title)")
-            Haptics.success()
-        } catch { self.error = error.localizedDescription; Haptics.warning() }
     }
 
     /// Full design presentation: measured plan, layout plan, exact 3D model (top + isometric),
@@ -588,7 +720,7 @@ struct FloorPlanDetailView: View {
         defer { isRendering = false; progressText = nil; UIApplication.shared.isIdleTimerDisabled = false }
 
         // Every item inside the scanned outline; the room type decides titles, shots and what the AI may draw.
-        let proposal = original.fitted(to: plan)
+        let proposal = original.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
 
         progressText = "Строим точную 3D‑модель по скану…"
@@ -619,7 +751,7 @@ struct FloorPlanDetailView: View {
 
         var interiors: [(title: String, image: UIImage)] = []
         for (index, item) in exact.enumerated() {
-            if let photo = photos[index] { interiors.append((title: "\(item.title) · фотореализм (\(photo.engine))", image: photo.image)) }
+            if let photo = photos[index] { interiors.append((title: "\(item.title) · фотореализм (\(photo.title))", image: photo.image)) }
             interiors.append((title: "\(item.title) · точная 3D‑модель", image: item.image))
         }
         let rejected = exact.indices.filter { photos[$0] == nil }.count
@@ -635,57 +767,89 @@ struct FloorPlanDetailView: View {
             if let top { gallery.append((title: "3D‑план сверху · точная модель", image: top)) }
             if let iso { gallery.append((title: "Объёмный вид · точная модель", image: iso)) }
             gallery += interiors
-            for item in gallery { _ = try? store.addProjectPhoto(item.image, caption: "\(proposal.title): \(item.title)") }
-            withAnimation(.snappy) { presentation = PresentationResult(proposalID: original.id, pdf: url, images: gallery) }
+            // Kept with the concept: next time the plan opens with this presentation, without new renders.
+            var pdf = url
+            if let saved = try? store.savePresentation(pdf: url, pictures: gallery, engine: photos.compactMap { $0?.title }.first, proposalID: original.id, planID: plan.id),
+               let file = store.presentationFile(saved, saved.pdf) {
+                pdf = file
+            }
+            withAnimation(.snappy) { presentation = PresentationResult(proposalID: original.id, pdf: pdf, images: gallery) }
             store.track("design_presentation")
             if proposal.furniture.isEmpty {
                 error = "В этой концепции ИИ не прислал расстановку — в презентации только обмерный план и пустая комната. Нажмите «Ещё вариант дизайна»."
-            } else if rejected > 0 && (store.fluxAvailable || store.gptImageAvailable) {
+            } else if rejected > 0 && store.photorealAvailable {
                 error = "ИИ‑фото не прошли проверку геометрии: \(rejected). В презентации вместо них точная 3D‑модель — стены и расстановка гарантированно как в скане."
             }
             Haptics.success()
-            modelURL = url
+            modelURL = pdf
         } catch { self.error = "Не удалось собрать PDF: \(error.localizedDescription)" }
     }
 
-    /// Photoreal version from FLUX Kontext and GPT Image 2 in parallel; each is checked against the exact render
-    /// (geometry + exposure) and the one closest to the model wins. Nil if neither passes.
-    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> (image: UIImage, engine: String)? {
-        guard let reference else { return nil }
-        async let flux = candidate(engine: "FLUX", reference: reference, prompt: prompt)
-        async let gpt = candidate(engine: "GPT", reference: reference, prompt: prompt)
-        let results = await [flux, gpt].compactMap { $0 }
-        guard let best = results.max(by: { $0.score < $1.score }) else {
-            store.track("geometry_rejected")
-            return nil
-        }
-        store.track(best.engine == "GPT" ? "photo_winner_gpt" : "photo_winner_flux")
-        return (best.image, best.engine)
-    }
-
-    /// Up to 2 attempts with one engine; returns the best image that passed the checks.
-    private func candidate(engine: String, reference: UIImage, prompt: String) async -> (image: UIImage, score: Double, engine: String)? {
-        let available = engine == "GPT" ? store.gptImageAvailable : store.fluxAvailable
-        guard available else { return nil }
+    /// Photoreal version of one exact render: the server's engine (the next one if it fails), checked against the render
+    /// (geometry and exposure). One more try if the check fails; nil — the exact 3D model goes into the presentation instead.
+    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> (image: UIImage, title: String)? {
+        guard let reference, store.photorealAvailable else { return nil }
         for _ in 0..<2 {
-            let picture: UIImage?
-            if engine == "GPT" { picture = try? await store.gptRender(reference, prompt: prompt) }
-            else { picture = try? await store.fluxRender(reference, prompt: prompt, model: .max) }
-            guard let picture else { continue }
-            let score = GeometryCheck.score(reference: reference, candidate: picture)
-            if score >= GeometryCheck.threshold, RenderQuality.isUsable(picture) { return (picture, score, engine) }
+            guard let rendered = try? await store.photorealRender(reference, prompt: prompt) else { continue }
+            let score = GeometryCheck.score(reference: reference, candidate: rendered.image)
+            if score >= GeometryCheck.threshold, RenderQuality.isUsable(rendered.image) {
+                store.track("photo_accepted")
+                return (rendered.image, rendered.title)
+            }
+            store.track("geometry_rejected")
         }
         return nil
     }
 
-    private func render(_ proposal: DesignProposal, plan: FloorPlan) async {
-        isRendering = true
-        defer { isRendering = false }
-        let brief = "\(proposal.renderPrompt) Помещение \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м. Стиль: \(proposal.style). Расстановка как на приложенном плане сверху; вид изнутри комнаты, фотореализм."
+    /// The presentation saved with the selected concept (PDF and pictures on the iPhone).
+    private func loadSavedPresentation() {
+        guard let proposal else { presentation = nil; return }
+        guard presentation?.proposalID != proposal.id else { return }
+        guard let saved = proposal.presentation, let pdf = store.presentationFile(saved, saved.pdf) else { presentation = nil; return }
+        let images = saved.pictures.compactMap { picture -> (title: String, image: UIImage)? in
+            guard let url = store.presentationFile(saved, picture.file), let image = UIImage(contentsOfFile: url.path) else { return nil }
+            return (title: picture.title, image: image)
+        }
+        presentation = PresentationResult(proposalID: proposal.id, pdf: pdf, images: images)
+    }
+
+    /// Owner only: the same exact render through every picture engine, with the geometry score and the time —
+    /// to choose the engine on real scans.
+    private func compareEngines(_ original: DesignProposal, plan: FloorPlan) async {
+        isComparing = true
+        error = nil
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { isComparing = false; UIApplication.shared.isIdleTimerDisabled = false }
+        await store.refreshAICapabilities()
+        let proposal = original.placed(in: plan)
+        guard let shot = Room3DBuilder.interiorShots(plan: plan, proposal: proposal).first,
+              let reference = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .interior, shot: shot, size: CGSize(width: 2048, height: 1536)) else {
+            error = "Не удалось построить кадр 3D‑модели для сравнения."
+            return
+        }
+        let prompt = Room3DBuilder.photoPrompt(proposal: proposal, itemsEnglish: OfflineDesigner.englishNames(proposal.furniture), plan: plan)
+        let engines = store.imageEngines
+        let results = await withTaskGroup(of: EngineComparison.Result.self) { group -> [EngineComparison.Result] in
+            for engine in engines {
+                group.addTask { await renderForComparison(engine, reference: reference, prompt: prompt) }
+            }
+            var collected: [EngineComparison.Result] = []
+            for await result in group { collected.append(result) }
+            return collected
+        }
+        store.track("engine_comparison")
+        comparison = EngineComparison(reference: reference, results: engines.compactMap { engine in results.first { $0.id == engine.id } })
+    }
+
+    private func renderForComparison(_ engine: ImageEngine, reference: UIImage, prompt: String) async -> EngineComparison.Result {
+        let started = Date()
         do {
-            renderImage = try await store.createVisualization(style: "space", brief: brief, source: planImage(plan, proposal: proposal))
-            Haptics.success()
-        } catch { self.error = error.localizedDescription }
+            let rendered = try await store.photorealRender(reference, prompt: prompt, engine: engine.id)
+            let score = GeometryCheck.score(reference: reference, candidate: rendered.image)
+            return EngineComparison.Result(id: engine.id, title: engine.title, image: rendered.image, score: score, seconds: Date().timeIntervalSince(started), error: nil)
+        } catch {
+            return EngineComparison.Result(id: engine.id, title: engine.title, image: nil, score: nil, seconds: Date().timeIntervalSince(started), error: error.localizedDescription)
+        }
     }
 
     private func drawingsURL(_ plan: FloorPlan) -> URL? {
@@ -704,7 +868,7 @@ struct FloorPlanDetailView: View {
     }
 
     private func sharePlan(_ plan: FloorPlan) {
-        guard let image = planImage(plan, proposal: proposal) else { return }
+        guard let image = planImage(plan, proposal: step == .measure ? nil : proposal) else { return }
         shareImage(image, name: "План-\(plan.name)")
     }
 
@@ -728,6 +892,123 @@ struct FloorPlanDetailView: View {
             if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
         }
         return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
+    }
+}
+
+/// The three steps of the plan screen; a finished step shows a check mark.
+struct PlanStepBar: View {
+    @Binding var step: PlanStep
+    let done: Set<PlanStep>
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(PlanStep.allCases) { item in
+                let selected = item == step
+                Button { Haptics.tap(); withAnimation(.snappy) { step = item } } label: {
+                    HStack(spacing: 6) {
+                        ZStack {
+                            Circle().fill(selected ? Color.black.opacity(0.16) : Theme.panelRaised)
+                            if done.contains(item) && !selected {
+                                Image(systemName: "checkmark").font(.caption2.weight(.heavy)).foregroundStyle(Theme.orange)
+                            } else {
+                                Text("\(item.number)").font(.caption2.weight(.bold))
+                            }
+                        }
+                        .frame(width: 20, height: 20)
+                        Text(item.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.75)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .foregroundStyle(selected ? Color.black : Color.white)
+                    .background(selected ? Theme.orange : Theme.panel, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Шаг \(item.number) из \(PlanStep.allCases.count): \(item.title)" + (done.contains(item) ? ", готово" : ""))
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+    }
+}
+
+/// «Материалы и смета»: the room's finishing calculators with its sizes filled in.
+struct PlanMaterialsView: View {
+    let plan: FloorPlan
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Размеры уже подставлены из плана: пол \(format(plan.area)) м², стены \(format(plan.perimeter * plan.ceilingHeight)) м², окна и двери \(format(plan.openingsArea)) м².")
+                    .font(.footnote).foregroundStyle(Theme.muted)
+                ForEach(PlanMaterials.calculations(plan)) { item in
+                    NavigationLink {
+                        CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: "Размеры взяты из плана комнаты. Перепроверьте их перед закупкой.")
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: item.kind.icon).foregroundStyle(Theme.orange).frame(width: 26)
+                            Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
+                        .panelCard(14)
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                }
+                InfoNote(text: "Перед закупкой перепроверьте ключевые размеры рулеткой.")
+            }
+            .padding(20)
+        }
+        .background(Theme.background)
+        .navigationTitle("Материалы и смета")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func format(_ value: Double) -> String { CalculationEngine.format((value * 10).rounded() / 10) }
+}
+
+/// Owner only: one exact render of the room through every picture engine — to choose the engine on real scans.
+struct EngineComparisonView: View {
+    @Environment(\.dismiss) private var dismiss
+    let comparison: FloorPlanDetailView.EngineComparison
+    @State private var opened: FloorPlanDetailView.PhotoSheetItem?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Один и тот же кадр точной 3D‑модели через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от \(Int((GeometryCheck.threshold * 100).rounded())) %.")
+                    .font(.footnote).foregroundStyle(Theme.muted)
+                Text("ТОЧНАЯ 3D‑МОДЕЛЬ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Image(uiImage: comparison.reference).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                ForEach(comparison.results) { result in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(result.title).font(.headline)
+                            Spacer()
+                            Text(String(format: "%.0f с", result.seconds)).font(.caption).foregroundStyle(Theme.muted).monospacedDigit()
+                        }
+                        if let image = result.image {
+                            Image(uiImage: image).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .onTapGesture { opened = FloorPlanDetailView.PhotoSheetItem(image: image) }
+                        }
+                        if let score = result.score {
+                            Label("Совпадение с моделью: \(Int((score * 100).rounded())) %", systemImage: score >= GeometryCheck.threshold ? "checkmark.seal.fill" : "xmark.seal")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(score >= GeometryCheck.threshold ? Theme.success : Theme.danger)
+                        }
+                        if let error = result.error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+                    }
+                    .padding(14)
+                    .panelCard(16)
+                }
+            }
+            .padding(20)
+        }
+        .background(Theme.background)
+        .navigationTitle("Сравнение движков")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Сравнение движков") } }
     }
 }
 
