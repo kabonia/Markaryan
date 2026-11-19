@@ -9,9 +9,21 @@ export const config = {
   port: int('PORT', 8080),
   /** Optional shared token the app sends in X-App-Token (filters random bots; real protection = limits below). */
   appToken: env.APP_TOKEN || '',
-  /** Order of text providers: the first that works answers, the next is the fallback. */
-  providers: (env.AI_PROVIDERS || 'gigachat,yandex').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  /** Order of text providers: the first that works answers, the next is the fallback. Providers without keys are skipped. */
+  providers: (env.AI_PROVIDERS || 'openrouter,gigachat,yandex').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   dataDir: env.DATA_DIR || './data',
+
+  /** OpenRouter (or another OpenAI-compatible gateway): the first model answers, the others are automatic fallbacks. */
+  openrouter: {
+    apiKey: env.OPENROUTER_API_KEY || '',
+    base: (env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1').trim().replace(/\/$/, ''),
+    models: (env.OPENROUTER_MODELS || 'anthropic/claude-opus-5.5,openai/gpt-6.2-astra,google/gemini-4-carbon')
+      .split(',').map((s) => s.trim()).filter(Boolean),
+    /** low | medium | high | xhigh | max; empty — high for designs and photo counting, medium for chat. */
+    effort: env.OPENROUTER_EFFORT || '',
+    /** deny — only providers that do not store prompts (photos and plans of clients). */
+    dataCollection: (env.OPENROUTER_DATA_COLLECTION || '').toLowerCase(),
+  },
 
   gigachat: {
     authKey: env.GIGACHAT_AUTH_KEY || '',
@@ -53,5 +65,6 @@ export const config = {
   maxBodyBytes: int('MAX_BODY_MB', 16) * 1024 * 1024,
 };
 
+export const hasOpenRouter = () => Boolean(config.openrouter.apiKey && config.openrouter.models.length);
 export const hasGigaChat = () => Boolean(config.gigachat.authKey);
 export const hasYandex = () => Boolean(config.yandex.apiKey && config.yandex.folderId);

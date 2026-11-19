@@ -58,7 +58,7 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
-    return send(res, 200, { chat: providers.length > 0, vision: providers.length > 0, imageGenerate: providers.length > 0, imageEdit: editEngines(), providers, remaining: remaining(installId) });
+    return send(res, 200, { chat: providers.length > 0, vision: providers.length > 0, imageGenerate: ai.canGenerateImages(), imageEdit: editEngines(), providers, remaining: remaining(installId) });
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
   const body = await readBody(req);
