@@ -4,8 +4,11 @@ name: TestFlight — сборка и загрузка
 # Номер сборки = номер запуска этого workflow, версия — MARKETING_VERSION из проекта.
 # Нужны секреты репозитория (Settings → Secrets and variables → Actions):
 #   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API (роль Admin: подпись в облаке Apple);
-#   ASC_KEY_P8 — содержимое файла AuthKey_….p8 целиком;
-#   AI_SERVER_PLIST — содержимое настоящего Markaryan/AIServer.plist целиком.
+#   ASC_KEY_P8 — содержимое файла AuthKey_….p8 целиком (можно в base64);
+#   AI_SERVER_PLIST — содержимое настоящего Markaryan/AIServer.plist целиком (можно в base64),
+#   или вместо него AI_SERVER_URL (и при желании MARKET_SERVER_URL, APP_TOKEN).
+# Подходят и распространённые другие имена (APP_STORE_CONNECT_…, fastlane), а ID ключа и издателя —
+# также из переменных (vars). Значения ключей в журнал не выводятся.
 
 on:
   workflow_dispatch:
@@ -19,35 +22,62 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     env:
-      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
-      AI_SERVER_PLIST: ${{ secrets.AI_SERVER_PLIST }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || secrets.APP_STORE_CONNECT_KEY_ID || secrets.APP_STORE_CONNECT_API_KEY_ID || secrets.APP_STORE_CONNECT_API_KEY_KEY_ID || secrets.ASC_API_KEY_ID || secrets.APPSTORE_KEY_ID || secrets.API_KEY_ID || vars.ASC_KEY_ID || vars.APP_STORE_CONNECT_KEY_ID || vars.APP_STORE_CONNECT_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || secrets.APP_STORE_CONNECT_ISSUER_ID || secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID || secrets.ASC_API_ISSUER_ID || secrets.APPSTORE_ISSUER_ID || secrets.ISSUER_ID || vars.ASC_ISSUER_ID || vars.APP_STORE_CONNECT_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 || secrets.APP_STORE_CONNECT_PRIVATE_KEY || secrets.APP_STORE_CONNECT_API_KEY_KEY || secrets.APP_STORE_CONNECT_KEY || secrets.ASC_PRIVATE_KEY || secrets.ASC_API_KEY || secrets.APPSTORE_PRIVATE_KEY || secrets.AUTH_KEY_P8 || secrets.P8_KEY }}
+      AI_SERVER_PLIST: ${{ secrets.AI_SERVER_PLIST || secrets.AISERVER_PLIST || secrets.AI_SERVER_CONFIG || vars.AI_SERVER_PLIST }}
+      AI_SERVER_URL: ${{ secrets.AI_SERVER_URL || vars.AI_SERVER_URL }}
+      MARKET_SERVER_URL: ${{ secrets.MARKET_SERVER_URL || vars.MARKET_SERVER_URL }}
+      APP_TOKEN: ${{ secrets.APP_TOKEN || vars.APP_TOKEN }}
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Где лежат ключи (только имена, без значений)
+        run: |
+          echo "Секреты репозитория, видимые этому запуску (true — есть):"
+          echo "  ASC_KEY_ID=${{ secrets.ASC_KEY_ID != '' }} APP_STORE_CONNECT_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID != '' }} APP_STORE_CONNECT_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ID != '' }} APP_STORE_CONNECT_API_KEY_KEY_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID != '' }} ASC_API_KEY_ID=${{ secrets.ASC_API_KEY_ID != '' }} APPSTORE_KEY_ID=${{ secrets.APPSTORE_KEY_ID != '' }} API_KEY_ID=${{ secrets.API_KEY_ID != '' }}"
+          echo "  ASC_ISSUER_ID=${{ secrets.ASC_ISSUER_ID != '' }} APP_STORE_CONNECT_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID != '' }} APP_STORE_CONNECT_API_KEY_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID != '' }} ASC_API_ISSUER_ID=${{ secrets.ASC_API_ISSUER_ID != '' }} APPSTORE_ISSUER_ID=${{ secrets.APPSTORE_ISSUER_ID != '' }} ISSUER_ID=${{ secrets.ISSUER_ID != '' }}"
+          echo "  ASC_KEY_P8=${{ secrets.ASC_KEY_P8 != '' }} APP_STORE_CONNECT_PRIVATE_KEY=${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY != '' }} APP_STORE_CONNECT_API_KEY_KEY=${{ secrets.APP_STORE_CONNECT_API_KEY_KEY != '' }} APP_STORE_CONNECT_KEY=${{ secrets.APP_STORE_CONNECT_KEY != '' }} ASC_PRIVATE_KEY=${{ secrets.ASC_PRIVATE_KEY != '' }} ASC_API_KEY=${{ secrets.ASC_API_KEY != '' }} APPSTORE_PRIVATE_KEY=${{ secrets.APPSTORE_PRIVATE_KEY != '' }} AUTH_KEY_P8=${{ secrets.AUTH_KEY_P8 != '' }} P8_KEY=${{ secrets.P8_KEY != '' }}"
+          echo "  AI_SERVER_PLIST=${{ secrets.AI_SERVER_PLIST != '' }} AISERVER_PLIST=${{ secrets.AISERVER_PLIST != '' }} AI_SERVER_CONFIG=${{ secrets.AI_SERVER_CONFIG != '' }} AI_SERVER_URL=${{ secrets.AI_SERVER_URL != '' }} MARKET_SERVER_URL=${{ secrets.MARKET_SERVER_URL != '' }} APP_TOKEN=${{ secrets.APP_TOKEN != '' }}"
+          echo "Переменные (vars): ASC_KEY_ID=${{ vars.ASC_KEY_ID != '' }} ASC_ISSUER_ID=${{ vars.ASC_ISSUER_ID != '' }} APP_STORE_CONNECT_KEY_ID=${{ vars.APP_STORE_CONNECT_KEY_ID != '' }} APP_STORE_CONNECT_ISSUER_ID=${{ vars.APP_STORE_CONNECT_ISSUER_ID != '' }} AI_SERVER_PLIST=${{ vars.AI_SERVER_PLIST != '' }} AI_SERVER_URL=${{ vars.AI_SERVER_URL != '' }}"
+
       - name: Проверка секретов
         run: |
           missing=""
-          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 AI_SERVER_PLIST; do
-            if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
-          done
+          [ -n "$ASC_KEY_ID" ] || missing="$missing ASC_KEY_ID"
+          [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID"
+          [ -n "$ASC_KEY_P8" ] || missing="$missing ASC_KEY_P8"
+          [ -n "$AI_SERVER_PLIST" ] || [ -n "$AI_SERVER_URL" ] || missing="$missing AI_SERVER_PLIST"
           if [ -n "$missing" ]; then
-            echo "::error::Не заданы секреты репозитория:$missing (Settings → Secrets and variables → Actions)."
+            echo "::error::Не найдены:$missing. Добавьте их в Settings → Secrets and variables → Actions → Repository secrets (не в Environments)."
             exit 1
           fi
 
       - name: Настоящий AIServer.plist из секрета
         run: |
-          printf '%s\n' "$AI_SERVER_PLIST" > Markaryan/AIServer.plist
-          plutil -lint Markaryan/AIServer.plist
+          file=Markaryan/AIServer.plist
+          if [ -n "$AI_SERVER_PLIST" ]; then
+            printf '%s\n' "$AI_SERVER_PLIST" > "$file"
+            # Можно хранить и в base64.
+            if ! grep -q "<plist" "$file"; then printf '%s' "$AI_SERVER_PLIST" | base64 --decode > "$file"; fi
+          else
+            /usr/libexec/PlistBuddy -c "Add :AI_SERVER_URL string $AI_SERVER_URL" "$file" >/dev/null
+            /usr/libexec/PlistBuddy -c "Add :MARKET_SERVER_URL string ${MARKET_SERVER_URL:-$AI_SERVER_URL}" "$file" >/dev/null
+            /usr/libexec/PlistBuddy -c "Add :APP_TOKEN string $APP_TOKEN" "$file" >/dev/null
+          fi
+          plutil -lint "$file"
+          /usr/libexec/PlistBuddy -c "Print :AI_SERVER_URL" "$file" >/dev/null || { echo "::error::В AIServer.plist нет AI_SERVER_URL."; exit 1; }
 
       - name: Ключ App Store Connect API
         run: |
           mkdir -p "$RUNNER_TEMP/asc"
-          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
-          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+          key="$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$key"
+          # Можно хранить и в base64.
+          if ! grep -q "BEGIN PRIVATE KEY" "$key"; then printf '%s' "$ASC_KEY_P8" | base64 --decode > "$key"; fi
+          grep -q "BEGIN PRIVATE KEY" "$key" || { echo "::error::Ключ .p8 не распознан: нужен текст файла AuthKey_….p8 целиком."; exit 1; }
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
 
       - name: Тесты калькуляторов и планировок
         run: sh Tests/run.sh
