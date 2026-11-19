@@ -71,17 +71,18 @@ enum CalculationKind: String, CaseIterable, Codable, Identifiable {
     }
     var summary: String {
         switch self {
-        case .slab, .strip, .piles: return "Объём бетона · запас · стоимость"
-        case .masonry: return "Проёмы · швы · количество блоков"
+        case .slab, .strip: return "Объём бетона · опалубка · стоимость"
+        case .piles: return "Объём бетона · запас · стоимость"
+        case .masonry: return "Блоки · кубометры · клей или раствор"
         case .screed, .plaster: return "Толщина · расход · мешки смеси"
         case .paint: return "Слои · расход · упаковки"
-        case .tiles: return "Площадь · запас · упаковки"
-        case .rebar: return "Длина · теоретическая масса"
-        case .roof: return "Уклон · свесы · площадь покрытия"
-        case .concreteMix: return "Цемент · песок · щебень · вода"
+        case .tiles: return "Упаковки · плиточный клей"
+        case .rebar: return "Масса · прутки к покупке"
+        case .roof: return "Площадь покрытия · конёк"
+        case .concreteMix: return "Цемент · песок · щебень · вода на замес"
         case .drywall: return "Листы · слои · саморезы"
         case .insulation: return "Объём · толщина · упаковки"
-        case .fence: return "Листы · столбы · лаги"
+        case .fence: return "Листы · столбы · лаги · бетон"
         }
     }
     var priceUnit: String {
@@ -100,19 +101,19 @@ enum CalculationKind: String, CaseIterable, Codable, Identifiable {
     }
     var note: String {
         switch self {
-        case .slab: return "Прямоугольная плита постоянной толщины, без рёбер. Толщину и армирование задаёт проектировщик."
-        case .strip: return "Суммарная длина лент измеряется по осевым линиям, пересечения не должны учитываться дважды. Сечение постоянное; без ступеней и уширений."
+        case .slab: return "Прямоугольная плита постоянной толщины, без рёбер. Опалубка — торцы по периметру. Толщину и армирование задаёт проектировщик. Для заводского бетона обычно хватает запаса 3–5%."
+        case .strip: return "Суммарная длина лент измеряется по осевым линиям, пересечения не должны учитываться дважды. Сечение постоянное; без ступеней и уширений. Опалубка — две боковые стороны на всю высоту."
         case .piles: return "Цилиндрические сваи одинакового диаметра без уширений. Ростверк рассчитывается отдельно."
-        case .masonry: return "Один слой прямоугольных блоков. Расчёт по лицевой площади с учётом швов; без перевязки углов, армопоясов и перемычек."
+        case .masonry: return "Кладка в один блок по толщине стены. Количество — по лицевой площади с учётом швов; без армопоясов и перемычек. Шов до 5 мм — клей (1,5 кг на 1 м² × 1 мм шва, ≈25–30 кг на 1 м³ газобетона), толще — цементно-песчаный раствор (1,8 кг)."
         case .screed, .plaster: return "Введите расход с упаковки вашей смеси на 1 м² при толщине 1 мм. Значение по умолчанию — пример, а не характеристика выбранного материала."
         case .paint: return "Введите расход краски на один слой с упаковки. Впитываемость основания может изменить фактический расход."
-        case .tiles: return "Расчёт по площади, без раскладки. Для диагональной укладки и сложного рисунка увеличьте запас."
-        case .rebar: return "Теоретическая масса круглого стержня по заданной плотности. Количество, диаметр и нахлёсты назначаются по проекту; подбор несущей арматуры не выполняется."
-        case .roof: return "Симметричная двускатная крыша над прямоугольным планом. Свес вводится как горизонтальная проекция с каждой стороны. Без ендов, труб, окон и нахлёстов листов."
-        case .concreteMix: return "Пропорции по умолчанию — ориентир для бетона М200 на цементе М400 (1 : 2,8 : 4,8 по массе). Для несущих конструкций используйте заводской бетон и рецептуру по проекту."
+        case .tiles: return "Расчёт по площади, без раскладки. Для диагональной укладки и сложного рисунка увеличьте запас до 15%. Расход клея — с мешка: обычно 3–4 кг/м² при зубе 6 мм, 5–6 кг/м² при зубе 8–10 мм, 7–8 кг/м² для крупного формата."
+        case .rebar: return "Теоретическая масса стержня (сталь 7850 кг/м³, совпадает с ГОСТ: Ø12 — 0,888 кг/м). Прутки к покупке считаются раскроем: сколько целых отрезков выходит из одного прутка; длинные стержни — со стыками. Нахлёсты включайте в длину стержня или в запас. Базы режут пруток 11,7 м пополам — по 5,85 м."
+        case .roof: return "Симметричная двускатная крыша над прямоугольным планом. Свес вводится как горизонтальная проекция с каждой стороны. Без ендов, труб и окон. Нахлёсты листов закладывайте в запас: металлочерепица и профлист 10–15%, мягкая черепица 5–10%."
+        case .concreteMix: return "Пропорции по массе; по умолчанию — ориентир М200 на цементе М400 (1 : 2,8 : 4,8, В/Ц 0,6). Расход цемента на 1 м³ считается из пропорций методом абсолютных объёмов (цемент 3100, песок и щебень 2650 кг/м³, воздух 2%), поэтому смесь всегда даёт ровно заданный объём. Песок и щебень — сухие; влажный песок тяжелее, воду тогда уменьшают. Для несущих конструкций — заводской бетон."
         case .drywall: return "Расчёт листов по площади обшивки с учётом слоёв. Каркас, подвесы и шпаклёвка считаются отдельно."
         case .insulation: return "Объём утеплителя по площади и толщине. Объём упаковки указан на этикетке (например, 0,288 м³ = 8 плит 1200 × 600 × 50 мм)."
-        case .fence: return "Прямой забор без ворот и калиток. Длина столбов = высота забора + заглубление (обычно ещё 0,8–1,2 м)."
+        case .fence: return "Прямой забор без ворот и калиток. Длина столба = высота забора + заглубление (0,8–1,2 м, ниже глубины промерзания). Диаметр лунки 0 — столбы забиваются без бетона. Саморезы — ориентир: 6 на лист на каждый ряд лаг."
         }
     }
     var fields: [FieldSpec] {
@@ -125,17 +126,17 @@ enum CalculationKind: String, CaseIterable, Codable, Identifiable {
         case .slab: result = [f("length", "Длина", "м", "10"), f("width", "Ширина", "м", "8"), f("thickness", "Толщина", "мм", "250")]
         case .strip: result = [f("length", "Общая длина лент", "м", "40"), f("width", "Ширина ленты", "мм", "400"), f("height", "Полная высота ленты", "мм", "1200")]
         case .piles: result = [f("diameter", "Диаметр", "мм", "300"), f("height", "Длина сваи", "м", "3"), f("count", "Количество свай", "шт.", "12")]
-        case .masonry: result = [f("length", "Общая длина стен", "м", "40"), f("height", "Высота стен", "м", "3"), f("openings", "Площадь проёмов", "м²", "18", true), f("blockLength", "Длина блока", "мм", "600"), f("blockHeight", "Высота блока", "мм", "200"), f("joint", "Толщина шва", "мм", "3", true)]
+        case .masonry: result = [f("length", "Общая длина стен", "м", "40"), f("height", "Высота стен", "м", "3"), f("openings", "Площадь проёмов", "м²", "18", true), f("blockLength", "Длина блока", "мм", "600"), f("blockHeight", "Высота блока", "мм", "200"), f("blockWidth", "Толщина блока (стены)", "мм", "300"), f("joint", "Толщина шва", "мм", "3", true)]
         case .screed: result = [f("area", "Площадь пола", "м²", "50"), f("thickness", "Толщина слоя", "мм", "50"), f("consumption", "Расход на 1 м² × 1 мм", "кг", "2"), f("package", "Масса мешка", "кг", "25")]
         case .plaster: result = [f("area", "Площадь стен", "м²", "100"), f("openings", "Площадь проёмов", "м²", "15", true), f("thickness", "Средняя толщина", "мм", "10"), f("consumption", "Расход на 1 м² × 1 мм", "кг", "0,85"), f("package", "Масса мешка", "кг", "30")]
         case .paint: result = [f("area", "Площадь поверхности", "м²", "100"), f("openings", "Площадь проёмов", "м²", "15", true), f("layers", "Количество слоёв", "шт.", "2"), f("consumption", "Расход на 1 м² на слой", "л", "0,15"), f("package", "Объём банки", "л", "10")]
-        case .tiles: result = [f("area", "Площадь укладки", "м²", "25"), f("package", "Площадь в упаковке", "м²", "1,44")]
-        case .rebar: result = [f("diameter", "Диаметр стержня", "мм", "12"), f("length", "Длина одного стержня", "м", "6"), f("count", "Количество стержней", "шт.", "20"), f("density", "Плотность стали", "кг/м³", "7850")]
+        case .tiles: result = [f("area", "Площадь укладки", "м²", "25"), f("package", "Площадь в упаковке", "м²", "1,44"), f("glue", "Расход плиточного клея", "кг/м²", "5", true), f("glueBag", "Масса мешка клея", "кг", "25")]
+        case .rebar: result = [f("diameter", "Диаметр стержня", "мм", "12"), f("length", "Длина одного стержня", "м", "5,85"), f("count", "Количество стержней", "шт.", "20"), f("stock", "Длина прутка при покупке", "м", "11,7")]
         case .roof: result = [f("length", "Длина дома", "м", "12"), f("width", "Ширина дома", "м", "8"), f("overhang", "Свес с каждой стороны", "м", "0,5", true), f("angle", "Угол ската", "°", "30")]
-        case .concreteMix: result = [f("volume", "Объём бетона", "м³", "5"), f("cement", "Цемент на 1 м³", "кг", "270"), f("sand", "Песок, частей на 1 часть цемента", "ч.", "2,8"), f("gravel", "Щебень, частей на 1 часть цемента", "ч.", "4,8"), f("water", "Водоцементное отношение", "В/Ц", "0,6"), f("package", "Масса мешка цемента", "кг", "50")]
+        case .concreteMix: result = [f("volume", "Объём бетона", "м³", "5"), f("sand", "Песок, частей на 1 часть цемента", "ч.", "2,8"), f("gravel", "Щебень, частей на 1 часть цемента", "ч.", "4,8"), f("water", "Водоцементное отношение", "В/Ц", "0,6"), f("package", "Масса мешка цемента", "кг", "50")]
         case .drywall: result = [f("area", "Площадь обшивки", "м²", "40"), f("openings", "Площадь проёмов", "м²", "4", true), f("layers", "Слоёв гипсокартона", "шт.", "1"), f("sheetLength", "Длина листа", "м", "2,5"), f("sheetWidth", "Ширина листа", "м", "1,2"), f("screws", "Саморезов на лист", "шт.", "30", true)]
         case .insulation: result = [f("area", "Площадь утепления", "м²", "100"), f("thickness", "Толщина слоя", "мм", "100"), f("package", "Объём упаковки", "м³", "0,288")]
-        case .fence: result = [f("length", "Длина забора", "м", "30"), f("height", "Высота забора", "м", "2"), f("sheetWidth", "Полезная ширина листа", "м", "1,15"), f("postStep", "Шаг столбов", "м", "2,5"), f("rails", "Рядов лаг", "шт.", "2")]
+        case .fence: result = [f("length", "Длина забора", "м", "30"), f("height", "Высота забора", "м", "2"), f("sheetWidth", "Полезная ширина листа", "м", "1,15"), f("postStep", "Шаг столбов", "м", "2,5"), f("rails", "Рядов лаг", "шт.", "2"), f("postDepth", "Заглубление столба", "м", "1"), f("hole", "Диаметр лунки под бетон", "мм", "200", true)]
         }
         result.append(reserve)
         result.append(f("price", "Цена материала (необязательно)", priceUnit, "", true))
@@ -208,13 +209,26 @@ enum CalculationEngine {
             else { base = Double.pi * pow(v("diameter") / 2000, 2) * v("height") * v("count"); formula = "V = π × (диаметр / 2)² × длина × количество" }
             quantity = base * factor
             add("Объём по геометрии", base, "м³"); add("Бетон с запасом", quantity, "м³")
+            if kind == .slab { add("Опалубка по периметру", 2 * (v("length") + v("width")) * v("thickness") / 1000, "м²") }
+            if kind == .strip { add("Опалубка, две стороны", 2 * v("length") * v("height") / 1000, "м²") }
         case .masonry:
             let area = v("length") * v("height") - v("openings")
             guard area > 0 else { throw CalculationFailure(message: "Проёмы должны занимать меньше общей площади стен.") }
             let face = (v("blockLength") + v("joint")) * (v("blockHeight") + v("joint")) / 1_000_000
             quantity = ceil(area / face * factor)
             add("Площадь кладки", area, "м²"); add("Блоки с запасом", quantity, "шт.")
-            formula = "N = площадь без проёмов / ((длина блока + шов) × (высота блока + шов)) × запас; округление вверх"
+            let width = v("blockWidth") / 1000
+            let blockVolume = v("blockLength") * v("blockHeight") / 1_000_000 * width
+            add("Блоки, объём к покупке", quantity * blockVolume, "м³")
+            if v("joint") > 0 {
+                // Joint share of the wall: everything that is not block face, times wall thickness.
+                let joints = area * width * (1 - v("blockLength") * v("blockHeight") / 1_000_000 / face)
+                let isGlue = v("joint") <= 5
+                let mix = joints * (isGlue ? 1500 : 1800) * factor
+                add(isGlue ? "Клей для блоков" : "Сухая смесь для раствора", mix, "кг")
+                add("Мешки по 25 кг", ceil(mix / 25), "шт.")
+            }
+            formula = "N = площадь без проёмов / ((длина блока + шов) × (высота блока + шов)) × запас, вверх. Клей/раствор = объём швов × 1500 (клей, шов до 5 мм) или 1800 кг/м³ (раствор) × запас"
         case .screed, .plaster:
             let area = v("area") - v("openings")
             guard area > 0 else { throw CalculationFailure(message: "Проёмы должны занимать меньше площади поверхности.") }
@@ -234,29 +248,46 @@ enum CalculationEngine {
             let area = v("area") * factor
             quantity = ceil(area / v("package"))
             add("Площадь с запасом", area, "м²"); add("Упаковки к покупке", quantity, "шт."); add("Площадь в упаковках", quantity * v("package"), "м²")
-            formula = "Упаковки = площадь × запас / площадь упаковки, вверх"
+            if v("glue") > 0 {
+                let glue = v("area") * v("glue") * factor
+                add("Плиточный клей", glue, "кг"); add("Мешки клея", ceil(glue / v("glueBag")), "шт.")
+            }
+            formula = "Упаковки = площадь × запас / площадь упаковки, вверх. Клей = площадь × расход × запас"
         case .rebar:
             let length = v("length") * v("count")
-            let kgPerMeter = Double.pi * pow(v("diameter") / 2000, 2) * v("density")
-            quantity = length * kgPerMeter * factor
-            add("Общая длина без запаса", length, "м"); add("Масса одного метра", kgPerMeter, "кг/м"); add("Масса с запасом", quantity, "кг")
-            formula = "Масса = π × (диаметр в метрах / 2)² × плотность × длина × количество × запас"
+            let kgPerMeter = Double.pi * pow(v("diameter") / 2000, 2) * 7850
+            let mass = length * kgPerMeter * factor
+            add("Общая длина без запаса", length, "м"); add("Масса одного метра", kgPerMeter, "кг/м"); add("Масса с запасом", mass, "кг")
+            // Cutting: whole pieces from one stock bar; pieces longer than the bar are joined, so they go by length.
+            let piecesPerBar = floor(v("stock") / v("length") + 1e-9)
+            let bars = piecesPerBar >= 1
+                ? ceil(ceil(v("count") * factor - 1e-9) / piecesPerBar)
+                : ceil(length * factor / v("stock"))
+            quantity = bars * v("stock") * kgPerMeter
+            add("Прутков к покупке", bars, "шт."); add("Масса к покупке", quantity, "кг")
+            formula = "Масса = π × (диаметр / 2)² × 7850 кг/м³ × длина × количество × запас. Прутки = стержни с запасом / целых отрезков из прутка, вверх; цена — по массе целых прутков"
         case .roof:
             guard v("angle") > 0 && v("angle") < 75 else { throw CalculationFailure(message: "Для этого расчёта угол ската должен быть больше 0° и меньше 75°.") }
             let slope = (v("width") / 2 + v("overhang")) / cos(v("angle") * Double.pi / 180)
             let area = 2 * slope * (v("length") + 2 * v("overhang"))
             quantity = area * factor
             add("Длина ската со свесом", slope, "м"); add("Площадь двух скатов", area, "м²"); add("Покрытие с запасом", quantity, "м²")
+            add("Длина конька", v("length") + 2 * v("overhang"), "м")
+            add("Высота конька над стенами", v("width") / 2 * tan(v("angle") * Double.pi / 180), "м")
             formula = "Площадь = (длина + 2 × свес) × (ширина + 2 × свес) / cos(угол)"
         case .concreteMix:
             let volume = v("volume") * factor
-            let cement = volume * v("cement")
+            // Absolute volumes: 1 kg of cement brings cement, sand, gravel and water; 2% of the volume is air.
+            let litersPerKgCement = 1 / 3.1 + (v("sand") + v("gravel")) / 2.65 + v("water")
+            let cementPerCubicMeter = 980 / litersPerKgCement
+            let cement = volume * cementPerCubicMeter
             quantity = ceil(cement / v("package"))
             add("Бетон с запасом", volume, "м³"); add("Цемент", cement, "кг"); add("Мешки цемента", quantity, "шт.")
             add("Песок", cement * v("sand"), "кг"); add("Песок, насыпной объём ≈", cement * v("sand") / 1500, "м³")
             add("Щебень", cement * v("gravel"), "кг"); add("Щебень, насыпной объём ≈", cement * v("gravel") / 1450, "м³")
             add("Вода", cement * v("water"), "л")
-            formula = "Цемент = объём × расход × запас; песок и щебень = цемент × части; вода = цемент × В/Ц. Насыпная плотность: песок 1500, щебень 1450 кг/м³"
+            add("Цемент на 1 м³ по пропорциям", cementPerCubicMeter, "кг")
+            formula = "Цемент на 1 м³ = 980 л / (1/3,1 + (песок + щебень)/2,65 + В/Ц); песок и щебень = цемент × части; вода = цемент × В/Ц. Насыпная плотность: песок 1500, щебень 1450 кг/м³"
         case .drywall:
             let area = v("area") - v("openings")
             guard area > 0 else { throw CalculationFailure(message: "Проёмы должны занимать меньше площади обшивки.") }
@@ -274,7 +305,10 @@ enum CalculationEngine {
             let posts = ceil(v("length") / v("postStep")) + 1
             add("Площадь забора", v("length") * v("height"), "м²"); add("Листы профнастила", quantity, "шт.")
             add("Столбы", posts, "шт."); add("Лаги (профтруба)", v("length") * v("rails") * factor, "м")
-            formula = "Листы = длина / полезная ширина × запас, вверх. Столбы = длина / шаг, вверх, + 1. Лаги = длина × ряды × запас"
+            add("Труба на столбы", posts * (v("height") + v("postDepth")), "м")
+            if v("hole") > 0 { add("Бетон для столбов", Double.pi * pow(v("hole") / 2000, 2) * v("postDepth") * posts * factor, "м³") }
+            add("Кровельные саморезы ≈", quantity * v("rails") * 6, "шт.")
+            formula = "Листы = длина / полезная ширина × запас, вверх. Столбы = длина / шаг, вверх, + 1. Лаги = длина × ряды × запас. Бетон = π × (лунка / 2)² × заглубление × столбы × запас"
         }
         let cost = numbers["price"].map { $0 * quantity }
         guard lines.allSatisfy({ $0.value.isFinite && $0.value < 1e15 }), cost == nil || (cost!.isFinite && cost! < 1e15) else {
