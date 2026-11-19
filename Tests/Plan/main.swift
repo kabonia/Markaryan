@@ -735,4 +735,53 @@ check(!socketArcs.isEmpty && socketArcs.allSatisfy { arc in
     return abs((end - start) - 180) < 0.5
 }, "Socket symbols are half circles")
 
+// MARK: Apartment from one scan
+
+let apartmentID = UUID()
+/// A room as a multi-room scan gives it: corners in the scan's frame (turned as the iPhone stood), normalised on its own.
+func scanned(_ name: String, _ outline: [(Double, Double)], doors: [PlanSegment] = [], order: Double) -> FloorPlan {
+    let turn = 0.4, c = cos(turn), s = sin(turn)
+    func scan(_ p: PlanPoint) -> PlanPoint { PlanPoint(x: p.x * c - p.y * s + 10, y: p.x * s + p.y * c - 4) }
+    var plan = room(name, outline, doors: doors)
+    plan.segments = plan.segments.map { var segment = $0; segment.start = scan(segment.start); segment.end = scan(segment.end); return segment }
+    plan.floorPolygon = plan.floorPolygon.map(scan)
+    var normalized = FloorPlanBuilder.normalize(plan)
+    normalized.apartmentID = apartmentID
+    normalized.apartmentName = "Квартира 1"
+    normalized.createdAt = Date(timeIntervalSinceReferenceDate: order)
+    return normalized
+}
+let roomA = scanned("Гостиная", [(0, 0), (4, 0), (4, 3), (0, 3)], doors: [segment(.door, 4, 1.0, 4, 1.9)], order: 1)
+let roomB = scanned("Спальня", [(4.12, 0), (7.12, 0), (7.12, 3), (4.12, 3)], doors: [segment(.door, 4.12, 1.0, 4.12, 1.9)], order: 2)
+let apartments = Apartment.group([roomB, bedroom, roomA])
+check(apartments.count == 1 && apartments[0].rooms.map(\.name) == ["Гостиная", "Спальня"] && apartments[0].name == "Квартира 1", "Rooms of one scan make one apartment, in scan order")
+near(apartments[0].area, 21, "Apartment area is the sum of its rooms", 1e-6)
+let flat = apartments[0].layout
+near(flat.width, 7.12, "The apartment is put back together along its longest wall: width", 1e-6)
+near(flat.depth, 3, "…and depth", 1e-6)
+near(flat.rooms[0].area, 12, "Room areas survive", 1e-6)
+func gap(_ a: [PlanPoint], _ b: [PlanPoint]) -> Double {
+    func edges(_ p: [PlanPoint]) -> [(PlanPoint, PlanPoint)] { p.indices.map { (p[$0], p[($0 + 1) % p.count]) } }
+    let one = a.flatMap { point in edges(b).map { PlanMath.distance(point, toSegment: $0.0, $0.1) } }
+    let two = b.flatMap { point in edges(a).map { PlanMath.distance(point, toSegment: $0.0, $0.1) } }
+    return (one + two).min() ?? 0
+}
+near(gap(flat.rooms[0].plan.floorPolygon, flat.rooms[1].plan.floorPolygon), 0.12, "The partition between the rooms is as scanned", 1e-6)
+let bodies = flat.wallBodies()
+let partition = bodies[0].pieces.filter(\.shared)
+check(!partition.isEmpty && partition.allSatisfy { abs(($0.outerStart - $0.innerStart).dot($0.outward) - 0.06) < 1e-6 }, "Each room fills half of the partition")
+check(bodies[0].pieces.filter { !$0.shared }.allSatisfy { abs(($0.outerEnd - $0.innerEnd).dot($0.outward) - WallBody.standardThickness) < 1e-6 || $0.capEnd }, "Outside walls keep the standard thickness")
+check(bodies[1].pieces.contains(where: \.shared), "The partition is shared from the other side too")
+check(flat.doors.count == 1, "The door between the rooms is drawn once")
+let bedroomMiddle = flat.rooms[1].labelPoint
+check(flat.room(at: bedroomMiddle)?.name == "Спальня" && flat.room(at: PlanPoint(x: -1, y: -1)) == nil, "A finger finds the room it is on")
+check(flat.rooms.allSatisfy { $0.plan.contains($0.labelPoint) }, "Room labels are inside the rooms")
+let movedA = roomA.moved(turn: 0.3, shift: PlanPoint(x: 1, y: 2))
+let scanBefore = roomA.placement!.apply(roomA.floorPolygon[0]), scanAfter = movedA.placement!.apply(movedA.floorPolygon[0])
+check(scanBefore.distance(to: scanAfter) < 1e-9 && abs(movedA.area - roomA.area) < 1e-9, "A moved room still knows where it is in the scan")
+let lShapedFlat = Apartment(id: UUID(), name: "Г", rooms: [lShaped]).layout
+check(lShapedFlat.rooms[0].plan.contains(lShapedFlat.rooms[0].labelPoint), "The label of an L-shaped room is inside it")
+let savedApartmentRoom = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(roomA))
+check(savedApartmentRoom.apartmentName == "Квартира 1" && savedApartmentRoom.apartmentID == apartmentID, "The apartment survives saving")
+
 print("PASS: \(passed) plan and design checks")

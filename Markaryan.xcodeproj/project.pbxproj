@@ -36,6 +36,7 @@
 		AA1000000000000000000D0D /* Markaryan/Core/ElectricPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D0D /* Markaryan/Core/ElectricPlan.swift */; };
 		AA1000000000000000000D0E /* Markaryan/Core/TileLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D0E /* Markaryan/Core/TileLayout.swift */; };
 		AA1000000000000000000D0F /* Markaryan/Core/PlanDXF.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D0F /* Markaryan/Core/PlanDXF.swift */; };
+		AA1000000000000000000D10 /* Markaryan/Core/Apartment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D10 /* Markaryan/Core/Apartment.swift */; };
 		AA1000000000000000000D0B /* Markaryan/Views/PlanEditorViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D0B /* Markaryan/Views/PlanEditorViews.swift */; };
 		AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */; };
 		AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */; };
@@ -93,6 +94,7 @@
 		AA2000000000000000000D0D /* Markaryan/Core/ElectricPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ElectricPlan.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D0E /* Markaryan/Core/TileLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/TileLayout.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D0F /* Markaryan/Core/PlanDXF.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanDXF.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D10 /* Markaryan/Core/Apartment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Apartment.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D0B /* Markaryan/Views/PlanEditorViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PlanEditorViews.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignBrief.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutCheck.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 				AA2000000000000000000D0D /* Markaryan/Core/ElectricPlan.swift */,
 				AA2000000000000000000D0E /* Markaryan/Core/TileLayout.swift */,
 				AA2000000000000000000D0F /* Markaryan/Core/PlanDXF.swift */,
+				AA2000000000000000000D10 /* Markaryan/Core/Apartment.swift */,
 				AA2000000000000000000D0B /* Markaryan/Views/PlanEditorViews.swift */,
 				AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */,
 				AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */,
@@ -327,6 +330,7 @@
 				AA1000000000000000000D0D /* Markaryan/Core/ElectricPlan.swift in Sources */,
 				AA1000000000000000000D0E /* Markaryan/Core/TileLayout.swift in Sources */,
 				AA1000000000000000000D0F /* Markaryan/Core/PlanDXF.swift in Sources */,
+				AA1000000000000000000D10 /* Markaryan/Core/Apartment.swift in Sources */,
 				AA1000000000000000000D0B /* Markaryan/Views/PlanEditorViews.swift in Sources */,
 				AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */,
 				AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */,

@@ -16,6 +16,9 @@ struct WallBody {
         let capEnd: Bool
         /// Unit vector out of the room.
         let outward: PlanPoint
+        /// A partition with the next room: this room draws its half, the outer face is the middle of the partition
+        /// and is not drawn as a line.
+        var shared = false
 
         var innerStart: PlanPoint { polygon[0] }
         var innerEnd: PlanPoint { polygon[1] }
@@ -42,7 +45,9 @@ struct WallBody {
     let outline: [PlanPoint]
 
     /// `cut`: kinds of openings that leave a gap in the wall (the 3D model keeps the wall over a door, for example).
-    init(plan: FloorPlan, thickness: Double = WallBody.standardThickness, cut: Set<PlanSegment.Kind> = [.door, .opening, .window]) {
+    /// `neighbours`: outlines of the other rooms of the apartment in the same coordinates; a wall facing one of them
+    /// closer than 45 cm is a partition: each room fills half of the real gap instead of a wall of standard thickness.
+    init(plan: FloorPlan, thickness: Double = WallBody.standardThickness, cut: Set<PlanSegment.Kind> = [.door, .opening, .window], neighbours: [[PlanPoint]] = []) {
         self.thickness = thickness
         var outline = WallBody.outline(of: plan)
         if PlanMath.signedArea2(outline) < 0 { outline.reverse() }
@@ -57,6 +62,30 @@ struct WallBody {
             let d = (b - a) * (1 / length)
             return Edge(a: a, d: d, length: length, out: PlanPoint(x: d.y, y: -d.x))
         }
+        // Partitions: the gap to a neighbouring room's wall along the outward side, sampled along the edge.
+        let partitions: [Double?] = edges.map { edge in
+            guard !neighbours.isEmpty else { return nil }
+            var found: [Double] = []
+            for fraction in [0.2, 0.5, 0.8] {
+                let p = edge.a + edge.d * (edge.length * fraction)
+                var nearest: Double?
+                for other in neighbours where other.count >= 3 {
+                    for j in other.indices {
+                        let c = other[j], e = other[(j + 1) % other.count]
+                        let side = e - c
+                        guard side.length > 0.05, abs(edge.d.cross(side * (1 / side.length))) < 0.1 else { continue }
+                        let denominator = edge.out.cross(side)
+                        guard abs(denominator) > 1e-9 else { continue }
+                        let distance = (c - p).cross(side) / denominator, along = (c - p).cross(edge.out) / denominator
+                        if along >= -0.01, along <= 1.01, distance > -0.1, distance < 0.45, nearest.map({ distance < $0 }) ?? true { nearest = distance }
+                    }
+                }
+                if let nearest { found.append(nearest) }
+            }
+            guard found.count >= 2 else { return nil }
+            return found.sorted()[found.count / 2]
+        }
+        let thicknesses: [Double] = partitions.map { gap in gap.map { max(0.01, $0 / 2) } ?? thickness }
         /// Part of the edge a segment lies on (both ends close to the edge line and parallel to it), in metres along it.
         func span(_ segment: PlanSegment, on edge: Edge, tolerance: Double = 0.25) -> (Double, Double)? {
             guard segment.length > 0.02 else { return nil }
@@ -88,7 +117,7 @@ struct WallBody {
             let mid = (opening.start + opening.end) * 0.5
             guard let (index, part) = candidates.min(by: { abs((mid - edges[$0.0].a).dot(edges[$0.0].out)) < abs((mid - edges[$1.0].a).dot(edges[$1.0].out)) }) else { continue }
             let edge = edges[index]
-            gaps.append(Gap(opening: opening, innerStart: edge.a + edge.d * part.0, innerEnd: edge.a + edge.d * part.1, outward: edge.out, thickness: thickness))
+            gaps.append(Gap(opening: opening, innerStart: edge.a + edge.d * part.0, innerEnd: edge.a + edge.d * part.1, outward: edge.out, thickness: thicknesses[index]))
             if cut.contains(opening.kind) { holes[index].append(part) }
         }
         self.gaps = gaps
@@ -102,36 +131,38 @@ struct WallBody {
         }
 
         /// Outer corner where two neighbouring walls meet; nil for a straight joint or a corner so sharp the mitre runs away.
-        func mitre(_ first: Edge, _ second: Edge) -> PlanPoint? {
+        func mitre(_ firstIndex: Int, _ secondIndex: Int) -> PlanPoint? {
+            let first = edges[firstIndex], second = edges[secondIndex]
             let denominator = first.d.cross(second.d)
             guard abs(denominator) > 1e-6 else { return nil }
-            let p = first.a + first.out * thickness, q = second.a + second.out * thickness
+            let p = first.a + first.out * thicknesses[firstIndex], q = second.a + second.out * thicknesses[secondIndex]
             let point = p + first.d * ((q - p).cross(second.d) / denominator)
             let corner = second.a
-            return point.distance(to: corner) <= thickness * 4 ? point : nil
+            return point.distance(to: corner) <= max(thicknesses[firstIndex], thicknesses[secondIndex]) * 4 ? point : nil
         }
 
         var pieces: [Piece] = []
         for (index, edge) in edges.enumerated() {
             let previous = (index + count - 1) % count, next = (index + 1) % count
+            let own = thicknesses[index]
             for part in covered[index] {
                 let inner0 = edge.a + edge.d * part.0, inner1 = edge.a + edge.d * part.1
-                var outer0 = inner0 + edge.out * thickness, outer1 = inner1 + edge.out * thickness
+                var outer0 = inner0 + edge.out * own, outer1 = inner1 + edge.out * own
                 var capStart = true, capEnd = true
                 if part.0 <= 1e-9, let last = covered[previous].last, last.1 >= edges[previous].length - 1e-9 {
                     capStart = false
-                    if let point = mitre(edges[previous], edge) { outer0 = point }
+                    if let point = mitre(previous, index) { outer0 = point }
                 }
                 if part.1 >= edge.length - 1e-9, let first = covered[next].first, first.0 <= 1e-9 {
                     capEnd = false
-                    if let point = mitre(edge, edges[next]) { outer1 = point }
+                    if let point = mitre(index, next) { outer1 = point }
                 }
                 // A wall shorter than the mitres turns inside out: square ends instead.
                 if (outer1 - outer0).dot(inner1 - inner0) <= 0 {
-                    outer0 = inner0 + edge.out * thickness; outer1 = inner1 + edge.out * thickness
+                    outer0 = inner0 + edge.out * own; outer1 = inner1 + edge.out * own
                     capStart = true; capEnd = true
                 }
-                pieces.append(Piece(polygon: [inner0, inner1, outer1, outer0], capStart: capStart, capEnd: capEnd, outward: edge.out))
+                pieces.append(Piece(polygon: [inner0, inner1, outer1, outer0], capStart: capStart, capEnd: capEnd, outward: edge.out, shared: partitions[index] != nil))
             }
         }
         self.pieces = pieces
