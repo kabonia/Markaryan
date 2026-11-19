@@ -1,0 +1,47 @@
+name: iOS — тесты и сборка
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Заглушка AIServer.plist (настоящий файл не хранится в git)
+        run: |
+          cat > Markaryan/AIServer.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>AI_SERVER_URL</key><string>https://ai.example.ru</string>
+          <key>MARKET_SERVER_URL</key><string>https://ai.example.ru</string>
+          <key>APP_TOKEN</key><string></string>
+          </dict></plist>
+          PLIST
+
+      - name: Тесты калькуляторов и планировок
+        run: sh Tests/run.sh
+
+      - name: Сборка приложения для симулятора
+        run: |
+          set -o pipefail
+          xcodebuild -project Markaryan.xcodeproj -scheme Markaryan \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -40
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
