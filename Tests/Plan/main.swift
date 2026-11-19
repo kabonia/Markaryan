@@ -507,23 +507,23 @@ check(savedEdit.editedAt != nil, "The edit time survives saving")
 check(FurnitureEditor.normalized(-90) == 270 && FurnitureEditor.normalized(450) == 90 && FurnitureEditor.normalized(360) == 0, "Angles in 0..<360")
 let dresser = DesignFurniture(name: "Комод", kind: "storage", x: 2, y: 1.5, width: 1.0, depth: 0.45, rotation: 0, height: 0.85)
 let atTop = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 0.35), walls: bedroomWalls)
-near(atTop.y, 0.305, "Near a wall the item stands flush with it")
+near(atTop.y, 0.225 + LayoutRules.wallGap, "Near a wall the item stands flush with it")
 check(atTop.rotation == 0 && atTop.wall == 3, "Back to the top wall")
 let inCorner = FurnitureEditor.move(dresser, to: PlanPoint(x: 0.6, y: 0.35), walls: bedroomWalls)
-near(inCorner.x, 0.58, "Near the end of the wall it slides into the corner")
-near(inCorner.y, 0.305, "…and stays flush with the wall")
+near(inCorner.x, 0.5 + LayoutRules.wallGap, "Near the end of the wall it slides into the corner")
+near(inCorner.y, 0.225 + LayoutRules.wallGap, "…and stays flush with the wall")
 let inMiddle = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 1.6), walls: bedroomWalls)
 check(inMiddle.x == 2 && inMiddle.y == 1.6 && inMiddle.wall == nil, "In the middle of the room the item goes where the finger is")
 let free = FurnitureEditor.move(dresser, to: PlanPoint(x: 2, y: 0.35), walls: bedroomWalls, snap: false)
 check(free.y == 0.35 && free.wall == nil, "Without snapping nothing is adjusted")
 let mirror = FurnitureEditor.move(DesignFurniture(name: "Зеркало", kind: "mirror", x: 0, y: 0, width: 0.6, depth: 0.03, rotation: 45), to: PlanPoint(x: 2, y: 1.2), walls: bedroomWalls)
-near(mirror.y, 0.095, "A mirror always hangs on the nearest wall")
+near(mirror.y, 0.015 + LayoutRules.wallGap, "A mirror always hangs on the nearest wall")
 check(mirror.rotation == 0, "A mirror faces the room")
 let movedRug = FurnitureEditor.move(DesignFurniture(name: "Ковёр", kind: "decor", x: 0, y: 0, width: 2, depth: 1.4, rotation: 10), to: PlanPoint(x: 1.1, y: 0.8), walls: bedroomWalls)
 check(movedRug.x == 1.1 && movedRug.y == 0.8 && movedRug.rotation == 10, "A rug goes exactly where it is put")
 let quarter = FurnitureEditor.rotated(atTop, by: 90, walls: bedroomWalls)
 check(quarter.rotation == 90 && quarter.wall == 3, "A quarter turn at a wall keeps the item at the wall")
-near(quarter.y, 0.58, "…flush with its other side")
+near(quarter.y, 0.5 + LayoutRules.wallGap, "…flush with its other side")
 let slanted = FurnitureEditor.rotated(atTop, by: 15, walls: bedroomWalls)
 check(slanted.rotation == 15 && slanted.wall == nil && slanted.y == atTop.y, "A small turn is free")
 
@@ -570,5 +570,38 @@ check(staleFlow.presentationOutdated && !staleFlow.done.contains(.result), "A pr
 check(staleFlow.main(on: .result) == PlanMainButton(action: .buildPresentation, title: "Обновить презентацию", icon: "arrow.triangle.2.circlepath"), "…and the result offers to update it")
 stale.proposals[0].editedAt = Date(timeIntervalSinceReferenceDate: 700_000_000)
 check(!PlanFlow(plan: stale, proposal: stale.proposals[0], hasPresentation: true, canRender: true).presentationOutdated, "An older edit does not matter")
+
+// MARK: Walls drawn outward from the scanned line
+
+let thick = WallBody.standardThickness
+func samePoint(_ a: PlanPoint, _ b: PlanPoint) -> Bool { a.distance(to: b) < 1e-9 }
+let bedroomBody = WallBody(plan: bedroom)
+check(bedroomBody.pieces.count == 6, "Bedroom walls: four walls, the door and the window split two of them, got \(bedroomBody.pieces.count)")
+check(bedroomBody.pieces.filter(\.capStart).count + bedroomBody.pieces.filter(\.capEnd).count == 4, "Jambs only at the door and the window")
+check(bedroomBody.pieces.allSatisfy { piece in
+    let inner = piece.innerEnd - piece.innerStart, outer = piece.outerEnd - piece.outerStart
+    return abs(inner.cross(outer)) < 1e-9 && abs((piece.outerStart - piece.innerStart).dot(piece.outward) - thick) < 1e-9 || !piece.capStart
+}, "The outer face is parallel to the inner one, a wall thickness out")
+let outerCorners = bedroomBody.pieces.flatMap { [$0.outerStart, $0.outerEnd] }
+for corner in [PlanPoint(x: -thick, y: -thick), PlanPoint(x: 4 + thick, y: -thick), PlanPoint(x: 4 + thick, y: 3 + thick), PlanPoint(x: -thick, y: 3 + thick)] {
+    check(outerCorners.contains { samePoint($0, corner) }, "Mitred outer corner at \(corner)")
+}
+check(bedroomBody.pieces.allSatisfy { piece in [piece.innerStart, piece.innerEnd].allSatisfy { p in PlanMath.distance(p, toSegment: PlanPoint(x: 0, y: 0), PlanPoint(x: 4, y: 0)) < 1e-9 || PlanMath.distance(p, toSegment: PlanPoint(x: 4, y: 0), PlanPoint(x: 4, y: 3)) < 1e-9 || PlanMath.distance(p, toSegment: PlanPoint(x: 4, y: 3), PlanPoint(x: 0, y: 3)) < 1e-9 || PlanMath.distance(p, toSegment: PlanPoint(x: 0, y: 3), PlanPoint(x: 0, y: 0)) < 1e-9 } }, "The inner face is the scanned line: the room keeps its size")
+let windowGap = bedroomBody.gaps.first { $0.opening.kind == .window }!
+check(samePoint(windowGap.innerStart, PlanPoint(x: 1.5, y: 0)) && samePoint(windowGap.innerEnd, PlanPoint(x: 2.7, y: 0)) && samePoint(windowGap.outward, PlanPoint(x: 0, y: -1)), "The window gap and the outward side")
+check(bedroomBody.gaps.count == 2, "Door and window are gaps")
+let solidBody = WallBody(plan: bedroom, cut: [])
+check(solidBody.pieces.count == 4 && solidBody.gaps.count == 2 && solidBody.pieces.allSatisfy { !$0.capStart && !$0.capEnd }, "Without cuts: four closed walls, openings still known")
+let lBody = WallBody(plan: lShaped)
+check(lBody.pieces.count == 6, "L-shaped room: six walls")
+check(lBody.pieces.contains { samePoint($0.outerEnd, PlanPoint(x: 3 + thick, y: 2 + thick)) } && lBody.pieces.contains { samePoint($0.outerStart, PlanPoint(x: 3 + thick, y: 2 + thick)) }, "The inner corner of the L is mitred too")
+var openSide = bedroom
+openSide.segments.removeAll { $0.kind == .wall && $0.start == PlanPoint(x: 4, y: 0) }
+let openBody = WallBody(plan: openSide)
+check(!openBody.pieces.contains { abs($0.innerStart.x - 4) < 1e-9 && abs($0.innerEnd.x - 4) < 1e-9 }, "A side without a scanned wall stays open")
+check(openBody.pieces.filter { $0.capEnd && samePoint($0.innerEnd, PlanPoint(x: 4, y: 0)) }.count == 1, "The wall next to the open side ends with a jamb")
+let loopBody = WallBody(plan: noPolygon)
+check(loopBody.outline.count == 4 && loopBody.pieces.count == 6, "Without a floor outline the walls themselves make the loop")
+check(LayoutRules.wallGap < 0.05, "Furniture stands just off the inner face of the wall")
 
 print("PASS: \(passed) plan and design checks")

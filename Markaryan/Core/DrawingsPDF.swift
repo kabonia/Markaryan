@@ -38,7 +38,7 @@ enum DrawingsPDF {
         let draw: (CGContext) -> Void
     }
 
-    private static let wallThickness = 0.15
+    private static let wallThickness = WallBody.standardThickness
     private static let axisLetters = ["А", "Б", "В", "Г", "Д", "Е", "Ж", "И", "К", "Л", "М", "Н", "П", "Р", "С", "Т", "У", "Ф", "Ш", "Э", "Ю", "Я"]
 
     // MARK: Entry point
@@ -281,18 +281,12 @@ enum DrawingsPDF {
 
     // MARK: Walls (cut, hatched) and openings
 
-    private static func wallPolygon(_ segment: PlanSegment, thickness: Double, extend: Bool, t: Transform) -> [CGPoint] {
-        let dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y
-        let length = max(0.0001, hypot(dx, dy))
-        let nx = -dy / length * thickness / 2, ny = dx / length * thickness / 2
-        let ex = extend ? dx / length * thickness / 2 : 0, ey = extend ? dy / length * thickness / 2 : 0
-        return [PlanPoint(x: segment.start.x - ex + nx, y: segment.start.y - ey + ny), PlanPoint(x: segment.end.x + ex + nx, y: segment.end.y + ey + ny),
-                PlanPoint(x: segment.end.x + ex - nx, y: segment.end.y + ey - ny), PlanPoint(x: segment.start.x - ex - nx, y: segment.start.y - ey - ny)].map { t.p($0) }
-    }
-
+    /// Walls as one closed contour: the scanned line is the inner face, the wall goes outward (`WallBody`),
+    /// corners are mitred, doors and windows are gaps with jambs.
     private static func drawWalls(_ cg: CGContext, plan: FloorPlan, t: Transform, hatch: Bool, openings: Bool = true) {
-        let polygons = plan.walls.map { wallPolygon($0, thickness: wallThickness, extend: true, t: t) }
-        // Fill (union) + 45° hatching for cut walls (ГОСТ 2.306), or solid poché on design sheets.
+        let body = WallBody(plan: plan, thickness: wallThickness)
+        let polygons = body.pieces.map { $0.polygon.map { t.p($0) } }
+        // Fill + 45° hatching for cut walls (ГОСТ 2.306), or solid poché on design sheets.
         cg.saveGState()
         for polygon in polygons { cg.addLines(between: polygon); cg.closePath() }
         if hatch {
@@ -308,34 +302,36 @@ enum DrawingsPDF {
             cg.setFillColor(UIColor(white: 0.55, alpha: 1).cgColor); cg.fillPath()
         }
         cg.restoreGState()
-        cg.setStrokeColor(ink.cgColor); cg.setLineWidth(s1)
-        for polygon in polygons { cg.addLines(between: polygon); cg.closePath() }
-        cg.strokePath()
-
-        for opening in plan.doors + plan.windows {
-            let cut = wallPolygon(opening, thickness: wallThickness + 0.03, extend: false, t: t)
-            cg.setFillColor(UIColor.white.cgColor); cg.addLines(between: cut); cg.closePath(); cg.fillPath()
-            line(cg, [cut[0], cut[3]], s1); line(cg, [cut[1], cut[2]], s1)
-            guard openings else { continue }
-            let a = t.p(opening.start), c = t.p(opening.end)
-            let dx = c.x - a.x, dy = c.y - a.y, length = max(0.001, hypot(dx, dy))
-            let nx = -dy / length, ny = dx / length
+        // Contour: inner and outer faces, jambs at openings and free ends; no seams at the corners.
+        for piece in body.pieces {
+            line(cg, [t.p(piece.innerStart), t.p(piece.innerEnd)], s1)
+            line(cg, [t.p(piece.outerStart), t.p(piece.outerEnd)], s1)
+            if piece.capStart { line(cg, [t.p(piece.innerStart), t.p(piece.outerStart)], s1) }
+            if piece.capEnd { line(cg, [t.p(piece.innerEnd), t.p(piece.outerEnd)], s1) }
+        }
+        guard openings else { return }
+        for gap in body.gaps {
+            let opening = gap.opening
             if opening.kind == .window {
-                // Window per ГОСТ 21.201: frame lines + sill line
-                let half = t.len(wallThickness / 2)
-                for k: CGFloat in [-1, -0.25, 0.25, 1] {
-                    line(cg, [CGPoint(x: a.x + nx * half * k, y: a.y + ny * half * k), CGPoint(x: c.x + nx * half * k, y: c.y + ny * half * k)], k == -1 || k == 1 ? s2 : s3)
+                // Window per ГОСТ 21.201: frame lines on both faces and the glass inside the wall.
+                for k in [0.0, 0.4, 0.6, 1.0] {
+                    let shift = gap.outward * (gap.thickness * k)
+                    line(cg, [t.p(gap.innerStart + shift), t.p(gap.innerEnd + shift)], k == 0 || k == 1 ? s2 : s3)
                 }
             } else if opening.kind == .door {
-                // Leaf opens into the room (same rule as the plan screen and the 3D model).
-                let leaf = t.p(plan.doorSwing(opening).leaf)
+                // Leaf opens into the room (same rule as the plan screen and the 3D model), hinged at the start of the door.
+                let hinge = gap.innerStart.distance(to: opening.start) <= gap.innerEnd.distance(to: opening.start) ? gap.innerStart : gap.innerEnd
+                let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
+                let a = t.p(hinge), c = t.p(latch)
+                let leaf = t.p(hinge + gap.outward * -hinge.distance(to: latch))
                 line(cg, [a, leaf], s2)
-                let start = atan2(dy, dx), finish = atan2(leaf.y - a.y, leaf.x - a.x)
+                let radius = hypot(c.x - a.x, c.y - a.y)
+                let start = atan2(c.y - a.y, c.x - a.x), finish = atan2(leaf.y - a.y, leaf.x - a.x)
                 var sweep = finish - start
                 if sweep > .pi { sweep -= 2 * .pi } else if sweep < -.pi { sweep += 2 * .pi }
                 line(cg, (0...24).map { step in
                     let angle = start + sweep * CGFloat(step) / 24
-                    return CGPoint(x: a.x + cos(angle) * length, y: a.y + sin(angle) * length)
+                    return CGPoint(x: a.x + cos(angle) * radius, y: a.y + sin(angle) * radius)
                 }, s3)
             }
         }
@@ -395,8 +391,9 @@ enum DrawingsPDF {
         if xs.count < 2 { xs = [b.minX, b.maxX] }
         if ys.count < 2 { ys = [b.minY, b.maxY] }
         xs = Array(xs.prefix(12)); ys = Array(ys.prefix(axisLetters.count))
-        let top = t.p(0, b.minY).y - mm(34), bottom = t.p(0, b.maxY).y + mm(6)
-        let leftX = t.p(b.minX, 0).x - mm(34), rightX = t.p(b.maxX, 0).x + mm(6)
+        let wall = t.len(wallThickness)
+        let top = t.p(0, b.minY).y - wall - mm(32), bottom = t.p(0, b.maxY).y + wall + mm(4)
+        let leftX = t.p(b.minX, 0).x - wall - mm(32), rightX = t.p(b.maxX, 0).x + wall + mm(4)
         let radius = mm(4)
         for (index, x) in xs.enumerated() {
             let px = t.p(x, 0).x
@@ -465,7 +462,7 @@ enum DrawingsPDF {
         func chain(_ values: [Double], side: Int, level: Int) {
             let coords = merged(values)
             guard coords.count > 1 else { return }
-            let gap = mm(8) + mm(8) * CGFloat(level)
+            let gap = t.len(wallThickness) + mm(6) + mm(8) * CGFloat(level)
             for (index, value) in coords.dropLast().enumerated() {
                 let next = coords[index + 1]
                 let label = "\(Int(((next - value) * 1000).rounded()))"
@@ -529,14 +526,13 @@ enum DrawingsPDF {
                 return w.start.y + (w.end.y - w.start.y) * k
             }.sorted()
         }
-        let half = wallThickness / 2
         let xs = crossings(horizontalAt: cy + 0.35)
         if let left = xs.last(where: { $0 < cx }), let right = xs.first(where: { $0 > cx }), right - left > 0.6 {
-            tickDimension(cg, from: t.p(left + half, cy + 0.35), to: t.p(right - half, cy + 0.35), lineOffset: .zero, label: "\(Int(((right - left - wallThickness) * 1000).rounded()))")
+            tickDimension(cg, from: t.p(left, cy + 0.35), to: t.p(right, cy + 0.35), lineOffset: .zero, label: "\(Int(((right - left) * 1000).rounded()))")
         }
         let ys = crossings(verticalAt: cx - 0.35)
         if let top = ys.last(where: { $0 < cy }), let bottom = ys.first(where: { $0 > cy }), bottom - top > 0.6 {
-            tickDimension(cg, from: t.p(cx - 0.35, bottom - half), to: t.p(cx - 0.35, top + half), lineOffset: .zero, label: "\(Int(((bottom - top - wallThickness) * 1000).rounded()))")
+            tickDimension(cg, from: t.p(cx - 0.35, bottom), to: t.p(cx - 0.35, top), lineOffset: .zero, label: "\(Int(((bottom - top) * 1000).rounded()))")
         }
     }
 

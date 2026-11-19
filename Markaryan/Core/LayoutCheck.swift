@@ -13,8 +13,9 @@ struct LayoutIssue: Hashable {
 enum LayoutRules {
     /// Narrowest passage people can walk through.
     static let passage = 0.7
-    /// Gap between the back of an item and the wall line (half of the drawn wall thickness plus a little air).
-    static let wallGap = 0.08
+    /// Gap between the back of an item and the wall line: the scanned line is the inner face of the wall
+    /// (`WallBody` draws the wall outward), so only the skirting and a little air.
+    static let wallGap = 0.03
 
     static func frontClearance(_ item: DesignFurniture) -> Double {
         switch item.model {

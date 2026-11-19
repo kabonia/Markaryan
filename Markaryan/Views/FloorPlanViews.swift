@@ -74,27 +74,31 @@ struct FloorPlanCanvas: View {
                     }
                 }
             }
-            // Walls
-            let wallWidth: CGFloat = compact ? 3 : max(4, min(9, scale * 0.16))
-            for wall in plan.walls {
-                var path = Path(); path.move(to: p(wall.start)); path.addLine(to: p(wall.end))
-                context.stroke(path, with: .color(ink), style: StrokeStyle(lineWidth: wallWidth, lineCap: .square))
-            }
-            // Windows: light gap with a double glass line
-            for window in plan.windows {
-                var path = Path(); path.move(to: p(window.start)); path.addLine(to: p(window.end))
-                context.stroke(path, with: .color(paper), style: StrokeStyle(lineWidth: wallWidth + 1))
-                context.stroke(path, with: .color(Color(red: 0.25, green: 0.55, blue: 0.85)), style: StrokeStyle(lineWidth: 2))
-            }
-            // Doors: gap + swing arc
-            for door in plan.doors {
-                let a = p(door.start), c = p(door.end)
-                var gap = Path(); gap.move(to: a); gap.addLine(to: c)
-                context.stroke(gap, with: .color(paper), style: StrokeStyle(lineWidth: wallWidth + 1))
-                if door.kind == .door && !compact {
-                    // Leaf opens into the room — the same as on the drawings and in 3D.
-                    let swing = plan.doorSwing(door)
-                    let leafEnd = p(swing.leaf)
+            // Walls: one closed contour outward from the scanned line, the same as on the drawings and in 3D.
+            let body = WallBody(plan: plan, thickness: max(WallBody.standardThickness, Double((compact ? 2.5 : 4) / max(scale, 0.001))))
+            let wallPoints = CGFloat(body.thickness) * scale
+            var walls = Path()
+            for piece in body.pieces { walls.addLines(piece.polygon.map(p)); walls.closeSubpath() }
+            context.fill(walls, with: .color(ink))
+            for gap in body.gaps {
+                if gap.opening.kind == .window {
+                    // Window: frame lines on both faces, the glass in the middle of the wall.
+                    var frame = Path()
+                    for k in [0.0, 1.0] {
+                        frame.move(to: p(gap.innerStart + gap.outward * (gap.thickness * k)))
+                        frame.addLine(to: p(gap.innerEnd + gap.outward * (gap.thickness * k)))
+                    }
+                    context.stroke(frame, with: .color(ink), lineWidth: 1)
+                    var glass = Path()
+                    glass.move(to: p(gap.innerStart + gap.outward * (gap.thickness / 2)))
+                    glass.addLine(to: p(gap.innerEnd + gap.outward * (gap.thickness / 2)))
+                    context.stroke(glass, with: .color(Color(red: 0.25, green: 0.55, blue: 0.85)), lineWidth: 2)
+                } else if gap.opening.kind == .door && !compact {
+                    // Leaf opens into the room from the hinge at the start of the door — the same as on the drawings and in 3D.
+                    let hinge = gap.innerStart.distance(to: gap.opening.start) <= gap.innerEnd.distance(to: gap.opening.start) ? gap.innerStart : gap.innerEnd
+                    let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
+                    let a = p(hinge), c = p(latch)
+                    let leafEnd = p(hinge + gap.outward * -hinge.distance(to: latch))
                     let radius = hypot(c.x - a.x, c.y - a.y)
                     let start = atan2(c.y - a.y, c.x - a.x), finish = atan2(leafEnd.y - a.y, leafEnd.x - a.x)
                     var sweep = finish - start
@@ -119,7 +123,7 @@ struct FloorPlanCanvas: View {
                     let len = max(0.001, hypot(normal.x, normal.y)); normal = CGPoint(x: normal.x / len, y: normal.y / len)
                     // Put the label outside the room.
                     if (mid.x + normal.x - center.x) * normal.x + (mid.y + normal.y - center.y) * normal.y < 0 { normal = CGPoint(x: -normal.x, y: -normal.y) }
-                    let label = CGPoint(x: mid.x + normal.x * 14, y: mid.y + normal.y * 14)
+                    let label = CGPoint(x: mid.x + normal.x * (wallPoints + 10), y: mid.y + normal.y * (wallPoints + 10))
                     context.draw(Text(String(format: "%.2f м", wall.length).replacingOccurrences(of: ".", with: ",")).font(.system(size: 9, weight: .semibold).monospacedDigit()).foregroundColor(ink.opacity(0.8)), at: label)
                 }
             }
