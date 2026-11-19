@@ -30,6 +30,12 @@ enum AIServerConfig {
               raw.lowercased().hasPrefix("https://"), !raw.contains("example") else { return nil }
         return URL(string: raw.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
     }
+    /// Server of market prices and partner contractors (may differ from the AI server). Falls back to the AI server.
+    static var marketURL: URL? {
+        guard let raw = (plist["MARKET_SERVER_URL"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              raw.lowercased().hasPrefix("https://"), !raw.contains("example") else { return baseURL }
+        return URL(string: raw.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    }
     static var appToken: String { (plist["APP_TOKEN"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
 
     /// Random id of this installation (kept in the Keychain): the server counts daily limits by it.

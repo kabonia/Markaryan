@@ -8,6 +8,7 @@ import * as ai from './ai.js';
 import { imageEngines, legacyEditEngines, renderWithFallback, resolveEngines } from './providers/images.js';
 import * as hh from './hh.js';
 import * as avito from './avito.js';
+import * as market from './market.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -46,6 +47,8 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://local');
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { ok: true });
 
+  if (req.method === 'GET' && url.pathname === '/v1/market/price-book') return send(res, 200, market.priceBook(url));
+  if (url.pathname.startsWith('/v1/partners') || url.pathname.startsWith('/v1/admin/partners')) return handlePartners(req, res, url);
   if (url.pathname.startsWith('/v1/auth/hh/') || url.pathname.startsWith('/v1/hh/')) return handleHH(req, res, url);
   if (req.method === 'GET' && url.pathname === '/v1/market/vacancies') return handleMarketSearch(req, res, url);
   if (req.method === 'GET' && (url.pathname === '/v1/market/resumes' || url.pathname === '/v1/market/owner')) return handleResumeSearch(req, res, url);
@@ -288,6 +291,21 @@ async function handleMarket(req, res, url, provider, slug, title) {
       if (req.method === 'POST') { const body = await readBody(req); return send(res, 200, await provider.sendMessage(orderId, orderToken, chatId, body.text)); }
     }
   }
+  return send(res, 404, { error: 'Не найдено' });
+}
+
+async function handlePartners(req, res, url) {
+  if (url.pathname === '/v1/admin/partners') {
+    market.checkAdmin(req);
+    if (req.method === 'GET') return send(res, 200, { partners: market.listPartners(), stats: market.partnerStats() });
+    if (req.method === 'PUT') return send(res, 200, market.savePartners((await readBody(req)).partners));
+  }
+  if (req.method === 'GET' && url.pathname === '/v1/partners') {
+    const q = (k) => url.searchParams.get(k);
+    return send(res, 200, { partners: market.partnersFor({ city: q('city'), region: q('region'), category: q('category') }) });
+  }
+  const event = url.pathname.match(/^\/v1\/partners\/([a-z0-9-]{2,40})\/events$/);
+  if (req.method === 'POST' && event) return send(res, 200, market.recordEvent(event[1], (await readBody(req)).type));
   return send(res, 404, { error: 'Не найдено' });
 }
 

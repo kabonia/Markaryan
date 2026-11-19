@@ -199,6 +199,14 @@ struct HouseEstimateView: View {
     private var laborTotal: Double { lines.reduce(0) { $0 + labor($1) } }
     private var total: Double { materialTotal + laborTotal }
     private var perSquareMeter: Double { squareMeters > 0 ? total / squareMeters : 0 }
+    /// Market range of the whole estimate: P25 / P75 of real offers where known, the line price otherwise.
+    private var totalLow: Double { lines.reduce(0) { $0 + quantity($1) * (($1.materialLow ?? $1.materialRate) * reserveFactor + ($1.laborLow ?? $1.laborRate)) } }
+    private var totalHigh: Double { lines.reduce(0) { $0 + quantity($1) * (($1.materialHigh ?? $1.materialRate) * reserveFactor + ($1.laborHigh ?? $1.laborRate)) } }
+    private var priceCity: String { store.priceBook.city ?? store.userRegion?.city ?? "" }
+    private var isMarketPriced: Bool { store.priceBook.marketLineCount > 0 }
+    private var partnerSummary: String {
+        "Здравствуйте! Посчитал в приложении АртСтрой смету «\(kind.title)» на \(area) м²\(priceCity.isEmpty ? "" : ", \(priceCity)"): рыночная оценка \(CalculationEngine.money(total)). Подскажите вашу цену за эти работы?"
+    }
     private var inputsDescription: String {
         var parts = ["Площадь: \(area) м²"]
         if kind == .house { parts.append("Этажей: \(Int(floorCount)) (пятно застройки ≈ \(CalculationEngine.format(footprint.rounded())) м²)") }
@@ -207,7 +215,7 @@ struct HouseEstimateView: View {
         return parts.joined(separator: " · ")
     }
     private var report: String {
-        var text = ["АРТСТРОЙ · ПРЕДВАРИТЕЛЬНАЯ СМЕТА: \(kind.title.uppercased())", "Объект: \(store.projectDisplayName)", inputsDescription, ""]
+        var text = ["РЫНОЧНАЯ СМЕТА: \(kind.title.uppercased())", "Объект: \(store.projectDisplayName)", "Цены: \(priceCity.isEmpty ? "базовые ориентиры" : priceCity)", inputsDescription, ""]
         for section in sections where !excluded.contains(section) {
             let sectionLines = lines.filter { $0.section == section }
             guard !sectionLines.isEmpty else { continue }
@@ -215,14 +223,15 @@ struct HouseEstimateView: View {
             for line in sectionLines { text.append("\(line.title): \(CalculationEngine.format(quantity(line))) \(line.unit) · материалы \(CalculationEngine.money(material(line))) · работа \(CalculationEngine.money(labor(line)))") }
             text.append("")
         }
-        text += ["Материалы: \(CalculationEngine.money(materialTotal))", "Работа и техника: \(CalculationEngine.money(laborTotal))", "ИТОГО: \(CalculationEngine.money(total))", "", "Расчёт предварительный. Окончательная смета зависит от проекта, участка, выбранных материалов и условий договора.", "", Brand.shareFooter]
+        text += ["Материалы: \(CalculationEngine.money(materialTotal))", "Работа и техника: \(CalculationEngine.money(laborTotal))", "ИТОГО: \(CalculationEngine.money(total))", isMarketPriced ? "Рыночный диапазон: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))" : "", "", "Расчёт предварительный, по рыночным ценам магазинов и мастеров. Окончательная стоимость зависит от проекта, участка, выбранных материалов и подрядчика.", "", Brand.shareFooter]
         return text.joined(separator: "\n")
     }
     private var assistantContext: AIAssistantContext {
         let assistantLines = lines.map { line in
             AIAssistantLine(id: line.code, section: line.section, title: line.title, quantity: quantity(line), unit: line.unit, material: material(line), labor: labor(line), total: material(line) + labor(line))
         }
-        return AIAssistantContext(estimateType: kind.title, objectName: store.projectDisplayName, area: squareMeters, floors: Int(floorCount), reservePercent: CalculationEngine.parse(reserve), materialTotal: materialTotal, laborTotal: laborTotal, total: total, lines: assistantLines)
+        let context = AIAssistantContext(estimateType: kind.title, objectName: store.projectDisplayName, area: squareMeters, floors: Int(floorCount), reservePercent: CalculationEngine.parse(reserve), materialTotal: materialTotal, laborTotal: laborTotal, total: total, lines: assistantLines)
+        return priceCity.isEmpty ? context : context.withCity(priceCity)
     }
     private var workOrderDraft: WorkOrderDraft {
         WorkOrderDraft(category: "Строительство: \(kind.title)", city: store.projectCity, details: "Нужно согласовать и выполнить работы по предварительной смете.\n\n" + report, budget: CalculationEngine.money(total), attachment: nil)
@@ -230,12 +239,13 @@ struct HouseEstimateView: View {
     private var printableDocument: PrintableEstimate {
         PrintableEstimate(title: "Локальная смета: \(kind.title)", objectName: store.projectDisplayName, inputs: [inputsDescription], lines: lines.map { line in
             PrintableEstimateLine(section: line.section, title: line.title, quantity: quantity(line), unit: line.unit, material: material(line), labor: labor(line), total: material(line) + labor(line))
-        }, materialTotal: materialTotal, laborTotal: laborTotal, total: total, note: "Наша цена — предварительная оценка. Окончательная смета уточняется после проекта, выезда и выбора материалов.")
+        }, materialTotal: materialTotal, laborTotal: laborTotal, total: total, note: "Рыночная оценка\(priceCity.isEmpty ? "" : " для города \(priceCity)") по ценам магазинов, маркетплейсов и мастеров. Окончательная стоимость уточняется после проекта и выбора подрядчика.")
     }
 
     var body: some View {
         ScrollView { VStack(alignment: .leading, spacing: 20) {
-            SectionTitle(eyebrow: "Прозрачная стоимость", title: "Полная смета: \(kind.title.lowercased())")
+            SectionTitle(eyebrow: "Рыночная стоимость", title: "Полная смета: \(kind.title.lowercased())")
+            RegionChip()
             HStack(spacing: 12) {
                 estimateField("Площадь, м²", text: $area, id: "area")
                 if kind == .house { estimateField("Этажей", text: $floors, id: "floors", type: .numberPad) }
@@ -245,9 +255,6 @@ struct HouseEstimateView: View {
             if store.priceAlert != nil { PriceAlertBanner(text: store.priceAlert ?? "") { store.priceAlert = nil } }
             ForEach(sections, id: \.self) { section in sectionCard(section) }
 
-            NavigationLink { CreateWorkOrderView(prefill: workOrderDraft) } label: {
-                Label("Получить точную смету от АртСтроя", systemImage: "paperplane.fill").font(.headline).frame(maxWidth: .infinity).padding(16).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }.buttonStyle(PremiumPressStyle())
             HStack(spacing: 10) {
                 Button { exportPDF() } label: { SecondaryActionLabel(title: "PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
                 ShareLink(item: report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
@@ -256,10 +263,8 @@ struct HouseEstimateView: View {
                 NavigationLink { AIAssistantView(context: assistantContext) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
                 Button { applyToBudget() } label: { SecondaryActionLabel(title: "В бюджет", icon: "chart.bar.doc.horizontal") }.buttonStyle(PremiumPressStyle())
             }
-            Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Посчитал в приложении смету «\(kind.title)» на \(area) м² — ориентир \(CalculationEngine.money(total)). Хочу уточнить стоимость.")) {
-                SecondaryActionLabel(title: "Обсудить в WhatsApp", icon: "message.fill")
-            }.buttonStyle(PremiumPressStyle())
-            InfoNote(text: "Прайс-лист от \(store.priceBook.updatedAt.formatted(date: .abbreviated, time: .omitted)). Это предварительная оценка: проект, геология и выбранные материалы могут изменить стоимость.")
+            if total > 0 { PartnerOfferSection(category: kind.rawValue, summary: partnerSummary) }
+            PriceSourceNote()
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
             .background(Theme.background).navigationTitle(kind.screenTitle).navigationBarTitleDisplayMode(.inline)
@@ -267,9 +272,9 @@ struct HouseEstimateView: View {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button { Task { await store.refreshPriceBook() } } label: { Label("Обновить цены с сервера", systemImage: "arrow.clockwise") }
+                        Button { Task { await store.refreshPriceBook() } } label: { Label("Обновить рыночные цены", systemImage: "arrow.clockwise") }
+                        Button { store.showRegionPicker = true } label: { Label("Сменить город", systemImage: "mappin.and.ellipse") }
                         Button { showImporter = true } label: { Label("Импортировать файл прайса", systemImage: "square.and.arrow.down") }
-                        Button { showServerSettings = true } label: { Label("Настроить сервер цен", systemImage: "gearshape") }
                     } label: { Image(systemName: "ellipsis.circle") }
                     .accessibilityLabel("Настройки прайса")
                 }
@@ -285,13 +290,15 @@ struct HouseEstimateView: View {
             .alert("Прайс", isPresented: Binding(get: { store.priceSyncMessage != nil && !showServerSettings }, set: { if !$0 { store.priceSyncMessage = nil } })) { Button("Понятно") { store.priceSyncMessage = nil } } message: { Text(store.priceSyncMessage ?? "") }
             .alert("Бюджет проекта", isPresented: Binding(get: { budgetMessage != nil }, set: { if !$0 { budgetMessage = nil } })) { Button("Понятно") { budgetMessage = nil } } message: { Text(budgetMessage ?? "") }
             .onAppear { store.track("estimate_open_\(kind.rawValue)"); if kind == .house, let saved = CalculationEngine.parse(store.passport.area), saved > 0 { area = store.passport.area } }
+            .task { await store.ensureRegion() }
     }
 
     private var totalCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("НАША ЦЕНА · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
+            Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
             Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
             if perSquareMeter > 0 { Text("≈ \(CalculationEngine.money(perSquareMeter)) за м²").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85)) }
+            if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.orangeSoft) }
             HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(Theme.muted)
             if total > 0 {
                 GeometryReader { proxy in
@@ -332,6 +339,7 @@ struct HouseEstimateView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(alignment: .top) { Text(line.title).font(.subheadline.weight(.medium)); Spacer(); Text(CalculationEngine.money(material(line) + labor(line))).font(.subheadline.bold()).monospacedDigit() }
                         Text("\(CalculationEngine.format(quantity(line))) \(line.unit) · материалы \(CalculationEngine.money(material(line))) · работа \(CalculationEngine.money(labor(line)))").font(.caption).foregroundStyle(Theme.muted)
+                        if isMarketPriced { Text(line.hasMarketData ? (line.lowData == true ? "рынок · мало предложений" : "рынок · \((line.materialSources ?? 0) + (line.laborSources ?? 0)) предложений") : "ориентир · нет рыночных данных").font(.caption2.weight(.semibold)).foregroundStyle(line.hasMarketData && line.lowData != true ? Theme.success : Theme.orangeSoft) }
                     }.padding(.vertical, 11)
                     if line.id != sectionLines.last?.id { Divider() }
                 }
@@ -461,11 +469,8 @@ struct CalculatorView: View {
                         Button { exportPDF(result) } label: { SecondaryActionLabel(title: "PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
                         ShareLink(item: snapshot.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
                     }
-                    HStack(spacing: 10) {
-                        NavigationLink { AIAssistantView(context: assistantContext(for: result)) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
-                        NavigationLink { CreateWorkOrderView(prefill: workOrderDraft(for: snapshot)) } label: { SecondaryActionLabel(title: "В АртСтрой", icon: "paperplane.fill") }.buttonStyle(PremiumPressStyle())
-                    }
-                    Button("Добавить результат в заявку") { addToRequest(snapshot) }.font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity)
+                    NavigationLink { AIAssistantView(context: assistantContext(for: result)) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
+                    PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении АртСтрой: «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
                 }
             }
             InfoNote(text: kind.note)

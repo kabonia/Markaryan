@@ -1,0 +1,5 @@
+# Подставьте свой домен. Файл кладётся в /etc/caddy/sites/, затем: systemctl reload caddy
+ai.example.ru {
+	encode gzip
+	reverse_proxy 127.0.0.1:3200
+}

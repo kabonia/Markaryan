@@ -196,12 +196,30 @@ struct PriceLine: Codable, Identifiable {
     var basis: String
     /// Nil keeps compatibility with the first price files and means that the line belongs to a house estimate.
     var appliesTo: [String]? = nil
+    // Market range from the price collection (P25 / P75 of real offers) and how many offers it rests on.
+    var materialLow: Double? = nil
+    var materialHigh: Double? = nil
+    var laborLow: Double? = nil
+    var laborHigh: Double? = nil
+    var materialSources: Int? = nil
+    var laborSources: Int? = nil
+    /// "material" / "labor": which side of the line has market data for the chosen city. Empty: base guide price.
+    var marketData: [String]? = nil
+    var lowData: Bool? = nil
     var id: String { code }
     var scopes: [String] { appliesTo ?? ["house"] }
+    var hasMarketData: Bool { !(marketData ?? []).isEmpty }
 }
 struct PriceBook: Codable {
     var updatedAt: Date
     var lines: [PriceLine]
+    /// City the market prices were collected for; nil — built-in base guide prices.
+    var city: String? = nil
+    /// city / region / nearby / national / import
+    var coverage: String? = nil
+    var distanceKm: Double? = nil
+    var method: String? = nil
+    var marketLineCount: Int { lines.filter(\.hasMarketData).count }
     static let `default` = PriceBook(updatedAt: .now, lines: [
         PriceLine(code: "survey", section: "Подготовка", title: "Выезд, геодезия и разметка", unit: "компл.", materialRate: 0, laborRate: 35_000, quantityPerSquareMeter: 0, basis: "fixed"),
         PriceLine(code: "temporary", section: "Подготовка", title: "Временное электроснабжение и бытовка", unit: "компл.", materialRate: 70_000, laborRate: 20_000, quantityPerSquareMeter: 0, basis: "fixed"),
@@ -442,6 +460,12 @@ enum WorkOrderError: LocalizedError {
     @Published var workOrders: [WorkOrder] = []
     @Published var workOrdersLoading = false
     @Published var lastPriceSync: Date? { didSet { UserDefaults.standard.set(lastPriceSync, forKey: "lastPriceSync") } }
+    /// City for market prices and partner contractors.
+    @Published var userRegion: UserRegion? { didSet { scheduleSave(userRegion, key: "userRegion") } }
+    @Published var showRegionPicker = false
+    @Published private(set) var regionDetecting = false
+    @Published private(set) var locationDenied = false
+    private let locationService = LocationService()
     /// Number of meaningful results (saved calculation, PDF, sent request). Used to ask for an App Store rating at a good moment.
     @Published private(set) var meaningfulActions = UserDefaults.standard.integer(forKey: "meaningfulActions")
     private let workOrdersDeviceID: String
@@ -480,7 +504,10 @@ enum WorkOrderError: LocalizedError {
         aiPreference = AIPreference(rawValue: UserDefaults.standard.string(forKey: "aiPreference") ?? "") ?? .auto
         claudeModel = ClaudeModel(rawValue: UserDefaults.standard.string(forKey: "claudeModel") ?? "") ?? .sonnet
         hasClaudeKey = ClaudeClient.currentKey != nil
+        userRegion = Self.read("userRegion")
         priceBook = Self.read("priceBook") ?? .default
+        // Prices saved by older versions came from the company price list: start from the base guide instead.
+        if priceBook.coverage == nil { priceBook = .default }
         let savedServerURL = UserDefaults.standard.string(forKey: "priceServerURL")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         priceServerURL = savedServerURL.isEmpty ? Self.productionServerURL : savedServerURL
         priceAlert = UserDefaults.standard.string(forKey: "priceAlert")
@@ -656,7 +683,7 @@ enum WorkOrderError: LocalizedError {
     }
     var projectCity: String {
         let city = passport.address.trimmingCharacters(in: .whitespacesAndNewlines)
-        return city.isEmpty ? Brand.city : city
+        return city.isEmpty ? (userRegion?.city ?? Brand.city) : city
     }
     var projectProgress: Double {
         milestones.isEmpty ? 0 : Double(milestones.filter(\.completed).count) / Double(milestones.count)
@@ -728,31 +755,119 @@ enum WorkOrderError: LocalizedError {
 
     func importPriceBook(from url: URL) throws {
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-        let book = try decoder.decode(PriceBook.self, from: Data(contentsOf: url))
+        var book = try decoder.decode(PriceBook.self, from: Data(contentsOf: url))
         guard !book.lines.isEmpty else { throw PriceBookError.empty }
+        book.coverage = "import"
         applyPriceBook(book)
         priceSyncMessage = "Прайс обновлён: \(book.lines.count) позиций."
     }
 
+    // MARK: Region and market prices
+
+    /// Server with market prices and partners: the platform AI server, else the configured server.
+    private func marketURL(_ path: String, query: [URLQueryItem] = []) -> URL? {
+        let base = AIServerConfig.marketURL?.absoluteString ?? serverBase
+        guard base.lowercased().hasPrefix("http"), var components = URLComponents(string: base + path) else { return nil }
+        if !query.isEmpty { components.queryItems = query }
+        return components.url
+    }
+    private var regionQuery: [URLQueryItem] {
+        guard let region = userRegion else { return [] }
+        var items = [URLQueryItem(name: "city", value: region.city), URLQueryItem(name: "region", value: region.region)]
+        if let lat = region.latitude, let lon = region.longitude {
+            items += [URLQueryItem(name: "lat", value: String(format: "%.2f", lat)), URLQueryItem(name: "lon", value: String(format: "%.2f", lon))]
+        }
+        return items
+    }
+
+    /// Asks for the city once: from location if allowed, otherwise opens the manual city choice.
+    func ensureRegion() async {
+        guard userRegion == nil, !regionDetecting else { return }
+        if !(await detectRegion()) { showRegionPicker = true }
+    }
+
+    @discardableResult
+    func detectRegion() async -> Bool {
+        regionDetecting = true
+        defer { regionDetecting = false; locationDenied = locationService.isDenied }
+        guard let location = await locationService.currentLocation(), let region = await LocationService.region(for: location) else { return false }
+        setRegion(region)
+        return true
+    }
+
+    func setRegion(_ region: UserRegion) {
+        guard region != userRegion else { return }
+        userRegion = region
+        track("region_\(region.source.rawValue)")
+        Task { await refreshPriceBook(silent: true) }
+    }
+
     /// - Parameter silent: background refresh (launch) never shows alerts; only a manual refresh reports the result.
     func refreshPriceBook(silent: Bool = false) async {
-        guard let url = serverURL("/v1/public/price-book") else {
-            if !silent { priceSyncMessage = "Укажите адрес сервера в настройках прайса." }
+        guard let region = userRegion else {
+            if !silent { showRegionPicker = true }
+            return
+        }
+        guard let url = marketURL("/v1/market/price-book", query: regionQuery) else {
+            if !silent { priceSyncMessage = "Сервер рыночных цен не настроен." }
             return
         }
         do {
             var request = URLRequest(url: url)
             request.timeoutInterval = silent ? 8 : 20
             let (data, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw PriceBookError.server }
+            guard let http = response as? HTTPURLResponse else { throw PriceBookError.server }
+            if http.statusCode == 404 {
+                useBasePrices(for: region)
+                if !silent { priceSyncMessage = "Для города \(region.city) рыночные цены пока не собраны. Смета посчитана по базовым ориентирам." }
+                return
+            }
+            guard (200...299).contains(http.statusCode) else { throw PriceBookError.server }
             let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-            let book = try decoder.decode(PriceBook.self, from: data)
-            guard !book.lines.isEmpty else { throw PriceBookError.empty }
+            let market = try decoder.decode(PriceBook.self, from: data)
+            guard !market.lines.isEmpty else { throw PriceBookError.empty }
+            // Market lines replace the base guide line by line; lines without market data stay as a marked guide.
+            let byCode = Dictionary(market.lines.map { ($0.code, $0) }, uniquingKeysWith: { first, _ in first })
+            let baseCodes = Set(PriceBook.default.lines.map(\.code))
+            var book = market
+            book.lines = PriceBook.default.lines.map { base in
+                guard var line = byCode[base.code] else { return base }
+                // A side without market data (e.g. only material offers were found) keeps the base guide rate.
+                let sides = line.marketData ?? []
+                if !sides.contains("material") { line.materialRate = base.materialRate; line.materialLow = nil; line.materialHigh = nil }
+                if !sides.contains("labor") { line.laborRate = base.laborRate; line.laborLow = nil; line.laborHigh = nil }
+                return line
+            } + market.lines.filter { !baseCodes.contains($0.code) }
             applyPriceBook(book)
-            if !silent { priceSyncMessage = "Получен актуальный прайс: \(book.updatedAt.formatted(date: .abbreviated, time: .shortened))." }
+            if !silent { priceSyncMessage = "Рыночные цены: \(book.city ?? region.city), \(book.marketLineCount) из \(book.lines.count) позиций, от \(book.updatedAt.formatted(date: .abbreviated, time: .omitted))." }
         } catch {
-            if !silent { priceSyncMessage = "Не удалось обновить прайс: \(error.localizedDescription)" }
+            // Never keep prices of another city after the city was changed.
+            if priceBook.city != nil, priceBook.city != region.city, priceBook.coverage != "nearby" { useBasePrices(for: region) }
+            if !silent { priceSyncMessage = "Не удалось обновить цены: \(error.localizedDescription)" }
         }
+    }
+
+    private func useBasePrices(for _: UserRegion) {
+        var book = PriceBook.default
+        book.coverage = "base"
+        priceBook = book
+        lastPriceSync = .now
+    }
+
+    // MARK: Partner contractors (advertising)
+
+    func partners(category: String) async -> [Partner] {
+        guard userRegion != nil, let url = marketURL("/v1/partners", query: regionQuery + [URLQueryItem(name: "category", value: category)]) else { return [] }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        guard let result = try? await session.data(for: request), (result.1 as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode(PartnersResponse.self, from: result.0).partners) ?? []
+    }
+
+    /// Views and clicks are counted per partner for advertising reports.
+    func partnerEvent(_ partnerID: String, _ type: String) {
+        guard let url = marketURL("/v1/partners/\(partnerID)/events"), let body = try? JSONSerialization.data(withJSONObject: ["type": type]) else { return }
+        Task { _ = try? await postJSON(url, body: body, timeout: 10) }
     }
 
     private func applyPriceBook(_ book: PriceBook) {

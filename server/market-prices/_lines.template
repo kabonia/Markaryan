@@ -1,0 +1,368 @@
+{
+ "note": "Шаблон строк сметы: код, единица и норма расхода. Цены берутся из market-observations/<город>.csv",
+ "lines": [
+  {
+   "code": "survey",
+   "section": "Подготовка",
+   "title": "Выезд, геодезия и разметка",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "temporary",
+   "section": "Подготовка",
+   "title": "Временное электроснабжение и бытовка",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "excavation",
+   "section": "Фундамент",
+   "title": "Разработка грунта",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.45,
+   "basis": "area"
+  },
+  {
+   "code": "sand",
+   "section": "Фундамент",
+   "title": "Песчано-щебёночное основание",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.25,
+   "basis": "area"
+  },
+  {
+   "code": "concrete",
+   "section": "Фундамент",
+   "title": "Бетон для фундаментной плиты",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.3,
+   "basis": "area"
+  },
+  {
+   "code": "rebar",
+   "section": "Фундамент",
+   "title": "Арматура и вязальная проволока",
+   "unit": "кг",
+   "quantityPerSquareMeter": 18.0,
+   "basis": "area"
+  },
+  {
+   "code": "formwork",
+   "section": "Фундамент",
+   "title": "Опалубка и крепёж",
+   "unit": "м²",
+   "quantityPerSquareMeter": 0.55,
+   "basis": "area"
+  },
+  {
+   "code": "waterproofing",
+   "section": "Фундамент",
+   "title": "Гидроизоляция фундамента",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.1,
+   "basis": "area"
+  },
+  {
+   "code": "pump",
+   "section": "Фундамент",
+   "title": "Бетононасос и техника",
+   "unit": "смена",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "block",
+   "section": "Коробка",
+   "title": "Кладка наружных стен",
+   "unit": "м² стен",
+   "quantityPerSquareMeter": 2.8,
+   "basis": "area"
+  },
+  {
+   "code": "floor",
+   "section": "Коробка",
+   "title": "Перекрытия и армопояса",
+   "unit": "м² дома",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area"
+  },
+  {
+   "code": "roof",
+   "section": "Кровля",
+   "title": "Стропильная система",
+   "unit": "м² кровли",
+   "quantityPerSquareMeter": 1.25,
+   "basis": "area"
+  },
+  {
+   "code": "covering",
+   "section": "Кровля",
+   "title": "Кровельное покрытие и водосток",
+   "unit": "м² кровли",
+   "quantityPerSquareMeter": 1.25,
+   "basis": "area"
+  },
+  {
+   "code": "windows",
+   "section": "Проёмы",
+   "title": "Окна и входные двери",
+   "unit": "м² проёмов",
+   "quantityPerSquareMeter": 0.2,
+   "basis": "area"
+  },
+  {
+   "code": "facade",
+   "section": "Фасад",
+   "title": "Утепление и фасад",
+   "unit": "м² фасада",
+   "quantityPerSquareMeter": 2.8,
+   "basis": "area"
+  },
+  {
+   "code": "electric",
+   "section": "Инженерия",
+   "title": "Электрика",
+   "unit": "м² дома",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area"
+  },
+  {
+   "code": "water",
+   "section": "Инженерия",
+   "title": "Водоснабжение и канализация",
+   "unit": "м² дома",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area"
+  },
+  {
+   "code": "septic",
+   "section": "Инженерия",
+   "title": "Септик и подключение",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "roughFinish",
+   "section": "Отделка",
+   "title": "Черновая отделка",
+   "unit": "м² дома",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area"
+  },
+  {
+   "code": "finish",
+   "section": "Отделка",
+   "title": "Чистовая отделка",
+   "unit": "м² дома",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area"
+  },
+  {
+   "code": "delivery",
+   "section": "Логистика",
+   "title": "Доставка материалов",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "waste",
+   "section": "Логистика",
+   "title": "Вывоз мусора",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed"
+  },
+  {
+   "code": "gazeboLayout",
+   "section": "Подготовка",
+   "title": "Разметка площадки",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboBase",
+   "section": "Основание",
+   "title": "Щебёночное основание",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.18,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboConcrete",
+   "section": "Основание",
+   "title": "Бетонные опоры",
+   "unit": "м³",
+   "quantityPerSquareMeter": 0.12,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboFrame",
+   "section": "Каркас",
+   "title": "Деревянный или металлический каркас",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboRoof",
+   "section": "Кровля",
+   "title": "Стропила, покрытие и водосток",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.25,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboFloor",
+   "section": "Отделка",
+   "title": "Настил пола",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboRail",
+   "section": "Отделка",
+   "title": "Ограждения и декоративные элементы",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboPaint",
+   "section": "Отделка",
+   "title": "Защита и покраска",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.6,
+   "basis": "area",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "gazeboDelivery",
+   "section": "Логистика",
+   "title": "Доставка и монтаж",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed",
+   "appliesTo": [
+    "gazebo"
+   ]
+  },
+  {
+   "code": "metalMeasure",
+   "section": "Подготовка",
+   "title": "Замер и рабочая схема",
+   "unit": "компл.",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalProfile",
+   "section": "Материал",
+   "title": "Профильная труба и прокат",
+   "unit": "кг",
+   "quantityPerSquareMeter": 22.0,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalSheet",
+   "section": "Материал",
+   "title": "Листовой металл и крепёж",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.1,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalWeld",
+   "section": "Изготовление",
+   "title": "Резка, сварка и сборка",
+   "unit": "кг",
+   "quantityPerSquareMeter": 22.0,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalPrimer",
+   "section": "Защита",
+   "title": "Антикоррозионный грунт и окраска",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.5,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalAnchors",
+   "section": "Монтаж",
+   "title": "Анкеры, крепёж и расходники",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalInstall",
+   "section": "Монтаж",
+   "title": "Доставка и монтаж конструкции",
+   "unit": "м²",
+   "quantityPerSquareMeter": 1.0,
+   "basis": "area",
+   "appliesTo": [
+    "metal"
+   ]
+  },
+  {
+   "code": "metalLift",
+   "section": "Логистика",
+   "title": "Подъёмная техника",
+   "unit": "смена",
+   "quantityPerSquareMeter": 0.0,
+   "basis": "fixed",
+   "appliesTo": [
+    "metal"
+   ]
+  }
+ ]
+}
