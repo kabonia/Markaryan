@@ -79,25 +79,6 @@ struct FloorPlan: Codable, Identifiable {
     /// Net wall area for paint/plaster: perimeter × height minus doors and windows.
     var netWallArea: Double { max(0, perimeter * ceilingHeight - openingsArea) }
     var volume: Double { area * ceilingHeight }
-
-    /// Compact description for the AI (rounded to centimetres).
-    var aiDescription: String {
-        func r(_ v: Double) -> Double { (v * 100).rounded() / 100 }
-        func seg(_ s: PlanSegment) -> [String: Any] { ["from": [r(s.start.x), r(s.start.y)], "to": [r(s.end.x), r(s.end.y)], "length": r(s.length), "height": r(s.height)] }
-        let payload: [String: Any] = [
-            "units": "meters; x right, y down; origin top-left",
-            "size": ["width": r(width), "depth": r(depth)],
-            "floorArea": r(area),
-            "ceilingHeight": r(ceilingHeight),
-            "floorPolygon": floorPolygon.map { [r($0.x), r($0.y)] },
-            "walls": walls.map(seg),
-            "doors": doors.map(seg),
-            "windows": windows.map(seg),
-            "existingObjects": objects.map { ["name": $0.name, "center": [r($0.center.x), r($0.center.y)], "width": r($0.width), "depth": r($0.depth)] as [String: Any] }
-        ]
-        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]), let text = String(data: data, encoding: .utf8) else { return "" }
-        return text
-    }
 }
 
 extension FloorPlan {

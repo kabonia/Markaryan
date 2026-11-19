@@ -10,6 +10,8 @@ struct FloorPlanCanvas: View {
     var proposal: DesignProposal?
     var showDimensions = true
     var compact = false
+    /// Wall numbers in circles (the picture sent to the AI: «стена 2» in its answer is the wall marked 2 here).
+    var wallNumbers = false
 
     private let paper = Color(red: 0.97, green: 0.96, blue: 0.93)
     private let ink = Color(red: 0.13, green: 0.15, blue: 0.14)
@@ -118,6 +120,13 @@ struct FloorPlanCanvas: View {
                     if (mid.x + normal.x - center.x) * normal.x + (mid.y + normal.y - center.y) * normal.y < 0 { normal = CGPoint(x: -normal.x, y: -normal.y) }
                     let label = CGPoint(x: mid.x + normal.x * 14, y: mid.y + normal.y * 14)
                     context.draw(Text(String(format: "%.2f м", wall.length).replacingOccurrences(of: ".", with: ",")).font(.system(size: 9, weight: .semibold).monospacedDigit()).foregroundColor(ink.opacity(0.8)), at: label)
+                }
+            }
+            if wallNumbers && !compact {
+                for wall in PlanWalls.numbered(plan) {
+                    let center = p(wall.point(wall.length / 2, offset: 0.32))
+                    context.fill(Path(ellipseIn: CGRect(x: center.x - 10, y: center.y - 10, width: 20, height: 20)), with: .color(ink))
+                    context.draw(Text("\(wall.number)").font(.system(size: 11, weight: .bold)).foregroundColor(paper), at: center)
                 }
             }
         }
@@ -390,6 +399,13 @@ struct FloorPlanDetailView: View {
             Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text(proposal.title).font(.title3.bold())
             Text(proposal.summary).font(.subheadline).foregroundStyle(.white.opacity(0.88))
+            if !proposal.layoutNotes.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(proposal.layoutNotes, id: \.self) { note in
+                        Label(note, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.muted)
+                    }
+                }
+            }
             if !proposal.palette.isEmpty {
                 HStack(spacing: 8) {
                     ForEach(proposal.palette, id: \.self) { hex in
@@ -520,10 +536,10 @@ struct FloorPlanDetailView: View {
         return AIAssistantContext(estimateType: "Дизайн: \(proposal.title)", objectName: plan.name, area: plan.area, floors: nil, reservePercent: nil, materialTotal: nil, laborTotal: nil, total: proposal.budgetMax > 0 ? proposal.budgetMax : nil, lines: lines)
     }
 
-    @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?) -> UIImage? {
+    @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?, wallNumbers: Bool = false) -> UIImage? {
         let ratio = max(0.7, min(1.6, plan.width / max(0.5, plan.depth)))
         let width: CGFloat = 1200
-        let renderer = ImageRenderer(content: FloorPlanCanvas(plan: plan, proposal: proposal).frame(width: width, height: width / ratio))
+        let renderer = ImageRenderer(content: FloorPlanCanvas(plan: plan, proposal: proposal, wallNumbers: wallNumbers).frame(width: width, height: width / ratio))
         renderer.scale = 1
         return renderer.uiImage
     }
@@ -538,7 +554,7 @@ struct FloorPlanDetailView: View {
         error = nil
         isGenerating = true
         UIApplication.shared.isIdleTimerDisabled = true // the screen must not lock while the AI is working
-        let image = planImage(plan, proposal: nil)
+        let image = planImage(plan, proposal: nil, wallNumbers: true)
         Task {
             do {
                 let result = try await store.generateDesign(for: plan, planImage: image, style: style, purpose: purpose, wishes: wishes)

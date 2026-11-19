@@ -64,9 +64,10 @@ if let contour = FloorPlanBuilder.fromContour([turned(0, 0), turned(5, 0), turne
 } else { check(false, "Contour plan is built") }
 check(FloorPlanBuilder.fromContour([SIMD3<Float>(0, 0, 0), SIMD3<Float>(1, 0, 0)], name: "x") == nil, "Two points are not a room")
 
-if let json = try? JSONSerialization.jsonObject(with: Data(bedroom.aiDescription.utf8)) as? [String: Any] {
+if let json = try? JSONSerialization.jsonObject(with: Data(PlanWalls.aiDescription(bedroom).utf8)) as? [String: Any], let walls = json["walls"] as? [[String: Any]] {
     near(json["floorArea"] as? Double ?? 0, 12, "AI description: area")
-    check((json["walls"] as? [Any])?.count == 4 && (json["doors"] as? [Any])?.count == 1, "AI description: walls and doors")
+    check(walls.count == 4 && walls[0]["number"] as? Int == 1 && (walls[0]["doors"] as? [Any])?.count == 1, "AI description: wall 1 has the door")
+    check((walls[2]["windows"] as? [Any])?.count == 1, "AI description: window on wall 3")
 } else { check(false, "AI description is JSON") }
 
 // MARK: Room type
@@ -236,5 +237,114 @@ let wall = [item("Стеллаж через всю комнату", "storage", 2
 check(LayoutCheck.issues(plan: bedroom, furniture: wall).contains { $0.kind == .passage && $0.message.contains("Кровать") }, "Item cut off from the entrance is found")
 check(kinds([item("Шкаф у двери", "storage", 1.4, 2.6, 1.6, 0.6, 180)]).contains(.passage), "Blocked entrance is found")
 check(kinds([item("Кухня", "kitchen", 2.0, 0.38, 2.4, 0.6), item("Остров", "table", 2.0, 1.2, 1.6, 0.6)]).contains(.front), "Too little room in front of a kitchen is found")
+
+// MARK: Layout engine: built-in designer in typical rooms
+
+let narrowBathroom = room("Санузел", [(0, 0), (1.5, 0), (1.5, 2.6), (0, 2.6)], doors: [segment(.door, 0.4, 2.6, 1.1, 2.6, height: 2.0)])
+let smallBathroom = room("Санузел", [(0, 0), (2, 0), (2, 1.7), (0, 1.7)], doors: [segment(.door, 0.1, 1.7, 0.8, 1.7, height: 2.0)])
+let bigBathroom = room("Ванная", [(0, 0), (2.6, 0), (2.6, 2.4), (0, 2.4)], doors: [segment(.door, 1.7, 2.4, 2.45, 2.4, height: 2.0)])
+let lLiving = room("Гостиная", [(0, 0), (5, 0), (5, 2.4), (3, 2.4), (3, 4.5), (0, 4.5)], doors: [segment(.door, 3.0, 3.2, 3.0, 4.1, height: 2.05)], windows: [segment(.window, 1.0, 0, 3.0, 0, height: 1.5)])
+let studio = room("Студия", [(0, 0), (6, 0), (6, 5), (0, 5)], doors: [segment(.door, 0.3, 5, 1.2, 5, height: 2.05)], windows: [segment(.window, 1.5, 0, 4.5, 0, height: 1.6)])
+let hall = room("Прихожая", [(0, 0), (1.6, 0), (1.6, 3.2), (0, 3.2)], doors: [segment(.door, 0.4, 3.2, 1.3, 3.2, height: 2.05), segment(.opening, 0.3, 0, 1.2, 0, height: 2.1)])
+let kids = room("Детская", [(0, 0), (3, 0), (3, 3.3), (0, 3.3)], doors: [segment(.door, 2.0, 3.3, 2.8, 3.3, height: 2.05)], windows: [segment(.window, 0.8, 0, 2.2, 0, height: 1.5)])
+let office = room("Кабинет", [(0, 0), (2.6, 0), (2.6, 3), (0, 3)], doors: [segment(.door, 0.2, 3, 1.0, 3, height: 2.05)], windows: [segment(.window, 0.7, 0, 1.9, 0, height: 1.5)])
+let kitchen = room("Кухня", [(0, 0), (3, 0), (3, 3.5), (0, 3.5)], doors: [segment(.door, 2.0, 3.5, 2.8, 3.5, height: 2.05)], windows: [segment(.window, 0.9, 0, 2.1, 0, height: 1.5)])
+let chamfered = room("Спальня", [(0, 0), (4, 0), (4, 2.2), (3.2, 3.4), (0, 3.4)], doors: [segment(.door, 0.3, 3.4, 1.1, 3.4, height: 2.05)], windows: [segment(.window, 1.2, 0, 2.6, 0, height: 1.5)])
+let doorless = FloorPlanBuilder.fromContour([SIMD3<Float>(0, 0, 0), SIMD3<Float>(4, 0, 0), SIMD3<Float>(4, 0, 3.5), SIMD3<Float>(0, 0, 3.5)], name: "Контур")!
+
+func models(_ proposal: DesignProposal) -> [String] { proposal.furniture.map(\.model) }
+let cases: [(String, FloorPlan, String, [String])] = [
+    ("Санузел", narrowBathroom, "", ["shower", "toilet", "sink"]),
+    ("Санузел", smallBathroom, "", ["shower", "toilet", "sink"]),
+    ("Ванная", bigBathroom, "ванна, стиральная машина", ["bathtub", "toilet", "sink", "washer"]),
+    ("Спальня", bedroom, "", ["bed"]),
+    ("Спальня", chamfered, "", ["bed", "storage"]),
+    ("Гостиная", lLiving, "", ["sofa", "tv"]),
+    ("Кухня‑гостиная", studio, "", ["kitchen", "table", "chair", "sofa", "tv"]),
+    ("Прихожая", hall, "", ["storage"]),
+    ("Детская", kids, "", ["bed", "desk"]),
+    ("Кабинет", office, "", ["desk", "chair"]),
+    ("Кухня", kitchen, "", ["kitchen", "appliance"]),
+    ("Спальня", doorless, "", ["bed"])
+]
+for (purpose, plan, wishes, required) in cases {
+    guard let proposal = OfflineDesigner.propose(plan: plan, style: "Современный", purpose: purpose, wishes: wishes) else { check(false, "Design for \(plan.name)"); continue }
+    let issues = LayoutCheck.issues(plan: plan, furniture: proposal.furniture)
+    check(issues.isEmpty, "\(purpose) «\(plan.name)»: no layout issues, got \(issues.map(\.message))")
+    for model in required { check(models(proposal).contains(model), "\(purpose) «\(plan.name)»: has \(model), got \(models(proposal))") }
+    check(proposal.layoutVersion == 2 && proposal.roomKind == DesignComposer.room(plan: plan, purpose: purpose).rawValue, "\(purpose): placed by the engine")
+    check(proposal.placed(in: plan).furniture == proposal.furniture, "\(purpose): engine layout is not fitted again")
+}
+let studioDesign = OfflineDesigner.propose(plan: studio, style: "Лофт", purpose: "Кухня‑гостиная", wishes: "")!
+check(Set(studioDesign.zones.map(\.name)) == ["Кухня", "Гостиная"], "Studio has kitchen and living zones")
+check(!LayoutCheck.issues(plan: studio, furniture: studioDesign.furniture).contains { $0.kind == .window }, "Kitchen is not put under the window")
+let again = OfflineDesigner.propose(plan: studio, style: "Лофт", purpose: "Кухня‑гостиная", wishes: "")!
+check(again.furniture == studioDesign.furniture, "Same room, same layout")
+
+// MARK: Layout engine: AI brief
+
+func aiDesign(_ json: String, _ plan: FloorPlan, _ purpose: String) throws -> DesignProposal {
+    try DesignComposer.proposal(from: Data(json.utf8), plan: plan, purpose: purpose)
+}
+let studioBrief = #"""
+{"title":"Светлая студия","style":"Скандинавский","summary":"Кухня у глухой стены, диван спиной к кухне.","roomPurpose":"кухня-гостиная",
+ "items":[
+  {"name":"Кухонный гарнитур 2700","kind":"kitchen","width":2.7,"depth":0.6,"count":1,"placement":"corner","wall":2,"relation":"none","target":0,"prefer":"none","optional":false,"zone":"Кухня"},
+  {"name":"Холодильник","kind":"appliance","width":0.6,"depth":0.65,"count":1,"placement":"wall","wall":0,"relation":"nextTo","target":1,"prefer":"none","optional":false,"zone":"Кухня"},
+  {"name":"Обеденный стол","kind":"table","width":1.4,"depth":0.8,"count":1,"placement":"free","wall":0,"relation":"none","target":0,"prefer":"window","optional":false,"zone":"Кухня"},
+  {"name":"Стул","kind":"chair","width":0.45,"depth":0.5,"count":"4","placement":"free","wall":0,"relation":"around","target":3,"prefer":"none","optional":false,"zone":"Кухня"},
+  {"name":"Диван","kind":"sofa","width":220,"depth":95,"count":1,"placement":"wall","wall":4,"relation":"none","target":0,"prefer":"none","optional":false,"zone":"Гостиная"},
+  {"name":"Журнальный столик","kind":"table","width":1.0,"depth":0.55,"count":1,"placement":"free","wall":0,"relation":"front","target":5,"prefer":"none","optional":true,"zone":"Гостиная"},
+  {"name":"ТВ на тумбе","kind":"tv","width":1.8,"depth":0.45,"count":1,"placement":"wall","wall":0,"relation":"opposite","target":5,"prefer":"none","optional":false,"zone":"Гостиная"},
+  {"name":"Ковёр","kind":"decor","width":2.0,"depth":1.4,"count":1,"placement":"free","wall":0,"relation":"under","target":6,"prefer":"none","optional":true,"zone":"Гостиная"},
+  {"name":"Подвесной светильник","kind":"light","width":0.5,"depth":0.5,"count":1,"placement":"ceiling","wall":0,"relation":"above","target":3,"prefer":"none","optional":true,"zone":"Кухня"},
+  {"name":"Унитаз","kind":"toilet","width":0.4,"depth":0.6,"count":1,"placement":"wall","wall":0,"relation":"none","target":0,"prefer":"none","optional":false,"zone":""}
+ ],
+ "palette":["#F2EFEA","#D9C7A7"],"materials":[],"lighting":"","tips":[],"budgetMin":900000,"budgetMax":1500000,
+ "floor":{"material":"Кварцвинил","color":"#D9C7A7","details":"","english":"oak vinyl"},"walls":{"material":"Краска","color":"#F2EFEA","details":"","english":"white paint"},"ceiling":{"material":"Натяжной","color":"#FFFFFF","details":"","english":"white ceiling"}}
+"""#
+let ai = try aiDesign(studioBrief, studio, "Кухня‑гостиная")
+let aiIssues = LayoutCheck.issues(plan: studio, furniture: ai.furniture)
+check(aiIssues.isEmpty, "AI studio: no layout issues, got \(aiIssues.map(\.message)) notes \(ai.layoutNotes)")
+check(ai.layoutVersion == 2 && ai.title == "Светлая студия" && ai.floor.material == "Кварцвинил", "AI texts and finishes are kept")
+check(!models(ai).contains("toilet") && ai.layoutNotes.contains { $0.contains("Унитаз") }, "Toilet is removed from a studio with a note")
+let aiSofa = ai.furniture.first { $0.model == "sofa" }!
+near(aiSofa.width, 2.2, "Centimetres in the brief become metres")
+check(aiSofa.wall == 4, "Sofa stands against the wall the AI asked for")
+check(ai.furniture.first { $0.model == "kitchen" }?.wall == 2, "Kitchen on the wall the AI asked for")
+let aiTable = ai.furniture.first { $0.name == "Обеденный стол" }!
+let chairs = ai.furniture.filter { $0.model == "chair" }
+check(chairs.count == 4, "Four chairs from one item with count 4, got \(chairs.count)")
+check(chairs.allSatisfy { aiTable.footprint.distance(to: PlanPoint(x: $0.x, y: $0.y)) < 0.4 }, "Chairs stand around the table")
+check(chairs.allSatisfy { $0.front.dot(PlanPoint(x: aiTable.x - $0.x, y: aiTable.y - $0.y)) > 0 }, "Chairs face the table")
+let coffee = ai.furniture.first { $0.name == "Журнальный столик" }!
+let toCoffee = PlanPoint(x: coffee.x - aiSofa.x, y: coffee.y - aiSofa.y)
+check(toCoffee.dot(aiSofa.front) > 0.5 && toCoffee.dot(aiSofa.front) < 1.4, "Coffee table in front of the sofa")
+let tv = ai.furniture.first { $0.model == "tv" }!
+check(tv.front.dot(PlanPoint(x: aiSofa.x - tv.x, y: aiSofa.y - tv.y)) > 1.5 && aiSofa.front.dot(PlanPoint(x: tv.x - aiSofa.x, y: tv.y - aiSofa.y)) > 1.5, "TV faces the sofa from the opposite wall")
+let rug = ai.furniture.first { $0.name == "Ковёр" }!
+check(rug.isFlat && rug.footprint.contains(PlanPoint(x: coffee.x, y: coffee.y)), "Rug lies under the coffee table")
+let lamp = ai.furniture.first { $0.name == "Подвесной светильник" }!
+check(lamp.isCeiling && aiTable.footprint.contains(PlanPoint(x: lamp.x, y: lamp.y)), "Pendant hangs above the table")
+check(ai.zones.count == 2, "Zones come from the items")
+
+let tooBig = try aiDesign(#"{"items":[{"name":"Кровать 1600","kind":"bed","width":1.6,"depth":2.05,"placement":"wall"}]}"#, room("Кладовая", [(0, 0), (1.5, 0), (1.5, 1.5), (0, 1.5)], doors: [segment(.door, 0.4, 1.5, 1.1, 1.5)]), "Спальня")
+check(tooBig.furniture.isEmpty && tooBig.layoutNotes.contains { $0.contains("Не поместилось") }, "An item that cannot fit is reported, not forced in")
+let closet = room("Гардеробная", [(0, 0), (2.4, 0), (2.4, 2.4), (0, 2.4)], doors: [segment(.door, 0.2, 2.4, 0.9, 2.4)])
+let shrunk = try aiDesign(#"{"items":[{"name":"Шкаф","kind":"storage","width":2.6,"depth":0.6,"placement":"wall"}]}"#, closet, "Прихожая")
+check(shrunk.furniture.count == 1 && shrunk.furniture[0].width < 2.3 && shrunk.layoutNotes.contains { $0.contains("уменьшен") }, "A too wide item is made narrower with a note: \(shrunk.furniture.map(\.width)) \(shrunk.layoutNotes)")
+check(LayoutCheck.issues(plan: closet, furniture: shrunk.furniture).isEmpty, "The narrower item keeps the rules")
+let legacy = try aiDesign(#"{"furniture":[{"name":"Кровать","kind":"bed","x":2,"y":1.2,"width":1.6,"depth":2.0,"rotation":0}]}"#, bedroom, "Спальня")
+check(legacy.layoutVersion == 1 && legacy.furniture.count == 1, "An old-style answer with coordinates is still fitted")
+let pair = try aiDesign(#"{"items":[{"name":"Кровать","kind":"bed","width":1.6,"depth":2.05,"placement":"wall","prefer":"farFromDoor"},{"name":"Тумба","kind":"storage","width":0.45,"depth":0.4,"count":2,"relation":"nextTo","target":1}]}"#, bedroom, "Спальня")
+let bed = pair.furniture.first { $0.model == "bed" }!
+let stands = pair.furniture.filter { $0.name == "Тумба" }
+check(stands.count == 2, "Two nightstands placed")
+let sides = stands.map { PlanPoint(x: $0.x - bed.x, y: $0.y - bed.y).dot(bed.footprint.axisX) }
+check(sides.count == 2 && sides[0] * sides[1] < 0, "Nightstands on both sides of the bed")
+check(stands.allSatisfy { bed.footprint.distance(to: PlanPoint(x: $0.x, y: $0.y)) < 0.35 }, "Nightstands right next to the bed")
+let lenient = try JSONDecoder().decode(DesignBrief.self, from: Data(#"{"items":[{"name":"Стол","kind":"table","placement":"у стены","count":"2","target":"1","relation":"рядом"},{"kind":"chair"}]}"#.utf8))
+check(lenient.items.count == 1 && lenient.items[0].placement == .wall && lenient.items[0].count == 2 && lenient.items[0].relation == .none, "Brief decoding is lenient")
+near(lenient.items[0].width, 1.2, "Missing size becomes a typical size")
 
 print("PASS: \(passed) plan and design checks")

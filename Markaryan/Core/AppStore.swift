@@ -993,21 +993,21 @@ enum WorkOrderError: LocalizedError {
         return result
     }
 
-    /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds)
-    /// returns strict JSON by the schema; without a working AI the built‑in designer makes the concept on the iPhone.
+    /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds) chooses
+    /// the items, their real sizes and where they belong (wall, corner, next to what) and writes the finishes;
+    /// `LayoutEngine` places everything by the rules. Without a working AI the built‑in designer does the same on the iPhone.
     func generateDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String) async throws -> DesignProposal {
-        let room = RoomKind.keyword(purpose) ?? RoomKind.fromScan(plan) ?? .living
+        let room = DesignComposer.room(plan: plan, purpose: purpose)
         let request = """
         Помещение: \(purpose). Стиль: \(style).
         \(room.rulesRussian)
         Пожелания клиента: \(wishes.isEmpty ? "нет, предложи лучший вариант" : wishes)
-        План помещения (JSON): \(plan.aiDescription)
-        Предложи концепцию дизайна и расстановку мебели строго в координатах этого плана. На картинке — тот же план сверху.
+        План помещения (JSON): \(PlanWalls.aiDescription(plan))
+        На картинке — тот же план сверху, номера стен в кружках. Выбери состав мебели и оборудования с реальными размерами и привязками к стенам и друг к другу — координаты не нужны, расстановку по правилам сделает приложение.
         """
-        let decoder = JSONDecoder()
         // Without a working AI (no key, disabled account, no internet) the built‑in designer makes the project on the iPhone.
         func offline() throws -> DesignProposal {
-            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes)?.placed(in: plan) else {
+            guard let proposal = OfflineDesigner.propose(plan: plan, style: style, purpose: purpose, wishes: wishes) else {
                 throw ClaudeError.api("Не удалось расставить предметы в этом помещении. Проверьте скан.")
             }
             track("design_offline")
@@ -1015,37 +1015,26 @@ enum WorkOrderError: LocalizedError {
             return proposal
         }
         guard claudeClient != nil else { return try offline() }
-        do { return try await aiDesign(for: plan, planImage: planImage, style: style, purpose: purpose, wishes: wishes, request: request, decoder: decoder) }
+        do { return try await aiDesign(for: plan, planImage: planImage, purpose: purpose, request: request) }
         catch { return try offline() }
     }
 
-    private func aiDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String, request: String, decoder: JSONDecoder) async throws -> DesignProposal {
+    private func aiDesign(for plan: FloorPlan, planImage: UIImage?, purpose: String, request: String) async throws -> DesignProposal {
         guard let claude = claudeClient else { throw ClaudeError.noKey }
-        let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: request, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-        var proposal = Self.stamped(try decoder.decode(DesignProposal.self, from: data), purpose: purpose).placed(in: plan)
+        func ask(_ text: String) async throws -> DesignProposal {
+            let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: text, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна: мебель и оборудование с привязками к стенам, отделка, свет и бюджет", schema: ClaudePrompts.designSchema, maxTokens: 16000)
+            return try DesignComposer.proposal(from: data, plan: plan, purpose: purpose)
+        }
+        var proposal = try await ask(request)
         if proposal.furniture.isEmpty {
             // An empty layout gives an empty plan and an empty 3D model: ask once more, explicitly.
-            let retry = request + "\n\nВАЖНО: в прошлом ответе массив furniture был пустым или с ошибками. Обязательно заполни furniture: у каждого предмета name, kind, x, y, width, depth, rotation — числа в метрах, внутри контура комнаты."
-            let again = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: retry, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна и расстановка мебели для плана помещения", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-            if let decoded = try? decoder.decode(DesignProposal.self, from: again) {
-                let second = Self.stamped(decoded, purpose: purpose).placed(in: plan)
-                if !second.furniture.isEmpty { proposal = second }
-            }
+            let retry = request + "\n\nВАЖНО: в прошлом ответе не было предметов или ни один не поместился. Обязательно заполни items реальными предметами с размерами в метрах, которые помещаются в эту комнату."
+            if let second = try? await ask(retry), !second.furniture.isEmpty { proposal = second }
         }
         guard !proposal.furniture.isEmpty else { throw ClaudeError.api("ИИ не прислал расстановку. Нажмите «Создать» ещё раз.") }
         track("design_ai")
         registerMeaningfulAction()
         return proposal
-    }
-
-    /// The room type the user chose always wins over what the AI wrote (a bathroom stays a bathroom).
-    /// Layout fields from an AI answer are never trusted: the concept is always fitted into the room.
-    private static func stamped(_ proposal: DesignProposal, purpose: String) -> DesignProposal {
-        var copy = proposal
-        copy.layoutVersion = nil
-        copy.roomKind = nil
-        if let chosen = RoomKind.keyword(purpose), RoomKind.keyword(proposal.roomPurpose) != chosen { copy.roomPurpose = purpose }
-        return copy
     }
 
     func createVisualization(style: String, brief: String, source: UIImage?) async throws -> UIImage {

@@ -36,6 +36,36 @@ enum PlanWalls {
     /// Walls shorter than this are scan fragments, not places for furniture.
     static let minimumLength = 0.3
 
+    /// The room for the AI: numbered walls with their doors and windows and the fixtures the scan found — no coordinates,
+    /// because the AI only says which wall or corner, and the layout engine does the geometry.
+    static func aiDescription(_ plan: FloorPlan) -> String {
+        let walls = numbered(plan)
+        func r(_ value: Double) -> Double { (value * 100).rounded() / 100 }
+        let wallItems: [[String: Any]] = walls.map { wall in
+            var item: [String: Any] = ["number": wall.number, "length": r(wall.length)]
+            if !wall.doors.isEmpty {
+                item["doors"] = wall.doors.map { ["type": $0.segment.kind == .door ? "дверь" : "проём без двери", "from": r($0.from), "to": r($0.to)] as [String: Any] }
+            }
+            if !wall.windows.isEmpty { item["windows"] = wall.windows.map { ["from": r($0.from), "to": r($0.to)] as [String: Any] } }
+            return item
+        }
+        let objects: [[String: Any]] = plan.objects.map { object in
+            let nearest = walls.min { PlanMath.distance(object.center, toSegment: $0.start, $0.end) < PlanMath.distance(object.center, toSegment: $1.start, $1.end) }
+            return ["name": object.name, "nearWall": nearest?.number ?? 0]
+        }
+        let payload: [String: Any] = [
+            "units": "метры",
+            "floorArea": r(plan.area),
+            "ceilingHeight": r(plan.ceilingHeight),
+            "size": "\(r(plan.width)) × \(r(plan.depth))",
+            "walls": wallItems,
+            "wallNumbering": "по часовой стрелке на плане, стена 1 — с входной дверью (без дверей — верхняя); from/to — метры от начала стены по ходу нумерации",
+            "scannedObjects": objects
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]), let text = String(data: data, encoding: .utf8) else { return "" }
+        return text
+    }
+
     /// Walls numbered clockwise on screen from the entrance (the first door, or the top wall when there is no door).
     static func numbered(_ plan: FloorPlan) -> [WallSide] {
         let walls = plan.walls.filter { $0.length >= minimumLength }

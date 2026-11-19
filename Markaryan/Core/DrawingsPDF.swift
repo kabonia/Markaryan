@@ -67,7 +67,8 @@ enum DrawingsPDF {
         let ppm = 1000 / scale * 72 / 25.4
         let t = Transform(scale: scale, origin: CGPoint(x: field.midX - CGFloat(widthM) * ppm / 2, y: field.midY - CGFloat(depthM) * ppm / 2), minX: b.minX, minY: b.minY)
 
-        let walls = plan.walls.filter { $0.length > 0.05 }
+        // Same numbering as the AI uses (clockwise from the entrance); each wall runs left to right as seen from inside.
+        let walls = PlanWalls.numbered(plan).map { side -> PlanSegment in var wall = side.segment; wall.start = side.start; wall.end = side.end; return wall }
         let doors = plan.doors, windows = plan.windows
         let roomName = plan.name
 

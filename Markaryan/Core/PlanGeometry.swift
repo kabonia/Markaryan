@@ -144,6 +144,21 @@ enum PlanMath {
         return point.distance(to: a + ab * t)
     }
 
+    /// Interiors of two convex polygons overlap (separating axis test; touching does not count).
+    static func convexOverlap(_ a: [PlanPoint], _ b: [PlanPoint]) -> Bool {
+        guard a.count >= 3, b.count >= 3 else { return false }
+        for polygon in [a, b] {
+            for i in polygon.indices {
+                let p = polygon[i], q = polygon[(i + 1) % polygon.count]
+                let axis = PlanPoint(x: p.y - q.y, y: q.x - p.x)
+                guard axis.length > 1e-12 else { continue }
+                let pa = a.map { $0.dot(axis) }, pb = b.map { $0.dot(axis) }
+                if pa.max()! <= pb.min()! + 1e-9 || pb.max()! <= pa.min()! + 1e-9 { return false }
+            }
+        }
+        return true
+    }
+
     /// The whole rectangle is inside the polygon: corners inside, no wall crosses it, no corner of the room pokes into it.
     static func polygon(_ polygon: [PlanPoint], contains rect: PlanRect) -> Bool {
         guard rect.corners.allSatisfy({ contains(polygon, $0) }) else { return false }
