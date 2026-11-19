@@ -36,7 +36,9 @@ enum OfflineDesigner {
             add("Полотенцесушитель водяной", "towel", 0.5, 0.1, .mounted, prefer: .water, optional: true)
             if area >= 4.5 { add("Шкаф‑пенал", "storage", 0.4, 0.35, optional: true) }
         case .kitchen:
-            let run = add("Кухонный гарнитур с мойкой и варочной панелью", "kitchen", min(3.0, max(1.8, area.squareRoot() * 0.9)), 0.6, .corner)
+            // Leaves room for the fridge on the same wall: round the corner it often lands in front of the window.
+            let longest = PlanWalls.numbered(plan).map(\.length).max() ?? 3
+            let run = add("Кухонный гарнитур с мойкой и варочной панелью", "kitchen", max(1.8, min(3.0, area.squareRoot() * 0.9, longest - 0.7)), 0.6, .corner)
             add("Холодильник", "appliance", 0.6, 0.65, relation: .nextTo, to: run, optional: true)
             if area >= 6 {
                 let table = add("Обеденный стол", "table", area > 10 ? 1.2 : 0.9, 0.8, .free, optional: true)

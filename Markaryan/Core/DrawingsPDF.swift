@@ -3,8 +3,10 @@ import UIKit
 /// Рабочие чертежи раздела АР по ГОСТ Р 21.101‑2020 / ГОСТ 21.501‑2018 (лист А3, альбомный):
 /// 1. Общие данные (ведомость листов, указания, экспликация, условные обозначения)
 /// 2. Обмерный план (существующее положение, без мебели) — оси, три цепочки размеров, марки проёмов, отметки
-/// 3. План расстановки мебели / сантехники (по типу помещения)  4. План полов  5. План потолка и светильников
-/// 6. Развёртки стен  7. Ведомость отделки и спецификация материалов.
+/// 3. План расстановки мебели / сантехники (по типу помещения)  4. Точки подключения  5. План полов
+/// 6. Раскладка плитки (если пол плиточный)  7. План потолка и светильников  8. Электрооборудование (ГОСТ 21.210)
+/// 9. Развёртки стен (с плиткой в санузле)  10. Ведомость отделки и спецификация материалов.
+/// Стены — замкнутым контуром наружу от линии скана (`WallBody`).
 enum DrawingsPDF {
     // MARK: Paper and pens
 
@@ -38,7 +40,7 @@ enum DrawingsPDF {
         let draw: (CGContext) -> Void
     }
 
-    private static let wallThickness = 0.15
+    private static let wallThickness = WallBody.standardThickness
     private static let axisLetters = ["А", "Б", "В", "Г", "Д", "Е", "Ж", "И", "К", "Л", "М", "Н", "П", "Р", "С", "Т", "У", "Ф", "Ш", "Э", "Ю", "Я"]
 
     // MARK: Entry point
@@ -126,9 +128,30 @@ enum DrawingsPDF {
                            rows: [["1", "1", [finish?.material ?? "", finish?.details ?? ""].filter { !$0.isEmpty }.joined(separator: ". ").orDefault("По проекту"), Self.area(plan.area)]])
             Self.drawHatchLegend(cg, at: CGPoint(x: sideX, y: field.minY + mm(40)), title: "Тип 1", tiled: Self.isTiledFloor(room, proposal?.floor))
         })
+        // Tiles: the floor when it is tiled, the walls of a bathroom; sizes from the finishes when they name one.
+        let floorTiled = Self.isTiledFloor(room, proposal?.floor)
+        let wallsTiled = room == .bathroom && TileLayout.isTiled(.bathroom, proposal?.walls)
+        let floorTiles = floorTiled ? TileLayout.floor(plan, tile: TileSize.parse((proposal?.floor.material ?? "") + " " + (proposal?.floor.details ?? "")) ?? .floor) : nil
+        let wallTiles = wallsTiled ? TileLayout.walls(plan, tile: TileSize.parse((proposal?.walls.material ?? "") + " " + (proposal?.walls.details ?? "")) ?? .wall) : []
+        if let floorTiles {
+            sheets.append(Sheet(title: "Раскладка плитки на полу", usesScale: true) { cg in
+                Self.drawTiles(cg, layout: floorTiles, t: t)
+                Self.drawWalls(cg, plan: plan, t: t, hatch: false)
+                Self.drawTileStart(cg, layout: floorTiles, plan: plan, t: t)
+                Self.drawDimensionChains(cg, plan: plan, t: t, onlyOverall: true)
+                let rows = Self.tileRows(floor: floorTiles, walls: wallTiles)
+                Self.drawTable(cg, at: CGPoint(x: sideX, y: field.minY), title: "Расход плитки", columns: [("Показатель", 50), ("Значение", 44)], rows: rows)
+                Self.drawNotes(cg, at: CGPoint(x: sideX, y: field.minY + mm(6) + mm(9) + mm(6) * CGFloat(rows.count) + mm(8)), width: mm(94), title: "Указания", notes: [
+                    "1. Раскладку начинать от линий начала (штрихпунктир) целой плиткой; шов \(Int((floorTiles.joint * 1000).rounded())) мм.",
+                    "2. Подрезанные плитки показаны серым; самая узкая подрезка указана в таблице.",
+                    "3. Запас 10 % — на подрезку и бой; при диагональной раскладке — 15 %.",
+                    "4. Количество уточнить по размеру плитки в коробке и партии."
+                ])
+            })
+        }
         sheets.append(Sheet(title: "План потолка. Размещение светильников", usesScale: true) { cg in
             Self.drawWalls(cg, plan: plan, t: t, hatch: false, openings: false)
-            let lights = Self.lightPositions(plan: plan)
+            let lights = ElectricPlanner.spotLights(plan)
             for light in lights { Self.drawLightSymbol(cg, at: t.p(light)) }
             Self.drawLightSettingOut(cg, lights: lights, plan: plan, t: t)
             Self.drawDimensionChains(cg, plan: plan, t: t, onlyOverall: true)
@@ -141,9 +164,26 @@ enum DrawingsPDF {
                                  + ((finish?.details.isEmpty ?? true) ? [] : [["", finish?.details ?? "", ""]]))
             Self.drawLightLegend(cg, at: CGPoint(x: sideX, y: field.minY + mm(48)))
         })
+        let power = ElectricPlanner.plan(for: plan, proposal: proposal, room: room)
+        sheets.append(Sheet(title: "План электрооборудования: розетки, выключатели, свет", usesScale: true) { cg in
+            Self.drawWalls(cg, plan: plan, t: t, hatch: false)
+            for item in proposal?.furniture ?? [] where item.blocksFloor { Self.drawGhost(cg, item: item, t: t) }
+            Self.drawElectric(cg, power: power, t: t)
+            Self.drawDimensionChains(cg, plan: plan, t: t, onlyOverall: true)
+            let rows = Self.electricRows(power)
+            Self.drawTable(cg, at: CGPoint(x: sideX, y: field.minY), title: "Ведомость электроустановочных изделий",
+                           columns: [("Наименование", 50), ("Кол.", 12), ("h, мм", 32)], rows: rows)
+            let groupsY = field.minY + mm(6) + mm(9) + mm(6) * CGFloat(rows.count) + mm(8)
+            Self.drawTable(cg, at: CGPoint(x: sideX, y: groupsY), title: "Группы щита",
+                           columns: [("Гр.", 8), ("Назначение", 34), ("Автомат", 26), ("Кабель", 26)],
+                           rows: power.circuits.map { ["\($0.number)", $0.title, $0.breaker, $0.cable] })
+            let legendY = groupsY + mm(6) + mm(9) + mm(6) * CGFloat(power.circuits.count) + mm(8)
+            Self.drawElectricLegend(cg, at: CGPoint(x: sideX, y: legendY), kinds: ElectricPoint.Kind.allCases.filter { power.count($0) > 0 })
+            Self.drawNotes(cg, at: CGPoint(x: frame.minX + mm(15), y: field.maxY + mm(10)), width: frame.width - mm(200), title: "Указания", notes: power.notes)
+        })
         if !walls.isEmpty && walls.count <= 16 {
             sheets.append(Sheet(title: "Развёртки стен", usesScale: false) { cg in
-                Self.drawElevations(cg, plan: plan, walls: walls, in: CGRect(x: frame.minX + mm(15), y: frame.minY + mm(28), width: frame.width - mm(30), height: frame.height - mm(28) - mm(62)))
+                Self.drawElevations(cg, plan: plan, walls: walls, tiles: wallTiles, in: CGRect(x: frame.minX + mm(15), y: frame.minY + mm(28), width: frame.width - mm(30), height: frame.height - mm(28) - mm(62)))
             })
         }
         sheets.append(Sheet(title: "Ведомость отделки помещений", usesScale: false) { cg in
@@ -171,6 +211,58 @@ enum DrawingsPDF {
                 drawStamp(cg, rect: stamp, code: code, object: "\(projectName). \(plan.name)", sheetTitle: item.title, sheetNumber: index + 1, sheetsCount: sheets.count)
                 text("Формат А3", at: CGPoint(x: frame.maxX - mm(20), y: frame.maxY + mm(1)), font: font(7))
             }
+        }
+        return url
+    }
+
+    // MARK: Apartment
+
+    /// The apartment on one sheet: every room where the scan saw it, partitions and doors once, room numbers, names
+    /// and areas, the overall dimensions and the room schedule (экспликация помещений).
+    static func render(apartment: ApartmentLayout, name: String, projectName: String) throws -> URL {
+        let safe = name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "квартира" : safe).pdf")
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(name)", kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В."]
+        let frame = CGRect(x: mm(20), y: mm(5), width: sheet.width - mm(25), height: sheet.height - mm(10))
+        let stamp = CGRect(x: frame.maxX - mm(185), y: frame.maxY - mm(55), width: mm(185), height: mm(55))
+        let field = CGRect(x: frame.minX + mm(34), y: frame.minY + mm(36), width: frame.width - mm(34) - mm(105), height: frame.height - mm(36) - mm(62))
+        let sideX = frame.maxX - mm(98)
+        let code = "АС‑\(Calendar.current.component(.year, from: .now))‑\(String((apartment.rooms.first?.id.uuidString ?? "0000").prefix(4)))‑АР"
+        let widthM = max(0.5, apartment.width), depthM = max(0.5, apartment.depth)
+        let scale: CGFloat = [20, 25, 50, 75, 100, 150, 200].first { s in
+            let ppm = 1000 / s * 72 / 25.4
+            return CGFloat(widthM) * ppm <= field.width && CGFloat(depthM) * ppm <= field.height
+        } ?? 200
+        let ppm = 1000 / scale * 72 / 25.4
+        let t = Transform(scale: scale, origin: CGPoint(x: field.midX - CGFloat(widthM) * ppm / 2, y: field.midY - CGFloat(depthM) * ppm / 2), minX: 0, minY: 0)
+        // All rooms as one plan, for the overall dimension chains.
+        let whole = FloorPlan(name: name, source: .lidar, segments: apartment.rooms.flatMap { $0.plan.segments }, objects: [], floorPolygon: [],
+                              ceilingHeight: apartment.rooms.first?.plan.ceilingHeight ?? 2.7, modelFilename: nil)
+        let title = "План квартиры"
+        let renderer = UIGraphicsPDFRenderer(bounds: sheet, format: format)
+        try renderer.writePDF(to: url) { context in
+            context.beginPage()
+            let cg = context.cgContext
+            UIColor.white.setFill(); cg.fill(sheet)
+            drawFrame(cg, frame: frame)
+            drawBodies(cg, apartment.wallBodies(thickness: wallThickness), t: t, hatch: true, doors: Set(apartment.doors.map(\.door.id)))
+            for room in apartment.rooms {
+                drawRoomMarker(cg, plan: room.plan, t: t, number: "\(room.number)", name: room.name, at: room.labelPoint)
+            }
+            drawDimensionChains(cg, plan: whole, t: t, onlyOverall: true)
+            let rows = apartment.rooms.map { ["\($0.number)", $0.name, area($0.area)] } + [["", "Итого", area(apartment.area)]]
+            drawTable(cg, at: CGPoint(x: sideX, y: field.minY), title: "Экспликация помещений", columns: [("№", 10), ("Наименование", 56), ("Площадь, м²", 28)], rows: rows)
+            drawNotes(cg, at: CGPoint(x: sideX, y: field.minY + mm(6) + mm(9) + mm(6) * CGFloat(rows.count) + mm(8)), width: mm(94), title: "Указания", notes: [
+                "1. Комнаты сняты одним сканом и поставлены на свои места; перегородки — по фактическому зазору между комнатами.",
+                "2. Наружные стены показаны условной толщины 150 мм.",
+                "3. Чертежи каждой комнаты (расстановка, полы, потолок, электрика, плитка) — в её разделе АР."
+            ])
+            text(title, at: CGPoint(x: frame.minX + mm(15), y: frame.minY + mm(8)), font: font(15, bold: true))
+            text("М 1:\(Int(scale))", at: CGPoint(x: frame.minX + mm(15), y: frame.minY + mm(16)), font: font(10))
+            drawScaleBar(cg, at: CGPoint(x: frame.minX + mm(38), y: frame.minY + mm(18.5)), t: t)
+            drawStamp(cg, rect: stamp, code: code, object: "\(projectName). \(name)", sheetTitle: title, sheetNumber: 1, sheetsCount: 1)
+            text("Формат А3", at: CGPoint(x: frame.maxX - mm(20), y: frame.maxY + mm(1)), font: font(7))
         }
         return url
     }
@@ -281,18 +373,18 @@ enum DrawingsPDF {
 
     // MARK: Walls (cut, hatched) and openings
 
-    private static func wallPolygon(_ segment: PlanSegment, thickness: Double, extend: Bool, t: Transform) -> [CGPoint] {
-        let dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y
-        let length = max(0.0001, hypot(dx, dy))
-        let nx = -dy / length * thickness / 2, ny = dx / length * thickness / 2
-        let ex = extend ? dx / length * thickness / 2 : 0, ey = extend ? dy / length * thickness / 2 : 0
-        return [PlanPoint(x: segment.start.x - ex + nx, y: segment.start.y - ey + ny), PlanPoint(x: segment.end.x + ex + nx, y: segment.end.y + ey + ny),
-                PlanPoint(x: segment.end.x + ex - nx, y: segment.end.y + ey - ny), PlanPoint(x: segment.start.x - ex - nx, y: segment.start.y - ey - ny)].map { t.p($0) }
+    /// Walls as one closed contour: the scanned line is the inner face, the wall goes outward (`WallBody`),
+    /// corners are mitred, doors and windows are gaps with jambs.
+    private static func drawWalls(_ cg: CGContext, plan: FloorPlan, t: Transform, hatch: Bool, openings: Bool = true) {
+        drawBodies(cg, [WallBody(plan: plan, thickness: wallThickness)], t: t, hatch: hatch, openings: openings)
     }
 
-    private static func drawWalls(_ cg: CGContext, plan: FloorPlan, t: Transform, hatch: Bool, openings: Bool = true) {
-        let polygons = plan.walls.map { wallPolygon($0, thickness: wallThickness, extend: true, t: t) }
-        // Fill (union) + 45° hatching for cut walls (ГОСТ 2.306), or solid poché on design sheets.
+    /// The walls of one room or of all rooms of an apartment, filled and hatched together: the middle of a partition
+    /// is not drawn, and only the doors in `doors` get a leaf (nil — every door).
+    private static func drawBodies(_ cg: CGContext, _ bodies: [WallBody], t: Transform, hatch: Bool, openings: Bool = true, doors: Set<UUID>? = nil) {
+        let pieces = bodies.flatMap(\.pieces)
+        let polygons = pieces.map { $0.polygon.map { t.p($0) } }
+        // Fill + 45° hatching for cut walls (ГОСТ 2.306), or solid poché on design sheets.
         cg.saveGState()
         for polygon in polygons { cg.addLines(between: polygon); cg.closePath() }
         if hatch {
@@ -308,34 +400,36 @@ enum DrawingsPDF {
             cg.setFillColor(UIColor(white: 0.55, alpha: 1).cgColor); cg.fillPath()
         }
         cg.restoreGState()
-        cg.setStrokeColor(ink.cgColor); cg.setLineWidth(s1)
-        for polygon in polygons { cg.addLines(between: polygon); cg.closePath() }
-        cg.strokePath()
-
-        for opening in plan.doors + plan.windows {
-            let cut = wallPolygon(opening, thickness: wallThickness + 0.03, extend: false, t: t)
-            cg.setFillColor(UIColor.white.cgColor); cg.addLines(between: cut); cg.closePath(); cg.fillPath()
-            line(cg, [cut[0], cut[3]], s1); line(cg, [cut[1], cut[2]], s1)
-            guard openings else { continue }
-            let a = t.p(opening.start), c = t.p(opening.end)
-            let dx = c.x - a.x, dy = c.y - a.y, length = max(0.001, hypot(dx, dy))
-            let nx = -dy / length, ny = dx / length
+        // Contour: inner and outer faces, jambs at openings and free ends; no seams at the corners or in partitions.
+        for piece in pieces {
+            line(cg, [t.p(piece.innerStart), t.p(piece.innerEnd)], s1)
+            if !piece.shared { line(cg, [t.p(piece.outerStart), t.p(piece.outerEnd)], s1) }
+            if piece.capStart { line(cg, [t.p(piece.innerStart), t.p(piece.outerStart)], s1) }
+            if piece.capEnd { line(cg, [t.p(piece.innerEnd), t.p(piece.outerEnd)], s1) }
+        }
+        guard openings else { return }
+        for gap in bodies.flatMap(\.gaps) {
+            let opening = gap.opening
             if opening.kind == .window {
-                // Window per ГОСТ 21.201: frame lines + sill line
-                let half = t.len(wallThickness / 2)
-                for k: CGFloat in [-1, -0.25, 0.25, 1] {
-                    line(cg, [CGPoint(x: a.x + nx * half * k, y: a.y + ny * half * k), CGPoint(x: c.x + nx * half * k, y: c.y + ny * half * k)], k == -1 || k == 1 ? s2 : s3)
+                // Window per ГОСТ 21.201: frame lines on both faces and the glass inside the wall.
+                for k in [0.0, 0.4, 0.6, 1.0] {
+                    let shift = gap.outward * (gap.thickness * k)
+                    line(cg, [t.p(gap.innerStart + shift), t.p(gap.innerEnd + shift)], k == 0 || k == 1 ? s2 : s3)
                 }
-            } else if opening.kind == .door {
-                // Leaf opens into the room (same rule as the plan screen and the 3D model).
-                let leaf = t.p(plan.doorSwing(opening).leaf)
+            } else if opening.kind == .door, doors.map({ $0.contains(opening.id) }) ?? true {
+                // Leaf opens into the room (same rule as the plan screen and the 3D model), hinged at the start of the door.
+                let hinge = gap.innerStart.distance(to: opening.start) <= gap.innerEnd.distance(to: opening.start) ? gap.innerStart : gap.innerEnd
+                let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
+                let a = t.p(hinge), c = t.p(latch)
+                let leaf = t.p(hinge + gap.outward * -hinge.distance(to: latch))
                 line(cg, [a, leaf], s2)
-                let start = atan2(dy, dx), finish = atan2(leaf.y - a.y, leaf.x - a.x)
+                let radius = hypot(c.x - a.x, c.y - a.y)
+                let start = atan2(c.y - a.y, c.x - a.x), finish = atan2(leaf.y - a.y, leaf.x - a.x)
                 var sweep = finish - start
                 if sweep > .pi { sweep -= 2 * .pi } else if sweep < -.pi { sweep += 2 * .pi }
                 line(cg, (0...24).map { step in
                     let angle = start + sweep * CGFloat(step) / 24
-                    return CGPoint(x: a.x + cos(angle) * length, y: a.y + sin(angle) * length)
+                    return CGPoint(x: a.x + cos(angle) * radius, y: a.y + sin(angle) * radius)
                 }, s3)
             }
         }
@@ -395,8 +489,9 @@ enum DrawingsPDF {
         if xs.count < 2 { xs = [b.minX, b.maxX] }
         if ys.count < 2 { ys = [b.minY, b.maxY] }
         xs = Array(xs.prefix(12)); ys = Array(ys.prefix(axisLetters.count))
-        let top = t.p(0, b.minY).y - mm(34), bottom = t.p(0, b.maxY).y + mm(6)
-        let leftX = t.p(b.minX, 0).x - mm(34), rightX = t.p(b.maxX, 0).x + mm(6)
+        let wall = t.len(wallThickness)
+        let top = t.p(0, b.minY).y - wall - mm(32), bottom = t.p(0, b.maxY).y + wall + mm(4)
+        let leftX = t.p(b.minX, 0).x - wall - mm(32), rightX = t.p(b.maxX, 0).x + wall + mm(4)
         let radius = mm(4)
         for (index, x) in xs.enumerated() {
             let px = t.p(x, 0).x
@@ -465,7 +560,7 @@ enum DrawingsPDF {
         func chain(_ values: [Double], side: Int, level: Int) {
             let coords = merged(values)
             guard coords.count > 1 else { return }
-            let gap = mm(8) + mm(8) * CGFloat(level)
+            let gap = t.len(wallThickness) + mm(6) + mm(8) * CGFloat(level)
             for (index, value) in coords.dropLast().enumerated() {
                 let next = coords[index + 1]
                 let label = "\(Int(((next - value) * 1000).rounded()))"
@@ -529,22 +624,21 @@ enum DrawingsPDF {
                 return w.start.y + (w.end.y - w.start.y) * k
             }.sorted()
         }
-        let half = wallThickness / 2
         let xs = crossings(horizontalAt: cy + 0.35)
         if let left = xs.last(where: { $0 < cx }), let right = xs.first(where: { $0 > cx }), right - left > 0.6 {
-            tickDimension(cg, from: t.p(left + half, cy + 0.35), to: t.p(right - half, cy + 0.35), lineOffset: .zero, label: "\(Int(((right - left - wallThickness) * 1000).rounded()))")
+            tickDimension(cg, from: t.p(left, cy + 0.35), to: t.p(right, cy + 0.35), lineOffset: .zero, label: "\(Int(((right - left) * 1000).rounded()))")
         }
         let ys = crossings(verticalAt: cx - 0.35)
         if let top = ys.last(where: { $0 < cy }), let bottom = ys.first(where: { $0 > cy }), bottom - top > 0.6 {
-            tickDimension(cg, from: t.p(cx - 0.35, bottom - half), to: t.p(cx - 0.35, top + half), lineOffset: .zero, label: "\(Int(((bottom - top - wallThickness) * 1000).rounded()))")
+            tickDimension(cg, from: t.p(cx - 0.35, bottom), to: t.p(cx - 0.35, top), lineOffset: .zero, label: "\(Int(((bottom - top) * 1000).rounded()))")
         }
     }
 
     // MARK: Room marker, levels, north arrow
 
-    private static func drawRoomMarker(_ cg: CGContext, plan: FloorPlan, t: Transform, number: String, name: String, typeMark: String? = nil) {
+    private static func drawRoomMarker(_ cg: CGContext, plan: FloorPlan, t: Transform, number: String, name: String, typeMark: String? = nil, at point: PlanPoint? = nil) {
         let b = plan.bounds
-        let c = t.p((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 - min(0.6, (b.maxY - b.minY) * 0.15))
+        let c = point.map { t.p($0) } ?? t.p((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 - min(0.6, (b.maxY - b.minY) * 0.15))
         // Room number in an oval, name, area underlined (ГОСТ 21.501)
         let oval = CGRect(x: c.x - mm(5), y: c.y - mm(9), width: mm(10), height: mm(6))
         cg.setFillColor(UIColor.white.cgColor); cg.fillEllipse(in: oval)
@@ -909,12 +1003,7 @@ enum DrawingsPDF {
     }
 
     /// Tiles (bathroom, porcelain stoneware) or boards (parquet, laminate) — chosen from the room and the floor material.
-    static func isTiledFloor(_ room: RoomKind, _ finish: DesignFinish?) -> Bool {
-        let text = ((finish?.material ?? "") + " " + (finish?.details ?? "")).lowercased()
-        if ["плитк", "керамогранит", "керамич", "камень", "мрамор", "микроцемент", "бетон"].contains(where: { text.contains($0) }) { return true }
-        if ["доск", "паркет", "ламинат", "винил", "spc"].contains(where: { text.contains($0) }) { return false }
-        return room == .bathroom
-    }
+    static func isTiledFloor(_ room: RoomKind, _ finish: DesignFinish?) -> Bool { TileLayout.isTiled(room, finish) }
 
     private static func drawFloorHatch(_ cg: CGContext, plan: FloorPlan, t: Transform, tiled: Bool = false) {
         let points = outline(plan).map { t.p($0) }
@@ -954,31 +1043,155 @@ enum DrawingsPDF {
         text("— \(title): покрытие пола по экспликации", at: CGPoint(x: box.maxX + mm(3), y: box.minY + mm(3)), font: font(7.5))
     }
 
-    private static func lightPositions(plan: FloorPlan) -> [PlanPoint] {
-        let polygon = outline(plan)
-        func inside(_ p: PlanPoint) -> Bool {
-            var result = false; var j = polygon.count - 1
-            for i in polygon.indices {
-                let a = polygon[i], c = polygon[j]
-                if (a.y > p.y) != (c.y > p.y), p.x < (c.x - a.x) * (p.y - a.y) / (c.y - a.y) + a.x { result.toggle() }
-                j = i
+    // MARK: Tiles
+
+    private static func drawTiles(_ cg: CGContext, layout: TileLayout, t: Transform) {
+        for piece in layout.pieces {
+            let points = piece.polygon.map { t.p($0) }
+            guard points.count >= 3 else { continue }
+            if !piece.whole {
+                cg.setFillColor(UIColor(white: 0.86, alpha: 1).cgColor)
+                cg.addLines(between: points); cg.closePath(); cg.fillPath()
             }
-            return result
+            cg.setStrokeColor(UIColor(white: 0.35, alpha: 1).cgColor); cg.setLineWidth(s3)
+            cg.addLines(between: points); cg.closePath(); cg.strokePath()
         }
+    }
+
+    /// Start lines of the layout (the first whole row and column) with their distance from the walls.
+    private static func drawTileStart(_ cg: CGContext, layout: TileLayout, plan: FloorPlan, t: Transform) {
         let b = plan.bounds
-        let step = 1.2
-        var points: [PlanPoint] = []
-        var y = b.minY + 0.6
-        while y < b.maxY - 0.3 {
-            var x = b.minX + 0.6
-            while x < b.maxX - 0.3 {
-                let p = PlanPoint(x: x, y: y)
-                if [p, PlanPoint(x: x + 0.4, y: y), PlanPoint(x: x - 0.4, y: y), PlanPoint(x: x, y: y + 0.4), PlanPoint(x: x, y: y - 0.4)].allSatisfy(inside) { points.append(p) }
-                x += step
-            }
-            y += step
+        let mx = layout.tile.width + layout.joint, my = layout.tile.length + layout.joint
+        let x0 = b.minX + TileLayout.positiveRemainder(layout.origin.x - b.minX, mx)
+        let y0 = b.minY + TileLayout.positiveRemainder(layout.origin.y - b.minY, my)
+        line(cg, [t.p(x0, b.minY), t.p(x0, b.maxY)], s2, dash: [mm(6), mm(1.5), mm(0.5), mm(1.5)])
+        line(cg, [t.p(b.minX, y0), t.p(b.maxX, y0)], s2, dash: [mm(6), mm(1.5), mm(0.5), mm(1.5)])
+        if x0 - b.minX > 0.005 {
+            tickDimension(cg, from: t.p(b.minX, y0 + 0.25), to: t.p(x0, y0 + 0.25), lineOffset: .zero, label: "\(Int(((x0 - b.minX) * 1000).rounded()))")
         }
-        return points
+        if y0 - b.minY > 0.005 {
+            tickDimension(cg, from: t.p(x0 + 0.25, y0), to: t.p(x0 + 0.25, b.minY), lineOffset: .zero, label: "\(Int(((y0 - b.minY) * 1000).rounded()))")
+        }
+        text("начало раскладки", at: CGPoint(x: t.p(x0, y0).x + mm(1.5), y: t.p(x0, y0).y + mm(1.5)), font: font(6.5))
+    }
+
+    private static func tileRows(floor: TileLayout, walls: [TileLayout]) -> [[String]] {
+        func narrowest(_ layout: TileLayout) -> String { layout.narrowestCut.map { "\(Int(($0 * 1000).rounded())) мм" } ?? "без подрезки" }
+        var rows: [[String]] = [
+            ["Плитка пола", floor.tile.title],
+            ["Шов", "\(Int((floor.joint * 1000).rounded())) мм"],
+            ["Площадь пола", "\(area(floor.area)) м²"],
+            ["Целых / подрезанных", "\(floor.whole) / \(floor.cut)"],
+            ["Самая узкая подрезка", narrowest(floor)],
+            ["Купить с запасом 10 %", "\(floor.toBuy) шт. · \(area(floor.buyArea)) м²"]
+        ]
+        if let first = walls.first {
+            let whole = walls.reduce(0) { $0 + $1.whole }, cut = walls.reduce(0) { $0 + $1.cut }, buy = walls.reduce(0) { $0 + $1.toBuy }
+            let smallest = walls.compactMap(\.narrowestCut).min()
+            rows += [
+                ["Плитка стен", first.tile.title],
+                ["Площадь облицовки стен", "\(area(walls.reduce(0) { $0 + $1.area })) м²"],
+                ["Целых / подрезанных (стены)", "\(whole) / \(cut)"],
+                ["Самая узкая подрезка (стены)", smallest.map { "\(Int(($0 * 1000).rounded())) мм" } ?? "без подрезки"],
+                ["Купить для стен с запасом 10 %", "\(buy) шт. · \(area(Double(buy) * first.tile.width * first.tile.length)) м²"]
+            ]
+        }
+        return rows
+    }
+
+    // MARK: Electrics (ГОСТ 21.210: sockets, switches, lights)
+
+    /// Furniture as a thin grey outline: where the sockets go is clear without the numbers of the layout sheet.
+    private static func drawGhost(_ cg: CGContext, item: DesignFurniture, t: Transform) {
+        let corners = item.footprint.corners.map { t.p($0) }
+        cg.setStrokeColor(UIColor(white: 0.62, alpha: 1).cgColor); cg.setLineWidth(s3)
+        cg.addLines(between: corners); cg.closePath(); cg.strokePath()
+    }
+
+    private static func drawElectric(_ cg: CGContext, power: ElectricPlan, t: Transform) {
+        // Control lines: every switch to its nearest light.
+        let lights = power.lights.map { t.p($0.position) }
+        for device in power.switches {
+            let p = t.p(device.position)
+            if let light = lights.min(by: { hypot($0.x - p.x, $0.y - p.y) < hypot($1.x - p.x, $1.y - p.y) }) {
+                line(cg, [p, light], s3, dash: [mm(1.5), mm(1)])
+            }
+        }
+        for device in power.points {
+            let p = t.p(device.position)
+            let facing = CGPoint(x: device.facing.x, y: device.facing.y)
+            drawElectricSymbol(cg, device.kind, at: p, facing: facing)
+            if device.wall != nil {
+                // Height of the device, a little into the room.
+                text("\(Int((device.height * 1000).rounded()))", at: CGPoint(x: p.x + facing.x * mm(6), y: p.y + facing.y * mm(6)), font: font(6), centered: true)
+            }
+        }
+    }
+
+    /// A symbol at `point`; wall devices sit on the wall and look along `facing` (into the room).
+    private static func drawElectricSymbol(_ cg: CGContext, _ kind: ElectricPoint.Kind, at point: CGPoint, facing: CGPoint) {
+        if kind == .ceilingLight { drawLightSymbol(cg, at: point); return }
+        let r = mm(1.6)
+        cg.saveGState()
+        cg.translateBy(x: point.x, y: point.y)
+        cg.rotate(by: atan2(facing.y, facing.x))
+        cg.setStrokeColor(ink.cgColor); cg.setFillColor(ink.cgColor); cg.setLineWidth(s2)
+        func segment(_ a: CGPoint, _ b: CGPoint) { cg.move(to: a); cg.addLine(to: b); cg.strokePath() }
+        switch kind {
+        case .socket, .doubleSocket, .wetSocket, .powerSocket, .tvBlock:
+            // Semicircle on the wall; the contact line with the earth bar points into the room.
+            cg.addArc(center: .zero, radius: r, startAngle: -.pi / 2, endAngle: .pi / 2, clockwise: false)
+            cg.closePath()
+            if kind == .wetSocket || kind == .powerSocket { cg.fillPath() } else { cg.strokePath() }
+            let offsets: [CGFloat] = kind == .doubleSocket || kind == .tvBlock ? [-r * 0.4, r * 0.4] : [0]
+            for y in offsets {
+                segment(CGPoint(x: sqrt(max(0, r * r - y * y)), y: y), CGPoint(x: r * 1.9, y: y))
+                segment(CGPoint(x: r * 1.9, y: y - r * 0.35), CGPoint(x: r * 1.9, y: y + r * 0.35))
+            }
+            if kind == .powerSocket { text("32А", at: CGPoint(x: -r * 0.2, y: -r * 2.2), font: font(5.5, bold: true), centered: true) }
+            if kind == .tvBlock { text("ТВ", at: CGPoint(x: -r * 0.2, y: -r * 2.2), font: font(5.5, bold: true), centered: true) }
+        case .switchOne, .switchTwo:
+            let center = CGPoint(x: r * 0.9, y: 0), radius = r * 0.5
+            cg.strokeEllipse(in: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2))
+            let direction = CGPoint(x: cos(CGFloat.pi / 4), y: -sin(CGFloat.pi / 4))
+            let tip = CGPoint(x: center.x + direction.x * r * 2.2, y: center.y + direction.y * r * 2.2)
+            segment(CGPoint(x: center.x + direction.x * radius, y: center.y + direction.y * radius), tip)
+            let tick = CGPoint(x: direction.y * r * 0.5, y: -direction.x * r * 0.5)
+            for step in kind == .switchTwo ? [0, 0.45] as [CGFloat] : [0] {
+                let base = CGPoint(x: tip.x - direction.x * r * step, y: tip.y - direction.y * r * step)
+                segment(base, CGPoint(x: base.x + tick.x, y: base.y + tick.y))
+            }
+        case .pendant:
+            cg.strokeEllipse(in: CGRect(x: -r, y: -r, width: r * 2, height: r * 2))
+            cg.fillEllipse(in: CGRect(x: -r * 0.35, y: -r * 0.35, width: r * 0.7, height: r * 0.7))
+        case .wallLight:
+            cg.addArc(center: .zero, radius: r, startAngle: -.pi / 2, endAngle: .pi / 2, clockwise: false)
+            cg.closePath(); cg.strokePath()
+            cg.fillEllipse(in: CGRect(x: r * 0.2, y: -r * 0.3, width: r * 0.6, height: r * 0.6))
+        case .ceilingLight:
+            break
+        }
+        cg.restoreGState()
+    }
+
+    /// Kind, how many and at what heights (mm), for the schedule.
+    private static func electricRows(_ power: ElectricPlan) -> [[String]] {
+        ElectricPoint.Kind.allCases.compactMap { kind in
+            let items = power.points.filter { $0.kind == kind }
+            guard !items.isEmpty else { return nil }
+            let heights = Set(items.map { Int(($0.height * 1000).rounded()) }).sorted()
+            let shown = kind.isLight && items.allSatisfy({ $0.wall == nil }) ? "потолок" : heights.map(String.init).joined(separator: ", ")
+            return [kind.title, "\(items.count)", shown]
+        }
+    }
+
+    private static func drawElectricLegend(_ cg: CGContext, at origin: CGPoint, kinds: [ElectricPoint.Kind]) {
+        text("Условные обозначения", at: origin, font: font(8.5, bold: true))
+        for (index, kind) in kinds.enumerated() {
+            let y = origin.y + mm(9) + mm(6) * CGFloat(index)
+            drawElectricSymbol(cg, kind, at: CGPoint(x: origin.x + mm(3), y: y), facing: CGPoint(x: 1, y: 0))
+            text("— " + kind.title.lowercased(), at: CGPoint(x: origin.x + mm(11), y: y - mm(1.8)), font: font(7.5))
+        }
     }
 
     private static func drawLightSymbol(_ cg: CGContext, at point: CGPoint) {
@@ -1017,7 +1230,7 @@ enum DrawingsPDF {
 
     // MARK: Wall elevations
 
-    private static func drawElevations(_ cg: CGContext, plan: FloorPlan, walls: [PlanSegment], in area: CGRect) {
+    private static func drawElevations(_ cg: CGContext, plan: FloorPlan, walls: [PlanSegment], tiles: [TileLayout] = [], in area: CGRect) {
         let height = max(2.2, plan.ceilingHeight)
         let gap = mm(16)
         // Choose the largest standard scale at which all elevations fit in rows.
@@ -1041,6 +1254,15 @@ enum DrawingsPDF {
             let w = CGFloat(wall.length) * ppm, h = CGFloat(height) * ppm
             if x + w > area.maxX { x = area.minX; y += rowHeight }
             let rect = CGRect(x: x, y: y, width: w, height: h)
+            if index < tiles.count {
+                // Wall tiles: rows from the floor, cut pieces in grey.
+                for piece in tiles[index].pieces {
+                    let p = piece.polygon
+                    let r = CGRect(x: rect.minX + CGFloat(p[0].x) * ppm, y: rect.maxY - CGFloat(p[2].y) * ppm, width: CGFloat(p[1].x - p[0].x) * ppm, height: CGFloat(p[2].y - p[1].y) * ppm)
+                    if !piece.whole { cg.setFillColor(UIColor(white: 0.88, alpha: 1).cgColor); cg.fill(r) }
+                    cg.setStrokeColor(UIColor(white: 0.45, alpha: 1).cgColor); cg.setLineWidth(s3); cg.stroke(r)
+                }
+            }
             cg.setStrokeColor(ink.cgColor); cg.setLineWidth(s1); cg.stroke(rect)
             line(cg, [CGPoint(x: rect.minX, y: rect.maxY - mm(0.6)), CGPoint(x: rect.maxX, y: rect.maxY - mm(0.6))], s3) // skirting
             // Openings that lie on this wall

@@ -43,19 +43,27 @@ struct PlanFlow {
     let hasPresentation: Bool
     /// The app can build a presentation (AI server or picture keys).
     let canRender: Bool
+    /// The plan or the furniture was corrected by hand after the presentation was made.
+    let presentationOutdated: Bool
 
     init(plan: FloorPlan, proposal: DesignProposal?, hasPresentation: Bool, canRender: Bool) {
         hasConcepts = !plan.proposals.isEmpty
         conceptReady = proposal.map { !$0.furniture.isEmpty } ?? false
         self.hasPresentation = hasPresentation && proposal != nil
         self.canRender = canRender
+        let edited = [plan.editedAt, proposal?.editedAt].compactMap { $0 }.max()
+        if self.hasPresentation, let edited, let made = proposal?.presentation?.createdAt {
+            presentationOutdated = made < edited
+        } else {
+            presentationOutdated = false
+        }
     }
 
     /// Steps with a check mark.
     var done: Set<PlanStep> {
         var steps: Set<PlanStep> = [.measure]
         if hasConcepts { steps.insert(.design) }
-        if hasPresentation { steps.insert(.result) }
+        if hasPresentation && !presentationOutdated { steps.insert(.result) }
         return steps
     }
 
@@ -68,7 +76,10 @@ struct PlanFlow {
     func main(on step: PlanStep) -> PlanMainButton {
         let next = PlanMainButton(action: .goTo(.result), title: "Дальше: результат", icon: "arrow.right")
         let order = PlanMainButton(action: .orderRenovation, title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill")
-        let present = PlanMainButton(action: .buildPresentation, title: "Создать дизайн‑презентацию", icon: "rectangle.stack.badge.play")
+        let present = presentationOutdated
+            ? PlanMainButton(action: .buildPresentation, title: "Обновить презентацию", icon: "arrow.triangle.2.circlepath")
+            : PlanMainButton(action: .buildPresentation, title: "Создать дизайн‑презентацию", icon: "rectangle.stack.badge.play")
+        let current = hasPresentation && !presentationOutdated
         let design = hasConcepts
             ? PlanMainButton(action: .createDesign, title: "Ещё вариант дизайна", icon: "wand.and.stars")
             : PlanMainButton(action: .createDesign, title: "Создать дизайн по плану", icon: "wand.and.stars")
@@ -77,11 +88,11 @@ struct PlanFlow {
             return hasConcepts ? PlanMainButton(action: .goTo(.design), title: "Дальше: дизайн", icon: "arrow.right") : design
         case .design:
             guard conceptReady else { return design }
-            if hasPresentation || !canRender { return next }
+            if current || !canRender { return next }
             return present
         case .result:
             guard conceptReady else { return design }
-            return hasPresentation || !canRender ? order : present
+            return current || !canRender ? order : present
         }
     }
 }

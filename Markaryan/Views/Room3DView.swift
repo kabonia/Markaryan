@@ -379,34 +379,67 @@ enum Room3DBuilder {
         wallMaterial.normal.wrapS = .repeat; wallMaterial.normal.wrapT = .repeat
         wallMaterial.normal.contentsTransform = SCNMatrix4MakeScale(4, 4, 1)
         let skirting = material(UIColor(white: 0.96, alpha: 1), roughness: 0.6)
-        func segmentNode(_ segment: PlanSegment, height h: CGFloat, baseY: CGFloat, thickness: CGFloat, materialValue: SCNMaterial) -> SCNNode? {
-            // Walls are extended by their thickness so corners close without gaps.
-            let length = CGFloat(segment.length) + (segment.kind == .wall ? thickness : 0)
-            guard length > 0.02 else { return nil }
-            let node = box(length, h, thickness, materialValue, at: SCNVector3(Float((segment.start.x + segment.end.x) / 2), Float(baseY + h / 2), Float((segment.start.y + segment.end.y) / 2)), chamfer: 0)
-            node.eulerAngles.y = -Float(atan2(segment.end.y - segment.start.y, segment.end.x - segment.start.x))
-            return node
+        // The scanned line is the inner face of the wall: the wall goes outward with mitred corners (`WallBody`), the same
+        // as on the drawings, so furniture stands against the wall and not inside it. Doors and windows are real
+        // openings with reveals; the glass and the door leaf sit inside the wall.
+        let body = WallBody(plan: plan)
+        func prism(_ polygon: [PlanPoint], from bottom: CGFloat, to top: CGFloat, _ materialValue: SCNMaterial) {
+            guard top - bottom > 0.005, polygon.count >= 3 else { return }
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: polygon[0].x, y: polygon[0].y))
+            for point in polygon.dropFirst() { path.addLine(to: CGPoint(x: point.x, y: point.y)) }
+            path.close()
+            let shape = SCNShape(path: path, extrusionDepth: top - bottom)
+            shape.materials = [materialValue]
+            let node = SCNNode(geometry: shape)
+            node.eulerAngles.x = .pi / 2
+            node.position.y = Float((bottom + top) / 2)
+            scene.rootNode.addChildNode(node)
         }
-        for wall in plan.walls {
-            if let node = segmentNode(wall, height: height, baseY: 0, thickness: 0.12, materialValue: wallMaterial) { scene.rootNode.addChildNode(node) }
-            if let node = segmentNode(wall, height: 0.08, baseY: 0, thickness: 0.16, materialValue: skirting) { scene.rootNode.addChildNode(node) }
-            if mode == .interior, let node = segmentNode(wall, height: 0.06, baseY: height - 0.06, thickness: 0.18, materialValue: material(ceilingColor, roughness: 0.9)) { scene.rootNode.addChildNode(node) }
+        /// A band along the inner face of a wall, `depth` metres into the room.
+        func band(_ a: PlanPoint, _ b: PlanPoint, outward: PlanPoint, depth: Double, from bottom: CGFloat, to top: CGFloat, _ materialValue: SCNMaterial) {
+            let inward = outward * -depth
+            prism([a, b, b + inward, a + inward], from: bottom, to: top, materialValue)
+        }
+        /// A slab inside the wall thickness, between `near` and `far` (0 — inner face, 1 — outer face; negative — into the room).
+        func slab(_ gap: WallBody.Gap, near: Double, far: Double, from bottom: CGFloat, to top: CGFloat, _ materialValue: SCNMaterial) {
+            let a = gap.outward * (gap.thickness * near), b = gap.outward * (gap.thickness * far)
+            prism([gap.innerStart + a, gap.innerEnd + a, gap.innerEnd + b, gap.innerStart + b], from: bottom, to: top, materialValue)
+        }
+        let cornice = material(ceilingColor, roughness: 0.9)
+        for piece in body.pieces {
+            prism(piece.polygon, from: 0, to: height, wallMaterial)
+            band(piece.innerStart, piece.innerEnd, outward: piece.outward, depth: 0.015, from: 0, to: 0.08, skirting)
+            if mode == .interior { band(piece.innerStart, piece.innerEnd, outward: piece.outward, depth: 0.03, from: height - 0.06, to: height, cornice) }
         }
         let glass = material(UIColor(red: 0.80, green: 0.90, blue: 1.0, alpha: 1), roughness: 0.05)
         glass.emission.contents = UIColor(red: 0.75, green: 0.85, blue: 1.0, alpha: 1)
         glass.emission.intensity = 0.8
         let frame = material(UIColor(white: 0.98, alpha: 1), roughness: 0.5)
-        for window in plan.windows {
-            // Sill height as scanned (French windows start low), 0.85 m when the scan did not say.
-            let sill = CGFloat(max(0, window.elevation ?? 0.85))
-            let top = min(window.height > 0.3 ? sill + CGFloat(window.height) : 2.2, height - 0.1)
-            if top - sill > 0.05, let node = segmentNode(window, height: top - sill, baseY: sill, thickness: 0.15, materialValue: glass) { scene.rootNode.addChildNode(node) }
-            // Window board under the glass; a French window down to the floor has none.
-            if sill > 0.1, sill < height - 0.05, let node = segmentNode(window, height: 0.05, baseY: sill - 0.03, thickness: 0.3, materialValue: frame) { scene.rootNode.addChildNode(node) }
-        }
         let doorMaterial = material(UIColor(red: 0.62, green: 0.48, blue: 0.34, alpha: 1), roughness: 0.55)
-        for door in plan.doors where door.kind == .door {
-            if let node = segmentNode(door, height: min(2.05, height), baseY: 0, thickness: 0.15, materialValue: doorMaterial) { scene.rootNode.addChildNode(node) }
+        for gap in body.gaps {
+            let opening = gap.opening
+            let top: CGFloat
+            switch opening.kind {
+            case .window:
+                // Sill height as scanned (French windows start low), 0.85 m when the scan did not say.
+                let sill = min(CGFloat(max(0, opening.elevation ?? 0.85)), height - 0.15)
+                top = min(opening.height > 0.3 ? sill + CGFloat(opening.height) : 2.2, height - 0.1)
+                prism(gap.polygon, from: 0, to: sill, wallMaterial)
+                slab(gap, near: 0.45, far: 0.55, from: sill, to: top, glass)
+                // Window board in front of the glass; a French window down to the floor has none.
+                if sill > 0.1 { slab(gap, near: -0.35, far: 0.45, from: sill - 0.03, to: sill, frame) }
+                band(gap.innerStart, gap.innerEnd, outward: gap.outward, depth: 0.015, from: 0, to: 0.08, skirting)
+            case .door:
+                top = min(opening.height > 1.5 ? CGFloat(opening.height) : 2.05, height - 0.05)
+                slab(gap, near: 0.05, far: 0.3, from: 0, to: top, doorMaterial)
+            case .opening:
+                top = min(opening.height > 1.5 ? CGFloat(opening.height) : 2.1, height - 0.05)
+            case .wall:
+                continue
+            }
+            prism(gap.polygon, from: top, to: height, wallMaterial)
+            if mode == .interior { band(gap.innerStart, gap.innerEnd, outward: gap.outward, depth: 0.03, from: height - 0.06, to: height, cornice) }
         }
 
         // Furniture

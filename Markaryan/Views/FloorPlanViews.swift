@@ -16,15 +16,16 @@ struct FloorPlanCanvas: View {
     private let paper = Color(red: 0.97, green: 0.96, blue: 0.93)
     private let ink = Color(red: 0.13, green: 0.15, blue: 0.14)
 
+    /// Space around the plan inside the canvas (the editors use the same to hit what is drawn).
+    static func margin(compact: Bool) -> Double { compact ? 10 : 34 }
+
     var body: some View {
         let proposal = self.proposal?.placed(in: plan)
         return Canvas { context, size in
             let b = plan.bounds
-            let margin: CGFloat = compact ? 10 : 34
-            let scale = min((size.width - margin * 2) / CGFloat(max(0.5, b.maxX - b.minX)), (size.height - margin * 2) / CGFloat(max(0.5, b.maxY - b.minY)))
-            let offsetX = (size.width - CGFloat(b.maxX - b.minX) * scale) / 2
-            let offsetY = (size.height - CGFloat(b.maxY - b.minY) * scale) / 2
-            func p(_ point: PlanPoint) -> CGPoint { CGPoint(x: offsetX + CGFloat(point.x - b.minX) * scale, y: offsetY + CGFloat(point.y - b.minY) * scale) }
+            let viewport = PlanViewport(plan: plan, width: Double(size.width), height: Double(size.height), margin: Self.margin(compact: compact))
+            let scale = CGFloat(viewport.scale)
+            func p(_ point: PlanPoint) -> CGPoint { let s = viewport.screen(point); return CGPoint(x: s.x, y: s.y) }
             func pt(_ x: Double, _ y: Double) -> CGPoint { p(PlanPoint(x: x, y: y)) }
 
             context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(paper))
@@ -73,27 +74,31 @@ struct FloorPlanCanvas: View {
                     }
                 }
             }
-            // Walls
-            let wallWidth: CGFloat = compact ? 3 : max(4, min(9, scale * 0.16))
-            for wall in plan.walls {
-                var path = Path(); path.move(to: p(wall.start)); path.addLine(to: p(wall.end))
-                context.stroke(path, with: .color(ink), style: StrokeStyle(lineWidth: wallWidth, lineCap: .square))
-            }
-            // Windows: light gap with a double glass line
-            for window in plan.windows {
-                var path = Path(); path.move(to: p(window.start)); path.addLine(to: p(window.end))
-                context.stroke(path, with: .color(paper), style: StrokeStyle(lineWidth: wallWidth + 1))
-                context.stroke(path, with: .color(Color(red: 0.25, green: 0.55, blue: 0.85)), style: StrokeStyle(lineWidth: 2))
-            }
-            // Doors: gap + swing arc
-            for door in plan.doors {
-                let a = p(door.start), c = p(door.end)
-                var gap = Path(); gap.move(to: a); gap.addLine(to: c)
-                context.stroke(gap, with: .color(paper), style: StrokeStyle(lineWidth: wallWidth + 1))
-                if door.kind == .door && !compact {
-                    // Leaf opens into the room — the same as on the drawings and in 3D.
-                    let swing = plan.doorSwing(door)
-                    let leafEnd = p(swing.leaf)
+            // Walls: one closed contour outward from the scanned line, the same as on the drawings and in 3D.
+            let body = WallBody(plan: plan, thickness: max(WallBody.standardThickness, Double((compact ? 2.5 : 4) / max(scale, 0.001))))
+            let wallPoints = CGFloat(body.thickness) * scale
+            var walls = Path()
+            for piece in body.pieces { walls.addLines(piece.polygon.map(p)); walls.closeSubpath() }
+            context.fill(walls, with: .color(ink))
+            for gap in body.gaps {
+                if gap.opening.kind == .window {
+                    // Window: frame lines on both faces, the glass in the middle of the wall.
+                    var frame = Path()
+                    for k in [0.0, 1.0] {
+                        frame.move(to: p(gap.innerStart + gap.outward * (gap.thickness * k)))
+                        frame.addLine(to: p(gap.innerEnd + gap.outward * (gap.thickness * k)))
+                    }
+                    context.stroke(frame, with: .color(ink), lineWidth: 1)
+                    var glass = Path()
+                    glass.move(to: p(gap.innerStart + gap.outward * (gap.thickness / 2)))
+                    glass.addLine(to: p(gap.innerEnd + gap.outward * (gap.thickness / 2)))
+                    context.stroke(glass, with: .color(Color(red: 0.25, green: 0.55, blue: 0.85)), lineWidth: 2)
+                } else if gap.opening.kind == .door && !compact {
+                    // Leaf opens into the room from the hinge at the start of the door — the same as on the drawings and in 3D.
+                    let hinge = gap.innerStart.distance(to: gap.opening.start) <= gap.innerEnd.distance(to: gap.opening.start) ? gap.innerStart : gap.innerEnd
+                    let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
+                    let a = p(hinge), c = p(latch)
+                    let leafEnd = p(hinge + gap.outward * -hinge.distance(to: latch))
                     let radius = hypot(c.x - a.x, c.y - a.y)
                     let start = atan2(c.y - a.y, c.x - a.x), finish = atan2(leafEnd.y - a.y, leafEnd.x - a.x)
                     var sweep = finish - start
@@ -118,7 +123,7 @@ struct FloorPlanCanvas: View {
                     let len = max(0.001, hypot(normal.x, normal.y)); normal = CGPoint(x: normal.x / len, y: normal.y / len)
                     // Put the label outside the room.
                     if (mid.x + normal.x - center.x) * normal.x + (mid.y + normal.y - center.y) * normal.y < 0 { normal = CGPoint(x: -normal.x, y: -normal.y) }
-                    let label = CGPoint(x: mid.x + normal.x * 14, y: mid.y + normal.y * 14)
+                    let label = CGPoint(x: mid.x + normal.x * (wallPoints + 10), y: mid.y + normal.y * (wallPoints + 10))
                     context.draw(Text(String(format: "%.2f м", wall.length).replacingOccurrences(of: ".", with: ",")).font(.system(size: 9, weight: .semibold).monospacedDigit()).foregroundColor(ink.opacity(0.8)), at: label)
                 }
             }
@@ -208,9 +213,13 @@ struct FloorPlansView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
                 if store.floorPlans.isEmpty {
-                    ContentUnavailableView("Пока нет планировок", systemImage: "square.split.bottomrightquarter", description: Text("Первый скан займёт 1–2 минуты."))
+                    ContentUnavailableView("Пока нет планировок", systemImage: "square.split.bottomrightquarter", description: Text("Первый скан займёт 1–2 минуты. Квартиру целиком можно снять за один проход: после комнаты нажмите «Следующая комната»."))
                 } else {
-                    ForEach(store.floorPlans) { plan in
+                    ForEach(store.apartments) { apartment in
+                        NavigationLink { ApartmentView(apartmentID: apartment.id) } label: { ApartmentRow(apartment: apartment) }
+                            .buttonStyle(PremiumCardPressStyle())
+                    }
+                    ForEach(store.floorPlans.filter { $0.apartmentID == nil }) { plan in
                         NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
                             .buttonStyle(PremiumCardPressStyle())
                     }
@@ -291,6 +300,11 @@ struct FloorPlanDetailView: View {
     @State private var stepChosen = false
     @State private var show3D = false
     @State private var showOrder = false
+    @State private var editPlan = false
+    @State private var furnitureTarget: FurnitureTarget?
+
+    /// The concept whose furniture is being moved by hand.
+    struct FurnitureTarget: Identifiable { let id: UUID }
 
     private var plan: FloorPlan? { store.floorPlans.first { $0.id == planID } }
     private var proposal: DesignProposal? {
@@ -338,6 +352,8 @@ struct FloorPlanDetailView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $editPlan) { NavigationStack { PlanEditorView(planID: planID) } }
+        .fullScreenCover(item: $furnitureTarget) { target in NavigationStack { FurnitureEditorView(planID: planID, proposalID: target.id) } }
         .navigationDestination(isPresented: $showOrder) {
             if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
         }
@@ -395,6 +411,8 @@ struct FloorPlanDetailView: View {
             PlanStat(value: "\(plan.doors.count)", title: "Двери")
         }
         mainButton(flow.main(on: .measure), plan: plan)
+        Button { editPlan = true } label: { SecondaryActionLabel(title: "Исправить план: стены, двери, окна", icon: "pencil.and.ruler") }
+            .buttonStyle(PremiumPressStyle())
         NavigationLink { PlanMaterialsView(plan: plan) } label: {
             HStack(spacing: 12) {
                 Image(systemName: "function").font(.title3).foregroundStyle(Theme.orange).frame(width: 30)
@@ -410,7 +428,7 @@ struct FloorPlanDetailView: View {
             .panelCard(16)
         }
         .buttonStyle(PremiumCardPressStyle())
-        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR и не содержит окон и дверей. Для точной планировки используйте iPhone с лидаром.")
+        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR. Окна и двери добавьте в «Исправить план»; для точной планировки нужен iPhone с лидаром.")
     }
 
     /// Step 2: the concepts — the layout on the plan, finishes and budget; then the presentation.
@@ -435,6 +453,10 @@ struct FloorPlanDetailView: View {
             mainButton(flow.main(on: .design), plan: plan)
         }
         if let proposal {
+            if !proposal.furniture.isEmpty {
+                Button { furnitureTarget = FurnitureTarget(id: proposal.id) } label: { SecondaryActionLabel(title: "Передвинуть мебель", icon: "hand.draw") }
+                    .buttonStyle(PremiumPressStyle())
+            }
             if !isGenerating && flow.main(on: .design).action != .createDesign {
                 Button { showDesignSheet = true } label: { SecondaryActionLabel(title: "Ещё вариант дизайна", icon: "wand.and.stars") }
                     .buttonStyle(PremiumPressStyle())
@@ -453,6 +475,10 @@ struct FloorPlanDetailView: View {
                 Text("КОНЦЕПЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
                 Text(proposal.title).font(.title3.bold())
             }
+            if flow.presentationOutdated {
+                Label("План или мебель изменены после презентации — обновите её.", systemImage: "exclamationmark.arrow.triangle.2.circlepath")
+                    .font(.footnote).foregroundStyle(Theme.orange)
+            }
             if let presentation, presentation.proposalID == proposal.id {
                 presentationGallery(presentation)
             } else if flow.conceptReady && flow.canRender && !isRendering {
@@ -466,12 +492,14 @@ struct FloorPlanDetailView: View {
         mainButton(flow.main(on: .result), plan: plan)
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
-            Text("Обмерный план с размерами, план расстановки, точки сантехники, полы, потолок и свет, ведомость отделки — листы А3 со штампом, в масштабе.")
+            Text("Обмерный план, план расстановки, точки сантехники, полы и раскладка плитки, потолок, электрика, развёртки и ведомость отделки — листы А3 со штампом, в масштабе.")
                 .font(.caption).foregroundStyle(Theme.muted)
             HStack(spacing: 10) {
                 Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
                 Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "Сохранить PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
             }
+            Button { shareDXF(plan) } label: { SecondaryActionLabel(title: "DXF для AutoCAD, nanoCAD, ArchiCAD", icon: "square.and.arrow.up") }
+                .buttonStyle(PremiumPressStyle())
         }
         if flow.main(on: .result).action != .orderRenovation {
             Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
@@ -865,6 +893,15 @@ struct FloorPlanDetailView: View {
         guard let url = drawingsURL(plan) else { return }
         store.track("drawings_share")
         shareFile = SharedFile(url: url)
+    }
+
+    /// The plan for CAD: walls, openings, furniture, electrics and tiles on separate layers, in millimetres.
+    private func shareDXF(_ plan: FloorPlan) {
+        do {
+            let url = try PlanDXF.file(plan: plan, proposal: proposal, room: RoomKind.detect(plan: plan, proposal: proposal))
+            store.track("drawings_dxf")
+            shareFile = SharedFile(url: url)
+        } catch { self.error = "Не удалось сделать DXF: \(error.localizedDescription)" }
     }
 
     private func sharePlan(_ plan: FloorPlan) {

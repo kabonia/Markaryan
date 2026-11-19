@@ -226,6 +226,8 @@ struct DesignProposal: Codable, Identifiable {
     var layoutNotes: [String] = []
     /// The client presentation made for this concept (files on the iPhone), so it opens again without new renders.
     var presentation: SavedPresentation? = nil
+    /// Last time the furniture was moved by hand; a presentation made before it is out of date.
+    var editedAt: Date? = nil
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -238,7 +240,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation, editedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -267,6 +269,7 @@ struct DesignProposal: Codable, Identifiable {
         layoutVersion = try? c.decode(Int.self, forKey: .layoutVersion)
         layoutNotes = (try? c.decode([String].self, forKey: .layoutNotes)) ?? []
         presentation = try? c.decode(SavedPresentation.self, forKey: .presentation)
+        editedAt = try? c.decode(Date.self, forKey: .editedAt)
     }
 }
 
@@ -293,8 +296,8 @@ extension DesignProposal {
         let biggest = (furniture.flatMap { [$0.x, $0.y] } + zones.flatMap { [$0.x, $0.y] }).map(abs).max() ?? 0
         let factor: Double = biggest > maxSide * 200 ? 1000 : (biggest > maxSide * 8 ? 100 : 1)
         let center = PlanPoint(x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2)
-        // Half of the drawn wall thickness: items stand against the inner face of the wall, not inside it.
-        let inset = 0.075
+        // The scanned line is the inner face of the wall: items stand just off it, never in it.
+        let inset = LayoutRules.wallGap
 
         /// Which axes the item still has to move along to get off the walls.
         func needs(_ item: DesignFurniture) -> (x: Bool, y: Bool) {

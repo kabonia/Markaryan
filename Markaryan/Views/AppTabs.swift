@@ -158,6 +158,7 @@ struct ProjectsTabView: View {
         .navigationTitle("Проекты")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
+        .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in
                 store.createProject(name: name, address: address)

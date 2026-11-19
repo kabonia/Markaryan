@@ -20,8 +20,12 @@ struct FloorPlan: Codable, Identifiable {
     var proposals: [DesignProposal] = []
     /// Apartment this room belongs to (several rooms scanned in one session). Nil for a separate room.
     var apartmentID: UUID? = nil
+    /// Name of that apartment («Квартира на Ленина»); the same in all its rooms.
+    var apartmentName: String? = nil
     /// Where the room sits in the scan (and apartment) coordinates; set when the plan is normalised.
     var placement: PlanPlacement? = nil
+    /// Last correction by hand (`PlanEditor`); a presentation made before it is out of date.
+    var editedAt: Date? = nil
 
     var walls: [PlanSegment] { segments.filter { $0.kind == .wall } }
     var doors: [PlanSegment] { segments.filter { $0.kind == .door || $0.kind == .opening } }
@@ -96,7 +100,9 @@ extension FloorPlan {
         ceilingHeight = try c.decode(Double.self, forKey: .ceilingHeight)
         modelFilename = try c.decodeIfPresent(String.self, forKey: .modelFilename)
         apartmentID = try c.decodeIfPresent(UUID.self, forKey: .apartmentID)
+        apartmentName = try c.decodeIfPresent(String.self, forKey: .apartmentName)
         placement = try c.decodeIfPresent(PlanPlacement.self, forKey: .placement)
+        editedAt = try c.decodeIfPresent(Date.self, forKey: .editedAt)
         let saved = try c.decodeIfPresent([DesignProposal].self, forKey: .proposals) ?? []
         proposals = []
         proposals = saved.map { $0.placed(in: self) }
