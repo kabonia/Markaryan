@@ -201,7 +201,10 @@ struct PlanViewport {
     let offsetX: Double, offsetY: Double
 
     init(plan: FloorPlan, width: Double, height: Double, margin: Double) {
-        let b = plan.bounds
+        self.init(bounds: plan.bounds, width: width, height: height, margin: margin)
+    }
+
+    init(bounds b: (minX: Double, minY: Double, maxX: Double, maxY: Double), width: Double, height: Double, margin: Double) {
         originX = b.minX; originY = b.minY
         let spanX = max(0.5, b.maxX - b.minX), spanY = max(0.5, b.maxY - b.minY)
         scale = max(1e-6, min((width - margin * 2) / spanX, (height - margin * 2) / spanY))

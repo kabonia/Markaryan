@@ -137,6 +137,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }
         .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 3 } }
+        .onChange(of: store.apartmentToOpen) { _, id in if id != nil { store.tab = 3 } }
         .sheet(item: $store.arTransfer) { transfer in
             NavigationStack { CalculatorView(kind: transfer.kind, initialValues: [transfer.key: String(format: "%.2f", transfer.value)], measurementNote: "Размер передан из AR и является приблизительным. Перепроверьте его рулеткой перед закупкой.")
                     .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Закрыть") { store.arTransfer = nil } } } }

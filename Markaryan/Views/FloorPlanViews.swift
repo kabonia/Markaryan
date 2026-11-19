@@ -213,9 +213,13 @@ struct FloorPlansView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
                 if store.floorPlans.isEmpty {
-                    ContentUnavailableView("Пока нет планировок", systemImage: "square.split.bottomrightquarter", description: Text("Первый скан займёт 1–2 минуты."))
+                    ContentUnavailableView("Пока нет планировок", systemImage: "square.split.bottomrightquarter", description: Text("Первый скан займёт 1–2 минуты. Квартиру целиком можно снять за один проход: после комнаты нажмите «Следующая комната»."))
                 } else {
-                    ForEach(store.floorPlans) { plan in
+                    ForEach(store.apartments) { apartment in
+                        NavigationLink { ApartmentView(apartmentID: apartment.id) } label: { ApartmentRow(apartment: apartment) }
+                            .buttonStyle(PremiumCardPressStyle())
+                    }
+                    ForEach(store.floorPlans.filter { $0.apartmentID == nil }) { plan in
                         NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
                             .buttonStyle(PremiumCardPressStyle())
                     }

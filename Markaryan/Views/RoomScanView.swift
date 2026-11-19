@@ -3,17 +3,35 @@ import SwiftUI
 import RoomPlan
 #endif
 
+/// What the scan should do next; a new `token` makes the capture view act once.
+struct ScanCommand: Equatable {
+    enum Action: Equatable {
+        case run
+        /// `keepSession`: the AR session goes on, so the next room is scanned in the same coordinates.
+        case stop(keepSession: Bool)
+    }
+    var action: Action
+    var token: Int
+}
+
 /// LiDAR room scan (Apple RoomPlan): walls, doors, windows and furniture → 2D plan + 3D model.
-/// iPhones without LiDAR are offered the AR floor contour instead.
+/// Several rooms in one go make an apartment: the AR session keeps running between rooms, so they share the
+/// scan's coordinates and stand in their places on the apartment plan. iPhones without LiDAR get the AR contour.
 struct RoomScanView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @State private var phase: Phase = .intro
-    @State private var stopRequested = false
-    @State private var name = ""
+    @State private var command = ScanCommand(action: .run, token: 0)
     @State private var error: String?
+    /// Set when the user goes on to a next room: every room of this scan shares it.
+    @State private var apartmentID: UUID?
+    @State private var apartmentName = ""
+    /// Rooms saved in this scan, in order.
+    @State private var saved: [FloorPlan.ID] = []
+    /// The room being processed is followed by another one.
+    @State private var continuing = false
 
-    enum Phase { case intro, scanning, processing }
+    enum Phase { case intro, scanning, processing, between }
 
     private var isSupported: Bool {
         #if canImport(RoomPlan)
@@ -28,7 +46,7 @@ struct RoomScanView: View {
             Theme.background.ignoresSafeArea()
             #if canImport(RoomPlan)
             if phase != .intro && isSupported {
-                RoomCaptureRepresentable(stopRequested: stopRequested) { room, captureError in
+                RoomCaptureRepresentable(command: command) { room, captureError in
                     handle(room: room, error: captureError)
                 }
                 .ignoresSafeArea()
@@ -36,9 +54,10 @@ struct RoomScanView: View {
             #endif
             VStack {
                 HStack {
-                    Text(phase == .intro ? "СКАН КОМНАТЫ" : "СКАНИРОВАНИЕ").font(.headline).tracking(2)
+                    Text(title).font(.headline).tracking(2)
                     Spacer()
-                    Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
+                    // Closing after some rooms keeps them and opens what was scanned.
+                    Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
                 }
                 .padding(.horizontal, 20).padding(.top, 12)
                 Spacer()
@@ -47,12 +66,23 @@ struct RoomScanView: View {
                 case .scanning:
                     VStack(spacing: 12) {
                         Text("Медленно обходите комнату, наводя камеру на стены, углы, окна и двери. Модель строится на экране.").font(.footnote).multilineTextAlignment(.center)
-                        PrimaryButton(title: "Готово — построить план", icon: "checkmark") { stopRequested = true; phase = .processing; Haptics.success() }
+                        PrimaryButton(title: apartmentID == nil ? "Готово — построить план" : "Готово — собрать квартиру", icon: "checkmark") { finishRoom(next: false) }
+                        Button { finishRoom(next: true) } label: { SecondaryActionLabel(title: "Сохранить и перейти в следующую комнату", icon: "arrow.right.circle") }
+                            .buttonStyle(PremiumPressStyle())
                     }
                     .padding(18).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous)).padding(12)
                 case .processing:
                     HStack(spacing: 12) { ProgressView(); Text("Собираем стены, проёмы и мебель…").font(.subheadline) }
                         .padding(18).background(.ultraThinMaterial, in: Capsule()).padding(.bottom, 30)
+                case .between:
+                    VStack(spacing: 12) {
+                        Text("Комната \(saved.count) сохранена. Перейдите в следующую комнату, не закрывая скан, — комнаты встанут на свои места на общем плане.")
+                            .font(.footnote).multilineTextAlignment(.center)
+                        PrimaryButton(title: "Сканировать комнату \(saved.count + 1)", icon: "viewfinder") { nextRoom() }
+                        Button { finish() } label: { SecondaryActionLabel(title: "Закончить и открыть квартиру", icon: "checkmark") }
+                            .buttonStyle(PremiumPressStyle())
+                    }
+                    .padding(18).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous)).padding(12)
                 }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12)).padding(.bottom, 20) }
             }
@@ -71,10 +101,16 @@ struct RoomScanView: View {
                     Label("Включите свет и откройте двери", systemImage: "lightbulb")
                     Label("Держите iPhone на уровне груди", systemImage: "iphone")
                     Label("Обойдите комнату по периметру за 1–2 минуты", systemImage: "figure.walk")
+                    Label("Квартира целиком: после комнаты нажмите «Следующая комната» и идите дальше", systemImage: "square.split.2x2")
                 }
                 .font(.subheadline)
                 if isSupported {
-                    PrimaryButton(title: "Начать сканирование", icon: "viewfinder") { stopRequested = false; error = nil; phase = .scanning; store.track("room_scan_start") }
+                    PrimaryButton(title: "Начать сканирование", icon: "viewfinder") {
+                        error = nil
+                        command = ScanCommand(action: .run, token: command.token + 1)
+                        phase = .scanning
+                        store.track("room_scan_start")
+                    }
                 } else {
                     InfoNote(text: "Для скана нужен iPhone с лидаром (модели Pro начиная с iPhone 12 Pro). На этом iPhone постройте план по углам пола: AR‑студия → «Площадь» → обойдите углы → «Сохранить как план».")
                     PrimaryButton(title: "Открыть контур в AR", icon: "point.topleft.down.to.point.bottomright.curvepath") {
@@ -87,11 +123,51 @@ struct RoomScanView: View {
         }
     }
 
+    private var title: String {
+        switch phase {
+        case .intro: return "СКАН КОМНАТЫ"
+        case .between: return apartmentName.uppercased()
+        case .scanning, .processing: return apartmentID == nil ? "СКАНИРОВАНИЕ" : "КОМНАТА \(saved.count + 1)"
+        }
+    }
+
+    /// Stops the scan of this room; `next` keeps the AR session for the next room of the apartment.
+    private func finishRoom(next: Bool) {
+        if next && apartmentID == nil {
+            apartmentID = UUID()
+            apartmentName = "Квартира \(store.apartments.count + 1)"
+        }
+        continuing = next
+        command = ScanCommand(action: .stop(keepSession: next), token: command.token + 1)
+        phase = .processing
+        Haptics.success()
+    }
+
+    private func nextRoom() {
+        error = nil
+        command = ScanCommand(action: .run, token: command.token + 1)
+        phase = .scanning
+        store.track("room_scan_next")
+    }
+
+    /// Opens what was scanned: the apartment, or the room when there is only one.
+    private func finish() {
+        if let apartmentID, saved.count < 2 { store.ungroupApartment(apartmentID) }
+        let apartment = saved.count >= 2 ? apartmentID : nil
+        let room = saved.first
+        Haptics.success()
+        dismiss()
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            if let apartment { store.apartmentToOpen = apartment } else if let room { store.planToOpen = room }
+        }
+    }
+
     #if canImport(RoomPlan)
     private func handle(room: CapturedRoom?, error captureError: Error?) {
         guard let room, captureError == nil else {
             error = "Скан не удался: \(captureError?.localizedDescription ?? "нет данных"). Попробуйте ещё раз при лучшем освещении."
-            phase = .intro
+            failed()
             return
         }
         let id = UUID()
@@ -100,19 +176,28 @@ struct RoomScanView: View {
             let url = try AppStore.planModelFolder().appendingPathComponent(modelName!)
             try room.export(to: url, exportOptions: .parametric)
         } catch { modelName = nil }
-        let count = store.floorPlans.count + 1
-        var plan = FloorPlanBuilder.fromRoom(room, name: "Комната \(count)", modelFilename: modelName)
+        let number = apartmentID == nil ? store.floorPlans.count + 1 : saved.count + 1
+        var plan = FloorPlanBuilder.fromRoom(room, name: "Комната \(number)", modelFilename: modelName)
         plan.id = id
+        plan.apartmentID = apartmentID
+        plan.apartmentName = apartmentID == nil ? nil : apartmentName
         guard !plan.walls.isEmpty else {
             error = "Не удалось распознать стены. Обойдите комнату медленнее, захватывая углы."
-            phase = .intro
+            failed()
             return
         }
         store.savePlan(plan)
-        store.track("room_scan_saved")
+        saved.append(plan.id)
+        store.track(apartmentID == nil ? "room_scan_saved" : "apartment_room_saved")
         Haptics.success()
-        dismiss()
-        Task { try? await Task.sleep(for: .milliseconds(450)); store.planToOpen = plan.id }
+        if continuing { phase = .between } else { finish() }
+    }
+
+    /// A room that did not work: scan it again in the same session, or start over when nothing is saved yet.
+    private func failed() {
+        if saved.isEmpty { phase = .intro }
+        else if continuing { phase = .between }
+        else { finish() }
     }
     #endif
 }
@@ -120,7 +205,7 @@ struct RoomScanView: View {
 #if canImport(RoomPlan)
 /// Wraps Apple's RoomCaptureView (live scan UI with the growing 3D model).
 struct RoomCaptureRepresentable: UIViewRepresentable {
-    let stopRequested: Bool
+    let command: ScanCommand
     let onResult: (CapturedRoom?, Error?) -> Void
 
     func makeCoordinator() -> RoomScanCoordinator { RoomScanCoordinator() }
@@ -130,14 +215,24 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
         context.coordinator.onResult = onResult
         view.delegate = context.coordinator
         view.captureSession.run(configuration: RoomCaptureSession.Configuration())
+        context.coordinator.token = command.token
+        context.coordinator.stopped = false
         return view
     }
 
     func updateUIView(_ view: RoomCaptureView, context: Context) {
         context.coordinator.onResult = onResult
-        if stopRequested && !context.coordinator.stopped {
+        guard command.token != context.coordinator.token else { return }
+        context.coordinator.token = command.token
+        switch command.action {
+        case .run:
+            context.coordinator.stopped = false
+            view.captureSession.run(configuration: RoomCaptureSession.Configuration())
+        case .stop(let keepSession):
+            guard !context.coordinator.stopped else { return }
             context.coordinator.stopped = true
-            view.captureSession.stop()
+            // Keeping the AR session puts the next room in the same coordinates (RoomPlan, iOS 17).
+            view.captureSession.stop(pauseARSession: !keepSession)
         }
     }
 
@@ -149,6 +244,8 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
 final class RoomScanCoordinator: NSObject, RoomCaptureViewDelegate {
     var onResult: ((CapturedRoom?, Error?) -> Void)?
     var stopped = false
+    /// The last command acted on.
+    var token = 0
 
     override init() { super.init() }
     required init?(coder: NSCoder) { super.init() }

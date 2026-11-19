@@ -148,34 +148,7 @@ enum PlanDXF {
             for piece in tiles.pieces { dxf.polyline(piece.polygon, closed: true, layer: Layer.tiles) }
         }
 
-        // Walls: faces, jambs and the fill.
-        for piece in body.pieces {
-            dxf.solid(piece.polygon, layer: Layer.wallFill)
-            dxf.line(piece.innerStart, piece.innerEnd, layer: Layer.walls)
-            dxf.line(piece.outerStart, piece.outerEnd, layer: Layer.walls)
-            if piece.capStart { dxf.line(piece.innerStart, piece.outerStart, layer: Layer.walls) }
-            if piece.capEnd { dxf.line(piece.innerEnd, piece.outerEnd, layer: Layer.walls) }
-        }
-        for gap in body.gaps {
-            let opening = gap.opening
-            if opening.kind == .window {
-                for k in [0.0, 0.4, 0.6, 1.0] {
-                    let shift = gap.outward * (gap.thickness * k)
-                    dxf.line(gap.innerStart + shift, gap.innerEnd + shift, layer: Layer.windows)
-                }
-            } else if opening.kind == .door {
-                let hinge = gap.innerStart.distance(to: opening.start) <= gap.innerEnd.distance(to: opening.start) ? gap.innerStart : gap.innerEnd
-                let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
-                let width = hinge.distance(to: latch)
-                let leaf = hinge + gap.outward * -width
-                dxf.line(hinge, leaf, layer: Layer.doors)
-                // The swing in DXF space (y up): from the latch to the open leaf, counter-clockwise.
-                let h = DXFWriter.mm(hinge), l = DXFWriter.mm(latch), e = DXFWriter.mm(leaf)
-                let toLatch = atan2(l.y - h.y, l.x - h.x) * 180 / .pi, toLeaf = atan2(e.y - h.y, e.x - h.x) * 180 / .pi
-                let counterClockwise = (l.x - h.x) * (e.y - h.y) - (l.y - h.y) * (e.x - h.x) > 0
-                dxf.arc(hinge, radius: width, startDegrees: counterClockwise ? toLatch : toLeaf, endDegrees: counterClockwise ? toLeaf : toLatch, layer: Layer.doors)
-            }
-        }
+        addWalls(&dxf, [body])
 
         // Wall lengths inside the room, and the room label.
         for side in PlanWalls.numbered(plan) where side.length >= 0.4 {
@@ -227,6 +200,68 @@ enum PlanDXF {
             }
         }
         return dxf
+    }
+
+    /// Walls (faces, jambs, fill), windows and door swings of one room or of all rooms of an apartment: the middle of
+    /// a partition is not drawn, and only the doors in `doors` get a swing (nil — every door).
+    static func addWalls(_ dxf: inout DXFWriter, _ bodies: [WallBody], doors: Set<UUID>? = nil) {
+        for piece in bodies.flatMap(\.pieces) {
+            dxf.solid(piece.polygon, layer: Layer.wallFill)
+            dxf.line(piece.innerStart, piece.innerEnd, layer: Layer.walls)
+            if !piece.shared { dxf.line(piece.outerStart, piece.outerEnd, layer: Layer.walls) }
+            if piece.capStart { dxf.line(piece.innerStart, piece.outerStart, layer: Layer.walls) }
+            if piece.capEnd { dxf.line(piece.innerEnd, piece.outerEnd, layer: Layer.walls) }
+        }
+        for gap in bodies.flatMap(\.gaps) {
+            let opening = gap.opening
+            if opening.kind == .window {
+                for k in [0.0, 0.4, 0.6, 1.0] {
+                    let shift = gap.outward * (gap.thickness * k)
+                    dxf.line(gap.innerStart + shift, gap.innerEnd + shift, layer: Layer.windows)
+                }
+            } else if opening.kind == .door, doors.map({ $0.contains(opening.id) }) ?? true {
+                let hinge = gap.innerStart.distance(to: opening.start) <= gap.innerEnd.distance(to: opening.start) ? gap.innerStart : gap.innerEnd
+                let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
+                let width = hinge.distance(to: latch)
+                let leaf = hinge + gap.outward * -width
+                dxf.line(hinge, leaf, layer: Layer.doors)
+                // The swing in DXF space (y up): from the latch to the open leaf, counter-clockwise.
+                let h = DXFWriter.mm(hinge), l = DXFWriter.mm(latch), e = DXFWriter.mm(leaf)
+                let toLatch = atan2(l.y - h.y, l.x - h.x) * 180 / .pi, toLeaf = atan2(e.y - h.y, e.x - h.x) * 180 / .pi
+                let counterClockwise = (l.x - h.x) * (e.y - h.y) - (l.y - h.y) * (e.x - h.x) > 0
+                dxf.arc(hinge, radius: width, startDegrees: counterClockwise ? toLatch : toLeaf, endDegrees: counterClockwise ? toLeaf : toLatch, layer: Layer.doors)
+            }
+        }
+    }
+
+    /// The whole apartment: every room where the scan saw it, partitions once, doors once, the furniture of each
+    /// room's latest concept, room numbers, names and areas, the overall size.
+    static func writer(apartment: ApartmentLayout, name: String) -> DXFWriter {
+        var dxf = DXFWriter(layers: layers)
+        addWalls(&dxf, apartment.wallBodies(), doors: Set(apartment.doors.map(\.door.id)))
+        for room in apartment.rooms {
+            let label = room.labelPoint
+            dxf.text("\(room.number). \(room.name)", at: label, height: 0.2, layer: Layer.text, centered: true)
+            dxf.text(String(format: "%.2f м2", room.area).replacingOccurrences(of: ".", with: ","), at: label + PlanPoint(x: 0, y: 0.3), height: 0.15, layer: Layer.text, centered: true)
+            for item in room.plan.proposals.last?.furniture ?? [] where item.model != "hiddenlight" {
+                dxf.polyline(item.footprint.corners, closed: true, layer: Layer.furniture)
+            }
+        }
+        // Overall size below and to the left of the plan.
+        let w = apartment.width, d = apartment.depth
+        dxf.line(PlanPoint(x: 0, y: d + 0.8), PlanPoint(x: w, y: d + 0.8), layer: Layer.dimensions)
+        dxf.line(PlanPoint(x: -0.8, y: 0), PlanPoint(x: -0.8, y: d), layer: Layer.dimensions)
+        dxf.text("\(Int((w * 1000).rounded()))", at: PlanPoint(x: w / 2, y: d + 0.65), height: 0.15, layer: Layer.dimensions, centered: true)
+        dxf.text("\(Int((d * 1000).rounded()))", at: PlanPoint(x: -0.95, y: d / 2), height: 0.15, layer: Layer.dimensions, rotationDegrees: 90, centered: true)
+        dxf.text("\(name): \(String(format: "%.2f", apartment.area).replacingOccurrences(of: ".", with: ",")) м2", at: PlanPoint(x: w / 2, y: d + 1.3), height: 0.2, layer: Layer.text, centered: true)
+        return dxf
+    }
+
+    static func file(apartment: ApartmentLayout, name: String) throws -> URL {
+        let safe = name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "квартира" : safe).dxf")
+        try writer(apartment: apartment, name: name).data.write(to: url, options: .atomic)
+        return url
     }
 
     /// The DXF file for the room, in the temporary folder, named like the drawings.

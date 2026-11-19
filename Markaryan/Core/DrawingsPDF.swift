@@ -215,6 +215,58 @@ enum DrawingsPDF {
         return url
     }
 
+    // MARK: Apartment
+
+    /// The apartment on one sheet: every room where the scan saw it, partitions and doors once, room numbers, names
+    /// and areas, the overall dimensions and the room schedule (экспликация помещений).
+    static func render(apartment: ApartmentLayout, name: String, projectName: String) throws -> URL {
+        let safe = name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "квартира" : safe).pdf")
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(name)", kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В."]
+        let frame = CGRect(x: mm(20), y: mm(5), width: sheet.width - mm(25), height: sheet.height - mm(10))
+        let stamp = CGRect(x: frame.maxX - mm(185), y: frame.maxY - mm(55), width: mm(185), height: mm(55))
+        let field = CGRect(x: frame.minX + mm(34), y: frame.minY + mm(36), width: frame.width - mm(34) - mm(105), height: frame.height - mm(36) - mm(62))
+        let sideX = frame.maxX - mm(98)
+        let code = "АС‑\(Calendar.current.component(.year, from: .now))‑\(String((apartment.rooms.first?.id.uuidString ?? "0000").prefix(4)))‑АР"
+        let widthM = max(0.5, apartment.width), depthM = max(0.5, apartment.depth)
+        let scale: CGFloat = [20, 25, 50, 75, 100, 150, 200].first { s in
+            let ppm = 1000 / s * 72 / 25.4
+            return CGFloat(widthM) * ppm <= field.width && CGFloat(depthM) * ppm <= field.height
+        } ?? 200
+        let ppm = 1000 / scale * 72 / 25.4
+        let t = Transform(scale: scale, origin: CGPoint(x: field.midX - CGFloat(widthM) * ppm / 2, y: field.midY - CGFloat(depthM) * ppm / 2), minX: 0, minY: 0)
+        // All rooms as one plan, for the overall dimension chains.
+        let whole = FloorPlan(name: name, source: .lidar, segments: apartment.rooms.flatMap { $0.plan.segments }, objects: [], floorPolygon: [],
+                              ceilingHeight: apartment.rooms.first?.plan.ceilingHeight ?? 2.7, modelFilename: nil)
+        let title = "План квартиры"
+        let renderer = UIGraphicsPDFRenderer(bounds: sheet, format: format)
+        try renderer.writePDF(to: url) { context in
+            context.beginPage()
+            let cg = context.cgContext
+            UIColor.white.setFill(); cg.fill(sheet)
+            drawFrame(cg, frame: frame)
+            drawBodies(cg, apartment.wallBodies(thickness: wallThickness), t: t, hatch: true, doors: Set(apartment.doors.map(\.door.id)))
+            for room in apartment.rooms {
+                drawRoomMarker(cg, plan: room.plan, t: t, number: "\(room.number)", name: room.name, at: room.labelPoint)
+            }
+            drawDimensionChains(cg, plan: whole, t: t, onlyOverall: true)
+            let rows = apartment.rooms.map { ["\($0.number)", $0.name, area($0.area)] } + [["", "Итого", area(apartment.area)]]
+            drawTable(cg, at: CGPoint(x: sideX, y: field.minY), title: "Экспликация помещений", columns: [("№", 10), ("Наименование", 56), ("Площадь, м²", 28)], rows: rows)
+            drawNotes(cg, at: CGPoint(x: sideX, y: field.minY + mm(6) + mm(9) + mm(6) * CGFloat(rows.count) + mm(8)), width: mm(94), title: "Указания", notes: [
+                "1. Комнаты сняты одним сканом и поставлены на свои места; перегородки — по фактическому зазору между комнатами.",
+                "2. Наружные стены показаны условной толщины 150 мм.",
+                "3. Чертежи каждой комнаты (расстановка, полы, потолок, электрика, плитка) — в её разделе АР."
+            ])
+            text(title, at: CGPoint(x: frame.minX + mm(15), y: frame.minY + mm(8)), font: font(15, bold: true))
+            text("М 1:\(Int(scale))", at: CGPoint(x: frame.minX + mm(15), y: frame.minY + mm(16)), font: font(10))
+            drawScaleBar(cg, at: CGPoint(x: frame.minX + mm(38), y: frame.minY + mm(18.5)), t: t)
+            drawStamp(cg, rect: stamp, code: code, object: "\(projectName). \(name)", sheetTitle: title, sheetNumber: 1, sheetsCount: 1)
+            text("Формат А3", at: CGPoint(x: frame.maxX - mm(20), y: frame.maxY + mm(1)), font: font(7))
+        }
+        return url
+    }
+
     // MARK: Text and lines
 
     static func text(_ value: String, at point: CGPoint, font: UIFont, centered: Bool = false, angle: CGFloat = 0, maxWidth: CGFloat? = nil, rightAligned: Bool = false) {
@@ -324,8 +376,14 @@ enum DrawingsPDF {
     /// Walls as one closed contour: the scanned line is the inner face, the wall goes outward (`WallBody`),
     /// corners are mitred, doors and windows are gaps with jambs.
     private static func drawWalls(_ cg: CGContext, plan: FloorPlan, t: Transform, hatch: Bool, openings: Bool = true) {
-        let body = WallBody(plan: plan, thickness: wallThickness)
-        let polygons = body.pieces.map { $0.polygon.map { t.p($0) } }
+        drawBodies(cg, [WallBody(plan: plan, thickness: wallThickness)], t: t, hatch: hatch, openings: openings)
+    }
+
+    /// The walls of one room or of all rooms of an apartment, filled and hatched together: the middle of a partition
+    /// is not drawn, and only the doors in `doors` get a leaf (nil — every door).
+    private static func drawBodies(_ cg: CGContext, _ bodies: [WallBody], t: Transform, hatch: Bool, openings: Bool = true, doors: Set<UUID>? = nil) {
+        let pieces = bodies.flatMap(\.pieces)
+        let polygons = pieces.map { $0.polygon.map { t.p($0) } }
         // Fill + 45° hatching for cut walls (ГОСТ 2.306), or solid poché on design sheets.
         cg.saveGState()
         for polygon in polygons { cg.addLines(between: polygon); cg.closePath() }
@@ -342,15 +400,15 @@ enum DrawingsPDF {
             cg.setFillColor(UIColor(white: 0.55, alpha: 1).cgColor); cg.fillPath()
         }
         cg.restoreGState()
-        // Contour: inner and outer faces, jambs at openings and free ends; no seams at the corners.
-        for piece in body.pieces {
+        // Contour: inner and outer faces, jambs at openings and free ends; no seams at the corners or in partitions.
+        for piece in pieces {
             line(cg, [t.p(piece.innerStart), t.p(piece.innerEnd)], s1)
-            line(cg, [t.p(piece.outerStart), t.p(piece.outerEnd)], s1)
+            if !piece.shared { line(cg, [t.p(piece.outerStart), t.p(piece.outerEnd)], s1) }
             if piece.capStart { line(cg, [t.p(piece.innerStart), t.p(piece.outerStart)], s1) }
             if piece.capEnd { line(cg, [t.p(piece.innerEnd), t.p(piece.outerEnd)], s1) }
         }
         guard openings else { return }
-        for gap in body.gaps {
+        for gap in bodies.flatMap(\.gaps) {
             let opening = gap.opening
             if opening.kind == .window {
                 // Window per ГОСТ 21.201: frame lines on both faces and the glass inside the wall.
@@ -358,7 +416,7 @@ enum DrawingsPDF {
                     let shift = gap.outward * (gap.thickness * k)
                     line(cg, [t.p(gap.innerStart + shift), t.p(gap.innerEnd + shift)], k == 0 || k == 1 ? s2 : s3)
                 }
-            } else if opening.kind == .door {
+            } else if opening.kind == .door, doors.map({ $0.contains(opening.id) }) ?? true {
                 // Leaf opens into the room (same rule as the plan screen and the 3D model), hinged at the start of the door.
                 let hinge = gap.innerStart.distance(to: opening.start) <= gap.innerEnd.distance(to: opening.start) ? gap.innerStart : gap.innerEnd
                 let latch = hinge == gap.innerStart ? gap.innerEnd : gap.innerStart
@@ -578,9 +636,9 @@ enum DrawingsPDF {
 
     // MARK: Room marker, levels, north arrow
 
-    private static func drawRoomMarker(_ cg: CGContext, plan: FloorPlan, t: Transform, number: String, name: String, typeMark: String? = nil) {
+    private static func drawRoomMarker(_ cg: CGContext, plan: FloorPlan, t: Transform, number: String, name: String, typeMark: String? = nil, at point: PlanPoint? = nil) {
         let b = plan.bounds
-        let c = t.p((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 - min(0.6, (b.maxY - b.minY) * 0.15))
+        let c = point.map { t.p($0) } ?? t.p((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 - min(0.6, (b.maxY - b.minY) * 0.15))
         // Room number in an oval, name, area underlined (ГОСТ 21.501)
         let oval = CGRect(x: c.x - mm(5), y: c.y - mm(9), width: mm(10), height: mm(6))
         cg.setFillColor(UIColor.white.cgColor); cg.fillEllipse(in: oval)

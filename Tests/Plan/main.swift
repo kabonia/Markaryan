@@ -784,4 +784,12 @@ check(lShapedFlat.rooms[0].plan.contains(lShapedFlat.rooms[0].labelPoint), "The 
 let savedApartmentRoom = try JSONDecoder().decode(FloorPlan.self, from: JSONEncoder().encode(roomA))
 check(savedApartmentRoom.apartmentName == "Квартира 1" && savedApartmentRoom.apartmentID == apartmentID, "The apartment survives saving")
 
+let flatEntities = dxfEntities(dxfPairs(PlanDXF.writer(apartment: flat, name: "Квартира 1").document))
+let flatPieces = bodies.flatMap(\.pieces)
+let expectedWallLines = flatPieces.count + flatPieces.filter { !$0.shared }.count + flatPieces.filter(\.capStart).count + flatPieces.filter(\.capEnd).count
+check(flatEntities.filter { $0.type == "LINE" && $0.layer == PlanDXF.Layer.walls }.count == expectedWallLines, "Apartment DXF: the middle of a partition is not a line")
+check(flatEntities.filter { $0.type == "ARC" && $0.layer == PlanDXF.Layer.doors }.count == 1, "Apartment DXF: the door between the rooms once")
+check(flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "1. Гостиная" } && flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "2. Спальня" }, "Apartment DXF: numbered rooms")
+check(flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "Квартира 1: 21,00 м2" }, "Apartment DXF: the total area")
+
 print("PASS: \(passed) plan and design checks")

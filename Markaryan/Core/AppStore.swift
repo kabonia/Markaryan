@@ -424,6 +424,8 @@ enum WorkOrderError: LocalizedError {
     @Published var floorPlans: [FloorPlan] = [] { didSet { scheduleSave(floorPlans, key: "floorPlans"); persistActiveWorkspace() } }
     /// Plan to open right after a scan or AR contour is saved.
     @Published var planToOpen: FloorPlan.ID?
+    /// An apartment to show after a multi-room scan.
+    @Published var apartmentToOpen: UUID?
     @Published var showRoomScan = false
     // AI engine: Claude directly (key in Keychain) or the АртСтрой server.
     @Published var aiPreference: AIPreference = .auto { didSet { UserDefaults.standard.set(aiPreference.rawValue, forKey: "aiPreference") } }
@@ -885,6 +887,33 @@ enum WorkOrderError: LocalizedError {
     func savePlan(_ plan: FloorPlan) {
         if let index = floorPlans.firstIndex(where: { $0.id == plan.id }) { floorPlans[index] = plan } else { floorPlans.insert(plan, at: 0) }
     }
+    // MARK: Apartments (rooms of one scan)
+
+    var apartments: [Apartment] { Apartment.group(floorPlans) }
+
+    func renameApartment(_ id: UUID, to name: String) {
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        floorPlans = floorPlans.map { plan in
+            var renamed = plan
+            if plan.apartmentID == id { renamed.apartmentName = clean }
+            return renamed
+        }
+    }
+
+    /// The rooms stay, each on its own.
+    func ungroupApartment(_ id: UUID) {
+        floorPlans = floorPlans.map { plan in
+            var single = plan
+            if plan.apartmentID == id { single.apartmentID = nil; single.apartmentName = nil }
+            return single
+        }
+    }
+
+    func deleteApartment(_ id: UUID) {
+        for plan in floorPlans.filter({ $0.apartmentID == id }) { deletePlan(plan) }
+    }
+
     func deletePlan(_ plan: FloorPlan) {
         if let url = planModelURL(plan) { try? FileManager.default.removeItem(at: url) }
         if let folder = try? Self.presentationsFolder() {
