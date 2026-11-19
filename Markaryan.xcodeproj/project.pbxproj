@@ -29,6 +29,7 @@
 		AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */; };
 		AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */; };
 		AA1000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */; };
+		AA1000000000000000000D08 /* Markaryan/Core/PlanFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */; };
 		AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */; };
 		AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */; };
 		AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */; };
@@ -78,6 +79,7 @@
 		AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ClaudeClient.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FloorPlan.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutEngine.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanFlow.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignBrief.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/LayoutCheck.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanWalls.swift; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 				AA20000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift */,
 				AA20000000000000000000B5 /* Markaryan/Core/FloorPlan.swift */,
 				AA2000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift */,
+				AA2000000000000000000D08 /* Markaryan/Core/PlanFlow.swift */,
 				AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */,
 				AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */,
 				AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */,
@@ -296,6 +299,7 @@
 				AA10000000000000000000B4 /* Markaryan/Core/ClaudeClient.swift in Sources */,
 				AA10000000000000000000B5 /* Markaryan/Core/FloorPlan.swift in Sources */,
 				AA1000000000000000000D07 /* Markaryan/Core/LayoutEngine.swift in Sources */,
+				AA1000000000000000000D08 /* Markaryan/Core/PlanFlow.swift in Sources */,
 				AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */,
 				AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */,
 				AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */,

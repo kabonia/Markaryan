@@ -373,4 +373,34 @@ check(reloadedPresented.presentation == presented.presentation, "Saved presentat
 let forged = try aiDesign(#"{"title":"x","presentation":{"createdAt":0,"folder":"../../Documents","pdf":"a.pdf","pictures":[]},"items":[]}"#, bedroom, "Спальня")
 check(forged.presentation == nil, "An AI answer cannot point at files on the iPhone")
 
+// MARK: Plan screen in three steps
+
+let fresh = PlanFlow(plan: bedroom, proposal: nil, hasPresentation: false, canRender: true)
+check(fresh.initialStep == .measure && fresh.done == [.measure], "A new scan opens on the measurements")
+check(PlanStep.allCases.allSatisfy { fresh.main(on: $0).action == .createDesign }, "Without a concept every step offers to create one")
+check(fresh.main(on: .measure).title == "Создать дизайн по плану", "First design button")
+var designed = bedroom
+designed.proposals = [pair]
+let ready = PlanFlow(plan: designed, proposal: pair, hasPresentation: false, canRender: true)
+check(ready.initialStep == .design && ready.done == [.measure, .design], "A plan with a concept opens on the design")
+check(ready.main(on: .measure).action == .goTo(.design), "Measurements lead on to the design")
+check(ready.main(on: .design).action == .buildPresentation && ready.main(on: .result).action == .buildPresentation, "A concept leads to its presentation")
+let finished = PlanFlow(plan: designed, proposal: pair, hasPresentation: true, canRender: true)
+check(finished.initialStep == .result && finished.done == Set(PlanStep.allCases), "A finished presentation opens on the result")
+check(finished.main(on: .design).action == .goTo(.result) && finished.main(on: .result).action == .orderRenovation, "After the presentation comes the renovation request")
+let offline = PlanFlow(plan: designed, proposal: pair, hasPresentation: false, canRender: false)
+check(offline.main(on: .design).action == .goTo(.result) && offline.main(on: .result).action == .orderRenovation, "Without picture engines the result offers the renovation")
+var emptyConcept = pair
+emptyConcept.furniture = []
+let emptyFlow = PlanFlow(plan: designed, proposal: emptyConcept, hasPresentation: false, canRender: true)
+check(emptyFlow.main(on: .design) == PlanMainButton(action: .createDesign, title: "Ещё вариант дизайна", icon: "wand.and.stars"), "A concept without a layout asks for another variant")
+check(PlanFlow(plan: designed, proposal: nil, hasPresentation: true, canRender: true).done == [.measure, .design], "No finished result without a selected concept")
+check(PlanStep.allCases.map(\.title) == ["Обмер", "Дизайн", "Результат"] && PlanStep.result.number == 3, "Step titles and numbers")
+
+let calculations = PlanMaterials.calculations(bedroom)
+check(calculations.count == 6 && Set(calculations.map(\.id)).count == 6, "Six calculators with distinct titles")
+check(calculations[0].kind == .tiles && calculations[0].values["area"] == "12.00", "Floor area goes to the floor calculator")
+check(calculations[2].kind == .paint && calculations[2].values["area"] == "37.80" && calculations[2].values["openings"] == "3.44", "Walls: perimeter × height, openings apart")
+check(calculations[5].values["openings"] == "0" && calculations[5].values["area"] == "12.00", "Ceiling has no openings")
+
 print("PASS: \(passed) plan and design checks")
