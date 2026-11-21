@@ -77,7 +77,7 @@ enum ClaudeError: LocalizedError {
     case noKey, badResponse, api(String), emptyAnswer
     var errorDescription: String? {
         switch self {
-        case .noKey: return "ИИ не подключён: укажите адрес сервера ИИ в AIServer.plist."
+        case .noKey: return "ИИ не подключён: впишите OPENROUTER_API_KEY в AIServer.plist и пересоберите приложение."
         case .badResponse: return "ИИ вернул неожиданный ответ. Попробуйте ещё раз."
         case .api(let message): return message
         case .emptyAnswer: return "ИИ не прислал ответ. Попробуйте переформулировать вопрос."
@@ -122,7 +122,7 @@ struct ClaudeClient {
     }
     static var currentWorkspaceID: String? { KeychainStore.read(workspaceAccount) ?? bundledWorkspaceID }
     /// Key entered on this iPhone wins over the built-in one.
-    static var currentKey: String? { KeychainStore.read(keyAccount) ?? bundledKey }
+    static var currentKey: String? { KeychainStore.read(keyAccount) ?? bundledKey ?? AIServerConfig.openRouterKey }
     private static let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
 
     let apiKey: String
@@ -137,13 +137,33 @@ struct ClaudeClient {
         return URLSession(configuration: configuration)
     }()
 
+    /// OpenRouter key (sk-or-…): the same Anthropic Messages format through OpenRouter's Anthropic-compatible endpoint.
+    static func isOpenRouterKey(_ key: String) -> Bool { key.hasPrefix("sk-or-") }
+    private static let openRouterEndpoint = URL(string: "https://openrouter.ai/api/v1/messages")!
+    /// claude-sonnet-5-5 → anthropic/claude-sonnet-5.5 (OpenRouter model ids).
+    static func openRouterModel(_ model: String) -> String {
+        if model.contains("/") { return model }
+        guard let range = model.range(of: #"-(\d+)-(\d+)$"#, options: .regularExpression) else { return "anthropic/" + model }
+        let base = String(model[..<range.lowerBound])
+        let version = String(model[range].dropFirst()).replacingOccurrences(of: "-", with: ".")
+        return "anthropic/\(base)-\(version)"
+    }
+
     private func request(body: [String: Any]) throws -> URLRequest {
-        var request = URLRequest(url: Self.endpoint)
+        let viaOpenRouter = Self.isOpenRouterKey(apiKey)
+        var body = body
+        if viaOpenRouter, let name = body["model"] as? String { body["model"] = Self.openRouterModel(name) }
+        var request = URLRequest(url: viaOpenRouter ? Self.openRouterEndpoint : Self.endpoint)
         request.httpMethod = "POST"
         request.timeoutInterval = 180
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        if viaOpenRouter {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            request.setValue("ArtStroy", forHTTPHeaderField: "X-Title")
+        } else {
+            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+            if let workspaceID, !workspaceID.isEmpty { request.setValue(workspaceID, forHTTPHeaderField: "anthropic-workspace-id") }
+        }
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        if let workspaceID, !workspaceID.isEmpty { request.setValue(workspaceID, forHTTPHeaderField: "anthropic-workspace-id") }
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
@@ -176,7 +196,8 @@ struct ClaudeClient {
         if let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let error = raw["error"] as? [String: Any], let message = error["message"] as? String {
             switch status {
-            case 401: return .api("Ключ Claude API не подошёл. Проверьте его в настройках ИИ.")
+            case 401: return .api("Ключ ИИ не подошёл. Проверьте OPENROUTER_API_KEY в AIServer.plist.")
+            case 402: return .api("На балансе OpenRouter закончились деньги — пополните его на openrouter.ai.")
             case 429: return .api("Слишком много запросов к Claude. Подождите минуту.")
             case 529: return .api("Claude сейчас перегружен. Попробуйте чуть позже.")
             default: return .api("Claude: \(message)")
@@ -328,7 +349,7 @@ struct ClaudeClient {
 enum ClaudePrompts {
     static func assistantSystem(context: AIAssistantContext) -> String {
         var text = """
-        Ты — СтройПомощник, ИИ‑инженер компании АртСтрой (ИП Маркарян А.В.), которая строит в Сочи с 2012 года: фундаменты, монолит, коробки, кровли, фасады, инженерные сети, отделку и благоустройство.
+        Ты — СтройПомощник, ИИ‑инженер компании АртСтрой, которая строит в Сочи с 2012 года: фундаменты, монолит, коробки, кровли, фасады, инженерные сети, отделку и благоустройство.
         Отвечай по‑русски, коротко и по делу: сначала главный вывод, затем шаги или список. Без воды и канцелярита.
         Учитывай условия Сочи: влажный субтропический климат, сейсмичность 8–9 баллов, склоны и оползни, глинистые грунты, ливни, морской воздух и коррозию.
         Не выдумывай точные цены и сроки, если их нет в данных; давай диапазоны и честно помечай их как ориентир.

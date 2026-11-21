@@ -3,117 +3,293 @@ import PhotosUI
 
 struct HomeView: View {
     @EnvironmentObject private var store: AppStore
+    @State private var appeared = false
 
     private var greeting: String {
         switch Calendar.current.component(.hour, from: .now) {
-        case 5..<12: return "ДОБРОЕ УТРО"
-        case 12..<18: return "ДОБРЫЙ ДЕНЬ"
-        case 18..<23: return "ДОБРЫЙ ВЕЧЕР"
-        default: return "ДОБРОЙ НОЧИ"
+        case 5..<12: return "Доброе утро"
+        case 12..<18: return "Добрый день"
+        case 18..<23: return "Добрый вечер"
+        default: return "Доброй ночи"
         }
     }
 
+    private let quickCalculators: [CalculationKind] = [.concreteMix, .tiles, .paint, .screed, .masonry, .rebar, .plaster, .drywall, .roof, .fence]
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(spacing: 12) {
-                    Image("BrandMark").resizable().scaledToFit().frame(width: 42, height: 42)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("АРТСТРОЙ").font(.headline).tracking(1.2)
-                        Text("ИП МАРКАРЯН А.В. · СОЧИ").font(.caption2.weight(.semibold)).tracking(0.8).foregroundStyle(Theme.muted)
-                    }
-                    Spacer()
-                    Link(destination: Brand.phoneURL) {
-                        Image(systemName: "phone.fill").font(.subheadline.weight(.semibold)).foregroundStyle(.black)
-                            .frame(width: 40, height: 40).background(Theme.orange, in: Circle())
-                    }
-                    .accessibilityLabel("Позвонить в АртСтрой")
-                }
+            VStack(alignment: .leading, spacing: 24) {
+                header
+                    .reveal(appeared, delay: 0)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(greeting).font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(Theme.orange)
-                    Text("Стройка —\nв одном месте.").font(.system(.largeTitle, design: .default, weight: .bold)).tracking(-1.25)
-                    Text("Смета, AR‑замеры, ИИ‑помощник и контроль объекта — от идеи до приёмки.")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.muted)
-                }
+                NavigationLink { PhotoDesignView() } label: { HomeHeroCard(greeting: greeting) }
+                    .buttonStyle(PremiumCardPressStyle())
+                    .reveal(appeared, delay: 0.05)
 
                 if let alert = store.priceAlert { PriceAlertBanner(text: alert) { store.priceAlert = nil } }
+
+                VStack(alignment: .leading, spacing: 14) {
+                    HomeSectionHeader(eyebrow: "Популярное", title: "Инструменты")
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                        Button { store.tab = 2 } label: {
+                            HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан лидаром, обмеры, стиль и фотореалистичный рендер по точной геометрии.", accent: Theme.orange, badge: "ХИТ")
+                        }
+                        NavigationLink { PhotoDesignView() } label: {
+                            HomeToolCard(icon: "camera.aperture", title: "Дизайн по фото", text: "Сфотографируйте кухню или санузел — ИИ покажет новый дизайн за минуту.", accent: Theme.sky, badge: "LIVE")
+                        }
+                        Button { store.showAR = true } label: {
+                            HomeToolCard(icon: "viewfinder", title: "AR‑рулетка", text: "Длины, площадь и периметр камерой телефона — без рулетки.", accent: Theme.success)
+                        }
+                        NavigationLink { PhotoCountView() } label: {
+                            HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.orangeSoft)
+                        }
+                        NavigationLink { AIAssistantView(context: .general) } label: {
+                            HomeToolCard(icon: "sparkles", title: "СтройПомощник", text: "Ответит на любой вопрос о стройке и ремонте, разберёт смету и фото.", accent: Color(red: 0.68, green: 0.81, blue: 0.47))
+                        }
+                        NavigationLink { FullEstimateHubView() } label: {
+                            HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Color(red: 0.62, green: 0.70, blue: 0.95))
+                        }
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                    NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
+                        HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                }
+                .reveal(appeared, delay: 0.1)
+
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .lastTextBaseline) {
+                        HomeSectionHeader(eyebrow: "За 10 секунд", title: "Калькуляторы")
+                        Spacer()
+                        Button("Все") { store.tab = 1 }.font(.subheadline.weight(.semibold))
+                    }
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach(quickCalculators, id: \.self) { kind in
+                                NavigationLink { CalculatorView(kind: kind) } label: { HomeCalculatorChip(kind: kind) }
+                                    .buttonStyle(PremiumCardPressStyle())
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.horizontal, -20)
+                }
+                .reveal(appeared, delay: 0.15)
 
                 NavigationLink { ProjectHubView() } label: {
                     HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
                 }
                 .buttonStyle(PremiumCardPressStyle())
-
-                SectionTitle(eyebrow: "Быстрый старт", title: "Что делаем сегодня?")
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    NavigationLink { FullEstimateHubView() } label: { HomeActionCard(icon: "house.and.flag.fill", title: "Смета дома", subtitle: "Работы и материалы", accent: Theme.orange) }
-                    NavigationLink { AIAssistantView(context: .general) } label: { HomeActionCard(icon: "sparkles", title: "СтройПомощник", subtitle: "Спросить ИИ", accent: Theme.success) }
-                    Button { store.showAR = true } label: { HomeActionCard(icon: "viewfinder", title: "AR‑замер", subtitle: "Площадь камерой", accent: Theme.sky) }
-                    NavigationLink { AIVisionStudioView(initialStyle: .object) } label: { HomeActionCard(icon: "wand.and.stars", title: "Визуализация", subtitle: "Дом по фото", accent: Theme.orangeSoft) }
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                NavigationLink { FloorPlansView() } label: {
-                    HStack(spacing: 15) {
-                        Image(systemName: "cube.transparent").font(.title2.weight(.semibold)).foregroundStyle(.black)
-                            .frame(width: 52, height: 52).background(Theme.sky, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("НОВОЕ · СКАН КОМНАТЫ").font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(Theme.sky)
-                            Text("Планировка и дизайн по скану").font(.headline).foregroundStyle(.white)
-                            Text("План сверху, мебель и бюджет от ИИ").font(.caption).foregroundStyle(Theme.muted)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
-                    }
-                    .padding(16).panelCard(20)
-                }
-                .buttonStyle(PremiumCardPressStyle())
+                .reveal(appeared, delay: 0.2)
 
                 SiteWeatherCard()
 
                 if !store.calculations.isEmpty {
-                    HStack {
-                        SectionTitle(eyebrow: "Недавнее", title: "Мои расчёты")
-                        Spacer()
-                        NavigationLink("Все") { CalculationHistoryView() }.font(.subheadline.weight(.semibold))
-                    }
-                    ForEach(store.calculations.prefix(2)) { item in
-                        NavigationLink { SavedCalculationView(item: item) } label: {
-                            AppTabRow(icon: item.kind.icon, title: item.kind.title, subtitle: "\(item.object) · \(item.date.formatted(date: .abbreviated, time: .omitted))")
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .lastTextBaseline) {
+                            HomeSectionHeader(eyebrow: "Недавнее", title: "Мои расчёты")
+                            Spacer()
+                            NavigationLink("Все") { CalculationHistoryView() }.font(.subheadline.weight(.semibold))
                         }
-                        .buttonStyle(PremiumCardPressStyle())
+                        ForEach(store.calculations.prefix(2)) { item in
+                            NavigationLink { SavedCalculationView(item: item) } label: {
+                                AppTabRow(icon: item.kind.icon, title: item.kind.title, subtitle: "\(item.object) · \(item.date.formatted(date: .abbreviated, time: .omitted))")
+                            }
+                            .buttonStyle(PremiumCardPressStyle())
+                        }
                     }
                 }
 
-                SectionTitle(eyebrow: "Почему АртСтрой", title: "Строим с \(String(Brand.foundedYear)) года")
-                HStack(spacing: 10) {
-                    HomeMetric(value: "\(Brand.yearsOnMarket)", caption: "лет в Сочи")
-                    HomeMetric(value: "\(Brand.completedObjects)+", caption: "объектов")
-                    HomeMetric(value: "\(store.calculations.count)", caption: "ваших расчётов")
-                }
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(["Смета и договор до начала работ", "Этапы по актам и фотоотчётам", "Полный цикл: от фундамента до благоустройства"], id: \.self) { item in
-                        Label(item, systemImage: "checkmark.seal.fill").font(.subheadline).foregroundStyle(.white)
-                            .symbolRenderingMode(.palette).foregroundStyle(Theme.orange, .white)
+                VStack(alignment: .leading, spacing: 12) {
+                    HomeSectionHeader(eyebrow: "АртСтрой", title: "Строим в Сочи с \(String(Brand.foundedYear)) года")
+                    HStack(spacing: 10) {
+                        HomeMetric(value: "\(Brand.yearsOnMarket)", caption: "лет опыта")
+                        HomeMetric(value: "\(Brand.completedObjects)+", caption: "объектов")
+                        HomeMetric(value: "\(store.floorPlans.count)", caption: "ваших комнат")
                     }
                     NavigationLink { PortfolioView() } label: {
-                        HStack { Text("Смотреть объекты").font(.subheadline.weight(.semibold)); Image(systemName: "arrow.right") }.foregroundStyle(Theme.orange)
+                        AppTabRow(icon: "building.2.fill", title: "Наши объекты", subtitle: "Гостиницы, жильё, рестораны — фото и состав работ")
                     }
-                    .padding(.top, 4)
-                }
-                .padding(18).frame(maxWidth: .infinity, alignment: .leading).panelCard(20)
-
-                PrimaryButton(title: "Получить точную смету от АртСтроя", icon: "square.and.pencil") { store.showRequest = true }
-                Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Хочу обсудить объект: \(store.projectDisplayName), \(store.projectCity).")) {
-                    SecondaryActionLabel(title: "Написать в WhatsApp", icon: "message.fill")
+                    .buttonStyle(PremiumCardPressStyle())
                 }
             }
             .padding(20)
         }
-        .background(Theme.background)
+        .background(HomeBackdrop())
         .toolbar(.hidden, for: .navigationBar)
         .refreshable { await store.refreshPriceBook(silent: true) }
+        .onAppear { if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            Image("BrandMark").resizable().scaledToFit().frame(width: 40, height: 40)
+                .padding(6).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("АРТСТРОЙ").font(.headline).tracking(1.4)
+                Button { store.showRegionPicker = true } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.fill").font(.system(size: 9))
+                        Text(store.projectCity).font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                    }
+                    .foregroundStyle(Theme.muted)
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+            Link(destination: Brand.phoneURL) {
+                Image(systemName: "phone.fill").font(.subheadline.weight(.semibold)).foregroundStyle(.black)
+                    .frame(width: 40, height: 40).background(Theme.orange, in: Circle())
+            }
+            .accessibilityLabel("Позвонить в АртСтрой")
+        }
+    }
+}
+
+/// Soft glow behind the dashboard.
+struct HomeBackdrop: View {
+    var body: some View {
+        ZStack {
+            Theme.background
+            Circle().fill(Theme.orange.opacity(0.16)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
+            Circle().fill(Theme.sky.opacity(0.10)).frame(width: 360, height: 360).blur(radius: 90).offset(x: -170, y: 60)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct HomeSectionHeader: View {
+    let eyebrow: String
+    let title: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(eyebrow.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
+            Text(title).font(.title3.bold()).tracking(-0.4)
+        }
+    }
+}
+
+/// The big card on top: greeting and the most impressive feature.
+struct HomeHeroCard: View {
+    let greeting: String
+    @State private var glow = false
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(colors: [Color(red: 0.33, green: 0.20, blue: 0.13), Color(red: 0.10, green: 0.15, blue: 0.14), Color(red: 0.06, green: 0.09, blue: 0.09)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Circle().fill(Theme.orange.opacity(glow ? 0.34 : 0.22)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
+            HStack(spacing: -40) {
+                StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
+                    .frame(width: 150, height: 110).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .rotationEffect(.degrees(-8)).offset(y: 18)
+                StyleRoomIllustration(palette: ["#1F3B3A", "#C8A15A", "#EDE3D1", "#6B2D3A"])
+                    .frame(width: 160, height: 118).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .rotationEffect(.degrees(6))
+                    .shadow(color: .black.opacity(0.4), radius: 14, y: 8)
+            }
+            .offset(x: 150, y: -96)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
+                Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
+                Text("Сфотографируйте комнату — ИИ покажет её в новом стиле. А сметы, замеры и контроль объекта — рядом.")
+                    .font(.subheadline).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    Image(systemName: "camera.aperture")
+                    Text("Попробовать дизайн по фото").font(.subheadline.weight(.semibold))
+                    Image(systemName: "arrow.right").font(.caption.weight(.bold))
+                }
+                .foregroundStyle(.black).padding(.horizontal, 14).padding(.vertical, 11)
+                .background(LinearGradient(colors: [Theme.orange, Theme.orangeSoft], startPoint: .leading, endPoint: .trailing), in: Capsule())
+                .shadow(color: Theme.orange.opacity(0.35), radius: 12, y: 6)
+                .padding(.top, 4)
+            }
+            .padding(22)
+        }
+        .frame(maxWidth: .infinity, minHeight: 360, alignment: .bottomLeading)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.07)))
+        .onAppear { withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { glow = true } }
+    }
+}
+
+/// A tool on the dashboard: what it is and what it does, in one look.
+struct HomeToolCard: View {
+    let icon: String
+    let title: String
+    let text: String
+    let accent: Color
+    var badge: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                    .frame(width: 44, height: 44)
+                    .background(LinearGradient(colors: [accent, accent.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .shadow(color: accent.opacity(0.35), radius: 8, y: 4)
+                Spacer(minLength: 0)
+                if let badge {
+                    Text(badge).font(.system(size: 9, weight: .heavy)).tracking(0.6).padding(.horizontal, 7).padding(.vertical, 4)
+                        .background(accent.opacity(0.18), in: Capsule()).foregroundStyle(accent)
+                }
+            }
+            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.85)
+            Text(text).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .padding(15)
+        .frame(maxWidth: .infinity, minHeight: 180, alignment: .topLeading)
+        .background(
+            LinearGradient(colors: [accent.opacity(0.10), Theme.panel], startPoint: .topLeading, endPoint: .bottom),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.07)))
+    }
+}
+
+struct HomeWideToolCard: View {
+    let icon: String
+    let title: String
+    let text: String
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                .frame(width: 48, height: 48).background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                Text(text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
+        }
+        .padding(15)
+        .panelCard(22)
+    }
+}
+
+struct HomeCalculatorChip: View {
+    let kind: CalculationKind
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: kind.icon).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
+                .frame(width: 36, height: 36).background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            Text(kind.title).font(.footnote.weight(.semibold)).foregroundStyle(.white).lineLimit(2).multilineTextAlignment(.leading)
+            Text(kind.summary).font(.caption2).foregroundStyle(Theme.muted).lineLimit(2).multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(width: 148, height: 140, alignment: .topLeading)
+        .panelCard(18)
+    }
+}
+
+extension View {
+    /// Fades and lifts the dashboard blocks in one after another on the first appearance.
+    func reveal(_ shown: Bool, delay: Double) -> some View {
+        opacity(shown ? 1 : 0)
+            .offset(y: shown ? 0 : 14)
+            .animation(.spring(response: 0.55, dampingFraction: 0.86).delay(delay), value: shown)
     }
 }
 
@@ -219,16 +395,8 @@ struct ObjectPassportView: View {
                 NavigationLink { ProjectBudgetTrackerView() } label: { Label("Бюджет по этапам", systemImage: "rublesign.circle") }
                 NavigationLink { ConstructionDiaryView() } label: { Label("Журнал решений", systemImage: "book.closed") }
             }
-            Section { Button("Добавить паспорт в заявку") { addToRequest() }.fontWeight(.semibold) }
-            Section { Text("Паспорт, чек-листы и дневник хранятся только на этом iPhone. Подрядчик увидит их лишь если вы добавите данные в заявку.").font(.footnote).foregroundStyle(Theme.muted) }
+            Section { Text("Паспорт, чек-листы и дневник хранятся только на этом iPhone.").font(.footnote).foregroundStyle(Theme.muted) }
         }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Паспорт объекта")
-    }
-    private func addToRequest() {
-        store.draft.address = store.passport.address
-        if ["Планирование", "Проект готов", "Строительство", "Ремонт и реконструкция"].contains(store.passport.stage) { store.draft.stage = store.passport.stage }
-        else if store.passport.stage != "Подготовка" { store.draft.stage = "Строительство" }
-        let extra = ["Объект: \(store.projectDisplayName). Этап: \(store.passport.stage).", store.passport.area.isEmpty ? nil : "Площадь: \(store.passport.area) м².", store.passport.notes.isEmpty ? nil : "Заметка: \(store.passport.notes)"].compactMap { $0 }.joined(separator: "\n")
-        store.appendToRequest(extra)
     }
 }
 
@@ -310,7 +478,6 @@ struct ServiceDetail: View {
             SectionTitle(eyebrow: "Виды работ", title: service.title)
             Text(service.detail).font(.title3).foregroundStyle(Theme.muted)
             ForEach(["Согласуем состав работ и смету до старта", "Фиксируем сроки и порядок оплаты в договоре", "Сдаём этапы по актам и фотоотчётам"], id: \.self) { Label($0, systemImage: "checkmark.circle").padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16) }
-            PrimaryButton(title: "Добавить в заявку") { store.draft.services.insert(service.title); store.showRequest = true }
         }.padding(20) }.background(Theme.background).navigationTitle("Услуга").navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -318,7 +485,7 @@ struct ContactView: View {
     @EnvironmentObject private var store: AppStore
     var body: some View {
         List {
-            Section { Text("Маркарян А.В.").font(.title2.bold()); Text("Строительно-монтажные и общестроительные работы. Сочи и Краснодарский край. С \(String(Brand.foundedYear)) года.") }
+            Section { Text("АртСтрой").font(.title2.bold()); Text("Строительно-монтажные и общестроительные работы. Сочи и Краснодарский край. С \(String(Brand.foundedYear)) года.") }
             Section("Связаться") {
                 Link(destination: Brand.phoneURL) { Label(Brand.phoneDisplay, systemImage: "phone") }
                 Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Пишу из приложения АртСтрой.")) { Label("WhatsApp", systemImage: "message") }
@@ -330,12 +497,11 @@ struct ContactView: View {
             }
             Section("Как работаем") { ForEach(["01 · Осмотр и уточнение задачи", "02 · Смета и договор", "03 · Подготовка площадки", "04 · Работы и контроль", "05 · Приёмка и гарантия по договору"], id: \.self) { Text($0) } }
             Section("Конфиденциальность") {
-                Text("Черновик заявки, избранное, расчёты, бюджет и фото-дневник сохраняются на вашем iPhone. Анонимные технические события (открытие экранов, без личных данных) отправляются на сервер АртСтроя.")
-                Text("Заявка с именем и телефоном, смета, описание работ, город, ориентир бюджета и прикреплённая визуализация передаются в рабочий кабинет АртСтрой только после нажатия «Отправить». Сообщения по заявке хранятся на сервере для согласования.")
+                Text("Избранное, расчёты, бюджет, планировки и фото-дневник сохраняются на вашем iPhone. Анонимные технические события (открытие экранов, без личных данных) отправляются на сервер АртСтроя.")
                 Text("Камера используется для AR и съёмки объекта. Фото для ИИ-визуализации отправляется только после нажатия «Создать» — на сервер визуализации и поставщику модели для одного результата.")
                 Text("Прогноз погоды запрашивается у Open‑Meteo по координатам Сочи — местоположение устройства не используется.")
-                Text("Если в «ИИ‑движке» добавлен ключ Claude, вопросы, прикреплённые фото и план комнаты отправляются в Anthropic (api.anthropic.com) только для получения ответа. Скан комнаты и 3D‑модель хранятся на iPhone.")
-                Text("Черновик можно очистить в разделе «Заявка», расчёты — в истории. Удаление приложения удаляет его локальные данные.")
+                Text("Вопросы ИИ, прикреплённые фото и кадры 3D‑модели комнаты отправляются через OpenRouter поставщику модели только для получения ответа или картинки. Скан комнаты и 3D‑модель хранятся на iPhone.")
+                Text("Расчёты удаляются в истории. Удаление приложения удаляет его локальные данные.")
             }.font(.footnote)
             Section { Text("Версия \(Brand.appVersion) · iPhone").foregroundStyle(Theme.muted) }
         }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Контакты")
@@ -345,10 +511,6 @@ struct ContactView: View {
 struct ProjectHubView: View {
     @EnvironmentObject private var store: AppStore
     private var complete: Int { store.milestones.filter(\.completed).count }
-    private var workOrderDraft: WorkOrderDraft {
-        let details = "Проект: \(store.projectDisplayName)\nЭтап: \(store.passport.stage)\nПлановый бюджет: \(CalculationEngine.money(store.budgetPlanned))\nФактически: \(CalculationEngine.money(store.budgetActual))\n\nНужно согласовать состав работ, сроки и исполнителя. \(store.passport.notes)"
-        return WorkOrderDraft(category: "Проект: \(store.projectDisplayName)", city: store.projectCity, details: details, budget: store.budgetPlanned > 0 ? CalculationEngine.money(store.budgetPlanned) : "", attachment: nil)
-    }
     private var projectReport: String {
         var lines = ["ОТЧЁТ ПО ОБЪЕКТУ · \(store.projectDisplayName.uppercased())"]
         if !store.passport.address.isEmpty { lines.append("Адрес: \(store.passport.address)") }
@@ -367,7 +529,7 @@ struct ProjectHubView: View {
     var body: some View {
         ScrollView { VStack(alignment: .leading, spacing: 18) {
             SectionTitle(eyebrow: "Личный кабинет объекта", title: store.projectDisplayName)
-            Text(store.passport.address.isEmpty ? "Добавьте район или адрес — он попадёт в вашу заявку и PDF‑сметы." : store.passport.address).font(.subheadline).foregroundStyle(Theme.muted)
+            Text(store.passport.address.isEmpty ? "Добавьте район или адрес — он попадёт в PDF‑сметы и чертежи." : store.passport.address).font(.subheadline).foregroundStyle(Theme.muted)
             VStack(alignment: .leading, spacing: 14) {
                 HStack { VStack(alignment: .leading, spacing: 4) { Text("Готовность проекта").font(.caption).foregroundStyle(Theme.muted); Text("\(complete) из \(store.milestones.count) этапов").font(.title3.bold()) }; Spacer(); Text("\(Int(store.projectProgress * 100))%").font(.title.bold()).monospacedDigit().foregroundStyle(Theme.orange).contentTransition(.numericText()) }
                 ProgressView(value: store.projectProgress).tint(Theme.orange)
@@ -387,9 +549,6 @@ struct ProjectHubView: View {
             NavigationLink { ObjectPassportView() } label: { ProjectHubRow(icon: "house.and.flag", title: "Данные объекта", subtitle: "Название, район, площадь и текущий этап") }.buttonStyle(PremiumCardPressStyle())
             NavigationLink { ConstructionDiaryView() } label: { ProjectHubRow(icon: "text.book.closed", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Договорённости, даты, комментарии" : "Записей: \(store.diary.count)") }.buttonStyle(PremiumCardPressStyle())
             NavigationLink { ChecklistView() } label: { ProjectHubRow(icon: "checkmark.shield", title: "Чек‑листы контроля", subtitle: "Перед стартом, во время работ и при приёмке") }.buttonStyle(PremiumCardPressStyle())
-            NavigationLink { CreateWorkOrderView(prefill: workOrderDraft) } label: {
-                Label("Отправить проект в АртСтрой", systemImage: "paperplane.fill").font(.headline).frame(maxWidth: .infinity).padding(16).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }.buttonStyle(PremiumPressStyle())
             ShareLink(item: projectReport, subject: Text("Отчёт по объекту")) { SecondaryActionLabel(title: "Поделиться отчётом по объекту", icon: "square.and.arrow.up") }
             InfoNote(text: "Проект, бюджет и фото хранятся на этом iPhone. Они отправляются исполнителям только после вашего действия.")
         }.padding(20) }.background(Theme.background).navigationTitle("Мой проект").navigationBarTitleDisplayMode(.inline)

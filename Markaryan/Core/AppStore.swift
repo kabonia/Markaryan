@@ -950,17 +950,20 @@ enum WorkOrderError: LocalizedError {
     // MARK: Claude
 
     var usesClaude: Bool { aiPreference != .server && hasClaudeKey }
-    var aiEngineTitle: String { (usesClaude && AIServerConfig.baseURL == nil) ? claudeModel.title.components(separatedBy: " — ").first ?? "Claude" : "Сервер АртСтроя" }
-    /// The AI the app talks to: the АртСтрой AI server (keys only there). Claude directly — only in the owner's debug builds.
+    var aiEngineTitle: String {
+        guard usesClaude && AIServerConfig.baseURL == nil else { return "Сервер АртСтроя" }
+        let model = claudeModel.title.components(separatedBy: " — ").first ?? "Claude"
+        return OpenRouterImageClient.isConfigured ? "\(model) через OpenRouter" : model
+    }
+    /// The AI the app talks to: the АртСтрой AI server when its address is set; otherwise the user's own key
+    /// (Anthropic or OpenRouter) from the Keychain of this iPhone. Keys from files in the app — only in debug builds.
     private var claudeClient: (any AIEngine)? {
         if let base = AIServerConfig.baseURL { return ServerAIClient(base: base) }
-        #if DEBUG
         guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
-        return ClaudeClient(apiKey: key, model: claudeModel.rawValue, workspaceID: ClaudeClient.currentWorkspaceID)
-        #else
-        return nil
-        #endif
+        return ClaudeClient(apiKey: key, model: claudeModel.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
     }
+    /// Some AI answers now: the server or a key on this iPhone.
+    var aiAvailable: Bool { claudeClient != nil }
     var usesAIServer: Bool { AIServerConfig.baseURL != nil }
 
     /// What the AI server can do now (photoreal engines etc.). Refreshed at launch and before a presentation.
@@ -975,7 +978,7 @@ enum WorkOrderError: LocalizedError {
         hasClaudeKey = ClaudeClient.currentKey != nil
     }
     func testClaude() async -> String {
-        guard let claude = claudeClient else { return "ИИ не подключён: укажите адрес сервера в AIServer.plist." }
+        guard let claude = claudeClient else { return "ИИ не подключён: впишите OPENROUTER_API_KEY в AIServer.plist и пересоберите приложение." }
         do {
             let answer = try await claude.complete(system: "Отвечай одним коротким предложением по-русски.", turns: [ClaudeTurn(role: .user, text: "Скажи, что ты готов помогать АртСтрою.")], maxTokens: 60)
             return "Работает: \(answer)"
@@ -1089,7 +1092,7 @@ enum WorkOrderError: LocalizedError {
     /// Returns centres in 0…1 image coordinates; the user then corrects them by tapping.
     /// - Parameter object: what to count, or nil to let the AI recognise the material itself.
     func countObjectsOnPhoto(_ image: UIImage, object: String?) async throws -> (points: [CGPoint], note: String, kind: String, name: String) {
-        guard let claude = claudeClient else { throw ClaudeError.api("Счёт по фото работает через ИИ. Сервер ИИ сейчас не подключён.") }
+        guard let claude = claudeClient else { throw ClaudeError.api("ИИ не подключён: впишите OPENROUTER_API_KEY в AIServer.plist.") }
         struct Result: Decodable {
             struct Point: Decodable { let x: Double; let y: Double }
             let points: [Lossy<Point>]
@@ -1130,7 +1133,7 @@ enum WorkOrderError: LocalizedError {
 
     /// Something can turn the exact 3D render into a photo: the server, or a key in the owner's debug build.
     var photorealAvailable: Bool {
-        !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || FluxClient.isConfigured || OpenAIImageClient.isConfigured
+        !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || OpenRouterImageClient.isConfigured || FluxClient.isConfigured || OpenAIImageClient.isConfigured
     }
 
     /// Image models understand English best: the AI translates the brief when it is available.
@@ -1152,6 +1155,13 @@ enum WorkOrderError: LocalizedError {
             registerMeaningfulAction()
             return result
         }
+        // The user's own OpenRouter key on this iPhone.
+        if let key = OpenRouterImageClient.configuredKey {
+            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: image)
+            track("photoreal_openrouter")
+            registerMeaningfulAction()
+            return result
+        }
         // Owner's debug builds with keys in the app.
         if let key = FluxClient.configuredKey {
             let picture = try await FluxClient(apiKey: key, model: .max).edit(image, prompt: prompt)
@@ -1165,11 +1175,11 @@ enum WorkOrderError: LocalizedError {
             registerMeaningfulAction()
             return RenderedImage(image: picture, engine: "local:gpt-image", title: "GPT Image")
         }
-        throw ClaudeError.api("Фотореализм не подключён: на сервере ИИ нет движков картинок.")
+        throw ClaudeError.api("Картинки ИИ не подключены: впишите OPENROUTER_API_KEY в AIServer.plist.")
     }
 
     /// Photoreal pictures by description: the server's picture engines, or a FLUX key in the owner's debug build.
-    var picturesByDescriptionAvailable: Bool { !aiCapabilities.imageEngines.isEmpty || FluxClient.isConfigured }
+    var picturesByDescriptionAvailable: Bool { !aiCapabilities.imageEngines.isEmpty || OpenRouterImageClient.isConfigured || FluxClient.isConfigured }
 
     /// Picture by description, without a source photo: the server's picture engines (or Kandinsky / Alice AI ART);
     /// FLUX.2 with a key in the owner's debug build.
@@ -1180,7 +1190,13 @@ enum WorkOrderError: LocalizedError {
             registerMeaningfulAction()
             return picture
         }
-        guard let key = FluxClient.configuredKey else { throw ClaudeError.api("Картинки по описанию не подключены на сервере ИИ.") }
+        if let key = OpenRouterImageClient.configuredKey {
+            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: nil)
+            track("picture_openrouter")
+            registerMeaningfulAction()
+            return result.image
+        }
+        guard let key = FluxClient.configuredKey else { throw ClaudeError.api("Картинки ИИ не подключены: впишите OPENROUTER_API_KEY в AIServer.plist.") }
         let picture = try await FluxClient(apiKey: key).generate(prompt: prompt)
         track("flux_generate")
         registerMeaningfulAction()

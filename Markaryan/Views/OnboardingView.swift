@@ -74,7 +74,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("ВАШ ОБЪЕКТ").font(.caption.weight(.bold)).tracking(2).foregroundStyle(Theme.orange).padding(.top, 40)
                 Text("Что строим?").font(.system(.largeTitle, weight: .bold)).tracking(-1)
-                Text("Название и район подставятся в сметы, PDF и заявки. Данные хранятся на вашем iPhone.").foregroundStyle(Theme.muted)
+                Text("Название и район подставятся в сметы, PDF и чертежи. Данные хранятся на вашем iPhone.").foregroundStyle(Theme.muted)
                 VStack(spacing: 12) {
                     TextField("Например, дом в Хосте", text: $objectName).focused($focused).padding(16).panelCard(15)
                     TextField("Район: Адлер, Хоста, Дагомыс…", text: $district).focused($focused).padding(16).panelCard(15)

@@ -37,6 +37,13 @@ enum AIServerConfig {
         return URL(string: raw.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
     }
     static var appToken: String { (plist["APP_TOKEN"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
+    /// The OpenRouter key built into the app (OPENROUTER_API_KEY in AIServer.plist, which is not in git):
+    /// chat, design and pictures work without a server and without asking the user for a key.
+    static var openRouterKey: String? {
+        guard let raw = (plist["OPENROUTER_API_KEY"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              raw.hasPrefix("sk-or-"), raw.count > 20 else { return nil }
+        return raw
+    }
 
     /// Random id of this installation (kept in the Keychain): the server counts daily limits by it.
     static var installID: String {

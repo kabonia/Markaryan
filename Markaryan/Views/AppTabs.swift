@@ -1,169 +1,123 @@
 import SwiftUI
 import StoreKit
 
-struct AICenterTabView: View {
-    @EnvironmentObject private var store: AppStore
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "ИИ‑студия", title: "Увидьте объект\nдо начала работ.")
-                Text("Создавайте визуальные идеи по фото или описанию, а затем уточняйте смету и этапы со СтройПомощником.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-
-                NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
-                    ObjectVisualizerHero()
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                NavigationLink { FloorPlansView() } label: {
-                    ToolFeatureCard(
-                        icon: "cube.transparent",
-                        eyebrow: "СКАН КОМНАТЫ · ИИ‑ДИЗАЙН",
-                        title: "Планировка и дизайн по скану",
-                        subtitle: "Отсканируйте комнату — получите план сверху, расстановку мебели, материалы и бюджет от ИИ.",
-                        accent: Theme.sky
-                    )
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                HStack(spacing: 10) {
-                    Label("Объект целиком", systemImage: "house.fill")
-                    Spacer(minLength: 0)
-                    Label("Детали и окружение", systemImage: "square.3.layers.3d")
-                }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.muted)
-                .padding(.horizontal, 4)
-
-                NavigationLink { AIAssistantView(context: .general) } label: {
-                    AICenterAssistCard()
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                NavigationLink { PhotoCountView() } label: {
-                    ToolFeatureCard(
-                        icon: "camera.viewfinder",
-                        eyebrow: "СЧЁТ ПО ФОТО",
-                        title: "Сколько штук в пачке?",
-                        subtitle: "Сфотографируйте торцы арматуры, труб, досок или бруса — ИИ посчитает и переведёт в тонны и кубы.",
-                        accent: Theme.sky
-                    )
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                Button { store.showAR = true } label: {
-                    ToolFeatureCard(
-                        icon: "viewfinder",
-                        eyebrow: "КАМЕРА И AR",
-                        title: "AR‑студия",
-                        subtitle: "Измеряйте расстояния и размещайте макеты: плиту, стены, крышу, окна, двери и септик.",
-                        accent: Theme.orange
-                    )
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                InfoNote(text: "Визуализация показывает направление дизайна. Реальные размеры, материалы, стоимость и рабочие решения уточняются по проекту и смете.")
-            }
-            .padding(20)
-        }
-        .background(Theme.background)
-        .navigationTitle("ИИ‑студия")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
 struct ProjectsTabView: View {
     @EnvironmentObject private var store: AppStore
     @State private var showNewProject = false
 
+    private var openTasks: Int { store.projectTasks.filter { $0.status != .done }.count }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "Рабочее пространство", title: "Мои объекты")
-                Text("Добавляйте объекты и переключайтесь между ними. Этапы, бюджет, фотографии и журнал ведутся отдельно для каждого.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-
-                VStack(spacing: 12) {
-                    ForEach(store.projectWorkspaces) { workspace in
-                        Button {
-                            store.selectProject(workspace.id)
-                            Haptics.tap()
-                        } label: {
-                            ProjectWorkspaceSelectionCard(workspace: workspace, isActive: workspace.id == store.activeProjectID)
+            VStack(alignment: .leading, spacing: 22) {
+                // Objects: the active one first, switching is one tap.
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .lastTextBaseline) {
+                        HomeSectionHeader(eyebrow: "Мои объекты", title: store.projectDisplayName)
+                        Spacer()
+                        Button { showNewProject = true } label: {
+                            Label("Объект", systemImage: "plus").font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(Theme.orange, in: Capsule()).foregroundStyle(.black)
                         }
-                        .buttonStyle(PremiumCardPressStyle())
+                        .buttonStyle(PremiumPressStyle())
                     }
+                    if store.projectWorkspaces.count > 1 {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(store.projectWorkspaces) { workspace in
+                                    Button {
+                                        withAnimation(.snappy) { store.selectProject(workspace.id) }
+                                        Haptics.tap()
+                                    } label: {
+                                        ProjectWorkspaceSelectionCard(workspace: workspace, isActive: workspace.id == store.activeProjectID)
+                                            .frame(width: 250)
+                                    }
+                                    .buttonStyle(PremiumCardPressStyle())
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        .padding(.horizontal, -20)
+                    }
+                    NavigationLink { ProjectHubView() } label: {
+                        HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                 }
 
-                Button { showNewProject = true } label: {
-                    Label("Добавить объект", systemImage: "plus")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(16)
-                        .foregroundStyle(.black)
-                        .background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionHeader(eyebrow: "Работы", title: "План и команда")
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                        NavigationLink { ProjectPlanView() } label: {
+                            ProjectStatTile(icon: "flag.checkered", title: "Этапы", value: "\(store.milestones.filter(\.completed).count)/\(store.milestones.count)", caption: "готовность \(Int(store.projectProgress * 100))%", accent: Theme.orange)
+                        }
+                        NavigationLink { ProjectTasksView() } label: {
+                            ProjectStatTile(icon: "checklist", title: "Задачи", value: "\(openTasks)", caption: openTasks == 0 ? "нет открытых" : "открыто", accent: Theme.sky)
+                        }
+                        NavigationLink { ProjectBudgetTrackerView() } label: {
+                            ProjectStatTile(icon: "rublesign.circle.fill", title: "Бюджет", value: store.budgetPlanned > 0 ? CalculationEngine.money(store.budgetPlanned) : "—", caption: store.budgetPlanned > 0 ? "потрачено \(CalculationEngine.money(store.budgetActual))" : "план и факт", accent: Theme.success)
+                        }
+                        NavigationLink { ChecklistView() } label: {
+                            ProjectStatTile(icon: "checkmark.shield.fill", title: "Контроль", value: "\(store.checklistDone.count)", caption: "пунктов отмечено", accent: Theme.orangeSoft)
+                        }
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                 }
-                .buttonStyle(PremiumPressStyle())
 
-                NavigationLink { ProjectHubView() } label: {
-                    HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                NavigationLink { FloorPlansView() } label: {
-                    AppTabRow(icon: "square.split.bottomrightquarter.fill", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, план сверху и ИИ‑дизайн" : "Планов: \(store.floorPlans.count)")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ObjectPassportView() } label: {
-                    AppTabRow(icon: "house.and.flag.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ProjectTasksView() } label: {
-                    AppTabRow(icon: "checklist", title: "Задачи команды", subtitle: store.projectTasks.isEmpty ? "Поставить задачу, выбрать ответственного и срок" : "Открыто: \(store.projectTasks.filter { $0.status != .done }.count) · готово: \(store.projectTasks.filter { $0.status == .done }.count)")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ProjectBudgetTrackerView() } label: {
-                    AppTabRow(icon: "rublesign.circle.fill", title: "Бюджет по этапам", subtitle: store.budgetPlanned > 0 ? "План \(CalculationEngine.money(store.budgetPlanned)) · потрачено \(CalculationEngine.money(store.budgetActual))" : "План, факт и остаток по работам")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ProjectPhotoDiaryView() } label: {
-                    AppTabRow(icon: "photo.stack.fill", title: "Фото‑дневник", subtitle: store.projectPhotos.isEmpty ? "Скрытые работы и этапы на фото" : "Фото: \(store.projectPhotos.count)")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ConstructionDiaryView() } label: {
-                    AppTabRow(icon: "text.book.closed.fill", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Фиксируйте решения и договорённости" : "Записей: \(store.diary.count)")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ChecklistView() } label: {
-                    AppTabRow(icon: "checklist.checked", title: "Чек‑листы", subtitle: "\(store.checklistDone.count) отмечено · контроль от старта до приёмки")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                SectionTitle(eyebrow: "АртСтрой", title: "Реализованные объекты")
-                NavigationLink { PortfolioView() } label: {
-                    AppTabRow(icon: "building.2.fill", title: "Портфолио АртСтроя", subtitle: "\(Brand.completedObjects)+ объектов: гостиницы, жильё, рестораны")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PerformersHubView() } label: {
-                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: store.workOrders.isEmpty ? "Согласование работ с АртСтроем" : "Заявок: \(store.workOrders.count)")
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionHeader(eyebrow: "Документы", title: "История объекта")
+                    NavigationLink { ProjectPhotoDiaryView() } label: {
+                        AppTabRow(icon: "photo.stack.fill", title: "Фото‑дневник", subtitle: store.projectPhotos.isEmpty ? "Скрытые работы и этапы на фото" : "Фото: \(store.projectPhotos.count)")
+                    }
+                    NavigationLink { ConstructionDiaryView() } label: {
+                        AppTabRow(icon: "text.book.closed.fill", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Договорённости, даты, комментарии" : "Записей: \(store.diary.count)")
+                    }
+                    NavigationLink { ObjectPassportView() } label: {
+                        AppTabRow(icon: "house.and.flag.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
+                    }
+                    Button { store.tab = 2 } label: {
+                        AppTabRow(icon: "cube.transparent", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, обмеры и рендеры — во вкладке «Дизайн»" : "Помещений: \(store.floorPlans.count) — во вкладке «Дизайн»")
+                    }
                 }
                 .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проекты")
+        .navigationTitle("Проект")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
-        .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in
                 store.createProject(name: name, address: address)
             }
         }
+    }
+}
+
+/// A tile of the project tab: one number that matters and where it leads.
+struct ProjectStatTile: View {
+    let icon: String
+    let title: String
+    let value: String
+    let caption: String
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon).font(.body.weight(.semibold)).foregroundStyle(accent)
+                    .frame(width: 36, height: 36).background(accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
+            }
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+            Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+            Text(caption).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .panelCard(20)
     }
 }
 
@@ -408,7 +362,6 @@ struct ProfileTabView: View {
                         .panelCard(19)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("АРТСТРОЙ").font(.title3.bold()).tracking(1.3)
-                        Text("ИП МАРКАРЯН А.В.").font(.caption.weight(.semibold)).tracking(0.8).foregroundStyle(Theme.muted)
                         Text("Строительство и ремонт в Сочи").font(.footnote).foregroundStyle(Theme.muted)
                     }
                     Spacer()
@@ -426,12 +379,8 @@ struct ProfileTabView: View {
                     AppTabRow(icon: "message.fill", title: "Контакты и услуги", subtitle: "Телефон, почта, адрес и направления работ")
                 }
                 .buttonStyle(PremiumCardPressStyle())
-                Button { store.showRequest = true } label: {
-                    AppTabRow(icon: "square.and.pencil", title: "Оставить заявку", subtitle: "Ответим по телефону или в чате приложения")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PerformersHubView() } label: {
-                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: "Статусы и переписка по заявкам")
+                NavigationLink { PortfolioView() } label: {
+                    AppTabRow(icon: "building.2.fill", title: "Портфолио АртСтроя", subtitle: "\(Brand.completedObjects)+ объектов: гостиницы, жильё, рестораны")
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
