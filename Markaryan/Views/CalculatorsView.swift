@@ -19,7 +19,7 @@ struct CalculatorsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 SectionTitle(eyebrow: "Расчёты и сметы", title: "Сначала цифры.\nПотом стройка.")
-                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF и WhatsApp.")
+                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF, WhatsApp или заявку.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
 
@@ -546,6 +546,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+            PrimaryButton(title: "Добавить в заявку", icon: "square.and.pencil") { store.appendToRequest(item.report) }
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }

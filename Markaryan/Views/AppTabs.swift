@@ -378,6 +378,14 @@ struct ProfileTabView: View {
                     Link(destination: Brand.emailURL) { ProfileQuickAction(icon: "envelope.fill", title: "Почта") }
                 }
                 .buttonStyle(PremiumCardPressStyle())
+                Button { store.showRequest = true } label: {
+                    AppTabRow(icon: "square.and.pencil", title: "Оставить заявку", subtitle: "Ответим по телефону или в чате приложения")
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { PerformersHubView() } label: {
+                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: "Статусы и переписка по заявкам")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 NavigationLink { ContactView() } label: {
                     AppTabRow(icon: "message.fill", title: "Контакты и услуги", subtitle: "Телефон, почта, адрес и направления работ")
                 }

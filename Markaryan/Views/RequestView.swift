@@ -37,7 +37,7 @@ struct RequestView: View {
                 if let sentOrder {
                     VStack(alignment: .leading, spacing: 10) {
                         Label("Заявка отправлена в АртСтрой", systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(Theme.success)
-                        Text("Мы свяжемся с вами по телефону \(store.draft.phone). Переписка по заявке — в разделе «Мои заявки и чаты».").font(.footnote).foregroundStyle(Theme.muted)
+                        Text("Мы свяжемся с вами по телефону \(store.draft.phone). Переписка по заявке — в «Профиле», раздел «Мои заявки и чаты».").font(.footnote).foregroundStyle(Theme.muted)
                         NavigationLink { WorkOrderChatView(order: sentOrder) } label: { SecondaryActionLabel(title: "Открыть чат заявки", icon: "bubble.left.and.bubble.right.fill") }
                     }
                     .padding(16).panelCard(16)

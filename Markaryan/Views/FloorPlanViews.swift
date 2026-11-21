@@ -419,6 +419,7 @@ struct FloorPlanDetailView: View {
     @State private var showEdits = false
     @State private var showModels = false
     @State private var showAssistant = false
+    @State private var showOrder = false
     @State private var savedPictures = false
     @State private var editPlan = false
     @State private var furnitureTarget: FurnitureTarget?
@@ -467,6 +468,9 @@ struct FloorPlanDetailView: View {
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView() }.presentationDetents([.large]) }
         .navigationDestination(isPresented: $showAssistant) {
             if let plan, let proposal { AIAssistantView(context: assistantContext(proposal, plan: plan)) }
+        }
+        .navigationDestination(isPresented: $showOrder) {
+            if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
         }
         .fullScreenCover(isPresented: $show3D) {
             if let plan {
@@ -651,6 +655,10 @@ struct FloorPlanDetailView: View {
                 .font(.subheadline).foregroundStyle(Theme.muted)
         }
         mainButton(flow.main(on: .result), plan: plan)
+        if proposal != nil {
+            Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
+                .buttonStyle(PremiumPressStyle())
+        }
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text("Обмерный план, расстановка, электрика, плитка и развёртки — листы А3 в масштабе.")
@@ -895,6 +903,16 @@ struct FloorPlanDetailView: View {
             AIAssistantLine(id: "material-\(index)", section: "Материалы концепции", title: "\(material.name) (\(material.where))", quantity: 0, unit: material.amount, material: 0, labor: 0, total: 0)
         }
         return AIAssistantContext(estimateType: "Дизайн: \(proposal.title)", objectName: plan.name, area: plan.area, floors: nil, reservePercent: nil, materialTotal: nil, laborTotal: nil, total: proposal.budgetMax > 0 ? proposal.budgetMax : nil, lines: lines)
+    }
+
+    /// The order for the renovation of this room: sizes from the scan, the chosen concept and its budget, the plan picture.
+    private func workOrder(_ plan: FloorPlan) -> WorkOrderDraft {
+        var details = "Нужен ремонт помещения «\(plan.name)» по скану из приложения.\nПлощадь: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², периметр \(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м, потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м, окон: \(plan.windows.count), дверей: \(plan.doors.count)."
+        if let proposal {
+            details += "\n\nВыбранная концепция: \(proposal.title) (\(proposal.style)).\n\(proposal.summary)"
+            if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
+        }
+        return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
     }
 
     @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?, wallNumbers: Bool = false) -> UIImage? {
