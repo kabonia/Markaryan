@@ -42,7 +42,6 @@ struct LaunchGateView: View {
                             .overlay(RoundedRectangle(cornerRadius: 34, style: .continuous).stroke(Theme.orange.opacity(0.45), lineWidth: 1))
                         VStack(spacing: 7) {
                             Text("АРТСТРОЙ").font(.title2.bold()).tracking(3)
-                            Text("ИП МАРКАРЯН А.В.").font(.caption.weight(.semibold)).tracking(1.1).foregroundStyle(Theme.muted)
                             Text("СТРОИМ В СОЧИ С \(String(Brand.foundedYear)) ГОДА").font(.caption.weight(.medium)).tracking(1.5).foregroundStyle(Theme.muted)
                         }
                     }.opacity(revealsLogo ? 1 : 0).scaleEffect(revealsLogo ? 1 : 0.92)
@@ -113,8 +112,8 @@ struct RootView: View {
             NavigationStack { CalculatorsView() }
                 .tabItem { Label("Смета", systemImage: "function") }
                 .tag(1)
-            NavigationStack { AICenterTabView() }
-                .tabItem { Label("ИИ", systemImage: "sparkles") }
+            NavigationStack { FloorPlansView() }
+                .tabItem { Label("Дизайн", systemImage: "cube.transparent.fill") }
                 .tag(2)
             NavigationStack { ProjectsTabView() }
                 .tabItem { Label("Проект", systemImage: "folder.fill") }
@@ -137,8 +136,8 @@ struct RootView: View {
         .sheet(isPresented: $store.showRegionPicker) { RegionPickerView() }
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }
-        .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 3 } }
-        .onChange(of: store.apartmentToOpen) { _, id in if id != nil { store.tab = 3 } }
+        .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 2 } }
+        .onChange(of: store.apartmentToOpen) { _, id in if id != nil { store.tab = 2 } }
         .sheet(item: $store.arTransfer) { transfer in
             NavigationStack { CalculatorView(kind: transfer.kind, initialValues: [transfer.key: String(format: "%.2f", transfer.value)], measurementNote: "Размер передан из AR и является приблизительным. Перепроверьте его рулеткой перед закупкой.")
                     .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Закрыть") { store.arTransfer = nil } } } }

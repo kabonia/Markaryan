@@ -557,7 +557,6 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-            PrimaryButton(title: "Добавить в заявку", icon: "square.and.pencil") { store.appendToRequest(item.report) }
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -663,11 +662,6 @@ struct AIAssistantView: View {
                                 Button("Повторить вопрос") { retry(lastQuestion) }.font(.footnote.weight(.semibold))
                             }
                         }
-                    }
-                    if messages.count >= 2 && !isLoading {
-                        NavigationLink { CreateWorkOrderView(prefill: WorkOrderDraft(category: "Консультация: \(context.estimateType)", city: store.projectCity, details: conversationSummary, budget: context.total.map { CalculationEngine.money($0) } ?? "", attachment: nil)) } label: {
-                            SecondaryActionLabel(title: "Обсудить с инженером АртСтроя", icon: "person.fill.checkmark")
-                        }.buttonStyle(PremiumPressStyle())
                     }
                 }.padding(20) }
                 .scrollDismissesKeyboard(.interactively)
@@ -822,17 +816,6 @@ struct AIVisionStudioView: View {
                 Text("Один запрос, как в чате: выберите сценарий, добавьте фото или снимите объект камерой и опишите пожелания.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
-
-                if store.priceServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    NavigationLink { PriceServerSettingsView() } label: {
-                        Label("Указать адрес сервера", systemImage: "gearshape")
-                            .frame(maxWidth: .infinity)
-                            .padding(15)
-                            .foregroundStyle(.black)
-                            .background(Theme.orange, in: RoundedRectangle(cornerRadius: 15))
-                    }
-                    .buttonStyle(.plain)
-                }
 
                 visualPromptComposer
                 ApplePlaygroundButton(prompt: brief.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? style.subtitle : brief) { image in
@@ -1023,15 +1006,6 @@ struct AIVisionStudioView: View {
                 .resizable()
                 .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 20))
-            NavigationLink { CreateWorkOrderView(prefill: workOrderDraft(for: image)) } label: {
-                Label("Отправить исполнителям на согласование", systemImage: "person.3.fill")
-                    .frame(maxWidth: .infinity)
-                    .padding(13)
-                    .foregroundStyle(.black)
-                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14))
-            }
-            .buttonStyle(PremiumPressStyle())
-
             HStack(spacing: 10) {
                 Button { addToDiary(image) } label: {
                     Label(addedToProject ? "В проекте" : "В проект", systemImage: addedToProject ? "checkmark" : "folder.badge.plus")
@@ -1230,7 +1204,7 @@ enum EstimatePDFRenderer {
         let safeTitle = estimate.objectName.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-").prefix(40)
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Смета-АртСтрой-\(safeTitle.isEmpty ? "объект" : String(safeTitle))-\(stamp).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В.", kCGPDFContextCreator as String: "Приложение АртСтрой"]
+        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: "АртСтрой", kCGPDFContextCreator as String: "Приложение АртСтрой"]
         let renderer = UIGraphicsPDFRenderer(bounds: page, format: format)
         let qr = BrandGraphics.qrCode(Brand.whatsAppURL(text: "Здравствуйте! У меня смета из приложения АртСтрой: \(estimate.title).").absoluteString, size: 180)
         try renderer.writePDF(to: url) { rendererContext in
@@ -1251,13 +1225,13 @@ enum EstimatePDFRenderer {
             func footer() {
                 let footerY = page.height - 46
                 line(CGPoint(x: left, y: footerY), CGPoint(x: left + width, y: footerY))
-                text("АртСтрой · \(Brand.owner) · строим в Сочи с \(Brand.foundedYear) года · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
+                text("АртСтрой · строим в Сочи с \(Brand.foundedYear) года · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
                 text("Стр. \(pageNumber)", CGRect(x: left + width - 80, y: footerY + 8, width: 80, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray, .right)
             }
             func header(_ continuation: Bool) {
                 if pageNumber > 0 { footer() }
                 rendererContext.beginPage(); pageNumber += 1; y = 34
-                text("АРТСТРОЙ · ИП МАРКАРЯН А.В.", CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
+                text("АРТСТРОЙ", CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
                 text("СТРОИТЕЛЬСТВО И РЕМОНТ · СОЧИ", CGRect(x: left, y: y + 20, width: 300, height: 16), UIFont.systemFont(ofSize: 8, weight: .semibold), UIColor.darkGray)
                 text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)", CGRect(x: 355, y: y, width: 208, height: 32), UIFont.systemFont(ofSize: 8), UIColor.darkGray, .right)
                 y += 52; line(CGPoint(x: left, y: y), CGPoint(x: left + width, y: y), accent, 1); y += 14

@@ -31,7 +31,7 @@ enum DesignPresentationPDF {
         let safe = content.proposal.title.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-").prefix(40)
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-проект-\(safe.isEmpty ? "АртСтрой" : String(safe)).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: content.proposal.title, kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В."]
+        format.documentInfo = [kCGPDFContextTitle as String: content.proposal.title, kCGPDFContextAuthor as String: "АртСтрой"]
         let renderer = UIGraphicsPDFRenderer(bounds: page, format: format)
         var pageNumber = 0
 
@@ -65,7 +65,7 @@ enum DesignPresentationPDF {
             }
             func footer(dark: Bool = false) {
                 let color = dark ? UIColor(white: 1, alpha: 0.7) : muted
-                text("АРТСТРОЙ · ИП МАРКАРЯН А.В. · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: margin, y: page.height - 24, width: 500, height: 12), .systemFont(ofSize: 7, weight: .medium), color)
+                text("АРТСТРОЙ · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: margin, y: page.height - 24, width: 500, height: 12), .systemFont(ofSize: 7, weight: .medium), color)
                 text("\(pageNumber)", CGRect(x: page.width - margin - 40, y: page.height - 24, width: 40, height: 12), .systemFont(ofSize: 7, weight: .medium), color, .right)
             }
             func imagePage(_ eyebrow: String, _ title: String, _ picture: UIImage, caption: String? = nil) {
@@ -243,7 +243,7 @@ enum DesignPresentationPDF {
             newPage(dark: true)
             text("Реализуем этот проект под ключ", CGRect(x: margin, y: 150, width: 520, height: 80), .systemFont(ofSize: 28, weight: .bold), .white)
             text("Замер, рабочая документация, смета, черновая и чистовая отделка, мебель и комплектация. Этапы по актам и фотоотчётам.", CGRect(x: margin, y: 240, width: 470, height: 60), .systemFont(ofSize: 12), UIColor(white: 1, alpha: 0.8), lineSpacing: 4)
-            text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)\nАртСтрой · ИП Маркарян А.В. · Сочи", CGRect(x: margin, y: 320, width: 470, height: 70), .systemFont(ofSize: 13, weight: .semibold), .white, lineSpacing: 5)
+            text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)\nАртСтрой · Сочи", CGRect(x: margin, y: 320, width: 470, height: 70), .systemFont(ofSize: 13, weight: .semibold), .white, lineSpacing: 5)
             if let qr = BrandGraphics.qrCode(Brand.whatsAppURL(text: "Здравствуйте! Хочу реализовать дизайн‑проект «\(proposal.title)».").absoluteString, size: 300) {
                 UIColor.white.setFill(); UIBezierPath(roundedRect: CGRect(x: 600, y: 150, width: 200, height: 200), cornerRadius: 10).fill()
                 qr.draw(in: CGRect(x: 612, y: 162, width: 176, height: 176))

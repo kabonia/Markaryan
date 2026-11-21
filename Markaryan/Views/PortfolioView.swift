@@ -45,7 +45,6 @@ struct ProjectDetail: View {
             }
             Text("Выполненные работы").font(.title2.bold())
             ForEach(project.works, id: \.self) { Label($0, systemImage: "checkmark").foregroundStyle(Theme.muted) }
-            PrimaryButton(title: "Хочу похожий объект", icon: "square.and.pencil") { store.appendToRequest("Интересует объект, похожий на: \(project.name).") }
             Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Увидел в приложении ваш объект «\(project.name)». Хочу обсудить похожий.")) { SecondaryActionLabel(title: "Обсудить в WhatsApp", icon: "message.fill") }.buttonStyle(PremiumPressStyle())
         }.padding(20) }.background(Theme.background).navigationTitle("Проект").navigationBarTitleDisplayMode(.inline)
             .toolbar { Button { store.toggleFavorite(project.id) } label: { Image(systemName: store.favorites.contains(project.id) ? "heart.fill" : "heart") }.accessibilityLabel(store.favorites.contains(project.id) ? "Убрать из избранного" : "Добавить в избранное") }

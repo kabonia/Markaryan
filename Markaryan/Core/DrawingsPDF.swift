@@ -51,7 +51,7 @@ enum DrawingsPDF {
         let safe = plan.name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "помещение" : safe).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(plan.name)", kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В."]
+        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(plan.name)", kCGPDFContextAuthor as String: "АртСтрой"]
 
         let frame = CGRect(x: mm(20), y: mm(5), width: sheet.width - mm(25), height: sheet.height - mm(10))
         let stamp = CGRect(x: frame.maxX - mm(185), y: frame.maxY - mm(55), width: mm(185), height: mm(55))
@@ -223,7 +223,7 @@ enum DrawingsPDF {
         let safe = name.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("АР-\(safe.isEmpty ? "квартира" : safe).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(name)", kCGPDFContextAuthor as String: "АртСтрой · ИП Маркарян А.В."]
+        format.documentInfo = [kCGPDFContextTitle as String: "Раздел АР · \(name)", kCGPDFContextAuthor as String: "АртСтрой"]
         let frame = CGRect(x: mm(20), y: mm(5), width: sheet.width - mm(25), height: sheet.height - mm(10))
         let stamp = CGRect(x: frame.maxX - mm(185), y: frame.maxY - mm(55), width: mm(185), height: mm(55))
         let field = CGRect(x: frame.minX + mm(34), y: frame.minY + mm(36), width: frame.width - mm(34) - mm(105), height: frame.height - mm(36) - mm(62))
@@ -331,7 +331,7 @@ enum DrawingsPDF {
         let headers = ["Изм.", "Кол.уч.", "Лист", "№ док.", "Подп.", "Дата"]
         var hx = rect.minX
         for (index, header) in headers.enumerated() { text(header, at: CGPoint(x: hx + colWidths[index] / 2, y: rect.minY + row * 4.5), font: font(6.5), centered: true); hx += colWidths[index] }
-        let roles = [("Разраб.", "АртСтрой"), ("Пров.", ""), ("ГИП", "Маркарян А.В."), ("Н.контр.", ""), ("Утв.", "Маркарян А.В.")]
+        let roles = [("Разраб.", "АртСтрой"), ("Пров.", ""), ("ГИП", ""), ("Н.контр.", ""), ("Утв.", "")]
         for (index, role) in roles.enumerated() {
             let y = rect.minY + row * (CGFloat(index) + 5.5)
             text(role.0, at: CGPoint(x: rect.minX + mm(1), y: y - mm(1.8)), font: font(6.5))
@@ -356,7 +356,7 @@ enum DrawingsPDF {
             text(cell.1, at: CGPoint(x: cx, y: r.minY + mm(25)), font: font(10, bold: true), centered: true)
         }
         text("АРТСТРОЙ", at: CGPoint(x: infoX + mm(25), y: r.minY + mm(39)), font: font(12, bold: true), centered: true)
-        text("ИП Маркарян А.В., г. Сочи", at: CGPoint(x: infoX + mm(25), y: r.minY + mm(45)), font: font(7), centered: true)
+        text("АртСтрой, г. Сочи", at: CGPoint(x: infoX + mm(25), y: r.minY + mm(45)), font: font(7), centered: true)
         text("\(Brand.phoneDisplay)", at: CGPoint(x: infoX + mm(25), y: r.minY + mm(50)), font: font(7), centered: true)
     }
 

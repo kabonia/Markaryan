@@ -7,7 +7,6 @@ import CoreImage.CIFilterBuiltins
 
 enum Brand {
     static let name = "АртСтрой"
-    static let owner = "ИП Маркарян А.В."
     static let city = "Сочи"
     static let foundedYear = 2012
     static let completedObjects = 58
@@ -39,7 +38,7 @@ enum Brand {
 
     /// Footer that is appended to every shared text so each share also promotes the company.
     static var shareFooter: String {
-        "—\n\(name) · \(owner)\nСтроим в Сочи с \(foundedYear) года\n\(phoneDisplay) · WhatsApp: wa.me/\(phoneDigits)\n\(site)"
+        "—\n\(name)\nСтроим в Сочи с \(foundedYear) года\n\(phoneDisplay) · WhatsApp: wa.me/\(phoneDigits)\n\(site)"
     }
 
     static var inviteText: String {

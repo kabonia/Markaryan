@@ -1,5 +1,6 @@
 import SwiftUI
 import QuickLook
+import Photos
 
 // MARK: - Top-down plan drawing
 
@@ -197,39 +198,153 @@ extension Color {
     }
 }
 
-// MARK: - Plans list
+// MARK: - Design tab: scan → room → measurements → design → result
 
 struct FloorPlansView: View {
     @EnvironmentObject private var store: AppStore
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "Скан → план → дизайн", title: "Планировки\nи дизайн комнат")
-                Text("Отсканируйте комнату лидаром или обойдите углы в AR — получите план сверху с размерами, а ИИ предложит зонирование, мебель, материалы и бюджет.").font(.subheadline).foregroundStyle(Theme.muted)
-                HStack(spacing: 12) {
-                    Button { store.showRoomScan = true } label: { HomeActionCard(icon: "cube.transparent", title: "Скан комнаты", subtitle: "Лидар · 3D", accent: Theme.orange) }
-                    Button { store.showAR = true } label: { HomeActionCard(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Контур в AR", subtitle: "Любой iPhone", accent: Theme.sky) }
+            VStack(alignment: .leading, spacing: 22) {
+                DesignStudioHero()
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Button { store.showRoomScan = true } label: {
+                        DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать комнату",
+                                        subtitle: "Лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
+                    }
+                    HStack(spacing: 12) {
+                        NavigationLink { PhotoDesignView() } label: {
+                            DesignStartCard(icon: "camera.aperture", eyebrow: "ФОТО / LIVE", title: "Дизайн по фото",
+                                            subtitle: "Снимите кухню или санузел — ИИ сделает новый дизайн.", accent: Theme.sky)
+                        }
+                        Button { store.showAR = true } label: {
+                            DesignStartCard(icon: "point.topleft.down.to.point.bottomright.curvepath", eyebrow: "БЕЗ ЛИДАРА", title: "Контур в AR",
+                                            subtitle: "Обойдите углы пола камерой любого iPhone.", accent: Theme.success)
+                        }
+                    }
                 }
                 .buttonStyle(PremiumCardPressStyle())
+
+                DesignStepsStrip()
+
                 if store.floorPlans.isEmpty {
-                    ContentUnavailableView("Пока нет планировок", systemImage: "square.split.bottomrightquarter", description: Text("Первый скан займёт 1–2 минуты. Квартиру целиком можно снять за один проход: после комнаты нажмите «Следующая комната»."))
-                } else {
-                    ForEach(store.apartments) { apartment in
-                        NavigationLink { ApartmentView(apartmentID: apartment.id) } label: { ApartmentRow(apartment: apartment) }
-                            .buttonStyle(PremiumCardPressStyle())
+                    VStack(spacing: 10) {
+                        Image(systemName: "square.split.bottomrightquarter").font(.largeTitle).foregroundStyle(Theme.muted)
+                        Text("Пока нет помещений").font(.headline)
+                        Text("Отсканируйте первую комнату — здесь появятся её план, обмеры, дизайн и рендеры.")
+                            .font(.footnote).foregroundStyle(Theme.muted).multilineTextAlignment(.center)
                     }
-                    ForEach(store.floorPlans.filter { $0.apartmentID == nil }) { plan in
-                        NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
-                            .buttonStyle(PremiumCardPressStyle())
+                    .frame(maxWidth: .infinity).padding(24).panelCard(20)
+                } else {
+                    SectionTitle(eyebrow: "Мои помещения", title: "Планы и дизайны")
+                    LazyVStack(spacing: 12) {
+                        ForEach(store.apartments) { apartment in
+                            NavigationLink { ApartmentView(apartmentID: apartment.id) } label: { ApartmentRow(apartment: apartment) }
+                                .buttonStyle(PremiumCardPressStyle())
+                        }
+                        ForEach(store.floorPlans.filter { $0.apartmentID == nil }) { plan in
+                            NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
+                                .buttonStyle(PremiumCardPressStyle())
+                        }
                     }
                 }
             }
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Планировки")
+        .navigationTitle("Дизайн")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
+        .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }
+    }
+}
+
+/// Top of the Design tab.
+struct DesignStudioHero: View {
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(colors: [Color(red: 0.20, green: 0.17, blue: 0.14), Color(red: 0.07, green: 0.12, blue: 0.11)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            StyleRoomIllustration(palette: ["#E9E4DC", "#B89C7D", "#3D3F42", "#C8A15A"])
+                .frame(width: 210, height: 150)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .rotationEffect(.degrees(-5))
+                .offset(x: 150, y: -70)
+                .shadow(color: .black.opacity(0.35), radius: 18, y: 10)
+            Circle().fill(Theme.orange.opacity(0.22)).frame(width: 200, height: 200).blur(radius: 40).offset(x: 170, y: -120)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
+                Text("Ваша комната —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
+                Text("Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF.")
+                    .font(.caption).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(20)
+        }
+        .frame(maxWidth: .infinity, minHeight: 240, alignment: .bottomLeading)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.06)))
+    }
+}
+
+struct DesignStartCard: View {
+    let icon: String
+    let eyebrow: String
+    let title: String
+    let subtitle: String
+    let accent: Color
+    var prominent = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                    .frame(width: 44, height: 44).background(accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                Spacer()
+                Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(accent)
+            }
+            Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
+            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(.white).lineLimit(2)
+            Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: prominent ? 0 : 196, alignment: .topLeading)
+        .background(
+            LinearGradient(colors: [accent.opacity(prominent ? 0.20 : 0.12), Theme.panel], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(accent.opacity(0.25), lineWidth: 1))
+    }
+}
+
+/// How the room work goes, in one glance.
+struct DesignStepsStrip: View {
+    private let steps: [(String, String, String)] = [
+        ("cube.transparent", "Скан", "Стены, окна, двери"),
+        ("ruler", "Обмеры", "Площади, плинтус, откосы"),
+        ("paintpalette", "Дизайн", "Стиль и правки текстом"),
+        ("photo.on.rectangle.angled", "Результат", "Рендеры и PDF"),
+    ]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("КАК ЭТО РАБОТАЕТ").font(.caption.weight(.bold)).tracking(1.3).foregroundStyle(Theme.muted)
+            HStack(alignment: .top, spacing: 8) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    VStack(spacing: 6) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: step.0).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
+                                .frame(width: 42, height: 42).background(Theme.orange.opacity(0.12), in: Circle())
+                            Text("\(index + 1)").font(.system(size: 9, weight: .heavy)).foregroundStyle(.black)
+                                .frame(width: 15, height: 15).background(Theme.orange, in: Circle()).offset(x: 3, y: -3)
+                        }
+                        Text(step.1).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                        Text(step.2).font(.system(size: 10)).foregroundStyle(Theme.muted).multilineTextAlignment(.center).lineLimit(2)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(16)
+        .panelCard(20)
     }
 }
 
@@ -296,10 +411,11 @@ struct FloorPlanDetailView: View {
     @State private var showRename = false
     @State private var newName = ""
     @State private var confirmDelete = false
-    @State private var step: PlanStep = .measure
+    @State private var step: PlanStep = .data
     @State private var stepChosen = false
     @State private var show3D = false
-    @State private var showOrder = false
+    @State private var edits = ""
+    @State private var savedPictures = false
     @State private var editPlan = false
     @State private var furnitureTarget: FurnitureTarget?
 
@@ -335,7 +451,7 @@ struct FloorPlanDetailView: View {
         .toolbar { ToolbarItem(placement: .topBarTrailing) { moreMenu } }
         .sheet(isPresented: $showDesignSheet) {
             NavigationStack {
-                DesignRequestSheet(suggested: plan.flatMap { suggestedRoom($0) }, reason: plan.flatMap { RoomKind.scanReason($0) }) { style, purpose, wishes in
+                DesignRequestSheet(suggested: plan.flatMap { suggestedRoom($0) }, reason: plan.flatMap { RoomKind.scanReason($0) }, plan: plan) { style, purpose, wishes in
                     generate(style: style, purpose: purpose, wishes: wishes)
                 }
             }
@@ -347,16 +463,13 @@ struct FloorPlanDetailView: View {
         .fullScreenCover(isPresented: $show3D) {
             if let plan {
                 NavigationStack {
-                    Room3DView(plan: plan, proposal: step == .measure ? nil : proposal)
+                    Room3DView(plan: plan, proposal: (step == .data || step == .measure) ? nil : proposal)
                         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Готово") { show3D = false } } }
                 }
             }
         }
         .fullScreenCover(isPresented: $editPlan) { NavigationStack { PlanEditorView(planID: planID) } }
         .fullScreenCover(item: $furnitureTarget) { target in NavigationStack { FurnitureEditorView(planID: planID, proposalID: target.id) } }
-        .navigationDestination(isPresented: $showOrder) {
-            if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
-        }
         .quickLookPreview($modelURL)
         .alert("Название плана", isPresented: $showRename) {
             TextField("Например, гостиная", text: $newName)
@@ -385,53 +498,80 @@ struct FloorPlanDetailView: View {
                 PlanStepBar(step: $step, done: flow.done)
                 if let error {
                     Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
+                        .transition(.opacity)
                 }
                 if isComparing {
                     Label("Сравниваем движки рендера… 1–3 мин", systemImage: "hourglass").font(.footnote).foregroundStyle(Theme.muted)
                 }
-                switch step {
-                case .measure: measureStep(plan, flow: flow)
-                case .design: designStep(plan, flow: flow)
-                case .result: resultStep(plan, flow: flow)
+                Group {
+                    switch step {
+                    case .data: dataStep(plan, flow: flow)
+                    case .measure: measureStep(plan, flow: flow)
+                    case .design: designStep(plan, flow: flow)
+                    case .result: resultStep(plan, flow: flow)
+                    }
                 }
+                .id(step)
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 12)), removal: .opacity))
             }
             .padding(20)
+            .animation(.snappy(duration: 0.32), value: step)
         }
+        .scrollDismissesKeyboard(.interactively)
     }
 
-    /// Step 1: the room as scanned — the plan with sizes and the numbers; materials are counted from here.
-    @ViewBuilder private func measureStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
+    /// Step 1: the room as scanned — the plan, the main numbers, 3D and the plan editor.
+    @ViewBuilder private func dataStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
         planPicture(plan, proposal: nil)
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             PlanStat(value: "\(CalculationEngine.format((plan.area * 10).rounded() / 10)) м²", title: "Площадь")
             PlanStat(value: "\(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м", title: "Периметр")
             PlanStat(value: "\(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м", title: "Потолок")
-            PlanStat(value: "\(CalculationEngine.format(plan.netWallArea.rounded())) м²", title: "Стены")
+            PlanStat(value: "\(PlanWalls.numbered(plan).count)", title: "Стены")
             PlanStat(value: "\(plan.windows.count)", title: "Окна")
             PlanStat(value: "\(plan.doors.count)", title: "Двери")
         }
-        mainButton(flow.main(on: .measure), plan: plan)
-        Button { editPlan = true } label: { SecondaryActionLabel(title: "Исправить план: стены, двери, окна", icon: "pencil.and.ruler") }
-            .buttonStyle(PremiumPressStyle())
-        NavigationLink { PlanMaterialsView(plan: plan) } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "function").font(.title3).foregroundStyle(Theme.orange).frame(width: 30)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Материалы и смета").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
-                    Text("Пол, стяжка, стены и потолок — размеры уже из плана").font(.caption).foregroundStyle(Theme.muted)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .panelCard(16)
+        HStack(spacing: 10) {
+            Button { show3D = true } label: { SecondaryActionLabel(title: "3D‑вид", icon: "rotate.3d") }
+                .buttonStyle(PremiumPressStyle())
+            Button { editPlan = true } label: { SecondaryActionLabel(title: "Исправить план", icon: "pencil.and.ruler") }
+                .buttonStyle(PremiumPressStyle())
         }
-        .buttonStyle(PremiumCardPressStyle())
-        InfoNote(text: plan.source == .lidar ? "Точность лидара — около 1–2 см на метр. Перед закупкой и заказом мебели перепроверьте ключевые размеры рулеткой." : "План построен по углам пола в AR. Окна и двери добавьте в «Исправить план»; для точной планировки нужен iPhone с лидаром.")
+        mainButton(flow.main(on: .data), plan: plan)
+        Text(plan.source == .lidar ? "Лидар: точность около 1–2 см на метр." : "Контур AR: окна и двери добавьте в «Исправить план».")
+            .font(.caption).foregroundStyle(Theme.muted)
     }
 
-    /// Step 2: the concepts — the layout on the plan, finishes and budget; then the presentation.
+    /// Step 2: every number a finisher or a buyer needs, from the scan.
+    @ViewBuilder private func measureStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
+        let rows = PlanMeasurements.list(plan)
+        let groups = rows.reduce(into: [String]()) { if !$0.contains($1.group) { $0.append($1.group) } }
+        ForEach(groups, id: \.self) { group in
+            MeasurementGroupCard(title: group, rows: rows.filter { $0.group == group })
+        }
+        let walls = PlanMeasurements.walls(plan)
+        if !walls.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("ПО СТЕНАМ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                FloorPlanCanvas(plan: plan, wallNumbers: true)
+                    .aspectRatio(max(0.7, min(1.6, plan.width / max(0.5, plan.depth))), contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                    ForEach(walls) { wall in PlanStat(value: measureText(wall), title: wall.title) }
+                }
+            }
+            .padding(16).panelCard(20)
+        }
+        NavigationLink { PlanMaterialsView(plan: plan) } label: {
+            AppTabRow(icon: "function", title: "Посчитать материалы", subtitle: "Плитка, стяжка, штукатурка, краска, гипсокартон — размеры уже из скана")
+        }
+        .buttonStyle(PremiumCardPressStyle())
+        ShareLink(item: measurementsText(plan)) { SecondaryActionLabel(title: "Отправить обмеры текстом", icon: "square.and.arrow.up") }
+            .buttonStyle(PremiumPressStyle())
+        mainButton(flow.main(on: .measure), plan: plan)
+    }
+
+    /// Step 3: the style and the concept; corrections in plain words.
     @ViewBuilder private func designStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
         if plan.proposals.count > 1 {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -440,26 +580,47 @@ struct FloorPlanDetailView: View {
                 }
             }
         }
+        if isGenerating {
+            generatingCard
+        }
         if let proposal {
             planPicture(plan, proposal: proposal)
             proposalCard(proposal, plan: plan)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("ПРАВКИ ТЕКСТОМ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("Напишите, что поменять — ИИ переделает концепцию, а рендер учтёт правки.")
+                    .font(.caption).foregroundStyle(Theme.muted)
+                TextField("Например: пол светлее, убрать ковёр, кровать к окну, добавить рабочее место", text: $edits, axis: .vertical)
+                    .lineLimit(2...5).padding(12).background(Theme.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Button { applyEdits(proposal) } label: {
+                    Label("Применить правки", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                        .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(PremiumPressStyle())
+                .disabled(isGenerating || edits.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(16).panelCard(20)
         } else if !isGenerating {
-            Text("ИИ предложит зонирование, мебель, отделку, палитру и бюджет. Мебель приложение расставит по правилам: с проходами, свободной дверью и окнами.")
-                .font(.subheadline).foregroundStyle(Theme.muted)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Выберите стиль — посмотрите комнату в нём").font(.headline)
+                Text("ИИ подберёт мебель с реальными размерами, отделку, палитру и свет, а приложение расставит всё по правилам: с проходами, свободной дверью и окнами.")
+                    .font(.subheadline).foregroundStyle(Theme.muted)
+            }
         }
-        if isGenerating {
-            generatingCard
-        } else {
+        if !isGenerating {
             mainButton(flow.main(on: .design), plan: plan)
         }
         if let proposal {
-            if !proposal.furniture.isEmpty {
-                Button { furnitureTarget = FurnitureTarget(id: proposal.id) } label: { SecondaryActionLabel(title: "Передвинуть мебель", icon: "hand.draw") }
-                    .buttonStyle(PremiumPressStyle())
-            }
-            if !isGenerating && flow.main(on: .design).action != .createDesign {
-                Button { showDesignSheet = true } label: { SecondaryActionLabel(title: "Ещё вариант дизайна", icon: "wand.and.stars") }
-                    .buttonStyle(PremiumPressStyle())
+            HStack(spacing: 10) {
+                if !proposal.furniture.isEmpty {
+                    Button { furnitureTarget = FurnitureTarget(id: proposal.id) } label: { SecondaryActionLabel(title: "Мебель", icon: "hand.draw") }
+                        .buttonStyle(PremiumPressStyle())
+                }
+                if !isGenerating && flow.main(on: .design).action != .createDesign {
+                    Button { showDesignSheet = true } label: { SecondaryActionLabel(title: "Другой стиль", icon: "paintpalette") }
+                        .buttonStyle(PremiumPressStyle())
+                }
             }
             NavigationLink { AIAssistantView(context: assistantContext(proposal, plan: plan)) } label: {
                 SecondaryActionLabel(title: "Обсудить концепцию с ИИ", icon: "bubble.left.and.text.bubble.right")
@@ -468,63 +629,106 @@ struct FloorPlanDetailView: View {
         }
     }
 
-    /// Step 3: what goes to the client — the PDF presentation, the working drawings and the renovation request.
+    /// Step 4: photoreal renders of the exact 3D model in the style, the PDF and the working drawings.
     @ViewBuilder private func resultStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
         if let proposal {
             VStack(alignment: .leading, spacing: 4) {
-                Text("КОНЦЕПЦИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("РЕЗУЛЬТАТ · \(proposal.style.uppercased())").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
                 Text(proposal.title).font(.title3.bold())
             }
             if flow.presentationOutdated {
-                Label("План или мебель изменены после презентации — обновите её.", systemImage: "exclamationmark.arrow.triangle.2.circlepath")
+                Label("План, мебель или правки изменены после рендера — обновите его.", systemImage: "exclamationmark.arrow.triangle.2.circlepath")
                     .font(.footnote).foregroundStyle(Theme.orange)
             }
             if let presentation, presentation.proposalID == proposal.id {
                 presentationGallery(presentation)
-            } else if flow.conceptReady && flow.canRender && !isRendering {
-                Text("Обмерный план, план расстановки, точная 3D‑модель сверху и в объёме, три вида комнаты и фотореализм (только если совпадает с моделью) — в одной PDF‑презентации. Около 1–2 минут, сохраняется на iPhone.")
+            } else if flow.conceptReady && !isRendering {
+                Text(flow.canRender
+                     ? "Приложение строит точную 3D‑модель по скану — стены, проёмы, изгибы и мебель 1:1 — и снимает её с нескольких ракурсов. ИИ превращает каждый кадр в фотореалистичный рендер в стиле «\(proposal.style)», не меняя геометрию. Картинки и PDF сохраняются на iPhone. Около 1–2 минут."
+                     : "Без ключа ИИ результат — точная 3D‑модель по скану с нескольких ракурсов и PDF. Чтобы получить фотореализм, впишите OPENROUTER_API_KEY в AIServer.plist.")
                     .font(.caption).foregroundStyle(Theme.muted)
             }
         } else {
-            Text("Презентация строится по концепции дизайна. Чертежи и заявку на ремонт можно сделать и по одному обмеру.")
+            Text("Результат строится по дизайну: сначала выберите стиль на шаге «Дизайн». Чертежи можно сделать и по одному скану.")
                 .font(.subheadline).foregroundStyle(Theme.muted)
         }
         mainButton(flow.main(on: .result), plan: plan)
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
-            Text("Обмерный план, план расстановки, точки сантехники, полы и раскладка плитки, потолок, электрика, развёртки и ведомость отделки — листы А3 со штампом, в масштабе.")
+            Text("Обмерный план, расстановка, сантехника, полы и плитка, потолок, электрика, развёртки и ведомость отделки — листы А3 в масштабе.")
                 .font(.caption).foregroundStyle(Theme.muted)
             HStack(spacing: 10) {
                 Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
-                Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "Сохранить PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
+                Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
+                Button { shareDXF(plan) } label: { SecondaryActionLabel(title: "DXF", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
             }
-            Button { shareDXF(plan) } label: { SecondaryActionLabel(title: "DXF для AutoCAD, nanoCAD, ArchiCAD", icon: "square.and.arrow.up") }
-                .buttonStyle(PremiumPressStyle())
         }
-        if flow.main(on: .result).action != .orderRenovation {
-            Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
-                .buttonStyle(PremiumPressStyle())
+        .padding(16).panelCard(20)
+    }
+
+    private func measureText(_ row: PlanMeasurement) -> String {
+        let digits = row.unit == "кг" ? 1 : 100.0
+        return "\(CalculationEngine.format((row.value * digits).rounded() / digits)) \(row.unit)"
+    }
+
+    private func measurementsText(_ plan: FloorPlan) -> String {
+        var lines = ["ОБМЕРЫ · \(plan.name)"]
+        var group = ""
+        for row in PlanMeasurements.list(plan) + PlanMeasurements.walls(plan) {
+            if row.group != group { group = row.group; lines += ["", group.uppercased()] }
+            lines.append("\(row.title): \(measureText(row))")
         }
+        lines += ["", "Скан и обмеры — приложение АртСтрой. Перед закупкой перепроверьте ключевые размеры рулеткой."]
+        return lines.joined(separator: "\n")
+    }
+
+    /// The same purpose and style, the user's corrections as the wishes: a new concept that the render follows.
+    private func applyEdits(_ proposal: DesignProposal) {
+        let text = edits.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        let base = "Возьми за основу текущую концепцию «\(proposal.title)»: \(proposal.summary). Внеси правки клиента: \(text)"
+        generate(style: proposal.style.isEmpty ? "Современный" : proposal.style, purpose: proposal.roomPurpose, wishes: base)
+        edits = ""
     }
 
     private func presentationGallery(_ presentation: PresentationResult) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(Array(presentation.images.enumerated()), id: \.offset) { _, item in
-                        VStack(alignment: .leading, spacing: 5) {
-                            Image(uiImage: item.image).resizable().scaledToFill().frame(width: 250, height: 180).clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(2)
-                                .frame(width: 250, alignment: .leading)
-                        }
-                        .onTapGesture { openedPhoto = PhotoSheetItem(image: item.image) }
+        VStack(alignment: .leading, spacing: 12) {
+            TabView {
+                ForEach(Array(presentation.images.enumerated()), id: \.offset) { _, item in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Image(uiImage: item.image).resizable().scaledToFill()
+                            .frame(maxWidth: .infinity).frame(height: 240).clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .onTapGesture { openedPhoto = PhotoSheetItem(image: item.image) }
+                        Text(item.title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted).lineLimit(1)
                     }
+                    .padding(.horizontal, 2)
                 }
             }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .frame(height: 290)
             HStack(spacing: 10) {
-                Button { modelURL = presentation.pdf } label: { SecondaryActionLabel(title: "Открыть PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
+                Button { modelURL = presentation.pdf } label: { SecondaryActionLabel(title: "PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
                 Button { shareFile = SharedFile(url: presentation.pdf) } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+                Button { saveToPhotos(presentation.images.map(\.image)) } label: { SecondaryActionLabel(title: savedPictures ? "В Фото ✓" : "В Фото", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
+            }
+        }
+    }
+
+    /// Every picture of the result into the Photos app.
+    private func saveToPhotos(_ images: [UIImage]) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async { error = "Разрешите приложению сохранять изображения в Фото (Настройки → АртСтрой)." }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges {
+                for image in images { PHAssetChangeRequest.creationRequestForAsset(from: image) }
+            } completionHandler: { success, saveError in
+                DispatchQueue.main.async {
+                    if success { savedPictures = true }
+                    else { error = saveError?.localizedDescription ?? "Не удалось сохранить картинки." }
+                }
             }
         }
     }
@@ -567,8 +771,8 @@ struct FloorPlanDetailView: View {
             guard let proposal else { return }
             withAnimation(.snappy) { step = .result }
             Task { await buildPresentation(proposal, plan: plan) }
-        case .orderRenovation:
-            showOrder = true
+        case .openPresentation:
+            if let presentation { modelURL = presentation.pdf }
         }
     }
 
@@ -769,7 +973,10 @@ struct FloorPlanDetailView: View {
         if !names.isEmpty { items = await store.englishPrompt(names) }
         if items.range(of: "[А-Яа-яЁё]", options: .regularExpression) != nil { items = OfflineDesigner.englishNames(proposal.furniture) }
         let references = exact.map { $0.image }
-        let photoPrompt = Room3DBuilder.photoPrompt(proposal: proposal, itemsEnglish: items, plan: plan)
+        var photoPrompt = Room3DBuilder.photoPrompt(proposal: proposal, itemsEnglish: items, plan: plan)
+        if let style = DesignStyle.named(proposal.style) {
+            photoPrompt += " The whole room follows the chosen style down to the smallest detail — finishes, furniture design, fabrics, fittings, lighting and decor: \(style.english)."
+        }
 
         progressText = exact.isEmpty ? "Собираем PDF‑презентацию…" : "ИИ делает фотореализм по точной модели… 1–2 мин"
         async let first = verifiedPhoto(references.count > 0 ? references[0] : nil, prompt: photoPrompt)
@@ -905,7 +1112,7 @@ struct FloorPlanDetailView: View {
     }
 
     private func sharePlan(_ plan: FloorPlan) {
-        guard let image = planImage(plan, proposal: step == .measure ? nil : proposal) else { return }
+        guard let image = planImage(plan, proposal: (step == .data || step == .measure) ? nil : proposal) else { return }
         shareImage(image, name: "План-\(plan.name)")
     }
 
@@ -922,48 +1129,77 @@ struct FloorPlanDetailView: View {
         store.savePlan(plan)
     }
 
-    private func workOrder(_ plan: FloorPlan) -> WorkOrderDraft {
-        var details = "Нужен ремонт помещения «\(plan.name)» по скану из приложения.\nПлощадь: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², периметр \(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м, потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м, окон: \(plan.windows.count), дверей: \(plan.doors.count)."
-        if let proposal {
-            details += "\n\nВыбранная концепция: \(proposal.title) (\(proposal.style)).\n\(proposal.summary)"
-            if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
-        }
-        return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
-    }
 }
 
-/// The three steps of the plan screen; a finished step shows a check mark.
+/// The four steps of the room screen; a finished step shows a check mark.
 struct PlanStepBar: View {
     @Binding var step: PlanStep
     let done: Set<PlanStep>
+    @Namespace private var selection
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 4) {
             ForEach(PlanStep.allCases) { item in
                 let selected = item == step
-                Button { Haptics.tap(); withAnimation(.snappy) { step = item } } label: {
-                    HStack(spacing: 6) {
+                Button { Haptics.tap(); withAnimation(.snappy(duration: 0.32)) { step = item } } label: {
+                    VStack(spacing: 5) {
                         ZStack {
-                            Circle().fill(selected ? Color.black.opacity(0.16) : Theme.panelRaised)
+                            Circle().fill(selected ? Color.black.opacity(0.18) : Theme.panelRaised)
                             if done.contains(item) && !selected {
-                                Image(systemName: "checkmark").font(.caption2.weight(.heavy)).foregroundStyle(Theme.orange)
+                                Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.orange)
                             } else {
-                                Text("\(item.number)").font(.caption2.weight(.bold))
+                                Image(systemName: item.icon).font(.caption.weight(.semibold))
                             }
                         }
-                        .frame(width: 20, height: 20)
-                        Text(item.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.75)
+                        .frame(width: 30, height: 30)
+                        Text(item.title).font(.caption2.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 9)
                     .foregroundStyle(selected ? Color.black : Color.white)
-                    .background(selected ? Theme.orange : Theme.panel, in: Capsule())
+                    .background {
+                        if selected {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.orange)
+                                .matchedGeometryEffect(id: "step", in: selection)
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Шаг \(item.number) из \(PlanStep.allCases.count): \(item.title)" + (done.contains(item) ? ", готово" : ""))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
+        .padding(4)
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+/// One group of the «Обмеры» step.
+struct MeasurementGroupCard: View {
+    let title: String
+    let rows: [PlanMeasurement]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            ForEach(rows) { row in
+                HStack(alignment: .firstTextBaseline) {
+                    Text(row.title).font(.subheadline).foregroundStyle(.white.opacity(0.9))
+                    Spacer(minLength: 8)
+                    Text(value(row)).font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
+                }
+                if row.id != rows.last?.id { Divider().overlay(Color.white.opacity(0.06)) }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .panelCard(20)
+    }
+
+    private func value(_ row: PlanMeasurement) -> String {
+        let digits = row.unit == "кг" ? 1 : 100.0
+        return "\(CalculationEngine.format((row.value * digits).rounded() / digits)) \(row.unit)"
     }
 }
 
@@ -1083,52 +1319,71 @@ struct PlanStat: View {
 // MARK: - Design request
 
 struct DesignRequestSheet: View {
+    @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     /// Type found by the scan / plan name / previous concept.
     var suggested: RoomKind? = nil
     var reason: String? = nil
+    /// The room: its exact 3D model is the base of the style previews.
+    var plan: FloorPlan? = nil
     let onSubmit: (String, String, String) -> Void
-    @State private var style = "Современный"
+    @State private var style = DesignStyle.all[0]
     @State private var purpose = ""
     @State private var wishes = ""
+    @State private var previews: [String: UIImage] = [:]
+    @State private var loadingStyle: String?
+    @State private var previewError: String?
+    @State private var opened: FloorPlanDetailView.PhotoSheetItem?
 
-    private let styles = ["Современный", "Скандинавский", "Минимализм", "Японди", "Лофт", "Неоклассика", "Средиземноморский", "Эко"]
     private let purposes = ["Санузел", "Кухня", "Кухня‑гостиная", "Гостиная", "Спальня", "Детская", "Кабинет", "Прихожая", "Студия", "Терраса"]
     private var chosen: RoomKind? { RoomKind.keyword(purpose) }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 20) {
                 SectionTitle(eyebrow: "ИИ‑дизайнер", title: "Каким будет\nэто помещение?")
-                Text("Назначение").font(.subheadline.weight(.semibold))
-                if let suggested {
-                    Label("Определено автоматически: \(suggested.russianName)" + (reason.map { " — \($0)" } ?? ""), systemImage: "checkmark.seal.fill")
-                        .font(.caption).foregroundStyle(Theme.orange)
-                } else {
-                    Text("Выберите назначение — от него зависит, что ИИ поставит в помещение: в санузел только сантехнику, в спальню и гостиную — без сантехники.")
-                        .font(.caption).foregroundStyle(Theme.muted)
-                }
-                FlowChips(items: purposes, selection: $purpose)
-                if let chosen {
-                    Text(chosen.allowedShort).font(.caption).foregroundStyle(.white.opacity(0.85))
-                        .padding(12).frame(maxWidth: .infinity, alignment: .leading).panelCard(12)
-                    if let suggested, suggested != chosen {
-                        Label("По скану это \(suggested.russianName), а выбрано «\(purpose)». Проверьте назначение.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption).foregroundStyle(Theme.danger)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Назначение").font(.headline)
+                    if let suggested {
+                        Label("Определено по скану: \(suggested.russianName)" + (reason.map { " — \($0)" } ?? ""), systemImage: "checkmark.seal.fill")
+                            .font(.caption).foregroundStyle(Theme.orange)
+                    }
+                    FlowChips(items: purposes, selection: $purpose)
+                    if let chosen {
+                        Text(chosen.allowedShort).font(.caption).foregroundStyle(Theme.muted)
+                        if let suggested, suggested != chosen {
+                            Label("По скану это \(suggested.russianName), а выбрано «\(purpose)». Проверьте назначение.", systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption).foregroundStyle(Theme.danger)
+                        }
                     }
                 }
-                Text("Стиль").font(.subheadline.weight(.semibold))
-                FlowChips(items: styles, selection: $style)
-                Text("Пожелания").font(.subheadline.weight(.semibold))
-                TextField(chosen == .bathroom ? "Например: душ с трапом вместо ванны, подвесной унитаз, место под стиральную машину" : "Например: рабочее место у окна, много хранения, кровать 180 см, светлый пол", text: $wishes, axis: .vertical)
-                    .lineLimit(3...6).padding(14).panelCard(14)
-                PrimaryButton(title: purpose.isEmpty ? "Выберите назначение" : "Создать концепцию", icon: "wand.and.stars") {
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Стиль").font(.headline)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                        ForEach(DesignStyle.all) { item in
+                            Button { Haptics.tap(); withAnimation(.snappy) { style = item } } label: {
+                                StyleCard(style: item, selected: style.id == item.id, preview: previews[item.id], loading: loadingStyle == item.id)
+                            }
+                            .buttonStyle(PremiumCardPressStyle())
+                        }
+                    }
+                    selectedStyleCard
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Пожелания").font(.headline)
+                    TextField(chosen == .bathroom ? "Например: душ с трапом вместо ванны, подвесной унитаз, место под стиральную машину" : "Например: рабочее место у окна, много хранения, кровать 180 см, светлый пол", text: $wishes, axis: .vertical)
+                        .lineLimit(3...6).padding(14).panelCard(14)
+                }
+
+                PrimaryButton(title: purpose.isEmpty ? "Выберите назначение" : "Создать дизайн «\(style.title)»", icon: "wand.and.stars") {
                     guard !purpose.isEmpty else { Haptics.warning(); return }
-                    onSubmit(style, purpose, wishes.trimmingCharacters(in: .whitespacesAndNewlines))
+                    onSubmit(style.title, purpose, wishes.trimmingCharacters(in: .whitespacesAndNewlines))
                     dismiss()
                 }
                 .opacity(purpose.isEmpty ? 0.5 : 1)
-                InfoNote(text: "ИИ видит план сверху и размеры, поэтому предметы ставятся с учётом дверей, окон и проходов. Всё, что не подходит для выбранного помещения, приложение убирает автоматически.")
             }
             .padding(20)
         }
@@ -1137,7 +1392,147 @@ struct DesignRequestSheet: View {
         .navigationTitle("Новый дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
+        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Превью · \(style.title)") } }
         .onAppear { if purpose.isEmpty, let suggested { purpose = suggested.purposeTitle } }
+    }
+
+    private var selectedStyleCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(style.title).font(.title3.bold())
+                Spacer()
+                HStack(spacing: 4) {
+                    ForEach(style.palette, id: \.self) { hex in Circle().fill(Color(hex: hex) ?? .gray).frame(width: 16, height: 16) }
+                }
+            }
+            Text(style.summary).font(.subheadline).foregroundStyle(.white.opacity(0.85))
+            FlowLayout(spacing: 6) {
+                ForEach(style.materials, id: \.self) { material in
+                    Text(material).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6)
+                        .background(Theme.background, in: Capsule())
+                }
+            }
+            if let image = previews[style.id] {
+                Image(uiImage: image).resizable().scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .onTapGesture { opened = FloorPlanDetailView.PhotoSheetItem(image: image) }
+                Text("Превью вашей комнаты в этом стиле от ИИ. Итоговый рендер будет по готовому дизайну.").font(.caption2).foregroundStyle(Theme.muted)
+            } else if plan != nil && store.photorealAvailable {
+                Button { Task { await makePreview(style) } } label: {
+                    HStack(spacing: 8) {
+                        if loadingStyle == style.id { ProgressView().tint(.black) } else { Image(systemName: "eye.fill") }
+                        Text(loadingStyle == style.id ? "ИИ рисует вашу комнату… ~30 с" : "Показать мою комнату в этом стиле").font(.subheadline.weight(.semibold))
+                    }
+                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                    .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(PremiumPressStyle())
+                .disabled(loadingStyle != nil)
+            }
+            if let previewError { Label(previewError, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.danger) }
+        }
+        .padding(16)
+        .panelCard(20)
+    }
+
+    /// The exact 3D model of the scan from the entrance → a photoreal picture in the style.
+    @MainActor private func makePreview(_ item: DesignStyle) async {
+        guard let plan else { return }
+        loadingStyle = item.id
+        previewError = nil
+        defer { loadingStyle = nil }
+        guard let shot = Room3DBuilder.interiorShots(plan: plan, proposal: nil).first,
+              let reference = Room3DBuilder.snapshot(plan: plan, proposal: nil, mode: .interior, shot: shot, size: CGSize(width: 1536, height: 1152)) else {
+            previewError = "Не удалось построить 3D‑кадр комнаты."
+            return
+        }
+        let room = RoomKind.detect(plan: plan, proposal: nil).english
+        do {
+            let result = try await store.photorealRender(reference, prompt: item.previewPrompt(room: room))
+            withAnimation(.snappy) { previews[item.id] = result.image }
+            Haptics.success()
+        } catch { previewError = error.localizedDescription }
+    }
+}
+
+/// A style in the gallery: an AI preview of the room when made, otherwise a small drawn room in the style's colours.
+struct StyleCard: View {
+    let style: DesignStyle
+    let selected: Bool
+    var preview: UIImage? = nil
+    var loading = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack(alignment: .topTrailing) {
+                Group {
+                    if let preview {
+                        Image(uiImage: preview).resizable().scaledToFill()
+                    } else {
+                        StyleRoomIllustration(palette: style.palette)
+                    }
+                }
+                .frame(height: 108).frame(maxWidth: .infinity).clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                if loading {
+                    ProgressView().tint(.white).padding(8).background(.black.opacity(0.5), in: Circle()).padding(6)
+                } else if preview != nil {
+                    Text("ИИ").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
+                        .background(Theme.orange, in: Capsule()).foregroundStyle(.black).padding(6)
+                }
+            }
+            Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
+            Text(style.tagline).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
+        }
+        .padding(8)
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(selected ? Theme.orange : Color.white.opacity(0.06), lineWidth: selected ? 2 : 1))
+        .scaleEffect(selected ? 1 : 0.98)
+        .animation(.snappy, value: selected)
+    }
+}
+
+/// A tiny interior drawn in four colours: wall, floor, sofa, accent.
+struct StyleRoomIllustration: View {
+    let palette: [String]
+    private func color(_ index: Int, _ fallback: Color) -> Color { palette.indices.contains(index) ? (Color(hex: palette[index]) ?? fallback) : fallback }
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width, h = geo.size.height
+            let wall = color(0, .gray), floor = color(1, .brown), sofa = color(2, .black), accent = color(3, .orange)
+            ZStack(alignment: .topLeading) {
+                LinearGradient(colors: [wall, wall.opacity(0.82)], startPoint: .top, endPoint: .bottom)
+                // Window with daylight
+                RoundedRectangle(cornerRadius: 3).fill(LinearGradient(colors: [Color.white.opacity(0.95), Color(red: 0.80, green: 0.88, blue: 0.95)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: w * 0.22, height: h * 0.38).offset(x: w * 0.66, y: h * 0.12)
+                Rectangle().fill(sofa.opacity(0.35)).frame(width: 1.5, height: h * 0.38).offset(x: w * 0.77 - 0.75, y: h * 0.12)
+                // Picture on the wall
+                RoundedRectangle(cornerRadius: 2).fill(accent.opacity(0.85))
+                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(sofa.opacity(0.4), lineWidth: 1))
+                    .frame(width: w * 0.16, height: h * 0.18).offset(x: w * 0.22, y: h * 0.18)
+                // Floor
+                Path { path in
+                    path.move(to: CGPoint(x: 0, y: h * 0.68)); path.addLine(to: CGPoint(x: w, y: h * 0.68))
+                    path.addLine(to: CGPoint(x: w, y: h)); path.addLine(to: CGPoint(x: 0, y: h)); path.closeSubpath()
+                }
+                .fill(LinearGradient(colors: [floor, floor.opacity(0.75)], startPoint: .top, endPoint: .bottom))
+                // Rug
+                Ellipse().fill(accent.opacity(0.35)).frame(width: w * 0.5, height: h * 0.12).offset(x: w * 0.16, y: h * 0.80)
+                // Sofa
+                RoundedRectangle(cornerRadius: 5).fill(sofa).frame(width: w * 0.46, height: h * 0.14).offset(x: w * 0.12, y: h * 0.52)
+                RoundedRectangle(cornerRadius: 6).fill(sofa.opacity(0.9)).frame(width: w * 0.50, height: h * 0.12).offset(x: w * 0.10, y: h * 0.62)
+                RoundedRectangle(cornerRadius: 3).fill(accent).frame(width: w * 0.09, height: h * 0.08).offset(x: w * 0.16, y: h * 0.55)
+                // Floor lamp
+                Rectangle().fill(sofa.opacity(0.8)).frame(width: 1.5, height: h * 0.36).offset(x: w * 0.66, y: h * 0.40)
+                Capsule().fill(accent.opacity(0.9)).frame(width: w * 0.08, height: h * 0.06).offset(x: w * 0.625, y: h * 0.36)
+                Circle().fill(Color.yellow.opacity(0.18)).frame(width: w * 0.22, height: w * 0.22).blur(radius: 8).offset(x: w * 0.555, y: h * 0.26)
+                // Plant
+                Circle().fill(Color(red: 0.36, green: 0.52, blue: 0.36)).frame(width: w * 0.10, height: w * 0.10).offset(x: w * 0.84, y: h * 0.55)
+                RoundedRectangle(cornerRadius: 2).fill(floor.opacity(0.9)).frame(width: w * 0.06, height: h * 0.08).offset(x: w * 0.86, y: h * 0.63)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 

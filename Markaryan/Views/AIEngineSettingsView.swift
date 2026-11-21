@@ -35,9 +35,9 @@ struct AIEngineSettingsView: View {
                     Label("Ключ сохранён в Связке ключей iPhone", systemImage: "lock.fill").foregroundStyle(Theme.success)
                     Button("Удалить ключ", role: .destructive) { store.setClaudeKey(""); testResult = nil }
                 } else {
-                    SecureField("sk-ant-…", text: $keyInput).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    SecureField("sk-ant-… или sk-or-… (OpenRouter)", text: $keyInput).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Button("Сохранить ключ") { store.setClaudeKey(keyInput); keyInput = ""; Haptics.success() }
-                        .disabled(!keyInput.trimmingCharacters(in: .whitespaces).hasPrefix("sk-ant-"))
+                        .disabled(!["sk-ant-", "sk-or-"].contains { keyInput.trimmingCharacters(in: .whitespaces).hasPrefix($0) })
                 }
                 Button {
                     isTesting = true
