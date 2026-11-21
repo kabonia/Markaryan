@@ -19,7 +19,7 @@ struct CalculatorsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 SectionTitle(eyebrow: "Расчёты и сметы", title: "Сначала цифры.\nПотом стройка.")
-                Text("Полная смета объекта по прайсу АртСтроя или \(CalculationKind.allCases.count) отдельных калькуляторов материалов. Любой результат — в PDF, WhatsApp или заявку.")
+                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF, WhatsApp или заявку.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
 
@@ -39,27 +39,12 @@ struct CalculatorsView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                NavigationLink { PhotoCountView() } label: {
-                    HStack(spacing: 15) {
-                        Image(systemName: "camera.viewfinder").font(.title3).foregroundStyle(.black).frame(width: 50, height: 50).background(Theme.sky, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Счёт по фото").font(.headline).foregroundStyle(.white)
-                            Text("Арматура, трубы, доски и брус — ИИ считает торцы на снимке").font(.caption).foregroundStyle(Theme.muted)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
-                    }
-                    .padding(18)
-                    .panelCard(22)
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
                 HStack(spacing: 12) {
                     NavigationLink { CalculationHistoryView() } label: {
                         CompactEstimateCard(icon: "clock.arrow.circlepath", title: "Мои расчёты", caption: store.calculations.isEmpty ? "Пока пусто" : "Сохранено: \(store.calculations.count)")
                     }
-                    NavigationLink { AIAssistantView(context: .general) } label: {
-                        CompactEstimateCard(icon: "sparkles", title: "Спросить ИИ", caption: "По смете и этапам")
+                    NavigationLink { PhotoCountView() } label: {
+                        CompactEstimateCard(icon: "camera.viewfinder", title: "Счёт по фото", caption: "Арматура, трубы, доски")
                     }
                 }
                 .buttonStyle(PremiumCardPressStyle())
@@ -85,7 +70,7 @@ struct CalculatorsView: View {
                     }
                 }
                 if filtered.isEmpty { ContentUnavailableView.search(text: search) }
-                InfoNote(text: "Калькуляторы дают предварительные объёмы и цену из введённых данных. Конструктивные решения и нагрузки проверяются по проекту.")
+                InfoNote(text: "Объёмы и цены предварительные. Конструкции и нагрузки проверяются по проекту.")
             }
             .padding(20)
         }
@@ -167,6 +152,8 @@ struct FullEstimateHubView: View {
 
 struct HouseEstimateView: View {
     @EnvironmentObject private var store: AppStore
+    /// The price file import is for the owner: it shows with the developer tools (five taps on the version in «Профиль»).
+    @AppStorage("developerTools") private var developerTools = false
     let kind: FullEstimateKind
     @State private var area: String
     @State private var floors = "1"
@@ -274,7 +261,9 @@ struct HouseEstimateView: View {
                     Menu {
                         Button { Task { await store.refreshPriceBook() } } label: { Label("Обновить рыночные цены", systemImage: "arrow.clockwise") }
                         Button { store.showRegionPicker = true } label: { Label("Сменить город", systemImage: "mappin.and.ellipse") }
-                        Button { showImporter = true } label: { Label("Импортировать файл прайса", systemImage: "square.and.arrow.down") }
+                        if developerTools {
+                            Button { showImporter = true } label: { Label("Импортировать файл прайса", systemImage: "square.and.arrow.down") }
+                        }
                     } label: { Image(systemName: "ellipsis.circle") }
                     .accessibilityLabel("Настройки прайса")
                 }
@@ -557,6 +546,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+            PrimaryButton(title: "Добавить в заявку", icon: "square.and.pencil") { store.appendToRequest(item.report) }
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -1,23 +1,21 @@
 import Foundation
 
-/// The room screen after the scan: data → measurements → design → result, with one main button on each step.
+/// The room screen after the scan: measurements → design → result, with one main button on each step.
 /// Pure logic, so it is tested on Linux; the view only draws it.
 enum PlanStep: Int, CaseIterable, Identifiable, Hashable {
-    case data, measure, design, result
+    case measure, design, result
 
     var id: Int { rawValue }
     var number: Int { rawValue + 1 }
     var title: String {
         switch self {
-        case .data: return "Комната"
-        case .measure: return "Обмеры"
+        case .measure: return "Обмер"
         case .design: return "Дизайн"
         case .result: return "Результат"
         }
     }
     var icon: String {
         switch self {
-        case .data: return "cube.transparent"
         case .measure: return "ruler"
         case .design: return "paintpalette"
         case .result: return "photo.on.rectangle.angled"
@@ -70,15 +68,15 @@ struct PlanFlow {
 
     /// Steps with a check mark.
     var done: Set<PlanStep> {
-        var steps: Set<PlanStep> = [.data, .measure]
+        var steps: Set<PlanStep> = [.measure]
         if hasConcepts { steps.insert(.design) }
         if hasPresentation && !presentationOutdated { steps.insert(.result) }
         return steps
     }
 
-    /// Where the screen opens: a new scan on the room data, a concept on the design, a finished one on the result.
+    /// Where the screen opens: a new scan on the measurements, a concept on the design, a finished one on the result.
     var initialStep: PlanStep {
-        if !hasConcepts { return .data }
+        if !hasConcepts { return .measure }
         return hasPresentation ? .result : .design
     }
 
@@ -91,8 +89,6 @@ struct PlanFlow {
             ? PlanMainButton(action: .createDesign, title: "Ещё вариант дизайна", icon: "wand.and.stars")
             : PlanMainButton(action: .createDesign, title: "Выбрать стиль и создать дизайн", icon: "wand.and.stars")
         switch step {
-        case .data:
-            return PlanMainButton(action: .goTo(.measure), title: "Дальше: обмеры", icon: "arrow.right")
         case .measure:
             return hasConcepts ? PlanMainButton(action: .goTo(.design), title: "Дальше: дизайн", icon: "arrow.right") : design
         case .design:
@@ -105,7 +101,7 @@ struct PlanFlow {
     }
 }
 
-/// One measurement of the room for the «Обмеры» step.
+/// One measurement of the room for «Все обмеры».
 struct PlanMeasurement: Identifiable, Equatable {
     let group: String
     let title: String
@@ -114,7 +110,7 @@ struct PlanMeasurement: Identifiable, Equatable {
     var id: String { group + "|" + title }
 }
 
-/// «Обмеры»: everything a finisher or a buyer of materials asks for, counted from the scan.
+/// «Все обмеры» on the «Обмер» step: everything a finisher or a buyer of materials asks for, counted from the scan.
 enum PlanMeasurements {
     static func list(_ plan: FloorPlan) -> [PlanMeasurement] {
         let height = plan.ceilingHeight

@@ -344,10 +344,13 @@ private struct NewProjectTaskSheet: View {
 struct ProfileTabView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.requestReview) private var requestReview
+    /// Server and price settings for the owner and the developers: five taps on the version show them.
+    @AppStorage("developerTools") private var developerTools = false
+    @State private var versionTaps = 0
     private var syncNote: String {
         var note = "Цены синхронизируются с сервером"
         if let sync = store.lastPriceSync { note += " (последний раз \(sync.formatted(date: .abbreviated, time: .shortened)))" }
-        return note + ". Паспорт объекта, бюджет и дневник хранятся только на этом iPhone."
+        return note + "."
     }
 
     var body: some View {
@@ -375,6 +378,14 @@ struct ProfileTabView: View {
                     Link(destination: Brand.emailURL) { ProfileQuickAction(icon: "envelope.fill", title: "Почта") }
                 }
                 .buttonStyle(PremiumCardPressStyle())
+                Button { store.showRequest = true } label: {
+                    AppTabRow(icon: "square.and.pencil", title: "Оставить заявку", subtitle: "Ответим по телефону или в чате приложения")
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { PerformersHubView() } label: {
+                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: "Статусы и переписка по заявкам")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 NavigationLink { ContactView() } label: {
                     AppTabRow(icon: "message.fill", title: "Контакты и услуги", subtitle: "Телефон, почта, адрес и направления работ")
                 }
@@ -384,7 +395,7 @@ struct ProfileTabView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                SectionTitle(eyebrow: "Расскажите друзьям", title: "Строите не один?")
+                Text("ПРИЛОЖЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange).padding(.top, 6)
                 ShareLink(item: Brand.inviteText) {
                     AppTabRow(icon: "gift.fill", title: "Поделиться приложением", subtitle: "Отправьте калькуляторы и смету тем, кто строится")
                 }
@@ -394,18 +405,25 @@ struct ProfileTabView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                SectionTitle(eyebrow: "Приложение", title: "Настройки")
-                NavigationLink { CalculationHistoryView() } label: {
-                    AppTabRow(icon: "clock.arrow.circlepath", title: "Мои расчёты", subtitle: store.calculations.isEmpty ? "Сохранённых расчётов пока нет" : "Сохранено: \(store.calculations.count)")
+                if developerTools {
+                    NavigationLink { PriceServerSettingsView() } label: {
+                        AppTabRow(icon: "arrow.triangle.2.circlepath", title: "Цены и синхронизация", subtitle: "Прайс, сервер и статистика")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                    InfoNote(text: syncNote)
                 }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PriceServerSettingsView() } label: {
-                    AppTabRow(icon: "arrow.triangle.2.circlepath", title: "Цены и синхронизация", subtitle: "Прайс, сервер и статистика")
-                }
-                .buttonStyle(PremiumCardPressStyle())
 
-                InfoNote(text: syncNote)
+                Text("Паспорт объекта, бюджет и дневник хранятся только на этом iPhone.")
+                    .font(.caption).foregroundStyle(Theme.muted).padding(.top, 4)
                 Text("Версия \(Brand.appVersion)").font(.caption2).foregroundStyle(Theme.muted).frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        versionTaps += 1
+                        guard versionTaps >= 5 else { return }
+                        versionTaps = 0
+                        withAnimation(.snappy) { developerTools.toggle() }
+                        Haptics.success()
+                    }
             }
             .padding(20)
         }
