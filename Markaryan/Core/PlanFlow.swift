@@ -1,17 +1,26 @@
 import Foundation
 
-/// The plan screen in three steps: measure → design → result, with one main button on each step.
+/// The room screen after the scan: data → measurements → design → result, with one main button on each step.
 /// Pure logic, so it is tested on Linux; the view only draws it.
 enum PlanStep: Int, CaseIterable, Identifiable, Hashable {
-    case measure, design, result
+    case data, measure, design, result
 
     var id: Int { rawValue }
     var number: Int { rawValue + 1 }
     var title: String {
         switch self {
-        case .measure: return "Обмер"
+        case .data: return "Комната"
+        case .measure: return "Обмеры"
         case .design: return "Дизайн"
         case .result: return "Результат"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .data: return "cube.transparent"
+        case .measure: return "ruler"
+        case .design: return "paintpalette"
+        case .result: return "photo.on.rectangle.angled"
         }
     }
 }
@@ -22,10 +31,10 @@ enum PlanAction: Equatable {
     case createDesign
     /// Moves to another step.
     case goTo(PlanStep)
-    /// Exact 3D model, photoreal views and the PDF for the selected concept.
+    /// Renders of the exact 3D model in the chosen style and the PDF.
     case buildPresentation
-    /// Request for the renovation of this room.
-    case orderRenovation
+    /// Opens the finished PDF.
+    case openPresentation
 }
 
 struct PlanMainButton: Equatable {
@@ -37,11 +46,11 @@ struct PlanMainButton: Equatable {
 struct PlanFlow {
     /// The plan has at least one concept.
     let hasConcepts: Bool
-    /// A concept is selected and has a layout: a presentation makes sense.
+    /// A concept is selected and has a layout: a render makes sense.
     let conceptReady: Bool
     /// The selected concept has a presentation on the iPhone.
     let hasPresentation: Bool
-    /// The app can build a presentation (AI server or picture keys).
+    /// The AI can make photoreal renders (otherwise the result is the exact 3D model only).
     let canRender: Bool
     /// The plan or the furniture was corrected by hand after the presentation was made.
     let presentationOutdated: Bool
@@ -61,38 +70,92 @@ struct PlanFlow {
 
     /// Steps with a check mark.
     var done: Set<PlanStep> {
-        var steps: Set<PlanStep> = [.measure]
+        var steps: Set<PlanStep> = [.data, .measure]
         if hasConcepts { steps.insert(.design) }
         if hasPresentation && !presentationOutdated { steps.insert(.result) }
         return steps
     }
 
-    /// Where the screen opens: a new scan on the measurements, a concept on the design, a finished one on the result.
+    /// Where the screen opens: a new scan on the room data, a concept on the design, a finished one on the result.
     var initialStep: PlanStep {
-        if !hasConcepts { return .measure }
+        if !hasConcepts { return .data }
         return hasPresentation ? .result : .design
     }
 
     func main(on step: PlanStep) -> PlanMainButton {
-        let next = PlanMainButton(action: .goTo(.result), title: "Дальше: результат", icon: "arrow.right")
-        let order = PlanMainButton(action: .orderRenovation, title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill")
-        let present = presentationOutdated
-            ? PlanMainButton(action: .buildPresentation, title: "Обновить презентацию", icon: "arrow.triangle.2.circlepath")
-            : PlanMainButton(action: .buildPresentation, title: "Создать дизайн‑презентацию", icon: "rectangle.stack.badge.play")
+        let render = presentationOutdated
+            ? PlanMainButton(action: .buildPresentation, title: "Обновить рендер и PDF", icon: "arrow.triangle.2.circlepath")
+            : PlanMainButton(action: .buildPresentation, title: "Создать рендер и PDF", icon: "camera.aperture")
         let current = hasPresentation && !presentationOutdated
         let design = hasConcepts
             ? PlanMainButton(action: .createDesign, title: "Ещё вариант дизайна", icon: "wand.and.stars")
-            : PlanMainButton(action: .createDesign, title: "Создать дизайн по плану", icon: "wand.and.stars")
+            : PlanMainButton(action: .createDesign, title: "Выбрать стиль и создать дизайн", icon: "wand.and.stars")
         switch step {
+        case .data:
+            return PlanMainButton(action: .goTo(.measure), title: "Дальше: обмеры", icon: "arrow.right")
         case .measure:
             return hasConcepts ? PlanMainButton(action: .goTo(.design), title: "Дальше: дизайн", icon: "arrow.right") : design
         case .design:
             guard conceptReady else { return design }
-            if current || !canRender { return next }
-            return present
+            return current ? PlanMainButton(action: .goTo(.result), title: "Дальше: результат", icon: "arrow.right") : render
         case .result:
             guard conceptReady else { return design }
-            return current || !canRender ? order : present
+            return current ? PlanMainButton(action: .openPresentation, title: "Открыть PDF", icon: "doc.richtext") : render
+        }
+    }
+}
+
+/// One measurement of the room for the «Обмеры» step.
+struct PlanMeasurement: Identifiable, Equatable {
+    let group: String
+    let title: String
+    let value: Double
+    let unit: String
+    var id: String { group + "|" + title }
+}
+
+/// «Обмеры»: everything a finisher or a buyer of materials asks for, counted from the scan.
+enum PlanMeasurements {
+    static func list(_ plan: FloorPlan) -> [PlanMeasurement] {
+        let height = plan.ceilingHeight
+        let doorWidth = plan.doors.reduce(0) { $0 + $1.length }
+        let windows = plan.windows
+        let windowArea = windows.reduce(0) { $0 + $1.length * $1.height }
+        let doorArea = plan.doors.reduce(0) { $0 + $1.length * $1.height }
+        // Window reveals: both sides and the top of every window, 0.25 m deep by default.
+        let revealDepth = 0.25
+        let revealLength = windows.reduce(0) { $0 + 2 * $1.height + $1.length }
+        let sills = windows.reduce(0) { $0 + $1.length }
+        let plinth = max(0, plan.perimeter - doorWidth)
+        var rows: [PlanMeasurement] = [
+            PlanMeasurement(group: "Пол и потолок", title: "Площадь пола", value: plan.area, unit: "м²"),
+            PlanMeasurement(group: "Пол и потолок", title: "Площадь потолка", value: plan.area, unit: "м²"),
+            PlanMeasurement(group: "Пол и потолок", title: "Высота потолка", value: height, unit: "м"),
+            PlanMeasurement(group: "Пол и потолок", title: "Объём помещения", value: plan.area * height, unit: "м³"),
+            PlanMeasurement(group: "Стены", title: "Периметр", value: plan.perimeter, unit: "м"),
+            PlanMeasurement(group: "Стены", title: "Стены всего", value: plan.perimeter * height, unit: "м²"),
+            PlanMeasurement(group: "Стены", title: "Стены без проёмов (покраска, обои)", value: plan.netWallArea, unit: "м²"),
+            PlanMeasurement(group: "Стены", title: "Плинтус (без дверей)", value: plinth, unit: "м"),
+            PlanMeasurement(group: "Стены", title: "Потолочный молдинг / карниз", value: plan.perimeter, unit: "м"),
+            PlanMeasurement(group: "Проёмы", title: "Окна, площадь", value: windowArea, unit: "м²"),
+            PlanMeasurement(group: "Проёмы", title: "Двери, площадь", value: doorArea, unit: "м²"),
+            PlanMeasurement(group: "Проёмы", title: "Откосы окон, длина", value: revealLength, unit: "м"),
+            PlanMeasurement(group: "Проёмы", title: "Откосы окон, площадь (25 см)", value: revealLength * revealDepth, unit: "м²"),
+            PlanMeasurement(group: "Проёмы", title: "Подоконники, длина", value: sills, unit: "м"),
+        ]
+        // Tiles: the floor plus +10 % for cutting; in a bathroom also the walls to the ceiling.
+        rows.append(PlanMeasurement(group: "Под отделку", title: "Плитка / ламинат на пол (+10 %)", value: plan.area * 1.1, unit: "м²"))
+        rows.append(PlanMeasurement(group: "Под отделку", title: "Плитка на стены до потолка (+10 %)", value: plan.netWallArea * 1.1, unit: "м²"))
+        rows.append(PlanMeasurement(group: "Под отделку", title: "Краска стен, 2 слоя (≈ 0,12 л/м²)", value: plan.netWallArea * 0.24, unit: "л"))
+        rows.append(PlanMeasurement(group: "Под отделку", title: "Краска потолка, 2 слоя", value: plan.area * 0.24, unit: "л"))
+        rows.append(PlanMeasurement(group: "Под отделку", title: "Наливной пол 1 см (≈ 16 кг/м²)", value: plan.area * 16, unit: "кг"))
+        return rows
+    }
+
+    /// Wall by wall, numbered as on the plan.
+    static func walls(_ plan: FloorPlan) -> [PlanMeasurement] {
+        PlanWalls.numbered(plan).map { wall in
+            PlanMeasurement(group: "По стенам", title: "Стена \(wall.number)", value: wall.length, unit: "м")
         }
     }
 }

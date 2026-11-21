@@ -373,29 +373,35 @@ check(reloadedPresented.presentation == presented.presentation, "Saved presentat
 let forged = try aiDesign(#"{"title":"x","presentation":{"createdAt":0,"folder":"../../Documents","pdf":"a.pdf","pictures":[]},"items":[]}"#, bedroom, "Спальня")
 check(forged.presentation == nil, "An AI answer cannot point at files on the iPhone")
 
-// MARK: Plan screen in three steps
+// MARK: Room screen in four steps
 
 let fresh = PlanFlow(plan: bedroom, proposal: nil, hasPresentation: false, canRender: true)
-check(fresh.initialStep == .measure && fresh.done == [.measure], "A new scan opens on the measurements")
-check(PlanStep.allCases.allSatisfy { fresh.main(on: $0).action == .createDesign }, "Without a concept every step offers to create one")
-check(fresh.main(on: .measure).title == "Создать дизайн по плану", "First design button")
+check(fresh.initialStep == .data && fresh.done == [.data, .measure], "A new scan opens on the room data")
+check(fresh.main(on: .data).action == .goTo(.measure), "Room data lead on to the measurements")
+check([PlanStep.measure, .design, .result].allSatisfy { fresh.main(on: $0).action == .createDesign }, "Without a concept the next steps offer to create one")
+check(fresh.main(on: .measure).title == "Выбрать стиль и создать дизайн", "First design button")
 var designed = bedroom
 designed.proposals = [pair]
 let ready = PlanFlow(plan: designed, proposal: pair, hasPresentation: false, canRender: true)
-check(ready.initialStep == .design && ready.done == [.measure, .design], "A plan with a concept opens on the design")
+check(ready.initialStep == .design && ready.done == [.data, .measure, .design], "A plan with a concept opens on the design")
 check(ready.main(on: .measure).action == .goTo(.design), "Measurements lead on to the design")
-check(ready.main(on: .design).action == .buildPresentation && ready.main(on: .result).action == .buildPresentation, "A concept leads to its presentation")
+check(ready.main(on: .design).action == .buildPresentation && ready.main(on: .result).action == .buildPresentation, "A concept leads to its render")
 let finished = PlanFlow(plan: designed, proposal: pair, hasPresentation: true, canRender: true)
-check(finished.initialStep == .result && finished.done == Set(PlanStep.allCases), "A finished presentation opens on the result")
-check(finished.main(on: .design).action == .goTo(.result) && finished.main(on: .result).action == .orderRenovation, "After the presentation comes the renovation request")
+check(finished.initialStep == .result && finished.done == Set(PlanStep.allCases), "A finished render opens on the result")
+check(finished.main(on: .design).action == .goTo(.result) && finished.main(on: .result).action == .openPresentation, "After the render the result opens the PDF")
 let offline = PlanFlow(plan: designed, proposal: pair, hasPresentation: false, canRender: false)
-check(offline.main(on: .design).action == .goTo(.result) && offline.main(on: .result).action == .orderRenovation, "Without picture engines the result offers the renovation")
+check(offline.main(on: .result).action == .buildPresentation, "Without picture engines the exact 3D model is still rendered")
 var emptyConcept = pair
 emptyConcept.furniture = []
 let emptyFlow = PlanFlow(plan: designed, proposal: emptyConcept, hasPresentation: false, canRender: true)
 check(emptyFlow.main(on: .design) == PlanMainButton(action: .createDesign, title: "Ещё вариант дизайна", icon: "wand.and.stars"), "A concept without a layout asks for another variant")
-check(PlanFlow(plan: designed, proposal: nil, hasPresentation: true, canRender: true).done == [.measure, .design], "No finished result without a selected concept")
-check(PlanStep.allCases.map(\.title) == ["Обмер", "Дизайн", "Результат"] && PlanStep.result.number == 3, "Step titles and numbers")
+check(PlanFlow(plan: designed, proposal: nil, hasPresentation: true, canRender: true).done == [.data, .measure, .design], "No finished result without a selected concept")
+check(PlanStep.allCases.map(\.title) == ["Комната", "Обмеры", "Дизайн", "Результат"] && PlanStep.result.number == 4, "Step titles and numbers")
+
+let measured = PlanMeasurements.list(bedroom)
+check(measured.contains { $0.title == "Площадь пола" && abs($0.value - bedroom.area) < 1e-9 }, "Measurements: floor area from the scan")
+check(measured.contains { $0.title == "Плинтус (без дверей)" && $0.value <= bedroom.perimeter + 1e-9 }, "Measurements: the skirting skips the doors")
+check(PlanMeasurements.walls(bedroom).count == PlanWalls.numbered(bedroom).count, "Measurements: every numbered wall")
 
 let calculations = PlanMaterials.calculations(bedroom)
 check(calculations.count == 6 && Set(calculations.map(\.id)).count == 6, "Six calculators with distinct titles")
@@ -567,7 +573,7 @@ stale.proposals[0].presentation = SavedPresentation(createdAt: Date(timeInterval
 stale.proposals[0].editedAt = Date(timeIntervalSinceReferenceDate: 800_000_100)
 let staleFlow = PlanFlow(plan: stale, proposal: stale.proposals[0], hasPresentation: true, canRender: true)
 check(staleFlow.presentationOutdated && !staleFlow.done.contains(.result), "A presentation made before an edit is out of date")
-check(staleFlow.main(on: .result) == PlanMainButton(action: .buildPresentation, title: "Обновить презентацию", icon: "arrow.triangle.2.circlepath"), "…and the result offers to update it")
+check(staleFlow.main(on: .result) == PlanMainButton(action: .buildPresentation, title: "Обновить рендер и PDF", icon: "arrow.triangle.2.circlepath"), "…and the result offers to update it")
 stale.proposals[0].editedAt = Date(timeIntervalSinceReferenceDate: 700_000_000)
 check(!PlanFlow(plan: stale, proposal: stale.proposals[0], hasPresentation: true, canRender: true).presentationOutdated, "An older edit does not matter")
 
