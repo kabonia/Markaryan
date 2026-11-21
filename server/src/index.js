@@ -5,7 +5,8 @@ import { config } from './config.js';
 import { ApiError } from './util.js';
 import { consume, refund, remaining } from './limits.js';
 import * as ai from './ai.js';
-import { imageEngines, legacyEditEngines, renderWithFallback, resolveEngines } from './providers/images.js';
+import { imageEngines, legacyEditEngines, preferredEngines, renderChoices, renderWithFallback, resolveEngines } from './providers/images.js';
+import { designChoices } from './providers/openrouter.js';
 import * as hh from './hh.js';
 import * as avito from './avito.js';
 import * as market from './market.js';
@@ -65,6 +66,8 @@ async function handle(req, res) {
     return send(res, 200, {
       chat: providers.length > 0, vision: providers.length > 0, imageGenerate: engines.length > 0 || ai.canGenerateImages(),
       imageEdit: legacyEditEngines(), imageEngines: engines, providers, remaining: remaining(installId),
+      // What the app offers to choose on the «Дизайн» step.
+      designModels: providers.includes('openrouter') ? designChoices() : [], renderModels: renderChoices(),
     });
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
@@ -100,16 +103,20 @@ async function handle(req, res) {
     const kind = messages.some((m) => m.image) ? 'vision' : 'json';
     if (!body.schema || typeof body.schema !== 'object') throw new ApiError(400, 'Нет схемы ответа.');
     consume(kind, installId, ip);
+    // `model` — the model the user picked on the «Дизайн» step; the answer says which model really answered.
+    const meta = {};
+    const model = typeof body.model === 'string' ? body.model.slice(0, 120) : undefined;
     try {
-      const result = await ai.json({ system: String(body.system || ''), messages, schema: body.schema, name: String(body.name || 'result').replace(/[^A-Za-z0-9_]/g, '_'), description: String(body.description || ''), maxTokens: Number(body.maxTokens) || 8000 });
-      return send(res, 200, { json: result });
+      const result = await ai.json({ system: String(body.system || ''), messages, schema: body.schema, name: String(body.name || 'result').replace(/[^A-Za-z0-9_]/g, '_'), description: String(body.description || ''), maxTokens: Number(body.maxTokens) || 8000, model, meta });
+      return send(res, 200, { json: result, model: meta.model || meta.provider || null });
     } catch (error) { refund(kind, installId, ip); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image-edit') {
-    // "auto" (or nothing) — the engines in order with fallback; an engine id — only that one (comparing engines).
+    // "auto" (or nothing) — the engines in order with fallback, `prefer` (the model picked on the «Дизайн» step) first;
+    // an engine id — only that one (comparing engines).
     const requested = typeof body.engine === 'string' ? body.engine : 'auto';
-    const engines = resolveEngines(requested);
+    const engines = requested === 'auto' ? preferredEngines(body.prefer) : resolveEngines(requested);
     if (engines.length === 0) throw new ApiError(400, 'Этот генератор не подключён на сервере.');
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
     consume('imageEdit', installId, ip);

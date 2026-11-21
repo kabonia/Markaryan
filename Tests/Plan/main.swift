@@ -798,4 +798,26 @@ check(flatEntities.filter { $0.type == "ARC" && $0.layer == PlanDXF.Layer.doors 
 check(flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "1. Гостиная" } && flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "2. Спальня" }, "Apartment DXF: numbered rooms")
 check(flatEntities.contains { $0.type == "TEXT" && $0.value(1) == "Квартира 1: 21,00 м2" }, "Apartment DXF: the total area")
 
+// MARK: Models picked on the «Дизайн» step
+
+check(DesignModel.standard == .opus && RenderModel.standard == .nanoBananaPro, "Recommended models by default")
+check(DesignModel.allCases.map(\.title) == ["Claude Opus 5.5", "Claude Sonnet 5.5", "GPT‑6.2 Astra", "Gemini 4 Carbon"], "Four design models")
+check(RenderModel.allCases.map(\.title) == ["Nano Banana Pro", "GPT Image 2.6 Sunburst", "Seedream 5.0 Pro"], "Three render models")
+check(DesignModel.sonnet.fallbacks == ["anthropic/claude-opus-5.5", "openai/gpt-6.2-astra", "google/gemini-4-carbon"], "The other design models stand behind the pick")
+check(DesignModel.allCases.allSatisfy { $0.fallbacks.count <= 3 && !$0.fallbacks.contains($0.rawValue) }, "OpenRouter takes at most three fallbacks, never the pick itself")
+check(DesignModel.opus.anthropicID == "claude-opus-5-5" && DesignModel.gpt.anthropicID == nil, "A key of Anthropic runs only Claude")
+check(RenderModel.seedream.order == ["bytedance-seed/seedream-5-0-pro", "google/gemini-3-pro-image", "openai/gpt-image-2.6-sunburst", "black-forest-labs/flux-3-image"], "The picked render model first, FLUX 3 last")
+check(RenderModel.gptImage.engineID == "openrouter:openai/gpt-image-2.6-sunburst" && RenderModel(engine: "openrouter:bytedance-seed/seedream-5-0-pro") == .seedream && RenderModel(engine: "bfl:flux-3-image") == nil, "Server engine ids")
+check(AIModelChoice.design("google/gemini-4-carbon") == .gemini && AIModelChoice.design("old/removed-model") == .opus && AIModelChoice.design(nil) == .opus, "A saved design pick is read back safely")
+check(AIModelChoice.render("bytedance-seed/seedream-5-0-pro") == .seedream && AIModelChoice.render("") == .nanoBananaPro, "A saved render pick is read back safely")
+check(DesignModel.title(of: "anthropic/claude-sonnet-5.5") == "Claude Sonnet 5.5" && DesignModel.title(of: "claude-opus-5-5") == "Claude Opus 5.5", "Titles of reported models")
+check(DesignModel.title(of: "claude-sonnet-5-5-20261015") == "Claude Sonnet 5.5" && DesignModel.title(of: "openai/gpt-6.2-astra:batch") == "GPT‑6.2 Astra", "Titles of dated and variant model ids")
+check(DesignModel.title(of: "gigachat") == "GigaChat" && DesignModel.title(of: "mistralai/new-model") == "new-model" && DesignModel.title(of: "  ") == nil, "Titles of other answers")
+var modelled = pair
+modelled.designModel = DesignModel.gemini.rawValue
+let reloadedModelled = try JSONDecoder().decode(DesignProposal.self, from: JSONEncoder().encode(modelled))
+check(reloadedModelled.designModel == "google/gemini-4-carbon", "The concept remembers which model made it")
+let selfNamed = try aiDesign(#"{"title":"x","designModel":"made-up","items":[]}"#, bedroom, "Спальня")
+check(selfNamed.designModel == nil, "The AI cannot name the model itself")
+
 print("PASS: \(passed) plan and design checks")

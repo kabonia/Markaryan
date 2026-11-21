@@ -37,13 +37,35 @@ export function imageEngines() {
 const isFlux = (engine) => /flux/i.test(engine.model);
 const isGPT = (engine) => /gpt-image/i.test(engine.model);
 
+/** A render model the app may choose (OPENROUTER_RENDER_CHOICES) even when the server's own list leaves it out. */
+function choiceEngine(id) {
+  if (!config.openrouter.apiKey || typeof id !== 'string') return null;
+  const model = id.startsWith('openrouter:') ? id.slice('openrouter:'.length) : id;
+  return config.openrouter.renderChoices.includes(model) ? { id: `openrouter:${model}`, vendor: 'openrouter', model, title: title(model) } : null;
+}
+
+/** Render models the app can offer on the «Дизайн» step, with their titles. */
+export function renderChoices() {
+  return config.openrouter.apiKey ? config.openrouter.renderChoices.map((model) => ({ id: `openrouter:${model}`, title: title(model) })) : [];
+}
+
 /** "auto" — every engine in order; an engine id — only that one; "flux" / "gpt" — what app versions up to 1.2 ask for. */
 export function resolveEngines(requested) {
   const all = imageEngines();
   if (!requested || requested === 'auto') return all;
   if (requested === 'flux') return all.filter(isFlux);
   if (requested === 'gpt') return all.filter(isGPT);
-  return all.filter((engine) => engine.id === requested);
+  const exact = all.filter((engine) => engine.id === requested);
+  const choice = exact.length ? null : choiceEngine(requested);
+  return choice ? [choice] : exact;
+}
+
+/** The engine the user picked first, then the server's engines in order as fallbacks; an unknown pick is ignored. */
+export function preferredEngines(prefer) {
+  const all = imageEngines();
+  if (typeof prefer !== 'string' || !prefer) return all;
+  const chosen = all.find((engine) => engine.id === prefer || engine.model === prefer) || choiceEngine(prefer);
+  return chosen ? [chosen, ...all.filter((engine) => engine.id !== chosen.id)] : all;
 }
 
 /** Capability names app versions up to 1.2 understand. */

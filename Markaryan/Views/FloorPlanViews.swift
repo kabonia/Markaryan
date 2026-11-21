@@ -609,6 +609,7 @@ struct FloorPlanDetailView: View {
             }
         }
         if !isGenerating {
+            if store.aiAvailable || store.photorealAvailable { modelsCard }
             mainButton(flow.main(on: .design), plan: plan)
         }
         if let proposal {
@@ -776,6 +777,66 @@ struct FloorPlanDetailView: View {
         }
     }
 
+    /// «Модели ИИ»: which AI designs and lays out the room, and which one turns the exact 3D model into photos.
+    /// The pick is kept for the next designs and renders.
+    private var modelsCard: some View {
+        let works = store.modelChoiceWorks
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("МОДЕЛИ ИИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            modelMenu(title: "Дизайн и расстановка", icon: "wand.and.stars", current: store.designModel.title, note: store.designModel.note, works: works.design) {
+                ForEach(DesignModel.allCases) { model in
+                    Toggle(isOn: Binding(get: { store.designModel == model }, set: { if $0 { Haptics.tap(); store.designModel = model } })) {
+                        Text(model.title)
+                        Text(model.note)
+                    }
+                }
+            }
+            Divider().overlay(Color.white.opacity(0.08))
+            modelMenu(title: "3D‑рендер", icon: "camera.aperture", current: store.renderModel.title, note: store.renderModel.note, works: works.render) {
+                ForEach(RenderModel.allCases) { model in
+                    Toggle(isOn: Binding(get: { store.renderModel == model }, set: { if $0 { Haptics.tap(); store.renderModel = model } })) {
+                        Text(model.title)
+                        Text(model.note)
+                    }
+                }
+            }
+            if !works.design || !works.render {
+                Text(modelChoiceHint).font(.caption2).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(20)
+    }
+
+    private func modelMenu<Options: View>(title: String, icon: String, current: String, note: String, works: Bool, @ViewBuilder options: () -> Options) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Menu {
+                options()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: icon).font(.body.weight(.semibold)).foregroundStyle(Theme.orange).frame(width: 26)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(.caption).foregroundStyle(Theme.muted)
+                        Text(current).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+                }
+                .contentShape(Rectangle())
+            }
+            .accessibilityLabel("\(title): \(current)")
+            Text(note).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+        }
+        .opacity(works ? 1 : 0.6)
+    }
+
+    /// Why a pick does not reach the AI right now.
+    private var modelChoiceHint: String {
+        if store.usesAIServer {
+            return "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере АртСтроя."
+        }
+        return "С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter."
+    }
+
     private var generatingCard: some View {
         HStack(spacing: 12) {
             ProgressView().tint(Theme.orange)
@@ -822,6 +883,9 @@ struct FloorPlanDetailView: View {
             Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text(proposal.title).font(.title3.bold())
             Text(proposal.summary).font(.subheadline).foregroundStyle(.white.opacity(0.88))
+            if let model = DesignModel.title(of: proposal.designModel) {
+                Label("Дизайн и расстановка: \(model)", systemImage: "cpu").font(.caption).foregroundStyle(Theme.muted)
+            }
             if !proposal.layoutNotes.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(proposal.layoutNotes, id: \.self) { note in
@@ -978,7 +1042,9 @@ struct FloorPlanDetailView: View {
             photoPrompt += " The whole room follows the chosen style down to the smallest detail — finishes, furniture design, fabrics, fittings, lighting and decor: \(style.english)."
         }
 
-        progressText = exact.isEmpty ? "Собираем PDF‑презентацию…" : "ИИ делает фотореализм по точной модели… 1–2 мин"
+        let painter = store.modelChoiceWorks.render ? store.renderModel.title : "ИИ"
+        let minutes = store.modelChoiceWorks.render && store.renderModel == .seedream ? "2–4" : "1–2"
+        progressText = exact.isEmpty ? "Собираем PDF‑презентацию…" : "\(painter) делает фотореализм по точной модели… \(minutes) мин"
         async let first = verifiedPhoto(references.count > 0 ? references[0] : nil, prompt: photoPrompt)
         async let second = verifiedPhoto(references.count > 1 ? references[1] : nil, prompt: photoPrompt)
         async let third = verifiedPhoto(references.count > 2 ? references[2] : nil, prompt: photoPrompt)

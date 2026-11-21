@@ -129,6 +129,8 @@ struct ClaudeClient {
     let model: String
     /// Needed when the key is not bound to a workspace (error «must include the anthropic-workspace-id header»).
     var workspaceID: String? = nil
+    /// OpenRouter only: models to try in order when `model` fails (at most three).
+    var fallbacks: [String] = []
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -153,6 +155,7 @@ struct ClaudeClient {
         let viaOpenRouter = Self.isOpenRouterKey(apiKey)
         var body = body
         if viaOpenRouter, let name = body["model"] as? String { body["model"] = Self.openRouterModel(name) }
+        if viaOpenRouter, !fallbacks.isEmpty { body["fallbacks"] = fallbacks.prefix(3).map { ["model": Self.openRouterModel($0)] } }
         var request = URLRequest(url: viaOpenRouter ? Self.openRouterEndpoint : Self.endpoint)
         request.httpMethod = "POST"
         request.timeoutInterval = 180
@@ -258,6 +261,11 @@ struct ClaudeClient {
     /// Forces Claude to answer through one tool, which guarantees JSON that matches `schema`.
     /// Returns the tool input re-encoded as JSON data, ready for `JSONDecoder`.
     func structured(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int = 4000) async throws -> Data {
+        try await structuredAnswer(system: system, turns: turns, toolName: toolName, toolDescription: toolDescription, schema: schema, maxTokens: maxTokens).data
+    }
+
+    /// The JSON and the model that answered (OpenRouter may answer with a fallback).
+    func structuredAnswer(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> (data: Data, model: String?) {
         // Long answers (design, counting) are streamed: a silent connection that waits a minute
         // for a big JSON is often dropped by mobile networks («сетевое соединение потеряно»).
         // One automatic retry covers short drops.
@@ -269,7 +277,7 @@ struct ClaudeClient {
         }
     }
 
-    private func structuredStream(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> Data {
+    private func structuredStream(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> (data: Data, model: String?) {
         // Some models do not accept a forced tool_choice, so the tool is offered with "auto"
         // and the prompt insists on calling it. A plain JSON text answer is accepted too.
         let strictSystem = system + "\n\nОтвечай ТОЛЬКО вызовом инструмента \(toolName), без текста до или после."
@@ -288,13 +296,16 @@ struct ClaudeClient {
         }
         var toolJSON = ""
         var text = ""
+        var answeredBy: String?
         for try await line in bytes.lines {
             guard line.hasPrefix("data:") else { continue }
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
             guard let data = payload.data(using: .utf8),
                   let event = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let type = event["type"] as? String else { continue }
-            if type == "content_block_delta", let delta = event["delta"] as? [String: Any] {
+            if type == "message_start", let message = event["message"] as? [String: Any] {
+                answeredBy = message["model"] as? String
+            } else if type == "content_block_delta", let delta = event["delta"] as? [String: Any] {
                 if let partial = delta["partial_json"] as? String { toolJSON += partial }
                 if let piece = delta["text"] as? String { text += piece }
             } else if type == "error" {
@@ -304,10 +315,10 @@ struct ClaudeClient {
                 break
             }
         }
-        if !toolJSON.isEmpty, let data = Self.validJSON(toolJSON) { return data }
+        if !toolJSON.isEmpty, let data = Self.validJSON(toolJSON) { return (data, answeredBy) }
         if let start = text.firstIndex(of: "{") {
-            if let end = text.lastIndex(of: "}"), start < end, let data = Self.validJSON(String(text[start...end])) { return data }
-            if let data = Self.validJSON(String(text[start...])) { return data }
+            if let end = text.lastIndex(of: "}"), start < end, let data = Self.validJSON(String(text[start...end])) { return (data, answeredBy) }
+            if let data = Self.validJSON(String(text[start...])) { return (data, answeredBy) }
         }
         throw ClaudeError.api("ИИ ответил не полностью. Попробуйте ещё раз.")
     }

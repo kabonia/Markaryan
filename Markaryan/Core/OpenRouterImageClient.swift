@@ -27,10 +27,13 @@ struct OpenRouterImageClient {
     }
 
     static func title(_ model: String) -> String {
+        if let known = RenderModel(rawValue: model) { return known.title }
+        if model == RenderModel.lastResort { return "FLUX 3" }
         let vendor = model.split(separator: "/").first.map(String.init) ?? ""
         if vendor == "google" { return "Nano Banana Pro" }
         if vendor == "openai" { return "GPT Image" }
         if vendor == "black-forest-labs" { return "FLUX" }
+        if vendor == "bytedance-seed" { return "Seedream" }
         return model
     }
 
@@ -104,11 +107,11 @@ struct OpenRouterImageClient {
         throw OpenRouterImageError.message("\(Self.title(model)) не вернул картинку.")
     }
 
-    /// The first model that answers; the next one when it fails.
-    func render(prompt: String, reference: UIImage?) async throws -> RenderedImage {
+    /// The first model that answers; the next one when it fails. `models` — the order to try (the user's pick first).
+    func render(prompt: String, reference: UIImage?, models: [String] = OpenRouterImageClient.models) async throws -> RenderedImage {
         let ratio = Self.aspectRatio(for: reference)
         var lastError: Error = OpenRouterImageError.message("OpenRouter не вернул картинку.")
-        for model in Self.models {
+        for model in models {
             do {
                 let picture = try await image(prompt: prompt, reference: reference, aspectRatio: ratio, model: model)
                 return RenderedImage(image: picture, engine: "openrouter:\(model)", title: Self.title(model))
