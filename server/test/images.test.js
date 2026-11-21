@@ -105,6 +105,29 @@ test('picture engines through the server', async (t) => {
   const missing = await post('/v1/ai/image-edit', { image: reference, prompt: 'x', engine: 'openai:dall-e-2' });
   assert.equal(missing.status, 400);
 
+  // Render models offered in the app: Seedream works with the same key even though the server's list leaves it out.
+  assert.deepEqual(caps.renderModels.map((m) => m.id), [
+    'openrouter:google/gemini-3-pro-image', 'openrouter:openai/gpt-image-2.6-sunburst', 'openrouter:bytedance-seed/seedream-5-0-pro',
+  ]);
+  assert.deepEqual(caps.renderModels.map((m) => m.title), ['Nano Banana Pro', 'GPT Image 2.6 Sunburst', 'Seedream 5.0 Pro']);
+  r = await (await post('/v1/ai/image-edit', { image: reference, prompt: 'фотореализм', prefer: 'openrouter:bytedance-seed/seedream-5-0-pro' })).json();
+  assert.equal(r.engine, 'openrouter:bytedance-seed/seedream-5-0-pro');
+  assert.equal(r.title, 'Seedream 5.0 Pro');
+  let picked = seen.filter((s) => s.url === '/or/images').at(-1);
+  assert.equal(picked.body.model, 'bytedance-seed/seedream-5-0-pro');
+  assert.equal(picked.body.resolution, '2K');
+  assert.match(picked.body.input_references[0].image_url.url, /^data:image\/jpeg;base64,RRRR/);
+  // A picked engine from the server's own list goes first, too.
+  r = await (await post('/v1/ai/image-edit', { image: reference, prompt: 'фотореализм', prefer: 'openai:gpt-image-2.6-sunburst' })).json();
+  assert.equal(r.engine, 'openai:gpt-image-2.6-sunburst');
+  // An unknown pick is ignored: the engines in order (the broken one, then Nano Banana Pro).
+  r = await (await post('/v1/ai/image-edit', { image: reference, prompt: 'фотореализм', prefer: 'openrouter:someone/expensive-model' })).json();
+  assert.equal(r.engine, 'openrouter:google/gemini-3-pro-image');
+  assert.equal(seen.filter((s) => s.url === '/or/images' && s.body.model === 'someone/expensive-model').length, 0);
+  // The owner's comparison can run a choice that is not in the server's list.
+  r = await (await post('/v1/ai/image-edit', { image: reference, prompt: 'фотореализм', engine: 'openrouter:bytedance-seed/seedream-5-0-pro' })).json();
+  assert.equal(r.engine, 'openrouter:bytedance-seed/seedream-5-0-pro');
+
   // A picture by description goes to the same engines, without a reference.
   r = await (await post('/v1/ai/image', { prompt: 'дом у моря' })).json();
   assert.equal(r.engine, 'openrouter:google/gemini-3-pro-image');
@@ -121,6 +144,8 @@ test('pictures by description fall back to Alice AI ART', async (t) => {
   const base = `http://127.0.0.1:${PORT_YANDEX}`;
   const caps = await (await fetch(`${base}/v1/ai/capabilities`, { headers })).json();
   assert.deepEqual(caps.imageEngines, []);
+  assert.deepEqual(caps.renderModels, [], 'nothing to choose without OpenRouter');
+  assert.deepEqual(caps.designModels, []);
   assert.equal(caps.imageGenerate, true);
   const r = await (await fetch(`${base}/v1/ai/image`, { method: 'POST', headers, body: JSON.stringify({ prompt: 'д'.repeat(800) }) })).json();
   assert.equal(r.image, PNG);

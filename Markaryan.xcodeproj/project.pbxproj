@@ -64,6 +64,7 @@
 		AA1000000000000000000D20 /* Markaryan/Core/OpenRouterImageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D20 /* Markaryan/Core/OpenRouterImageClient.swift */; };
 		AA1000000000000000000D21 /* Markaryan/Core/DesignStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D21 /* Markaryan/Core/DesignStyles.swift */; };
 		AA1000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift */; };
+		AA1000000000000000000D23 /* Markaryan/Core/AIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D23 /* Markaryan/Core/AIModels.swift */; };
 		BED89B0B916E9CA1B5B3BC84 /* Markaryan/PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 287A87EF29FDDB1211210671 /* Markaryan/PrivacyInfo.xcprivacy */; };
 		D2A9B8C7E6F50123456789AB /* Markaryan/Views/AppTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */; };
 		F68370387F6687AD64C17FBF /* Markaryan/Views/PortfolioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C85D5415445D3C323BA5FF /* Markaryan/Views/PortfolioView.swift */; };
@@ -126,6 +127,7 @@
 		AA2000000000000000000D20 /* Markaryan/Core/OpenRouterImageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/OpenRouterImageClient.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D21 /* Markaryan/Core/DesignStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignStyles.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoDesignView.swift; sourceTree = "<group>"; };
+		AA2000000000000000000D23 /* Markaryan/Core/AIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/AIModels.swift; sourceTree = "<group>"; };
 		AE7A221B5C03AA02418C806D /* Markaryan/Views/ARMeasureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ARMeasureView.swift; sourceTree = "<group>"; };
 		B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PerformersHubView.swift; sourceTree = "<group>"; };
 		C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PriceServerSettingsView.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 				AA2000000000000000000D20 /* Markaryan/Core/OpenRouterImageClient.swift */,
 				AA2000000000000000000D21 /* Markaryan/Core/DesignStyles.swift */,
 				AA2000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift */,
+				AA2000000000000000000D23 /* Markaryan/Core/AIModels.swift */,
 				AA2000000000000000000D06 /* Markaryan/Core/DesignBrief.swift */,
 				AA2000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift */,
 				AA2000000000000000000D04 /* Markaryan/Core/PlanWalls.swift */,
@@ -356,6 +359,7 @@
 				AA1000000000000000000D20 /* Markaryan/Core/OpenRouterImageClient.swift in Sources */,
 				AA1000000000000000000D21 /* Markaryan/Core/DesignStyles.swift in Sources */,
 				AA1000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift in Sources */,
+				AA1000000000000000000D23 /* Markaryan/Core/AIModels.swift in Sources */,
 				AA1000000000000000000D06 /* Markaryan/Core/DesignBrief.swift in Sources */,
 				AA1000000000000000000D05 /* Markaryan/Core/LayoutCheck.swift in Sources */,
 				AA1000000000000000000D04 /* Markaryan/Core/PlanWalls.swift in Sources */,

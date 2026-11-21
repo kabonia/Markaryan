@@ -448,6 +448,9 @@ enum WorkOrderError: LocalizedError {
     // AI engine: Claude directly (key in Keychain) or the АртСтрой server.
     @Published var aiPreference: AIPreference = .auto { didSet { UserDefaults.standard.set(aiPreference.rawValue, forKey: "aiPreference") } }
     @Published var claudeModel: ClaudeModel = .sonnet { didSet { UserDefaults.standard.set(claudeModel.rawValue, forKey: "claudeModel") } }
+    /// Picked on the «Дизайн» step: the AI that designs and lays out the room, and the one that draws the 3D render.
+    @Published var designModel: DesignModel = .standard { didSet { UserDefaults.standard.set(designModel.rawValue, forKey: AIModelChoice.designKey) } }
+    @Published var renderModel: RenderModel = .standard { didSet { UserDefaults.standard.set(renderModel.rawValue, forKey: AIModelChoice.renderKey) } }
     @Published private(set) var hasClaudeKey = false
     @Published var priceBook = PriceBook.default { didSet { scheduleSave(priceBook, key: "priceBook") } }
     @Published var priceServerURL = AppStore.productionServerURL { didSet { UserDefaults.standard.set(priceServerURL, forKey: "priceServerURL") } }
@@ -503,6 +506,8 @@ enum WorkOrderError: LocalizedError {
         floorPlans = Self.read("floorPlans") ?? []
         aiPreference = AIPreference(rawValue: UserDefaults.standard.string(forKey: "aiPreference") ?? "") ?? .auto
         claudeModel = ClaudeModel(rawValue: UserDefaults.standard.string(forKey: "claudeModel") ?? "") ?? .sonnet
+        designModel = AIModelChoice.design(UserDefaults.standard.string(forKey: AIModelChoice.designKey))
+        renderModel = AIModelChoice.render(UserDefaults.standard.string(forKey: AIModelChoice.renderKey))
         hasClaudeKey = ClaudeClient.currentKey != nil
         userRegion = Self.read("userRegion")
         priceBook = Self.read("priceBook") ?? .default
@@ -962,6 +967,26 @@ enum WorkOrderError: LocalizedError {
         guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
         return ClaudeClient(apiKey: key, model: claudeModel.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
     }
+    /// The AI for the concept and the layout: the same engine as `claudeClient`, with the model picked on the
+    /// «Дизайн» step first and the other models behind it. A key of Anthropic itself runs Claude models only.
+    private var designEngine: (any AIEngine)? {
+        if let base = AIServerConfig.baseURL { return ServerAIClient(base: base, designModel: designModel.rawValue) }
+        guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
+        if ClaudeClient.isOpenRouterKey(key) {
+            return ClaudeClient(apiKey: key, model: designModel.rawValue, workspaceID: nil, fallbacks: designModel.fallbacks)
+        }
+        return ClaudeClient(apiKey: key, model: designModel.anthropicID ?? claudeModel.rawValue, workspaceID: ClaudeClient.currentWorkspaceID)
+    }
+
+    /// Whether the picks on the «Дизайн» step reach the AI: (design, render). An older server or another gateway
+    /// chooses by itself; a key of Anthropic runs only the Claude models.
+    var modelChoiceWorks: (design: Bool, render: Bool) {
+        if AIServerConfig.baseURL != nil { return (!aiCapabilities.designModels.isEmpty, !aiCapabilities.renderModels.isEmpty) }
+        guard usesClaude, let key = ClaudeClient.currentKey else { return (false, false) }
+        if ClaudeClient.isOpenRouterKey(key) { return (true, true) }
+        return (designModel.anthropicID != nil, false)
+    }
+
     /// Some AI answers now: the server or a key on this iPhone.
     var aiAvailable: Bool { claudeClient != nil }
     var usesAIServer: Bool { AIServerConfig.baseURL != nil }
@@ -1128,8 +1153,12 @@ enum WorkOrderError: LocalizedError {
 
     // MARK: Pictures: photoreal render of the exact 3D model, pictures by description
 
-    /// Picture engines on the server, in its order (the first answers when no engine is chosen).
-    var imageEngines: [ImageEngine] { aiCapabilities.imageEngines }
+    /// Picture engines on the server, in its order (the first answers when no engine is chosen),
+    /// and the render models it offers — so the owner's comparison covers the three choices too.
+    var imageEngines: [ImageEngine] {
+        let engines = aiCapabilities.imageEngines
+        return engines + aiCapabilities.renderModels.filter { choice in !engines.contains { $0.id == choice.id } }
+    }
 
     /// Something can turn the exact 3D render into a photo: the server, or a key in the owner's debug build.
     var photorealAvailable: Bool {
@@ -1145,19 +1174,22 @@ enum WorkOrderError: LocalizedError {
     }
 
     /// Photoreal version of an image (the exact 3D render or a photo of the site).
-    /// `engine`: nil — the server's first engine, the next one when it fails; an engine id — only that engine (owner comparison).
+    /// `engine`: nil — the render model picked on the «Дизайн» step first, the next engine when it fails;
+    /// an engine id — only that engine (owner comparison).
     func photorealRender(_ image: UIImage, prompt: String, engine: String? = nil) async throws -> RenderedImage {
-        if let base = AIServerConfig.baseURL, !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty {
+        if let base = AIServerConfig.baseURL, !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || !aiCapabilities.renderModels.isEmpty {
             // A server before 1.3 knows only "flux" and "gpt".
-            let chosen = engine ?? (aiCapabilities.imageEngines.isEmpty ? aiCapabilities.imageEdit.first ?? "auto" : "auto")
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen)
+            let chosen = engine ?? (aiCapabilities.imageEngines.isEmpty && aiCapabilities.renderModels.isEmpty ? aiCapabilities.imageEdit.first ?? "auto" : "auto")
+            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen, prefer: engine == nil ? renderModel.engineID : nil)
             track("photoreal_server")
             registerMeaningfulAction()
             return result
         }
-        // The user's own OpenRouter key on this iPhone.
+        // The user's own OpenRouter key on this iPhone: the picked model first.
         if let key = OpenRouterImageClient.configuredKey {
-            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: image)
+            // A given engine (owner comparison) runs alone; otherwise the picked model, then the others.
+            let order = engine.map { [$0.hasPrefix("openrouter:") ? String($0.dropFirst("openrouter:".count)) : $0] } ?? renderModel.order
+            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: image, models: order)
             track("photoreal_openrouter")
             registerMeaningfulAction()
             return result
@@ -1230,10 +1262,14 @@ enum WorkOrderError: LocalizedError {
     }
 
     private func aiDesign(for plan: FloorPlan, planImage: UIImage?, purpose: String, request: String) async throws -> DesignProposal {
-        guard let claude = claudeClient else { throw ClaudeError.noKey }
+        guard let claude = designEngine else { throw ClaudeError.noKey }
+        let picked = designModel
         func ask(_ text: String) async throws -> DesignProposal {
-            let data = try await claude.structured(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: text, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна: мебель и оборудование с привязками к стенам, отделка, свет и бюджет", schema: ClaudePrompts.designSchema, maxTokens: 16000)
-            return try DesignComposer.proposal(from: data, plan: plan, purpose: purpose)
+            let answer = try await claude.structuredAnswer(system: ClaudePrompts.designSystem, turns: [ClaudeTurn(role: .user, text: text, image: planImage)], toolName: "design_proposal", toolDescription: "Концепция дизайна: мебель и оборудование с привязками к стенам, отделка, свет и бюджет", schema: ClaudePrompts.designSchema, maxTokens: 16000)
+            var proposal = try DesignComposer.proposal(from: answer.data, plan: plan, purpose: purpose)
+            // Which model made it: the one that answered, or the picked one when the engine does not say.
+            proposal.designModel = answer.model ?? (modelChoiceWorks.design ? picked.rawValue : nil)
+            return proposal
         }
         var proposal = try await ask(request)
         if proposal.furniture.isEmpty {

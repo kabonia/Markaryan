@@ -37,5 +37,9 @@ async function withFallback(task, { needsVision = false, needsImages = false } =
 }
 
 export const chat = (params) => withFallback((api) => api.chat(params), { needsVision: params.messages.some((m) => m.image) });
-export const json = (params) => withFallback((api) => api.json(params), { needsVision: params.messages.some((m) => m.image) });
+/** `params.model` — the model the app picked (OpenRouter only); `params.meta` receives the provider and the model that answered. */
+export const json = (params) => withFallback((api, name) => {
+  if (params.meta) params.meta.provider = name;
+  return api.json(params);
+}, { needsVision: params.messages.some((m) => m.image) });
 export const generateImage = (params) => withFallback((api) => api.generateImage(params), { needsImages: true });

@@ -228,6 +228,8 @@ struct DesignProposal: Codable, Identifiable {
     var presentation: SavedPresentation? = nil
     /// Last time the furniture was moved by hand; a presentation made before it is out of date.
     var editedAt: Date? = nil
+    /// The AI model that made the concept (OpenRouter id, or the provider); nil — the built-in designer or before 1.3.
+    var designModel: String? = nil
 
     /// One English sentence about all surfaces — added to every image prompt so they come out precise.
     var finishesEnglish: String {
@@ -240,7 +242,7 @@ struct DesignProposal: Codable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation, editedAt
+        case id, createdAt, title, style, summary, roomPurpose, zones, furniture, palette, materials, lighting, tips, budgetMin, budgetMax, renderPrompt, renderPromptEnglish, floor, walls, ceiling, roomKind, layoutVersion, layoutNotes, presentation, editedAt, designModel
     }
 
     init(from decoder: Decoder) throws {
@@ -270,6 +272,7 @@ struct DesignProposal: Codable, Identifiable {
         layoutNotes = (try? c.decode([String].self, forKey: .layoutNotes)) ?? []
         presentation = try? c.decode(SavedPresentation.self, forKey: .presentation)
         editedAt = try? c.decode(Date.self, forKey: .editedAt)
+        designModel = try? c.decode(String.self, forKey: .designModel)
     }
 }
 

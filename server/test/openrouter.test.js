@@ -108,6 +108,15 @@ test('OpenRouter through the server', async (t) => {
   assert.deepEqual(r.json, { title: 'Студия', items: [{ name: 'Диван' }] });
   assert.equal(lastCall().body.response_format.type, 'json_object');
 
+  // The model picked in the app answers first and the server says which model answered. On another gateway only
+  // its own configured models can be picked; anything else is ignored.
+  r = await (await post('/v1/ai/json', { name: 'design', schema, model: 'openai/gpt-6.2-astra', messages: [{ role: 'user', text: 'план' }] })).json();
+  assert.equal(lastCall().body.model, 'openai/gpt-6.2-astra');
+  assert.equal(r.model, 'openai/gpt-6.2-astra');
+  r = await (await post('/v1/ai/json', { name: 'design', schema, model: 'anthropic/claude-sonnet-5.5', messages: [{ role: 'user', text: 'план' }] })).json();
+  assert.equal(lastCall().body.model, 'anthropic/claude-opus-5.5');
+  assert.equal(r.model, 'anthropic/claude-opus-5.5');
+
   // No credits on OpenRouter: the next provider (Yandex) answers.
   r = await (await post('/v1/ai/chat', { messages: [{ role: 'user', text: 'NOCREDIT' }] })).json();
   assert.equal(r.text, 'yandex-answer');
@@ -116,14 +125,16 @@ test('OpenRouter through the server', async (t) => {
   const caps = await (await fetch(`${base}/v1/ai/capabilities`, { headers })).json();
   assert.deepEqual(caps.providers, ['openrouter', 'yandex']);
   assert.equal(caps.imageGenerate, true);
+  assert.deepEqual(caps.designModels, [], 'model ids of openrouter.ai are not offered for another gateway');
 });
 
 test('OpenRouter-only fields go to openrouter.ai', async (t) => {
   const original = { fetch: globalThis.fetch, base: config.openrouter.base, models: config.openrouter.models, effort: config.openrouter.effort };
   const sent = [];
   globalThis.fetch = async (url, options) => {
-    sent.push({ url, body: JSON.parse(options.body) });
-    return new Response(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content: '{"ok":true}' } }] }), { status: 200 });
+    const body = JSON.parse(options.body);
+    sent.push({ url, body });
+    return new Response(JSON.stringify({ model: body.model, choices: [{ finish_reason: 'stop', message: { content: '{"ok":true}' } }] }), { status: 200 });
   };
   t.after(() => {
     globalThis.fetch = original.fetch;
@@ -144,4 +155,25 @@ test('OpenRouter-only fields go to openrouter.ai', async (t) => {
   call = sent.at(-1);
   assert.deepEqual(call.body.reasoning, { effort: 'high', exclude: true });
   assert.deepEqual(call.body.provider, { require_parameters: true, data_collection: 'deny' });
+
+  // A design model picked in the app: first, the configured chain behind it (at most three fallbacks).
+  const meta = {};
+  assert.deepEqual(await openrouter.json({ system: 's', messages: [{ role: 'user', text: 'x' }], schema, model: 'anthropic/claude-sonnet-5.5', meta }), { ok: true });
+  call = sent.at(-1);
+  assert.equal(call.body.model, 'anthropic/claude-sonnet-5.5');
+  assert.deepEqual(call.body.models, ['anthropic/claude-opus-5.5', 'openai/gpt-6.2-astra', 'google/gemini-4-carbon']);
+  assert.equal(meta.model, 'anthropic/claude-sonnet-5.5', 'the model that answered is reported');
+  assert.deepEqual(openrouter.modelOrder('google/gemini-4-carbon'), ['google/gemini-4-carbon', 'anthropic/claude-opus-5.5', 'openai/gpt-6.2-astra']);
+  assert.deepEqual(openrouter.modelOrder('someone/expensive-model'), ['anthropic/claude-opus-5.5', 'openai/gpt-6.2-astra', 'google/gemini-4-carbon'], 'only allowed models can be picked');
+  assert.deepEqual(openrouter.modelOrder(undefined), ['anthropic/claude-opus-5.5', 'openai/gpt-6.2-astra', 'google/gemini-4-carbon']);
+});
+
+test('design models offered to the app', (t) => {
+  const original = { base: config.openrouter.base, apiKey: config.openrouter.apiKey };
+  t.after(() => Object.assign(config.openrouter, original));
+  Object.assign(config.openrouter, { base: 'https://openrouter.ai/api/v1', apiKey: 'sk-or-test' });
+  assert.deepEqual(openrouter.designChoices().map((m) => m.title), ['Claude Opus 5.5', 'Claude Sonnet 5.5', 'GPT‑6.2 Astra', 'Gemini 4 Carbon']);
+  assert.equal(openrouter.designChoices()[1].id, 'anthropic/claude-sonnet-5.5');
+  Object.assign(config.openrouter, { apiKey: '' });
+  assert.deepEqual(openrouter.designChoices(), []);
 });

@@ -2,10 +2,12 @@ name: TestFlight — сборка и загрузка
 
 # Запуск: Actions → «TestFlight — сборка и загрузка» → Run workflow.
 # Номер сборки = номер запуска этого workflow, версия — MARKETING_VERSION из проекта.
-# Нужны секреты репозитория (Settings → Secrets and variables → Actions):
-#   ASC_KEY_ID, ASC_ISSUER_ID — ключ App Store Connect API (роль Admin: подпись в облаке Apple);
-#   ASC_KEY_P8 — содержимое файла AuthKey_….p8 целиком;
-#   AI_SERVER_PLIST — содержимое настоящего Markaryan/AIServer.plist целиком.
+# Нужны секреты репозитория (Settings → Secrets and variables → Actions → Repository secrets):
+#   ASC_KEY_ID, ASC_ISSUER_ID — командный ключ App Store Connect API (Team Key, роль Admin:
+#     Xcode сам создаёт сертификаты и профили в облаке Apple);
+#   ASC_KEY_P8 — текст файла AuthKey_….p8 целиком (можно в base64);
+#   AI_SERVER_PLIST — текст настоящего Markaryan/AIServer.plist целиком (можно в base64).
+# Значения ключей в журнал не выводятся.
 
 on:
   workflow_dispatch:
@@ -23,6 +25,7 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
       AI_SERVER_PLIST: ${{ secrets.AI_SERVER_PLIST }}
+      BUNDLE_ID: com.sochiart.markaryan
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
@@ -34,20 +37,123 @@ jobs:
             if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
           done
           if [ -n "$missing" ]; then
-            echo "::error::Не заданы секреты репозитория:$missing (Settings → Secrets and variables → Actions)."
+            echo "::error::Не заданы секреты репозитория:$missing (Settings → Secrets and variables → Actions → Repository secrets)."
             exit 1
           fi
 
       - name: Настоящий AIServer.plist из секрета
         run: |
-          printf '%s\n' "$AI_SERVER_PLIST" > Markaryan/AIServer.plist
-          plutil -lint Markaryan/AIServer.plist
+          file=Markaryan/AIServer.plist
+          printf '%s\n' "$AI_SERVER_PLIST" | tr -d '\r' > "$file"
+          # Можно хранить и в base64.
+          if ! grep -q "<plist" "$file"; then printf '%s' "$AI_SERVER_PLIST" | base64 --decode > "$file"; fi
+          plutil -lint "$file"
+          /usr/libexec/PlistBuddy -c "Print :AI_SERVER_URL" "$file" >/dev/null || { echo "::error::В AIServer.plist нет AI_SERVER_URL."; exit 1; }
 
       - name: Ключ App Store Connect API
         run: |
+          kid=$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')
+          iss=$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')
+          echo "::add-mask::$kid"
+          echo "::add-mask::$iss"
           mkdir -p "$RUNNER_TEMP/asc"
-          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
-          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+          key="$RUNNER_TEMP/asc/AuthKey_$kid.p8"
+          python3 - "$key" <<'PY'
+          import base64, os, sys
+          s = os.environ.get("ASC_KEY_P8", "").replace("\r", "")
+          if "BEGIN" not in s:  # можно хранить и в base64
+              try:
+                  s = base64.b64decode("".join(s.split())).decode()
+              except Exception:
+                  pass
+          if "\\n" in s and s.count("\n") < 2:  # вставили с «\n» вместо переводов строк
+              s = s.replace("\\n", "\n")
+          s = s.strip() + "\n"
+          with open(sys.argv[1], "w") as f:
+              f.write(s)
+          lines = [l.strip() for l in s.strip().split("\n")]
+          print("Файл .p8: первая строка BEGIN PRIVATE KEY —", "да" if lines[0] == "-----BEGIN PRIVATE KEY-----" else "НЕТ")
+          print("Файл .p8: последняя строка END PRIVATE KEY —", "да" if lines[-1] == "-----END PRIVATE KEY-----" else "НЕТ")
+          PY
+          if [[ "$kid" =~ ^[A-Z0-9]{10}$ ]]; then echo "Key ID: 10 букв и цифр — да"; else echo "::warning::Key ID не похож на Key ID (нужно 10 заглавных букв и цифр, колонка «Key ID» в списке ключей)."; fi
+          if [[ "$iss" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then echo "Issuer ID: вида xxxxxxxx-xxxx-… — да"; else echo "::warning::Issuer ID не похож на Issuer ID (вида 69a6de7e-xxxx-xxxx-xxxx-xxxxxxxxxxxx, вверху страницы Team Keys)."; fi
+          {
+            echo "ASC_KID=$kid"
+            echo "ASC_ISS=$iss"
+            echo "ASC_KEY_PATH=$key"
+          } >> "$GITHUB_ENV"
+
+      - name: Вход в App Store Connect этим ключом
+        run: |
+          # Короткий токен (10 минут) из ключа — так же входит и Xcode. Токен в журнал не выводится.
+          token=$(python3 - <<'PY'
+          import base64, json, os, subprocess, sys, time
+          def b64(b): return base64.urlsafe_b64encode(b).rstrip(b"=")
+          now = int(time.time())
+          head = b64(json.dumps({"alg": "ES256", "kid": os.environ["ASC_KID"], "typ": "JWT"}, separators=(",", ":")).encode())
+          body = b64(json.dumps({"iss": os.environ["ASC_ISS"], "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"}, separators=(",", ":")).encode())
+          msg = head + b"." + body
+          sig = subprocess.run(["openssl", "dgst", "-sha256", "-sign", os.environ["ASC_KEY_PATH"]], input=msg, capture_output=True)
+          if sig.returncode != 0:
+              sys.exit(3)
+          der = sig.stdout
+          i = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7F)
+          def number(i):
+              n = der[i + 1]
+              return der[i + 2:i + 2 + n].lstrip(b"\0").rjust(32, b"\0"), i + 2 + n
+          r, i = number(i)
+          s, _ = number(i)
+          print((msg + b"." + b64(r + s)).decode())
+          PY
+          ) || { echo "::error::Файл .p8 не читается как ключ: вставьте в ASC_KEY_P8 текст файла AuthKey_….p8 целиком, со строками BEGIN и END."; exit 1; }
+          echo "::add-mask::$token"
+          api() { curl -sS -o "$RUNNER_TEMP/asc/answer.json" -w '%{http_code}' -H "Authorization: Bearer $token" "https://api.appstoreconnect.apple.com/v1/$1"; }
+          why() { python3 -c 'import json,sys; e=(json.load(open(sys.argv[1])).get("errors") or [{}])[0]; print(" ", e.get("code",""), "—", e.get("title",""), e.get("detail",""))' "$RUNNER_TEMP/asc/answer.json" 2>/dev/null || true; }
+          code=$(api "apps?filter%5BbundleId%5D=$BUNDLE_ID&fields%5Bapps%5D=name,bundleId")
+          echo "Ответ App Store Connect: HTTP $code"
+          if [ "$code" = 401 ]; then
+            why
+            echo "::error::Apple не принял ключ. Key ID, Issuer ID и файл .p8 должны быть от одного и того же ключа, и ключ — командный (Users and Access → Integrations → App Store Connect API → Team Keys), не личный (Individual Keys)."
+            exit 1
+          elif [ "$code" = 403 ]; then
+            why
+            echo "::error::Ключ принят, но у него не хватает прав. Нужна роль Admin (колонка Access в списке ключей)."
+            exit 1
+          elif [ "$code" != 200 ]; then
+            why
+            echo "::error::App Store Connect ответил HTTP $code."
+            exit 1
+          fi
+          app=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1]))["data"]; print(d[0]["attributes"]["name"] if d else "")' "$RUNNER_TEMP/asc/answer.json")
+          if [ -z "$app" ]; then
+            # Из какой команды ключ — только «да/нет» и количество, без названий чужих приложений (журнал публичный).
+            api "bundleIds?limit=200&fields%5BbundleIds%5D=identifier,seedId" >/dev/null
+            cp "$RUNNER_TEMP/asc/answer.json" "$RUNNER_TEMP/asc/bundles.json"
+            api "apps?limit=200&fields%5Bapps%5D=bundleId" >/dev/null
+            python3 - "$RUNNER_TEMP/asc/bundles.json" "$RUNNER_TEMP/asc/answer.json" <<'PY'
+          import json, re, sys
+          def data(path):
+              try:
+                  return json.load(open(path)).get("data") or []
+              except Exception:
+                  return []
+          bundles, apps = data(sys.argv[1]), data(sys.argv[2])
+          teams = {b["attributes"].get("seedId") for b in bundles if b.get("attributes")}
+          ours = lambda s: re.search(r"sochiart|markaryan", s or "", re.I)
+          print("Команда ключа — QFKA6588C4:", "да" if "QFKA6588C4" in teams else ("нет" if teams else "не удалось узнать"))
+          print("Приложений в команде ключа:", len(apps), "; идентификаторов:", len(bundles))
+          print("Похожие на АртСтрой:", ", ".join(sorted({a["attributes"]["bundleId"] for a in apps if ours(a["attributes"].get("bundleId"))} | {b["attributes"]["identifier"] for b in bundles if ours(b["attributes"].get("identifier"))})) or "нет")
+          PY
+            echo "::error::Ключ рабочий, но в его команде нет приложения $BUNDLE_ID. Похоже, ключ создан в другой команде (аккаунте разработчика), а проект подписывается командой QFKA6588C4."
+            exit 1
+          fi
+          echo "Приложение в App Store Connect: $app ($BUNDLE_ID) — найдено"
+          code=$(api "bundleIds?filter%5Bidentifier%5D=$BUNDLE_ID&fields%5BbundleIds%5D=identifier,seedId")
+          if [ "$code" = 200 ]; then
+            python3 -c 'import json,sys; [print("Идентификатор приложения:", b["attributes"]["identifier"], "— команда", b["attributes"]["seedId"]) for b in json.load(open(sys.argv[1]))["data"]]' "$RUNNER_TEMP/asc/answer.json"
+          else
+            echo "Идентификаторы приложений прочитать не удалось (HTTP $code) — у ключа, вероятно, не роль Admin."; why
+          fi
 
       - name: Тесты калькуляторов и планировок
         run: sh Tests/run.sh
@@ -60,8 +166,8 @@ jobs:
             -archivePath "$RUNNER_TEMP/Markaryan.xcarchive" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KID" \
+            -authenticationKeyIssuerID "$ASC_ISS" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             archive | tail -60
 
@@ -86,8 +192,8 @@ jobs:
             -exportPath "$RUNNER_TEMP/export" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -40
+            -authenticationKeyID "$ASC_KID" \
+            -authenticationKeyIssuerID "$ASC_ISS" | tail -40
           version=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/Markaryan.xcarchive/Info.plist")
           echo "АртСтрой $version ($BUILD_NUMBER) загружен в App Store Connect. В TestFlight появится после обработки Apple, обычно за 5–30 минут." >> "$GITHUB_STEP_SUMMARY"
 

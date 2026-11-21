@@ -6,9 +6,14 @@ protocol AIEngine {
     func stream(system: String, turns: [ClaudeTurn], maxTokens: Int) -> AsyncThrowingStream<String, Error>
     func complete(system: String, turns: [ClaudeTurn], maxTokens: Int) async throws -> String
     func structured(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> Data
+    /// The same as `structured`, plus the model that really answered when the engine knows it (it may be a fallback).
+    func structuredAnswer(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> (data: Data, model: String?)
 }
 
 extension AIEngine {
+    func structuredAnswer(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> (data: Data, model: String?) {
+        (try await structured(system: system, turns: turns, toolName: toolName, toolDescription: toolDescription, schema: schema, maxTokens: maxTokens), nil)
+    }
     func stream(system: String, turns: [ClaudeTurn]) -> AsyncThrowingStream<String, Error> { stream(system: system, turns: turns, maxTokens: 2000) }
     func complete(system: String, turns: [ClaudeTurn]) async throws -> String { try await complete(system: system, turns: turns, maxTokens: 1500) }
     func structured(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any]) async throws -> Data {
@@ -60,6 +65,12 @@ struct ImageEngine: Decodable, Hashable, Identifiable {
     let title: String
 }
 
+/// A text model the server offers for the design (Claude Opus 5.5…).
+struct AIModelInfo: Decodable, Hashable, Identifiable {
+    let id: String
+    let title: String
+}
+
 /// A photoreal picture and the engine that made it.
 struct RenderedImage {
     let image: UIImage
@@ -77,9 +88,12 @@ struct AICapabilities: Decodable {
     /// Picture engines in the server's order: the first answers when no engine is chosen.
     var imageEngines: [ImageEngine] = []
     var providers: [String] = []
+    /// Models the user may pick on the «Дизайн» step (empty — an older server or no OpenRouter: it chooses itself).
+    var designModels: [AIModelInfo] = []
+    var renderModels: [ImageEngine] = []
 
     init() {}
-    private enum CodingKeys: String, CodingKey { case chat, vision, imageGenerate, imageEdit, imageEngines, providers }
+    private enum CodingKeys: String, CodingKey { case chat, vision, imageGenerate, imageEdit, imageEngines, providers, designModels, renderModels }
     /// Lenient: an older server without some fields still works.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -89,24 +103,28 @@ struct AICapabilities: Decodable {
         imageEdit = (try? c.decode([String].self, forKey: .imageEdit)) ?? []
         imageEngines = (try? c.decode([ImageEngine].self, forKey: .imageEngines)) ?? []
         providers = (try? c.decode([String].self, forKey: .providers)) ?? []
+        designModels = (try? c.decode([AIModelInfo].self, forKey: .designModels)) ?? []
+        renderModels = (try? c.decode([ImageEngine].self, forKey: .renderModels)) ?? []
     }
 }
 
 /// Client of the АртСтрой AI server (GigaChat / YandexGPT behind it, keys only on the server).
 struct ServerAIClient: AIEngine {
     let base: URL
+    /// The model the user picked for the design (OpenRouter id): the server tries it first. Nil — the server's order.
+    var designModel: String? = nil
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 200
-        configuration.timeoutIntervalForResource = 320
+        configuration.timeoutIntervalForRequest = 300 // each request sets its own wait; renders may need up to 5 minutes
+        configuration.timeoutIntervalForResource = 330
         return URLSession(configuration: configuration)
     }()
 
-    private func request(_ path: String, body: [String: Any]?, accept: String = "application/json") throws -> URLRequest {
+    private func request(_ path: String, body: [String: Any]?, accept: String = "application/json", timeout: TimeInterval = 200) throws -> URLRequest {
         var request = URLRequest(url: base.appendingPathComponent(path))
         request.httpMethod = body == nil ? "GET" : "POST"
-        request.timeoutInterval = 200
+        request.timeoutInterval = timeout
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue(accept, forHTTPHeaderField: "Accept")
@@ -134,8 +152,8 @@ struct ServerAIClient: AIEngine {
         }
     }
 
-    private func post(_ path: String, _ body: [String: Any]) async throws -> [String: Any] {
-        let (data, response) = try await Self.session.data(for: try request(path, body: body))
+    private func post(_ path: String, _ body: [String: Any], timeout: TimeInterval = 200) async throws -> [String: Any] {
+        let (data, response) = try await Self.session.data(for: try request(path, body: body, timeout: timeout))
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200...299).contains(status) else { throw Self.failure(data, status: status) }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ClaudeError.badResponse }
@@ -176,15 +194,21 @@ struct ServerAIClient: AIEngine {
     }
 
     func structured(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> Data {
-        let body: [String: Any] = ["system": system, "messages": Self.messages(turns), "name": toolName, "description": toolDescription, "schema": schema, "maxTokens": maxTokens]
+        try await structuredAnswer(system: system, turns: turns, toolName: toolName, toolDescription: toolDescription, schema: schema, maxTokens: maxTokens).data
+    }
+
+    /// The server says which model answered (the picked one or its fallback); an older server says nothing.
+    func structuredAnswer(system: String, turns: [ClaudeTurn], toolName: String, toolDescription: String, schema: [String: Any], maxTokens: Int) async throws -> (data: Data, model: String?) {
+        var body: [String: Any] = ["system": system, "messages": Self.messages(turns), "name": toolName, "description": toolDescription, "schema": schema, "maxTokens": maxTokens]
+        if let designModel { body["model"] = designModel }
+        func answer(_ json: [String: Any]) throws -> (data: Data, model: String?) {
+            guard let result = json["json"] else { throw ClaudeError.badResponse }
+            return (try JSONSerialization.data(withJSONObject: result), json["model"] as? String)
+        }
         do {
-            let json = try await post("v1/ai/json", body)
-            guard let result = json["json"] else { throw ClaudeError.badResponse }
-            return try JSONSerialization.data(withJSONObject: result)
+            return try answer(try await post("v1/ai/json", body))
         } catch let error as URLError where [.networkConnectionLost, .timedOut].contains(error.code) {
-            let json = try await post("v1/ai/json", body) // one retry on a dropped mobile connection
-            guard let result = json["json"] else { throw ClaudeError.badResponse }
-            return try JSONSerialization.data(withJSONObject: result)
+            return try answer(try await post("v1/ai/json", body)) // one retry on a dropped mobile connection
         }
     }
 
@@ -199,7 +223,8 @@ struct ServerAIClient: AIEngine {
 
     /// Photoreal edit of an image (the exact 3D render or a photo) on the server.
     /// `engine`: "auto" — the server's engines in order, the next one when one fails; an engine id — only that engine.
-    func editImage(_ image: UIImage, prompt: String, engine: String = "auto") async throws -> RenderedImage {
+    /// `prefer`: with "auto", the engine the user picked goes first (an older server ignores it).
+    func editImage(_ image: UIImage, prompt: String, engine: String = "auto", prefer: String? = nil) async throws -> RenderedImage {
         let maxSide: CGFloat = 1536
         let scale = min(1, maxSide / max(image.size.width, image.size.height))
         let size = CGSize(width: max(1, image.size.width * scale), height: max(1, image.size.height * scale))
@@ -207,7 +232,10 @@ struct ServerAIClient: AIEngine {
         let resized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
         guard let jpeg = resized.jpegData(compressionQuality: 0.88) else { throw ClaudeError.api("Не удалось подготовить изображение.") }
         let shape = Self.shape(of: image)
-        let json = try await post("v1/ai/image-edit", ["image": jpeg.base64EncodedString(), "prompt": prompt, "engine": engine, "size": shape.size, "aspectRatio": shape.ratio])
+        var body: [String: Any] = ["image": jpeg.base64EncodedString(), "prompt": prompt, "engine": engine, "size": shape.size, "aspectRatio": shape.ratio]
+        if let prefer { body["prefer"] = prefer }
+        // Seedream takes about two minutes for a frame, a fallback after it a bit more.
+        let json = try await post("v1/ai/image-edit", body, timeout: 300)
         guard let base64 = json["image"] as? String, let data = Data(base64Encoded: base64), let result = UIImage(data: data) else { throw ClaudeError.badResponse }
         let id = json["engine"] as? String ?? engine
         return RenderedImage(image: result, engine: id, title: json["title"] as? String ?? id)

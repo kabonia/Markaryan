@@ -38,12 +38,36 @@ function failure(status, body) {
   return new ApiError(502, `OpenRouter: ${message || `ошибка ${status}`}`);
 }
 
+const DESIGN_TITLES = {
+  'anthropic/claude-opus-5.5': 'Claude Opus 5.5',
+  'anthropic/claude-sonnet-5.5': 'Claude Sonnet 5.5',
+  'openai/gpt-6.2-astra': 'GPT‑6.2 Astra',
+  'google/gemini-4-carbon': 'Gemini 4 Carbon',
+};
+
+/** Models the app may choose for the concept and the layout (only with OpenRouter itself, whose ids they are). */
+export function designChoices() {
+  if (!config.openrouter.apiKey || !isOpenRouter()) return [];
+  return config.openrouter.designChoices.map((id) => ({ id, title: DESIGN_TITLES[id] || id }));
+}
+
+/**
+ * Models in the order to try: the one the app picked (one of the configured models, or of the design choices on
+ * OpenRouter) first, then the configured chain. OpenRouter takes up to three fallbacks; anything else is ignored.
+ */
+export function modelOrder(requested) {
+  const configured = config.openrouter.models;
+  const allowed = typeof requested === 'string'
+    && (configured.includes(requested) || (isOpenRouter() && config.openrouter.designChoices.includes(requested)));
+  return (allowed ? [requested, ...configured.filter((model) => model !== requested)] : configured).slice(0, 4);
+}
+
 /**
  * Common request body. All four flagship models think before answering (reasoning cannot be switched off),
  * so the reply gets its own budget on top of the reasoning; the reasoning text itself is not sent back.
  */
-function body({ system, messages, maxTokens, effort, requireParameters = false }) {
-  const [primary, ...fallbacks] = config.openrouter.models;
+function body({ system, messages, maxTokens, effort, requireParameters = false, model }) {
+  const [primary, ...fallbacks] = modelOrder(model);
   const result = {
     model: primary,
     messages: toMessages(system, messages),
@@ -100,21 +124,25 @@ export async function chat({ system, messages, maxTokens = 2000, onDelta }) {
   return full;
 }
 
-/** Structured answer: the JSON schema is enforced by the model; if a route rejects the schema, plain JSON is repaired. */
-export async function json({ system, messages, schema, name = 'result', maxTokens = 8000 }) {
+/**
+ * Structured answer: the JSON schema is enforced by the model; if a route rejects the schema, plain JSON is repaired.
+ * `model` — the model the app picked (see modelOrder); `meta.model` receives the model that really answered.
+ */
+export async function json({ system, messages, schema, name = 'result', maxTokens = 8000, model, meta }) {
   const strictSystem = `${system}\n\nОтветь ТОЛЬКО одним JSON‑объектом по схеме, без текста вокруг.`;
   const strict = {
-    ...body({ system: strictSystem, messages, maxTokens, effort: 'high', requireParameters: true }),
+    ...body({ system: strictSystem, messages, maxTokens, effort: 'high', requireParameters: true, model }),
     response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: strictSchema(schema) } },
   };
   let response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(strict) });
   if (response.status === 400) {
     await readJSON(response);
-    const loose = { ...body({ system: strictSystem, messages, maxTokens, effort: 'high' }), response_format: { type: 'json_object' } };
+    const loose = { ...body({ system: strictSystem, messages, maxTokens, effort: 'high', model }), response_format: { type: 'json_object' } };
     response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(loose) });
   }
   const result = await readJSON(response);
   if (!response.ok) throw failure(response.status, result);
+  if (meta && typeof result?.model === 'string') meta.model = result.model;
   const choice = result?.choices?.[0];
   const content = choice?.message?.content;
   if (!content) {

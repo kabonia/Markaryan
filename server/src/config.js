@@ -26,6 +26,13 @@ export const config = {
     /** Image models for the photoreal render, in order: the first answers, the next ones step in when it fails. */
     imageModels: (env.OPENROUTER_IMAGE_MODELS || 'google/gemini-3-pro-image,openai/gpt-image-2.6-sunburst,black-forest-labs/flux-3-image')
       .split(',').map((s) => s.trim()).filter(Boolean),
+    /** Models the app offers on the «Дизайн» step for the concept and the layout: the chosen one answers first,
+     *  the models above stay as fallbacks. All of them work with the same OpenRouter key. */
+    designChoices: (env.OPENROUTER_DESIGN_CHOICES || 'anthropic/claude-opus-5.5,anthropic/claude-sonnet-5.5,openai/gpt-6.2-astra,google/gemini-4-carbon')
+      .split(',').map((s) => s.trim()).filter(Boolean),
+    /** Image models the app offers for the 3D render: the chosen one draws first, the engines below stay as fallbacks. */
+    renderChoices: (env.OPENROUTER_RENDER_CHOICES || 'google/gemini-3-pro-image,openai/gpt-image-2.6-sunburst,bytedance-seed/seedream-5-0-pro')
+      .split(',').map((s) => s.trim()).filter(Boolean),
   },
 
   /** Picture engines in order: openrouter (its image models), openai, bfl — each only when its key is set. */

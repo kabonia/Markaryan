@@ -135,6 +135,7 @@ enum DesignComposer {
         base.layoutNotes = []
         base.presentation = nil
         base.editedAt = nil
+        base.designModel = nil // the app records which model answered, not the answer itself
         if let chosen = RoomKind.keyword(purpose), RoomKind.keyword(base.roomPurpose) != chosen { base.roomPurpose = purpose }
         if base.roomPurpose.isEmpty { base.roomPurpose = purpose }
         guard !brief.items.isEmpty else { return base.placed(in: plan) }
