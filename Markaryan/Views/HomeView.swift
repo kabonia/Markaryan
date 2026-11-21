@@ -14,7 +14,6 @@ struct HomeView: View {
         }
     }
 
-    private let quickCalculators: [CalculationKind] = [.concreteMix, .tiles, .paint, .screed, .masonry, .rebar, .plaster, .drywall, .roof, .fence]
 
     var body: some View {
         ScrollView {
@@ -32,50 +31,25 @@ struct HomeView: View {
                     HomeSectionHeader(eyebrow: "Популярное", title: "Инструменты")
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         Button { store.tab = 2 } label: {
-                            HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан лидаром, обмеры, стиль и фотореалистичный рендер по точной геометрии.", accent: Theme.orange, badge: "ХИТ")
-                        }
-                        NavigationLink { PhotoDesignView() } label: {
-                            HomeToolCard(icon: "camera.aperture", title: "Дизайн по фото", text: "Сфотографируйте кухню или санузел — ИИ покажет новый дизайн за минуту.", accent: Theme.sky, badge: "LIVE")
+                            HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан, стиль и рендер по точной геометрии.", accent: Theme.orange, badge: "ХИТ")
                         }
                         Button { store.showAR = true } label: {
-                            HomeToolCard(icon: "viewfinder", title: "AR‑рулетка", text: "Длины, площадь и периметр камерой телефона — без рулетки.", accent: Theme.success)
+                            HomeToolCard(icon: "viewfinder", title: "AR‑рулетка", text: "Длины и площадь камерой телефона.", accent: Theme.success)
                         }
                         NavigationLink { PhotoCountView() } label: {
-                            HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.orangeSoft)
+                            HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает арматуру, трубы и доски на фото.", accent: Theme.orangeSoft)
                         }
                         NavigationLink { AIAssistantView(context: .general) } label: {
-                            HomeToolCard(icon: "sparkles", title: "СтройПомощник", text: "Ответит на любой вопрос о стройке и ремонте, разберёт смету и фото.", accent: Color(red: 0.68, green: 0.81, blue: 0.47))
-                        }
-                        NavigationLink { FullEstimateHubView() } label: {
-                            HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Color(red: 0.62, green: 0.70, blue: 0.95))
+                            HomeToolCard(icon: "sparkles", title: "СтройПомощник", text: "Ответит на вопрос о стройке и ремонте.", accent: Color(red: 0.68, green: 0.81, blue: 0.47))
                         }
                     }
                     .buttonStyle(PremiumCardPressStyle())
                     NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
-                        HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
+                        HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор и ландшафт — по фото или описанию.")
                     }
                     .buttonStyle(PremiumCardPressStyle())
                 }
                 .reveal(appeared, delay: 0.1)
-
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(alignment: .lastTextBaseline) {
-                        HomeSectionHeader(eyebrow: "За 10 секунд", title: "Калькуляторы")
-                        Spacer()
-                        Button("Все") { store.tab = 1 }.font(.subheadline.weight(.semibold))
-                    }
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(quickCalculators, id: \.self) { kind in
-                                NavigationLink { CalculatorView(kind: kind) } label: { HomeCalculatorChip(kind: kind) }
-                                    .buttonStyle(PremiumCardPressStyle())
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .padding(.horizontal, -20)
-                }
-                .reveal(appeared, delay: 0.15)
 
                 NavigationLink { ProjectHubView() } label: {
                     HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
@@ -101,18 +75,10 @@ struct HomeView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
-                    HomeSectionHeader(eyebrow: "АртСтрой", title: "Строим в Сочи с \(String(Brand.foundedYear)) года")
-                    HStack(spacing: 10) {
-                        HomeMetric(value: "\(Brand.yearsOnMarket)", caption: "лет опыта")
-                        HomeMetric(value: "\(Brand.completedObjects)+", caption: "объектов")
-                        HomeMetric(value: "\(store.floorPlans.count)", caption: "ваших комнат")
-                    }
-                    NavigationLink { PortfolioView() } label: {
-                        AppTabRow(icon: "building.2.fill", title: "Наши объекты", subtitle: "Гостиницы, жильё, рестораны — фото и состав работ")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { PortfolioView() } label: {
+                    AppTabRow(icon: "building.2.fill", title: "Объекты АртСтроя", subtitle: "Строим в Сочи с \(String(Brand.foundedYear)) года — фото и состав работ")
                 }
+                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
@@ -193,7 +159,7 @@ struct HomeHeroCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
                 Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
-                Text("Сфотографируйте комнату — ИИ покажет её в новом стиле. А сметы, замеры и контроль объекта — рядом.")
+                Text("Сфотографируйте комнату — ИИ покажет её в новом стиле.")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
                     Image(systemName: "camera.aperture")
@@ -207,7 +173,7 @@ struct HomeHeroCard: View {
             }
             .padding(22)
         }
-        .frame(maxWidth: .infinity, minHeight: 360, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: 300, alignment: .bottomLeading)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.07)))
         .onAppear { withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { glow = true } }
