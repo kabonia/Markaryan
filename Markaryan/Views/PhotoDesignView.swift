@@ -8,6 +8,9 @@ struct PhotoDesignView: View {
     @EnvironmentObject private var store: AppStore
     @State private var source: UIImage?
     @State private var results: [UIImage] = []
+    /// Which model drew each variant (the picked one, or the next one when it failed).
+    @State private var resultModels: [String] = []
+    @State private var showModels = false
     @State private var shown = 0
     @State private var room: PhotoDesignRoom = .kitchen
     @State private var mode: PhotoDesignMode = .redesign
@@ -34,6 +37,9 @@ struct PhotoDesignView: View {
                 sourceCard
                 if source != nil {
                     settings
+                    if store.photorealAvailable {
+                        AIModelsRow(value: store.renderModel.title, title: "Модель ИИ") { showModels = true }
+                    }
                     generateButton
                 }
                 if isLoading { loadingCard }
@@ -42,7 +48,7 @@ struct PhotoDesignView: View {
                 }
                 if let source, let current { resultCard(before: source, after: current) }
                 if !store.photorealAvailable {
-                    InfoNote(text: "Картинки ИИ работают через ключ OpenRouter: впишите OPENROUTER_API_KEY в AIServer.plist и пересоберите приложение.")
+                    InfoNote(text: "Дизайн по фото сейчас недоступен: картинки ИИ не подключены.")
                 }
             }
             .padding(20)
@@ -63,6 +69,7 @@ struct PhotoDesignView: View {
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
         .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Дизайн · \(room.title)") } }
+        .sheet(isPresented: $showModels) { NavigationStack { AIModelsView(showsDesign: false) }.presentationDetents([.medium, .large]) }
     }
 
     // MARK: Parts
@@ -195,7 +202,7 @@ struct PhotoDesignView: View {
             ProgressView().tint(Theme.sky)
             VStack(alignment: .leading, spacing: 3) {
                 Text("ИИ создаёт дизайн").font(.subheadline.weight(.semibold))
-                Text("Обычно 20–60 секунд. Не сворачивайте приложение.").font(.caption).foregroundStyle(Theme.muted)
+                Text(store.modelChoiceWorks.render && store.renderModel == .seedream ? "Seedream рисует 1–3 минуты. Не сворачивайте приложение." : "Обычно 20–60 секунд. Не сворачивайте приложение.").font(.caption).foregroundStyle(Theme.muted)
             }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
@@ -216,6 +223,9 @@ struct PhotoDesignView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .onTapGesture(count: 2) { opened = FloorPlanDetailView.PhotoSheetItem(image: after) }
             Text("Двигайте ползунок: слева — было, справа — стало. Двойное касание — на весь экран.").font(.caption2).foregroundStyle(Theme.muted)
+            if resultModels.indices.contains(shown) {
+                Label("Сделано: \(resultModels[shown])", systemImage: "cpu").font(.caption).foregroundStyle(Theme.muted)
+            }
             if results.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -260,6 +270,7 @@ struct PhotoDesignView: View {
     private func start(with image: UIImage) {
         source = image
         results = []
+        resultModels = []
         shown = 0
         error = nil
         saved = false
@@ -307,6 +318,7 @@ struct PhotoDesignView: View {
                 let result = try await store.photorealRender(base, prompt: prompt)
                 withAnimation(.snappy) {
                     results.append(result.image)
+                    resultModels.append(result.title)
                     shown = results.count - 1
                 }
                 store.track("photo_design")

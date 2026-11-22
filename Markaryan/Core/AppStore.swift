@@ -1217,13 +1217,13 @@ enum WorkOrderError: LocalizedError {
     /// FLUX.2 with a key in the owner's debug build.
     func pictureByDescription(_ prompt: String) async throws -> UIImage {
         if let base = AIServerConfig.baseURL, aiCapabilities.imageGenerate || !aiCapabilities.imageEngines.isEmpty {
-            let picture = try await ServerAIClient(base: base).generateImage(prompt: prompt)
+            let picture = try await ServerAIClient(base: base).generateImage(prompt: prompt, prefer: renderModel.engineID)
             track("picture_server")
             registerMeaningfulAction()
             return picture
         }
         if let key = OpenRouterImageClient.configuredKey {
-            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: nil)
+            let result = try await OpenRouterImageClient(apiKey: key).render(prompt: prompt, reference: nil, models: renderModel.order)
             track("picture_openrouter")
             registerMeaningfulAction()
             return result.image

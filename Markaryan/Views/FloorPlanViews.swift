@@ -616,19 +616,7 @@ struct FloorPlanDetailView: View {
 
     /// One quiet line with the AI models; the choice opens in its own window.
     private var modelsRow: some View {
-        Button { showModels = true } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "cpu").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
-                Text("Модели ИИ").font(.subheadline).foregroundStyle(Theme.muted)
-                Spacer(minLength: 8)
-                Text("\(store.designModel.title) · \(store.renderModel.title)").font(.caption.weight(.semibold)).foregroundStyle(.white)
-                    .lineLimit(1).minimumScaleFactor(0.75)
-                Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
-            }
-            .padding(.horizontal, 14).padding(.vertical, 12).panelCard(14)
-        }
-        .buttonStyle(PremiumPressStyle())
-        .accessibilityLabel("Модели ИИ: \(store.designModel.title) и \(store.renderModel.title)")
+        AIModelsRow(value: "\(store.designModel.title) · \(store.renderModel.title)") { showModels = true }
     }
 
     /// Step 3: photoreal renders of the exact 3D model in the style, the PDF and the working drawings.
@@ -1213,27 +1201,54 @@ struct MeasurementGroupCard: View {
 }
 
 /// «Материалы и смета»: the room's finishing calculators with its sizes filled in.
-/// «Модели ИИ»: which AI designs and lays out the room, and which one turns the exact 3D model into photos.
-/// The pick is kept for the next designs and renders.
+/// One quiet line with the picked AI models; a tap opens `AIModelsView`.
+struct AIModelsRow: View {
+    let value: String
+    var title = "Модели ИИ"
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "cpu").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+                Text(title).font(.subheadline).foregroundStyle(Theme.muted)
+                Spacer(minLength: 8)
+                Text(value).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                    .lineLimit(1).minimumScaleFactor(0.75)
+                Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12).panelCard(14)
+        }
+        .buttonStyle(PremiumPressStyle())
+        .accessibilityLabel("\(title): \(value)")
+    }
+}
+
+/// «Модели ИИ»: which AI designs and lays out the room, and which one turns the exact 3D model (or a photo) into
+/// a photoreal picture. The pick is kept for the next designs and renders. `showsDesign: false` — pictures only
+/// (design by photo has no layout to make).
 struct AIModelsView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
+    var showsDesign = true
 
     var body: some View {
         let works = store.modelChoiceWorks
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                section("Дизайн и расстановка", works: works.design) {
-                    ForEach(DesignModel.allCases) { model in
-                        row(model.title, model.note, selected: store.designModel == model) { store.designModel = model }
+                if showsDesign {
+                    section("Дизайн и расстановка", works: works.design) {
+                        ForEach(DesignModel.allCases) { model in
+                            row(model.title, model.note, selected: store.designModel == model) { store.designModel = model }
+                        }
                     }
                 }
-                section("3D‑рендер", works: works.render) {
+                section(showsDesign ? "3D‑рендер" : "Картинка ИИ", works: works.render) {
                     ForEach(RenderModel.allCases) { model in
                         row(model.title, model.note, selected: store.renderModel == model) { store.renderModel = model }
                     }
                 }
-                if !works.design || !works.render {
+                if (showsDesign && !works.design) || !works.render {
                     Text(store.usesAIServer
                          ? "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере АртСтроя."
                          : "С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter.")
