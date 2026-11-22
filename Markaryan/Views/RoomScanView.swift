@@ -56,21 +56,33 @@ struct RoomScanView: View {
                 HStack {
                     Text(title).font(.headline).tracking(2)
                     Spacer()
+                    if phase == .scanning { TorchButton() }
                     // Closing after some rooms keeps them and opens what was scanned.
                     Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
                 }
                 .padding(.horizontal, 20).padding(.top, 12)
+                // While scanning, the controls stay at the top: the bottom of the screen shows the growing 3D model.
+                if phase == .scanning {
+                    VStack(spacing: 10) {
+                        Text("Медленно обходите помещение, наводя камеру на стены, углы, окна и двери.").font(.footnote).multilineTextAlignment(.center)
+                        HStack(spacing: 8) {
+                            Button { finishRoom(next: false) } label: {
+                                Label("Готово", systemImage: "checkmark").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.onAccent)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12).background(Theme.orange, in: Capsule())
+                            }
+                            Button { finishRoom(next: true) } label: {
+                                Label("Следующая комната", systemImage: "arrow.right").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12).background(Theme.accentTint, in: Capsule())
+                            }
+                        }
+                    }
+                    .padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous)).padding(.horizontal, 12)
+                }
                 Spacer()
                 switch phase {
                 case .intro: intro
                 case .scanning:
-                    VStack(spacing: 12) {
-                        Text("Медленно обходите комнату, наводя камеру на стены, углы, окна и двери. Модель строится на экране.").font(.footnote).multilineTextAlignment(.center)
-                        PrimaryButton(title: apartmentID == nil ? "Готово — построить план" : "Готово — собрать квартиру", icon: "checkmark") { finishRoom(next: false) }
-                        Button { finishRoom(next: true) } label: { SecondaryActionLabel(title: "Сохранить и перейти в следующую комнату", icon: "arrow.right.circle") }
-                            .buttonStyle(PremiumPressStyle())
-                    }
-                    .padding(18).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous)).padding(12)
+                    EmptyView()
                 case .processing:
                     HStack(spacing: 12) { ProgressView(); Text("Собираем стены, проёмы и мебель…").font(.subheadline) }
                         .padding(18).background(.ultraThinMaterial, in: Capsule()).padding(.bottom, 30)

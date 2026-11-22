@@ -460,6 +460,7 @@ struct LiveCountCameraView: View {
                 HStack {
                     Button { dismiss() } label: { Image(systemName: "xmark").font(.headline).padding(12).background(.ultraThinMaterial, in: Circle()) }
                         .accessibilityLabel("Закрыть камеру")
+                    if camera.authorized { TorchButton() }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(session.detectedName.isEmpty ? "ИТОГО" : session.detectedName.uppercased()).font(.caption2.weight(.bold)).tracking(1)

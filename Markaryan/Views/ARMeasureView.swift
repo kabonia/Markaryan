@@ -380,7 +380,7 @@ struct ARMeasureView: View {
                 Image(systemName: "plus").font(.system(size: 30, weight: .light)).foregroundStyle(model.ready ? Theme.orange : .white).shadow(radius: 3).accessibilityHidden(true)
             }
             VStack(spacing: 12) {
-                HStack { Text("AR-СТУДИЯ").font(.headline).tracking(2); Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть AR") }.padding(.horizontal, 20)
+                HStack(spacing: 10) { Text("AR-СТУДИЯ").font(.headline).tracking(2); Spacer(); if model.supported && model.permission { TorchButton() }; Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть AR") }.padding(.horizontal, 20)
                 if model.permission && model.supported {
                     Picker("Режим AR", selection: $model.mode) { ForEach(ARMode.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.segmented).padding(.horizontal, 20).onChange(of: model.mode) { _, _ in model.reset() }
                     Text(model.status).font(.footnote).multilineTextAlignment(.center).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14)).padding(.horizontal, 20)
