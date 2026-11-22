@@ -27,6 +27,7 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C12DE55A6B9A3FA64CABA86D /* Markaryan/Core/BackgroundAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22DE55A6B9A3FA64CABA86D /* Markaryan/Core/BackgroundAI.swift */; };
 		C1E179BEE53FFE55731864D6 /* Markaryan/Core/Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2E179BEE53FFE55731864D6 /* Markaryan/Core/Helper.swift */; };
 		C11172E76A62AE85E2DA4B06 /* Markaryan/Core/Torch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21172E76A62AE85E2DA4B06 /* Markaryan/Core/Torch.swift */; };
 		C19D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */; };
@@ -84,6 +85,7 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C22DE55A6B9A3FA64CABA86D /* Markaryan/Core/BackgroundAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/BackgroundAI.swift; sourceTree = "<group>"; };
 		C2E179BEE53FFE55731864D6 /* Markaryan/Core/Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Helper.swift; sourceTree = "<group>"; };
 		C21172E76A62AE85E2DA4B06 /* Markaryan/Core/Torch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Torch.swift; sourceTree = "<group>"; };
 		C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ScreenshotRoutes.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C22DE55A6B9A3FA64CABA86D /* Markaryan/Core/BackgroundAI.swift */,
 				C2E179BEE53FFE55731864D6 /* Markaryan/Core/Helper.swift */,
 				C21172E76A62AE85E2DA4B06 /* Markaryan/Core/Torch.swift */,
 				C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */,
@@ -306,6 +309,7 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C12DE55A6B9A3FA64CABA86D /* Markaryan/Core/BackgroundAI.swift in Sources */,
 				C1E179BEE53FFE55731864D6 /* Markaryan/Core/Helper.swift in Sources */,
 				C11172E76A62AE85E2DA4B06 /* Markaryan/Core/Torch.swift in Sources */,
 				C19D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift in Sources */,

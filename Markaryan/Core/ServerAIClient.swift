@@ -145,6 +145,15 @@ struct ServerAIClient: AIEngine {
         }
     }
 
+    /// Name of a long job for the «готово» notification; nil — a quick request that does not need the background session.
+    private static func backgroundTitle(_ path: String) -> String? {
+        switch path {
+        case "v1/ai/image-edit", "v1/ai/image": return "Визуализация"
+        case "v1/ai/json": return "Дизайн‑проект"
+        default: return nil
+        }
+    }
+
     private static func failure(_ data: Data, status: Int) -> Error {
         let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
         switch status {
@@ -155,8 +164,16 @@ struct ServerAIClient: AIEngine {
     }
 
     private func post(_ path: String, _ body: [String: Any], timeout: TimeInterval = 200) async throws -> [String: Any] {
-        let (data, response) = try await Self.session.data(for: try request(path, body: body, timeout: timeout))
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let data: Data
+        let status: Int
+        if let title = Self.backgroundTitle(path) {
+            // Long jobs survive minimising the app; a notification tells when they are done.
+            let (received, response) = try await BackgroundAI.shared.send(try request(path, body: body, timeout: timeout), title: title)
+            data = received; status = response.statusCode
+        } else {
+            let (received, response) = try await Self.session.data(for: try request(path, body: body, timeout: timeout))
+            data = received; status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        }
         guard (200...299).contains(status) else { throw Self.failure(data, status: status) }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ClaudeError.badResponse }
         return json

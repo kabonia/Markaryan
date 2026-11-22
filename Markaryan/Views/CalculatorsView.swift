@@ -19,7 +19,7 @@ struct CalculatorsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 SectionTitle(eyebrow: "Расчёты и сметы", title: "Сначала цифры.\nПотом стройка.")
-                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF, WhatsApp или заявку.")
+                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF и с рыночными ценами вашего города.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
 
@@ -27,8 +27,8 @@ struct CalculatorsView: View {
                     HStack(spacing: 15) {
                         Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("Полная смета объекта").font(.headline).foregroundStyle(Theme.ink)
-                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(Theme.muted)
+                            Text("Полная смета объекта").font(.headline).foregroundStyle(.white)
+                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(.white.opacity(0.78))
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.orange)
@@ -281,11 +281,11 @@ struct HouseEstimateView: View {
 
     private var totalCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
-            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
+            Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
+            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).foregroundStyle(.white).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
             if perSquareMeter > 0 { Text("≈ \(CalculationEngine.money(perSquareMeter)) за м²").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85)) }
-            if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.orangeSoft) }
-            HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(Theme.muted)
+            if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(.white) }
+            HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(.white.opacity(0.8))
             if total > 0 {
                 GeometryReader { proxy in
                     HStack(spacing: 2) {
@@ -314,7 +314,7 @@ struct HouseEstimateView: View {
                     Image(systemName: isOn ? "checkmark.square.fill" : "square").foregroundStyle(isOn ? Theme.orange : Theme.muted)
                     Text(section.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(isOn ? Theme.orange : Theme.muted)
                     Spacer()
-                    Text(CalculationEngine.money(sectionTotal(section))).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(isOn ? .white : Theme.muted).strikethrough(!isOn)
+                    Text(CalculationEngine.money(sectionTotal(section))).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(isOn ? Theme.ink : Theme.muted).strikethrough(!isOn)
                 }
             }
             .buttonStyle(.plain)

@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 
 @main struct MarkaryanApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = AppStore()
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
