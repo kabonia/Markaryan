@@ -86,6 +86,30 @@ enum OfflineDesigner {
             add("ТВ‑зона с тумбой", "tv", 1.6, 0.45, relation: .opposite, to: sofa, optional: true, zone: zone)
             add("Стеллаж для хранения", "storage", 1.2, 0.4, .corner, optional: true, zone: zone)
             add("Растение в кашпо", "plant", 0.45, 0.45, .corner, optional: true, zone: zone)
+        case .garage:
+            add("Стеллаж металлический", "storage", 1.5, 0.5, .corner)
+            add("Верстак", "desk", 1.5, 0.7, optional: true)
+            add("Стеллаж для шин", "storage", 1.0, 0.45, optional: true)
+        case .shop:
+            let counter = add("Прилавок с кассой", "desk", 1.4, 0.6, prefer: .door)
+            add("Стеллаж торговый", "storage", 1.2, 0.45, count: max(2, Int(area / 8)))
+            add("Витрина", "storage", 1.0, 0.5, optional: true)
+            add("Стол выкладки", "table", 1.2, 0.8, .free, optional: true)
+            add("Стул продавца", "chair", 0.45, 0.5, relation: .nextTo, to: counter, optional: true)
+            add("Растение в кашпо", "plant", 0.45, 0.45, .corner, optional: true)
+        case .cafe:
+            add("Барная стойка", "desk", min(3.0, max(1.6, area.squareRoot() * 0.6)), 0.6, prefer: .farFromDoor)
+            let table = add("Стол для гостей", "table", 0.8, 0.8, .free, count: max(2, Int(area / 6)))
+            add("Стул", "chair", 0.45, 0.5, relation: .around, to: table, count: 4)
+            add("Холодильник", "appliance", 0.6, 0.65, optional: true)
+        case .warehouse:
+            add("Стеллаж складской", "storage", 1.8, 0.6, .corner, count: max(2, Int(area / 10)))
+            add("Верстак", "desk", 1.5, 0.7, optional: true)
+            add("Рабочий стол", "table", 1.2, 0.7, optional: true)
+        case .other:
+            add("Стеллаж", "storage", 1.0, 0.4, .corner, optional: true)
+            let table = add("Стол", "table", 1.2, 0.7, .free, optional: true)
+            add("Стул", "chair", 0.45, 0.5, relation: .around, to: table, optional: true, count: 2)
         }
         return list
     }

@@ -3,6 +3,8 @@ import Foundation
 /// Type of room: decides what may stand in it, the drawing titles, the camera shots and what the image AI may show.
 enum RoomKind: String, CaseIterable {
     case bathroom, kitchen, bedroom, kids, hall, office, living
+    /// Not only homes: garages, shops, cafés, storerooms and anything else.
+    case garage, shop, cafe, warehouse, other
 
     /// Room type from words: «Санузел», «Ванная», «Кухня‑гостиная», plan name…
     static func keyword(_ text: String) -> RoomKind? {
@@ -11,7 +13,11 @@ enum RoomKind: String, CaseIterable {
         if ["сануз", "с/у", "ванн", "туалет", "уборн", "душев", "bathroom", "toilet"].contains(where: { t.contains($0) }) { return .bathroom }
         if t.contains("детск") { return .kids }
         if t.contains("спальн") { return .bedroom }
-        if t.contains("кабинет") { return .office }
+        if t.contains("гараж") || t.contains("бокс") { return .garage }
+        if ["магазин", "цвет", "бутик", "салон", "торгов", "шоурум", "аптек", "лавк", "павильон"].contains(where: { t.contains($0) }) { return .shop }
+        if ["кафе", "кофейн", "ресторан", "бар", "столов", "пекарн", "пиццер"].contains(where: { t.contains($0) }) { return .cafe }
+        if ["склад", "мастерск", "цех", "подсоб", "кладов"].contains(where: { t.contains($0) }) { return .warehouse }
+        if t.contains("кабинет") || t.contains("офис") || t.contains("переговор") { return .office }
         if ["прихож", "коридор", "холл", "гардероб", "тамбур"].contains(where: { t.contains($0) }) { return .hall }
         if t.contains("кухн") && !t.contains("гостин") && !t.contains("студи") { return .kitchen }
         if ["гостин", "студи", "зал", "терраса", "living"].contains(where: { t.contains($0) }) { return .living }
@@ -61,6 +67,11 @@ enum RoomKind: String, CaseIterable {
         case .hall: return "Прихожая"
         case .office: return "Кабинет"
         case .living: return "Гостиная"
+        case .garage: return "Гараж"
+        case .shop: return "Магазин"
+        case .cafe: return "Кафе"
+        case .warehouse: return "Склад / мастерская"
+        case .other: return "Другое"
         }
     }
     var russianName: String {
@@ -72,6 +83,11 @@ enum RoomKind: String, CaseIterable {
         case .hall: return "прихожая"
         case .office: return "кабинет"
         case .living: return "гостиная / жилая комната"
+        case .garage: return "гараж"
+        case .shop: return "торговое помещение (магазин)"
+        case .cafe: return "кафе / общепит"
+        case .warehouse: return "склад / мастерская"
+        case .other: return "помещение"
         }
     }
 
@@ -83,6 +99,10 @@ enum RoomKind: String, CaseIterable {
         case .hall: return ["toilet", "shower", "bathtub", "bed", "kitchen", "sink"]
         case .bedroom, .kids, .office: return ["toilet", "shower", "bathtub", "sink", "kitchen", "washer", "boiler", "towel"]
         case .living: return ["toilet", "shower", "bathtub", "sink", "towel", "boiler"]
+        case .garage, .warehouse: return ["sofa", "bed", "kitchen", "toilet", "shower", "bathtub", "tv", "floorlamp", "towel", "decor"]
+        case .shop: return ["bed", "toilet", "shower", "bathtub", "kitchen", "towel"]
+        case .cafe: return ["bed", "toilet", "shower", "bathtub", "towel"]
+        case .other: return []
         }
     }
     func allows(_ model: String) -> Bool { !forbiddenModels.contains(model) }
@@ -97,6 +117,11 @@ enum RoomKind: String, CaseIterable {
         case .kids: return "Кровать, стол, хранение, игровая зона. Без сантехники и кухни."
         case .office: return "Стол, кресло, стеллажи, хранение. Без сантехники и кухни."
         case .living: return "Мягкая мебель, ТВ‑зона, хранение (в кухне‑гостиной и студии — кухня). Без сантехники санузла."
+        case .garage: return "Место под автомобиль, стеллажи, верстак, хранение шин и инструмента, освещение и розетки."
+        case .shop: return "Торговое оборудование: стеллажи и витрины по стенам, прилавок с кассой, зона выкладки, растения и свет. Для цветочного — холодильная витрина и стол флориста."
+        case .cafe: return "Столы и стулья для гостей, барная стойка или раздача, кухонное оборудование, зона хранения."
+        case .warehouse: return "Стеллажи, верстак, рабочий стол, проходы для погрузки, хранение."
+        case .other: return "Любое помещение: опишите назначение — подберём оборудование и отделку под задачу."
         }
     }
 
@@ -113,6 +138,16 @@ enum RoomKind: String, CaseIterable {
             return "Это \(russianName.uppercased()). Запрещено: сантехника санузла (унитаз, душ, ванна, раковина), кухня, бойлер."
         case .living:
             return "Это ЖИЛАЯ КОМНАТА. Запрещено: сантехника санузла (унитаз, душ, ванна, раковина санузла), полотенцесушитель."
+        case .garage:
+            return "Это ГАРАЖ. Оставь место под автомобиль (не менее 2,5×5 м и проход 0,6 м вокруг), по стенам — стеллажи (storage), верстак (desk), хранение шин. Отделка — износостойкая: наливной или бетонный пол, моющиеся стены, яркий свет. Запрещено: диван, кровать, кухня, сантехника, ковры."
+        case .shop:
+            return "Это ТОРГОВОЕ ПОМЕЩЕНИЕ. Ставь стеллажи и витрины по стенам (storage), прилавок с кассой у входа (desk), зону выкладки в центре (table), растения и акцентный свет (light). Проходы для покупателей не уже 1,2 м, вход свободен. Для цветочного магазина — холодильная витрина (appliance) и стол флориста (table). Запрещено: кровать, сантехника, бытовая кухня."
+        case .cafe:
+            return "Это КАФЕ. Ставь столы (table) со стульями (chair) для гостей, барную стойку или раздачу (desk), кухонное оборудование (kitchen, appliance) в рабочей зоне, хранение (storage). Проходы не уже 0,9 м. Запрещено: кровать, сантехника санузла в зале."
+        case .warehouse:
+            return "Это СКЛАД / МАСТЕРСКАЯ. Ставь стеллажи (storage) по стенам, верстак и рабочий стол (desk), оставь проходы не уже 1 м. Отделка — износостойкая. Запрещено: диван, кровать, бытовая кухня, сантехника."
+        case .other:
+            return "Это ПОМЕЩЕНИЕ с назначением, которое указал пользователь. Подбери оборудование и отделку строго под это назначение; не добавляй предметы, которые ему не нужны."
         }
     }
 
@@ -139,6 +174,11 @@ enum RoomKind: String, CaseIterable {
         case .hall: return "entrance hall"
         case .office: return "home office"
         case .living: return "living room"
+        case .garage: return "garage"
+        case .shop: return "retail shop"
+        case .cafe: return "cafe"
+        case .warehouse: return "workshop and storage room"
+        case .other: return "room"
         }
     }
     /// What the image AI must never invent in this room.
@@ -149,6 +189,10 @@ enum RoomKind: String, CaseIterable {
         case .bedroom, .kids: return "This room is a \(english.uppercased()): no kitchen units, no bathroom fixtures."
         case .hall: return "This room is an ENTRANCE HALL: no kitchen, no bed, no bathroom fixtures."
         case .office, .living: return "This room is a \(english.uppercased()): no bathroom fixtures (no toilet, shower or bathtub), no bed unless it is in the render."
+        case .garage, .warehouse: return "This room is a \(english.uppercased()): utilitarian finishes, shelving and workbench; no sofa, no bed, no kitchen, no bathroom fixtures."
+        case .shop: return "This room is a RETAIL SHOP: shelving, display cases and a cashier counter; no bed, no home kitchen, no bathroom fixtures."
+        case .cafe: return "This room is a CAFE: guest tables and chairs, a bar counter; no bed, no bathroom fixtures in the hall."
+        case .other: return "Show only what fits the purpose given by the user; no bathroom fixtures unless they are in the render."
         }
     }
 }

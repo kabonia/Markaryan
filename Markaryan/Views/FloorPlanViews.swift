@@ -211,8 +211,8 @@ struct FloorPlansView: View {
                     DesignStudioHero()
                     VStack(alignment: .leading, spacing: 12) {
                         Button { store.showRoomScan = true } label: {
-                            DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать комнату",
-                                            subtitle: "Лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
+                            DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать помещение",
+                                            subtitle: "Комната, гараж, магазин или кафе: лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
                         }
                         HStack(spacing: 12) {
                             NavigationLink { PhotoDesignView() } label: {
@@ -275,7 +275,7 @@ struct DesignStudioHero: View {
             Circle().fill(Theme.orange.opacity(0.22)).frame(width: 200, height: 200).blur(radius: 40).offset(x: 170, y: -120)
             VStack(alignment: .leading, spacing: 8) {
                 Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
-                Text("Ваша комната —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
+                Text("Любое помещение —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
                 Text("Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF.")
                     .font(.caption).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
             }

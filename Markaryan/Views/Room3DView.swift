@@ -662,7 +662,7 @@ extension Room3DBuilder {
             if let seating = centroid(all.filter { $0.model == "sofa" || $0.model == "tv" }) { add("Гостиная зона", eye: facing(seating, distance: min(3.5, max(2.2, size * 0.5))), target: seating) }
         case .bedroom, .kids:
             if let bed = centroid(all.filter { $0.model == "bed" }) { add("Спальная зона", eye: facing(bed, distance: min(3.5, max(2.2, size * 0.5))), target: bed) }
-        case .hall, .office:
+        case .hall, .office, .garage, .shop, .cafe, .warehouse, .other:
             if let main = centroid(all.filter { ["storage", "desk", "table"].contains($0.model) }) { add(room == .office ? "Рабочая зона" : "Системы хранения", eye: facing(main, distance: min(3, max(1.8, size * 0.45))), target: main) }
         }
         // Far corner view as a general shot.
