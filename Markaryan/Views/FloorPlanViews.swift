@@ -640,6 +640,10 @@ struct FloorPlanDetailView: View {
         }
         mainButton(flow.main(on: .result), plan: plan)
         if let proposal {
+            NavigationLink { MarketEstimateView(plan: plan, proposal: proposal) } label: {
+                AppTabRow(icon: "rublesign.circle.fill", title: "Смета по рыночным ценам", subtitle: "Каждый материал и работа: цена в вашем городе, пример и источники")
+            }
+            .buttonStyle(PremiumCardPressStyle())
             PartnerOfferSection(category: "finishing", summary: partnerSummary(plan, proposal: proposal))
         }
         VStack(alignment: .leading, spacing: 10) {

@@ -11,6 +11,7 @@ import * as hh from './hh.js';
 import * as avito from './avito.js';
 import * as market from './market.js';
 import * as reports from './reports.js';
+import * as estimate from './estimate.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -98,6 +99,11 @@ async function handle(req, res) {
       res.end();
     }
     return;
+  }
+
+  if (url.pathname === '/v1/ai/price-estimate') {
+    consume('chat', installId, ip);
+    try { return send(res, 200, await estimate.priceEstimate(body)); } catch (error) { refund('chat', installId, ip); throw error; }
   }
 
   if (url.pathname === '/v1/ai/json') {

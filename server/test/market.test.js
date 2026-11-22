@@ -101,3 +101,14 @@ test('error reports are accepted and logged without Telegram', async (t) => {
   assert.equal((await fetch(`${base}/v1/report`, { method: 'POST', body: '{}' })).status, 400);
   assert.match(fs.readFileSync(path.join(dir, 'reports.log'), 'utf8'), /Дизайн по фото/);
 });
+
+test('estimate rows keep sane numbers and real links only', async () => {
+  const { sanitize } = await import('../src/estimate.js');
+  const row = sanitize({ name: 'Ламинат 33 класс', unit: 'м²', quantity: '18', low: 900, typical: '1 250', high: 800,
+    sources: [{ title: 'Лемана', url: 'https://lemanapro.ru/x', price: 1200 }, { title: 'fake', url: 'javascript:alert(1)' }] });
+  assert.equal(row.typical, 1250);
+  assert.equal(row.high, 1250); // high below typical is raised
+  assert.equal(row.quantity, 18);
+  assert.equal(row.sources.length, 1);
+  assert.equal(sanitize({ name: 'x', typical: 0 }), null);
+});
