@@ -1093,7 +1093,7 @@ enum WorkOrderError: LocalizedError {
         try FileManager.default.copyItem(at: pdf, to: folder.appendingPathComponent(pdf.lastPathComponent))
         var saved: [SavedPresentation.Picture] = []
         for (index, picture) in pictures.enumerated() {
-            guard let data = picture.image.jpegData(compressionQuality: 0.85) else { continue }
+            guard let data = picture.image.jpegData(compressionQuality: 0.93) else { continue }
             let name = "picture-\(index + 1).jpg"
             try data.write(to: folder.appendingPathComponent(name), options: [.atomic, .completeFileProtection])
             saved.append(SavedPresentation.Picture(title: picture.title, file: name))

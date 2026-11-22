@@ -2,8 +2,9 @@ import SwiftUI
 import PhotosUI
 import Photos
 
-/// «Дизайн по фото / Live»: a photo of any part of the house — the AI makes a new design,
-/// or changes only what the user wrote. Every result can be corrected again in plain words.
+/// «Дизайн по фото»: a photo of any part of the house — the AI makes a new design,
+/// or changes only what the user wrote. Nothing starts until the user has chosen and pressed «Сгенерировать».
+/// Every result is saved on the iPhone and can be corrected again in plain words.
 struct PhotoDesignView: View {
     @EnvironmentObject private var store: AppStore
     @State private var source: UIImage?
@@ -12,12 +13,14 @@ struct PhotoDesignView: View {
     @State private var resultModels: [String] = []
     @State private var showModels = false
     @State private var shown = 0
-    @State private var room: PhotoDesignRoom = .kitchen
+    @State private var room: PhotoDesignRoom?
     @State private var mode: PhotoDesignMode = .redesign
-    @State private var style: DesignStyle? = DesignStyle.all[0]
+    @State private var style: DesignStyle?
     @State private var wishes = ""
     @State private var correction = ""
-    @State private var live = true
+    @State private var record: PhotoDesignRecord?
+    @State private var library: [PhotoDesignRecord] = []
+    @State private var confirmDelete: PhotoDesignRecord?
     @State private var isLoading = false
     @State private var error: String?
     @State private var pickerItem: PhotosPickerItem?
@@ -47,6 +50,7 @@ struct PhotoDesignView: View {
                     Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
                 }
                 if let source, let current { resultCard(before: source, after: current) }
+                savedDesigns
                 if !store.photorealAvailable {
                     InfoNote(text: "Дизайн по фото сейчас недоступен: картинки ИИ не подключены.")
                 }
@@ -65,10 +69,20 @@ struct PhotoDesignView: View {
             guard let image else { return }
             captured = nil
             start(with: image)
-            if live { generate() }
+        }
+        .onAppear { library = PhotoDesignLibrary.all() }
+        .confirmationDialog("Удалить этот дизайн с iPhone?", isPresented: Binding(get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }), titleVisibility: .visible) {
+            Button("Удалить", role: .destructive) {
+                if let item = confirmDelete {
+                    PhotoDesignLibrary.delete(item.id)
+                    if record?.id == item.id { record = nil }
+                    withAnimation(.snappy) { library = PhotoDesignLibrary.all() }
+                }
+                confirmDelete = nil
+            }
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
-        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Дизайн · \(room.title)") } }
+        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Дизайн · \((room ?? .other).title)") } }
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView(showsDesign: false) }.presentationDetents([.medium, .large]) }
     }
 
@@ -78,7 +92,7 @@ struct PhotoDesignView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ФОТО → НОВЫЙ ДИЗАЙН").font(.caption.weight(.bold)).tracking(1.4).foregroundStyle(Theme.sky)
             Text("Снимите помещение —\nувидьте его обновлённым").font(.title2.bold())
-            Text("Кухня, санузел, комната, балкон или фасад. ИИ сохранит стены, окна и ракурс, а отделку, мебель и свет сделает в выбранном стиле. Потом можно дописывать правки сколько угодно раз.")
+            Text("1. Снимите или выберите фото. 2. Укажите, что на нём, и выберите стиль. 3. Нажмите «Сгенерировать». ИИ сохранит стены, окна и ракурс, а отделку, мебель и свет сделает в выбранном стиле. Все результаты сохраняются на iPhone.")
                 .font(.subheadline).foregroundStyle(Theme.muted)
         }
     }
@@ -109,13 +123,6 @@ struct PhotoDesignView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Toggle(isOn: $live) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Live‑режим").font(.subheadline.weight(.semibold))
-                    Text("Сделали снимок — дизайн начинается сразу, без лишних нажатий").font(.caption).foregroundStyle(Theme.muted)
-                }
-            }
-            .tint(Theme.sky)
         }
         .padding(16)
         .panelCard(22)
@@ -125,10 +132,11 @@ struct PhotoDesignView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Что на фото").font(.headline)
+                    .foregroundStyle(room == nil ? Theme.sky : .white)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(PhotoDesignRoom.allCases) { item in
-                            Button { Haptics.tap(); room = item } label: {
+                            Button { Haptics.tap(); withAnimation(.snappy) { room = item } } label: {
                                 Label(item.title, systemImage: item.icon).font(.subheadline.weight(.medium))
                                     .padding(.horizontal, 12).padding(.vertical, 9)
                                     .background(room == item ? Theme.sky : Theme.panel, in: Capsule())
@@ -158,6 +166,7 @@ struct PhotoDesignView: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 Text(mode == .redesign ? "Стиль" : "Стиль (необязательно)").font(.headline)
+                    .foregroundStyle(mode == .redesign && style == nil ? Theme.sky : .white)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         if mode == .refine {
@@ -191,10 +200,40 @@ struct PhotoDesignView: View {
         }
     }
 
+    /// What is still to choose before the AI may start; nil — everything is chosen.
+    private var missingChoice: String? {
+        if room == nil { return "Выберите, что на фото" }
+        if mode == .redesign && style == nil { return "Выберите стиль" }
+        if mode == .refine && style == nil && wishes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Напишите, что изменить, или выберите стиль" }
+        return nil
+    }
+
     private var generateButton: some View {
-        PrimaryButton(title: isLoading ? "ИИ работает…" : (results.isEmpty ? "Сделать дизайн" : "Сделать ещё вариант"), icon: "wand.and.stars") { generate() }
-            .disabled(isLoading)
-            .opacity(isLoading ? 0.6 : 1)
+        VStack(alignment: .leading, spacing: 8) {
+            PrimaryButton(title: isLoading ? "ИИ работает…" : (results.isEmpty ? "Сгенерировать" : "Сгенерировать ещё вариант"), icon: "wand.and.stars") { generate() }
+                .disabled(isLoading || missingChoice != nil)
+                .opacity(isLoading || missingChoice != nil ? 0.5 : 1)
+            if let missingChoice, !isLoading {
+                Label(missingChoice, systemImage: "hand.point.up.left.fill").font(.caption).foregroundStyle(Theme.sky)
+            }
+        }
+    }
+
+    /// Designs made earlier: stored on the iPhone with the source photo and every variant.
+    @ViewBuilder private var savedDesigns: some View {
+        if !library.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("МОИ ДИЗАЙНЫ ПО ФОТО").font(.caption.weight(.bold)).tracking(1.3).foregroundStyle(Theme.sky)
+                ForEach(library) { item in
+                    Button { open(item) } label: { PhotoDesignRow(record: item) }
+                        .buttonStyle(PremiumCardPressStyle())
+                        .contextMenu {
+                            Button(role: .destructive) { confirmDelete = item } label: { Label("Удалить", systemImage: "trash") }
+                        }
+                }
+                Text("Удерживайте карточку, чтобы удалить.").font(.caption2).foregroundStyle(Theme.muted)
+            }
+        }
     }
 
     private var loadingCard: some View {
@@ -213,7 +252,7 @@ struct PhotoDesignView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("РЕЗУЛЬТАТ").font(.caption.weight(.bold)).tracking(1.3).foregroundStyle(Theme.sky)
-                    Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.headline)
+                    Text("\(room?.title ?? "Дизайн")\(style.map { " · \($0.title)" } ?? "")").font(.headline)
                 }
                 Spacer()
                 if results.count > 1 { Text("Вариант \(shown + 1) из \(results.count)").font(.caption).foregroundStyle(Theme.muted) }
@@ -222,7 +261,7 @@ struct PhotoDesignView: View {
                 .frame(height: 280)
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .onTapGesture(count: 2) { opened = FloorPlanDetailView.PhotoSheetItem(image: after) }
-            Text("Двигайте ползунок: слева — было, справа — стало. Двойное касание — на весь экран.").font(.caption2).foregroundStyle(Theme.muted)
+            Text("Двигайте ползунок: слева — было, справа — стало. Двойное касание — на весь экран. Все варианты сохранены в «Моих дизайнах».").font(.caption2).foregroundStyle(Theme.muted)
             if resultModels.indices.contains(shown) {
                 Label("Сделано: \(resultModels[shown])", systemImage: "cpu").font(.caption).foregroundStyle(Theme.muted)
             }
@@ -272,9 +311,54 @@ struct PhotoDesignView: View {
         results = []
         resultModels = []
         shown = 0
+        record = nil
         error = nil
         saved = false
         addedToProject = false
+    }
+
+    /// Opens a saved design: the photo, every variant and the choices it was made with.
+    private func open(_ item: PhotoDesignRecord) {
+        guard let photo = PhotoDesignLibrary.image("source.jpg", in: item.id) else {
+            error = "Файлы этого дизайна не найдены на iPhone."
+            return
+        }
+        Haptics.tap()
+        withAnimation(.snappy) {
+            source = photo
+            results = item.versions.compactMap { PhotoDesignLibrary.image($0, in: item.id) }
+            resultModels = (item.models ?? []).count == results.count ? (item.models ?? []) : []
+            shown = max(0, results.count - 1)
+            record = item
+            room = PhotoDesignRoom(rawValue: item.room)
+            mode = PhotoDesignMode(rawValue: item.mode) ?? .redesign
+            style = item.style.flatMap { id in DesignStyle.all.first { $0.id == id } }
+            wishes = item.wishes
+            error = nil
+            saved = false
+            addedToProject = false
+        }
+    }
+
+    /// Every new variant goes to the iPhone at once, so nothing is lost when the screen is closed.
+    private func persist(_ image: UIImage, model: String) {
+        guard let source else { return }
+        var item = record ?? PhotoDesignRecord(id: UUID(), date: .now, room: room?.rawValue ?? PhotoDesignRoom.other.rawValue, mode: mode.rawValue, style: style?.id, wishes: wishes, versions: [])
+        do {
+            if record == nil { try PhotoDesignLibrary.write(source, name: "source.jpg", in: item.id) }
+            let name = "v\(item.versions.count + 1).jpg"
+            try PhotoDesignLibrary.write(image, name: name, in: item.id)
+            try PhotoDesignLibrary.writeThumbnail(image, in: item.id)
+            item.versions.append(name)
+            item.models = (item.models ?? []) + [model]
+            item.date = .now
+            item.style = style?.id ?? item.style
+            try PhotoDesignLibrary.save(item)
+            record = item
+            library = PhotoDesignLibrary.all()
+        } catch {
+            self.error = "Результат не сохранился на iPhone: \(error.localizedDescription)"
+        }
     }
 
     private func load(_ item: PhotosPickerItem?) async {
@@ -286,13 +370,12 @@ struct PhotoDesignView: View {
             }
             pickerItem = nil
             start(with: image)
-            if live { generate() }
         } catch { self.error = error.localizedDescription }
     }
 
     /// A new variant from the source photo.
     private func generate() {
-        guard let source else { return }
+        guard let source, missingChoice == nil else { return }
         run(base: source, mode: mode, style: style, wishes: wishes.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
@@ -313,7 +396,7 @@ struct PhotoDesignView: View {
         UIApplication.shared.isIdleTimerDisabled = true
         Task {
             let english = wishes.isEmpty ? "" : await store.englishPrompt(wishes)
-            let prompt = mode.prompt(room: room, style: style, wishesEnglish: english)
+            let prompt = mode.prompt(room: room ?? .other, style: style, wishesEnglish: english)
             do {
                 let result = try await store.photorealRender(base, prompt: prompt)
                 withAnimation(.snappy) {
@@ -321,6 +404,7 @@ struct PhotoDesignView: View {
                     resultModels.append(result.title)
                     shown = results.count - 1
                 }
+                persist(result.image, model: result.title)
                 store.track("photo_design")
                 store.registerMeaningfulAction()
                 Haptics.success()
@@ -351,7 +435,7 @@ struct PhotoDesignView: View {
 
     private func addToProject(_ image: UIImage) {
         do {
-            try store.addProjectPhoto(image, caption: "Дизайн по фото: \(room.title.lowercased())\(style.map { ", \($0.title.lowercased())" } ?? "")")
+            try store.addProjectPhoto(image, caption: "Дизайн по фото: \((room ?? .other).title.lowercased())\(style.map { ", \($0.title.lowercased())" } ?? "")")
             addedToProject = true
             Haptics.success()
         } catch { self.error = error.localizedDescription }
@@ -365,6 +449,104 @@ struct PhotoDesignView: View {
             shareFile = SharedFile(url: url)
             store.track("photo_design_shared")
         } catch { self.error = error.localizedDescription }
+    }
+}
+
+/// A design by photo kept on the iPhone: Application Support/PhotoDesigns/<id>/ — source.jpg, v1.jpg…, thumb.jpg, meta.json.
+struct PhotoDesignRecord: Codable, Identifiable, Equatable {
+    let id: UUID
+    var date: Date
+    var room: String
+    var mode: String
+    var style: String?
+    var wishes: String
+    var versions: [String]
+    /// Which model drew each variant (older records have none).
+    var models: [String]? = nil
+}
+
+enum PhotoDesignLibrary {
+    static var folder: URL {
+        let base = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)) ?? FileManager.default.temporaryDirectory
+        let url = base.appendingPathComponent("PhotoDesigns", isDirectory: true)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    static func directory(_ id: UUID) -> URL {
+        let url = folder.appendingPathComponent(id.uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    static func all() -> [PhotoDesignRecord] {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let folders = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        return folders.compactMap { url -> PhotoDesignRecord? in
+            guard let data = try? Data(contentsOf: url.appendingPathComponent("meta.json")) else { return nil }
+            return try? decoder.decode(PhotoDesignRecord.self, from: data)
+        }
+        .filter { !$0.versions.isEmpty }
+        .sorted { $0.date > $1.date }
+    }
+
+    static func save(_ record: PhotoDesignRecord) throws {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(record).write(to: directory(record.id).appendingPathComponent("meta.json"), options: .atomic)
+    }
+
+    static func write(_ image: UIImage, name: String, in id: UUID) throws {
+        guard let data = image.jpegData(compressionQuality: 0.92) else { throw CocoaError(.fileWriteUnknown) }
+        try data.write(to: directory(id).appendingPathComponent(name), options: [.atomic, .completeFileProtection])
+    }
+
+    static func writeThumbnail(_ image: UIImage, in id: UUID) throws {
+        let side: CGFloat = 360
+        let scale = min(1, side / max(image.size.width, image.size.height, 1))
+        let size = CGSize(width: max(1, image.size.width * scale), height: max(1, image.size.height * scale))
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let small = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+        try write(small, name: "thumb.jpg", in: id)
+    }
+
+    static func image(_ name: String, in id: UUID) -> UIImage? {
+        UIImage(contentsOfFile: folder.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent(name).path)
+    }
+
+    static func delete(_ id: UUID) {
+        try? FileManager.default.removeItem(at: folder.appendingPathComponent(id.uuidString, isDirectory: true))
+    }
+}
+
+struct PhotoDesignRow: View {
+    let record: PhotoDesignRecord
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Group {
+                if let thumb = PhotoDesignLibrary.image("thumb.jpg", in: record.id) {
+                    Image(uiImage: thumb).resizable().scaledToFill()
+                } else {
+                    Theme.panelRaised
+                }
+            }
+            .frame(width: 76, height: 58).clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                let room = PhotoDesignRoom(rawValue: record.room) ?? .other
+                let style = record.style.flatMap { id in DesignStyle.all.first { $0.id == id } }
+                Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text("\(record.date.formatted(date: .abbreviated, time: .shortened)) · вариантов: \(record.versions.count)")
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
+        }
+        .padding(10)
+        .panelCard(16)
     }
 }
 

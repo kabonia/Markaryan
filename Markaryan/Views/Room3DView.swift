@@ -671,6 +671,10 @@ extension Room3DBuilder {
         if let corner = corners.max(by: { a, c in (shots.map { a.distance(to: $0.eye) }.min() ?? 0) < (shots.map { c.distance(to: $0.eye) }.min() ?? 0) }) {
             add("Общий вид", eye: corner, target: PlanPoint(x: center.x + (center.x - corner.x) * 0.5, y: center.y + (center.y - corner.y) * 0.5))
         }
+        // A studio set has four views: one more from the corner farthest from the others.
+        if shots.count < 4, let corner = corners.max(by: { a, c in (shots.map { a.distance(to: $0.eye) }.min() ?? 0) < (shots.map { c.distance(to: $0.eye) }.min() ?? 0) }) {
+            add("Вид из угла", eye: corner, target: PlanPoint(x: center.x + (center.x - corner.x) * 0.5, y: center.y + (center.y - corner.y) * 0.5))
+        }
         return shots
     }
 
@@ -679,9 +683,10 @@ extension Room3DBuilder {
         let furniture = proposal?.furniture ?? []
         let room = RoomKind.detect(plan: plan, proposal: proposal)
         let hasKitchen = furniture.contains { $0.model == "kitchen" }
-        var parts = ["Photorealistic version of THIS exact 3D render of a \(room.english), Lumion / V-Ray quality. It is a precise visualisation of a real scanned room, so geometry must not change."]
+        var parts = ["Turn THIS exact 3D render of a \(room.english) into a high-end architectural interior visualisation, the quality a top interior design and architecture studio delivers to its client (Corona Renderer / V-Ray, magazine cover level). The reference is a 1:1 model of a laser-scanned real room: its geometry is ground truth and must not change."]
         parts.append(room.rulesEnglish)
-        parts.append("Keep pixel-accurate: camera position, angle and lens; every wall, corner, wall length and ceiling height; every door opening; the position, size, shape and orientation of every object. Do not add, remove, move or resize anything. Keep the same exposure: evenly lit, nothing burnt out.")
+        parts.append("GEOMETRY — keep pixel-accurate: the camera position, height, angle and focal length; every wall, corner, edge, wall length, ceiling height and ceiling line; every window and door opening with its exact size and place; the position, size, shape and orientation of every piece of furniture and equipment. Do not add, remove, move, resize, bend or straighten anything; no extra walls, niches, columns, beams, windows, doors or furniture. Vertical lines stay perfectly vertical (two-point perspective), no wide-angle or fisheye distortion, no crop or zoom.")
+        parts.append("RENDER QUALITY: physically based materials with real detail — wood grain and plank joints, stone and tile veining with thin grout lines, fabric weave and soft folds, brushed and polished metal, glass with true reflections; physically correct global illumination; soft natural daylight only through the existing windows plus warm 2700–3000 K practical lights (pendants, wall lights, hidden LED lines) where the fittings are; soft contact shadows and ambient occlusion in every corner and under every object; subtle reflections on glossy surfaces; balanced exposure with detail in highlights and shadows, nothing burnt out or crushed; neutral white balance, true-to-life colours; tack-sharp focus across the room.")
         if let plan {
             if plan.windows.isEmpty {
                 parts.append("IMPORTANT: this room has NO windows. Do not add any window, glazing, balcony door, curtains or view outside. All walls without openings stay solid walls. Light comes only from ceiling spotlights, wall lights and LED strips.")
@@ -698,7 +703,7 @@ extension Room3DBuilder {
             if !proposal.palette.isEmpty { parts.append("Colour palette: \(proposal.palette.joined(separator: ", ")).") }
             if !proposal.style.isEmpty { parts.append("Style: \(proposal.style).") }
         }
-        parts.append("Professional interior photography, ultra detailed, sharp, no text, no people.")
+        parts.append("Styled and finished like a professional architectural photo shoot: everything clean, straight and complete, tasteful styling, no clutter. Ultra detailed, no text, no watermark, no people, no CGI look.")
         return parts.joined(separator: " ")
     }
 }

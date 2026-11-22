@@ -134,8 +134,10 @@ struct ClaudeClient {
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 180
-        configuration.timeoutIntervalForResource = 300
+        // A full design (furniture, finishes, budget) from a large model streams for several minutes.
+        configuration.timeoutIntervalForRequest = 300
+        configuration.timeoutIntervalForResource = 900
+        configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()
 
@@ -158,7 +160,7 @@ struct ClaudeClient {
         if viaOpenRouter, !fallbacks.isEmpty { body["fallbacks"] = fallbacks.prefix(3).map { ["model": Self.openRouterModel($0)] } }
         var request = URLRequest(url: viaOpenRouter ? Self.openRouterEndpoint : Self.endpoint)
         request.httpMethod = "POST"
-        request.timeoutInterval = 180
+        request.timeoutInterval = 300
         if viaOpenRouter {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
             request.setValue("ArtStroy", forHTTPHeaderField: "X-Title")
@@ -201,7 +203,8 @@ struct ClaudeClient {
             switch status {
             case 401: return .api("Ключ ИИ не подошёл. Проверьте OPENROUTER_API_KEY в AIServer.plist.")
             case 402: return .api("На балансе OpenRouter закончились деньги — пополните его на openrouter.ai.")
-            case 429: return .api("Слишком много запросов к Claude. Подождите минуту.")
+            case 408, 504, 524: return .api("ИИ отвечал слишком долго. Нажмите ещё раз — обычно со второго раза получается.")
+            case 429: return .api("Слишком много запросов к ИИ. Подождите минуту.")
             case 529: return .api("Claude сейчас перегружен. Попробуйте чуть позже.")
             default: return .api("Claude: \(message)")
             }

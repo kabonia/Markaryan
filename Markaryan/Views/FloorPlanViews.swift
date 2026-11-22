@@ -955,7 +955,8 @@ struct FloorPlanDetailView: View {
         // 3D plan and isometry: ONLY the exact model (no AI) — walls, openings and layout 1:1 with the scan.
         let top = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .overhead, size: CGSize(width: 1600, height: 1200))
         let iso = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .top, size: CGSize(width: 1600, height: 1200))
-        let shots = Array(Room3DBuilder.interiorShots(plan: plan, proposal: proposal).prefix(3))
+        // Four views, as a design studio delivers: from the entrance and from the other corners.
+        let shots = Array(Room3DBuilder.interiorShots(plan: plan, proposal: proposal).prefix(4))
         // Exact interior renders with auto-exposure; burnt-out or black frames are thrown away.
         var exact: [(title: String, image: UIImage)] = []
         for shot in shots {
@@ -979,7 +980,8 @@ struct FloorPlanDetailView: View {
         async let first = verifiedPhoto(references.count > 0 ? references[0] : nil, prompt: photoPrompt)
         async let second = verifiedPhoto(references.count > 1 ? references[1] : nil, prompt: photoPrompt)
         async let third = verifiedPhoto(references.count > 2 ? references[2] : nil, prompt: photoPrompt)
-        let photos = await [first, second, third]
+        async let fourth = verifiedPhoto(references.count > 3 ? references[3] : nil, prompt: photoPrompt)
+        let photos = await [first, second, third, fourth]
 
         var interiors: [(title: String, image: UIImage)] = []
         for (index, item) in exact.enumerated() {
@@ -1508,7 +1510,8 @@ struct DesignRequestSheet: View {
     /// The room: its exact 3D model is the base of the style previews.
     var plan: FloorPlan? = nil
     let onSubmit: (String, String, String) -> Void
-    @State private var style = DesignStyle.all[0]
+    /// Nothing is chosen for the user: the AI starts only after the style is picked and «Сгенерировать» is pressed.
+    @State private var style: DesignStyle?
     @State private var purpose = ""
     @State private var wishes = ""
     @State private var previews: [String: UIImage] = [:]
@@ -1541,16 +1544,17 @@ struct DesignRequestSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Стиль").font(.headline)
+                    Text(style == nil ? "Стиль — выберите карточку" : "Стиль").font(.headline)
+                        .foregroundStyle(style == nil ? Theme.orange : .white)
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(DesignStyle.all) { item in
                             Button { Haptics.tap(); withAnimation(.snappy) { style = item } } label: {
-                                StyleCard(style: item, selected: style.id == item.id, preview: previews[item.id], loading: loadingStyle == item.id)
+                                StyleCard(style: item, selected: style?.id == item.id, preview: previews[item.id], loading: loadingStyle == item.id)
                             }
                             .buttonStyle(PremiumCardPressStyle())
                         }
                     }
-                    selectedStyleCard
+                    if let style { selectedStyleCard(style) }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -1559,12 +1563,13 @@ struct DesignRequestSheet: View {
                         .lineLimit(3...6).padding(14).panelCard(14)
                 }
 
-                PrimaryButton(title: purpose.isEmpty ? "Выберите назначение" : "Создать дизайн «\(style.title)»", icon: "wand.and.stars") {
-                    guard !purpose.isEmpty else { Haptics.warning(); return }
+                PrimaryButton(title: purpose.isEmpty ? "Выберите назначение" : (style.map { "Сгенерировать дизайн «\($0.title)»" } ?? "Выберите стиль"), icon: "wand.and.stars") {
+                    guard !purpose.isEmpty, let style else { Haptics.warning(); return }
                     onSubmit(style.title, purpose, wishes.trimmingCharacters(in: .whitespacesAndNewlines))
                     dismiss()
                 }
-                .opacity(purpose.isEmpty ? 0.5 : 1)
+                .disabled(purpose.isEmpty || style == nil)
+                .opacity(purpose.isEmpty || style == nil ? 0.5 : 1)
             }
             .padding(20)
         }
@@ -1573,11 +1578,11 @@ struct DesignRequestSheet: View {
         .navigationTitle("Новый дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
-        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Превью · \(style.title)") } }
+        .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Превью · \(style?.title ?? "стиль")") } }
         .onAppear { if purpose.isEmpty, let suggested { purpose = suggested.purposeTitle } }
     }
 
-    private var selectedStyleCard: some View {
+    private func selectedStyleCard(_ style: DesignStyle) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(style.title).font(.title3.bold())

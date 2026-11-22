@@ -141,7 +141,8 @@ enum PhotoDesignMode: String, CaseIterable, Identifiable {
             parts.append("Edit THIS photo of a \(room.english). Keep everything as it is — camera, geometry, furniture, finishes and light — and change ONLY what is requested below\(style.map { ", in the spirit of \($0.english)" } ?? "").")
         }
         if !wishesEnglish.isEmpty { parts.append("Requested: \(wishesEnglish).") }
-        parts.append("Photorealistic, magazine-quality interior photography, real materials and textures, correct perspective, natural light, sharp details, no text, no people, no watermark.")
+        parts.append("Do not change the room's geometry: walls, corners, ceiling, windows and doors stay exactly where and as large as they are; vertical lines stay vertical; same framing, no crop or zoom.")
+        parts.append("Quality of a top interior design studio's final visualisation (Corona / V-Ray, architectural photography): physically based materials with real detail — wood grain, stone veining, thin grout lines, fabric weave, brushed metal; physically correct light — soft daylight through the existing windows plus warm practical lights; soft contact shadows; balanced exposure, true-to-life colours, tack-sharp. Clean, complete and tastefully styled. No text, no people, no watermark, no CGI look.")
         return parts.joined(separator: " ")
     }
 }

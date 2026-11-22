@@ -21,8 +21,10 @@ struct OpenRouterImageClient {
 
     enum OpenRouterImageError: LocalizedError {
         case message(String)
+        /// Busy, overloaded or too slow: worth one more try.
+        case transient(String)
         var errorDescription: String? {
-            switch self { case .message(let text): return text }
+            switch self { case .message(let text), .transient(let text): return text }
         }
     }
 
@@ -50,8 +52,10 @@ struct OpenRouterImageClient {
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 300
-        configuration.timeoutIntervalForResource = 420
+        // A 2K render waits silently until the picture is ready: Seedream and a busy queue need several minutes.
+        configuration.timeoutIntervalForRequest = 600
+        configuration.timeoutIntervalForResource = 900
+        configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()
 
@@ -76,7 +80,7 @@ struct OpenRouterImageClient {
         }
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
-        request.timeoutInterval = 300
+        request.timeoutInterval = 600
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("ArtStroy", forHTTPHeaderField: "X-Title")
@@ -89,6 +93,9 @@ struct OpenRouterImageClient {
             let detail = (json?["error"] as? [String: Any])?["message"] as? String
             if status == 401 { throw OpenRouterImageError.message("OpenRouter не принял ключ. Проверьте OPENROUTER_API_KEY в AIServer.plist.") }
             if status == 402 { throw OpenRouterImageError.message("На балансе OpenRouter закончились деньги — пополните его на openrouter.ai.") }
+            if [408, 429, 500, 502, 503, 504, 520, 522, 524, 529].contains(status) {
+                throw OpenRouterImageError.transient("\(Self.title(model)) занят или отвечал слишком долго (\(status)).")
+            }
             throw OpenRouterImageError.message("\(Self.title(model)): \(detail ?? "ошибка \(status)")")
         }
         let first = (json?["data"] as? [[String: Any]])?.first
@@ -108,20 +115,35 @@ struct OpenRouterImageClient {
     }
 
     /// The first model that answers; the next one when it fails. `models` — the order to try (the user's pick first).
+    /// A busy model or a request that timed out is tried once more after a pause before moving on.
     func render(prompt: String, reference: UIImage?, models: [String] = OpenRouterImageClient.models) async throws -> RenderedImage {
         let ratio = Self.aspectRatio(for: reference)
         var lastError: Error = OpenRouterImageError.message("OpenRouter не вернул картинку.")
         for model in models {
-            do {
-                let picture = try await image(prompt: prompt, reference: reference, aspectRatio: ratio, model: model)
-                return RenderedImage(image: picture, engine: "openrouter:\(model)", title: Self.title(model))
-            } catch let error as OpenRouterImageError {
-                lastError = error
-                // A rejected key or an empty balance will not be fixed by the next model.
-                if case .message(let text) = error, text.hasPrefix("OpenRouter не принял") || text.hasPrefix("На балансе") { throw error }
-            } catch {
-                lastError = error
-                if error is URLError { throw error }
+            for attempt in 0..<2 {
+                do {
+                    let picture = try await image(prompt: prompt, reference: reference, aspectRatio: ratio, model: model)
+                    return RenderedImage(image: picture, engine: "openrouter:\(model)", title: Self.title(model))
+                } catch let error as OpenRouterImageError {
+                    lastError = error
+                    if case .message(let text) = error {
+                        // A rejected key or an empty balance will not be fixed by the next model.
+                        if text.hasPrefix("OpenRouter не принял") || text.hasPrefix("На балансе") { throw error }
+                        break
+                    }
+                    if attempt == 0 { try await Task.sleep(for: .seconds(4)) }
+                } catch let error as URLError {
+                    if error.code == .notConnectedToInternet { throw error }
+                    guard [.timedOut, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed].contains(error.code) else { throw error }
+                    lastError = OpenRouterImageError.transient(error.code == .timedOut
+                        ? "\(Self.title(model)) рисовал дольше 10 минут."
+                        : "Связь прервалась, пока \(Self.title(model)) рисовал.")
+                    if attempt == 0 { try await Task.sleep(for: .seconds(3)) }
+                } catch {
+                    if error is CancellationError { throw error }
+                    lastError = error
+                    break
+                }
             }
         }
         throw lastError
