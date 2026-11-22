@@ -48,9 +48,7 @@ struct LaunchGateView: View {
                     Theme.background.ignoresSafeArea()
                     Circle().fill(Theme.orange.opacity(0.12)).frame(width: 360, height: 360).blur(radius: 36).offset(x: 110, y: -260)
                     VStack(spacing: 20) {
-                        Image("BrandMark").resizable().scaledToFit().frame(width: 108, height: 108).padding(26)
-                            .background(Theme.panel.opacity(0.92), in: RoundedRectangle(cornerRadius: 34, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 34, style: .continuous).stroke(Theme.orange.opacity(0.45), lineWidth: 1))
+                        AppMark(size: 112).shadow(color: Theme.orange.opacity(0.25), radius: 20, y: 8)
                         VStack(spacing: 7) {
                             Text(Brand.name).font(.title2.bold())
                             Text(Brand.tagline).font(.caption.weight(.medium)).foregroundStyle(Theme.muted)

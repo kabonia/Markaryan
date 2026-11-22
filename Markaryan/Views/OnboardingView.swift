@@ -21,7 +21,7 @@ struct OnboardingView: View {
             Circle().fill(Theme.orange.opacity(0.13)).frame(width: 380, height: 380).blur(radius: 50).offset(x: 140, y: -300)
             VStack(spacing: 0) {
                 HStack {
-                    Image("BrandMark").resizable().scaledToFit().frame(width: 34, height: 34)
+                    AppMark(size: 34)
                     Text(Brand.name).font(.headline)
                     Spacer()
                     if page < 2 { Button("Пропустить") { finish() }.font(.subheadline).foregroundStyle(Theme.muted) }

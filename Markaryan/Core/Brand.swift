@@ -70,6 +70,20 @@ extension View {
     }
 }
 
+/// App logo drawn in code: an emerald tile with a tape measure.
+struct AppMark: View {
+    var size: CGFloat = 40
+    var body: some View {
+        Image(systemName: "ruler.fill")
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .rotationEffect(.degrees(-45))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
 // MARK: - Haptics
 
 @MainActor enum Haptics {

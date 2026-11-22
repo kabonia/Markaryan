@@ -357,12 +357,7 @@ struct ProfileTabView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 14) {
-                    Image("BrandMark")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 58, height: 58)
-                        .padding(11)
-                        .panelCard(19)
+                    AppMark(size: 64)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(Brand.name).font(.title3.bold())
                         Text(Brand.tagline).font(.footnote).foregroundStyle(Theme.muted)

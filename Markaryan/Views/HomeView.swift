@@ -112,8 +112,7 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image("BrandMark").resizable().scaledToFit().frame(width: 40, height: 40)
-                .padding(6).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            AppMark(size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(Brand.name).font(.headline)
                 Button { store.showRegionPicker = true } label: {
@@ -164,14 +163,15 @@ struct HomeHeroCard: View {
             Circle().fill(Color.white.opacity(glow ? 0.16 : 0.10)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
             HStack(spacing: -40) {
                 StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
-                    .frame(width: 150, height: 110).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .rotationEffect(.degrees(-8)).offset(y: 18)
+                    .frame(width: 120, height: 88).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .rotationEffect(.degrees(-8)).offset(y: 14)
                 StyleRoomIllustration(palette: ["#1F3B3A", "#C8A15A", "#EDE3D1", "#6B2D3A"])
-                    .frame(width: 160, height: 118).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .frame(width: 128, height: 94).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .rotationEffect(.degrees(6))
                     .shadow(color: .black.opacity(0.4), radius: 14, y: 8)
             }
-            .offset(x: 150, y: -96)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .padding(.top, 18).padding(.trailing, -18)
             VStack(alignment: .leading, spacing: 10) {
                 Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
                 Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
@@ -189,7 +189,7 @@ struct HomeHeroCard: View {
             }
             .padding(22)
         }
-        .frame(maxWidth: .infinity, minHeight: 300, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: 330, alignment: .bottomLeading)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.07)))
         .onAppear { withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { glow = true } }
