@@ -651,8 +651,8 @@ struct FloorPlanDetailView: View {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text("Обмерный план, расстановка, электрика, плитка и развёртки — листы А3 в масштабе.")
                 .font(.caption).foregroundStyle(Theme.muted)
+            Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть чертежи", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
             HStack(spacing: 10) {
-                Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
                 Button { shareDrawings(plan) } label: { SecondaryActionLabel(title: "PDF", icon: "square.and.arrow.down") }.buttonStyle(PremiumPressStyle())
                 Button { shareDXF(plan) } label: { SecondaryActionLabel(title: "DXF", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
             }
@@ -983,10 +983,14 @@ struct FloorPlanDetailView: View {
 
         var interiors: [(title: String, image: UIImage)] = []
         for (index, item) in exact.enumerated() {
-            if let photo = photos[index] { interiors.append((title: "\(item.title) · фотореализм (\(photo.title))", image: photo.image)) }
+            if let image = photos[index].image {
+                let note = photos[index].approximate ? ", пропорции ≈ скану" : ""
+                interiors.append((title: "\(item.title) · фотореализм (\(photos[index].title)\(note))", image: image))
+            }
             interiors.append((title: "\(item.title) · точная 3D‑модель", image: item.image))
         }
-        let rejected = exact.indices.filter { photos[$0] == nil }.count
+        let rejected = exact.indices.filter { photos[$0].image == nil && photos[$0].rejected }.count
+        let failures = exact.indices.compactMap { photos[$0].image == nil ? photos[$0].failure : nil }
 
         progressText = "Собираем PDF‑презентацию…"
         let measured = DrawingsPDF.planPicture(plan: plan, proposal: nil, furniture: false)
@@ -1001,7 +1005,7 @@ struct FloorPlanDetailView: View {
             gallery += interiors
             // Kept with the concept: next time the plan opens with this presentation, without new renders.
             var pdf = url
-            if let saved = try? store.savePresentation(pdf: url, pictures: gallery, engine: photos.compactMap { $0?.title }.first, proposalID: original.id, planID: plan.id),
+            if let saved = try? store.savePresentation(pdf: url, pictures: gallery, engine: photos.compactMap { $0.image == nil ? nil : $0.title }.first, proposalID: original.id, planID: plan.id),
                let file = store.presentationFile(saved, saved.pdf) {
                 pdf = file
             }
@@ -1009,8 +1013,10 @@ struct FloorPlanDetailView: View {
             store.track("design_presentation")
             if proposal.furniture.isEmpty {
                 error = "В этой концепции ИИ не прислал расстановку — в презентации только обмерный план и пустая комната. Нажмите «Ещё вариант дизайна»."
+            } else if let failure = failures.first, store.photorealAvailable {
+                error = "ИИ не нарисовал \(failures.count) из \(exact.count) фото: \(failure) Вместо них в презентации точная 3D‑модель."
             } else if rejected > 0 && store.photorealAvailable {
-                error = "ИИ‑фото не прошли проверку геометрии: \(rejected). В презентации вместо них точная 3D‑модель — стены и расстановка гарантированно как в скане."
+                error = "ИИ исказил стены или окна на \(rejected) из \(exact.count) фото — их заменила точная 3D‑модель. Нажмите «Обновить рендер» ещё раз или выберите другую модель рендера на шаге «Дизайн»."
             }
             Haptics.success()
             modelURL = pdf
@@ -1019,18 +1025,43 @@ struct FloorPlanDetailView: View {
 
     /// Photoreal version of one exact render: the server's engine (the next one if it fails), checked against the render
     /// (geometry and exposure). One more try if the check fails; nil — the exact 3D model goes into the presentation instead.
-    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> (image: UIImage, title: String)? {
-        guard let reference, store.photorealAvailable else { return nil }
+    /// What happened to one AI frame: the photo (strict or close geometry) or why there is none.
+    struct PhotoOutcome {
+        var image: UIImage?
+        var title = ""
+        /// Passed only the soft check: shown with a note.
+        var approximate = false
+        /// The AI did not answer (the message of the last error).
+        var failure: String?
+        /// The AI answered, but the geometry or the exposure did not pass.
+        var rejected = false
+    }
+
+    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> PhotoOutcome {
+        guard let reference, store.photorealAvailable else { return PhotoOutcome() }
+        var outcome = PhotoOutcome()
+        var best: (image: UIImage, title: String, score: Double)?
         for _ in 0..<2 {
-            guard let rendered = try? await store.photorealRender(reference, prompt: prompt) else { continue }
+            let rendered: RenderedImage
+            do { rendered = try await store.photorealRender(reference, prompt: prompt) }
+            catch { outcome.failure = error.localizedDescription; continue }
+            outcome.failure = nil
+            guard RenderQuality.isUsable(rendered.image) else { outcome.rejected = true; continue }
             let score = GeometryCheck.score(reference: reference, candidate: rendered.image)
-            if score >= GeometryCheck.threshold, RenderQuality.isUsable(rendered.image) {
+            if score >= GeometryCheck.threshold {
                 store.track("photo_accepted")
-                return (rendered.image, rendered.title)
+                return PhotoOutcome(image: rendered.image, title: rendered.title)
             }
             store.track("geometry_rejected")
+            outcome.rejected = true
+            if score > (best?.score ?? 0) { best = (rendered.image, rendered.title, score) }
         }
-        return nil
+        // Close enough: better a photoreal frame with a note than none.
+        if let best, best.score >= GeometryCheck.softThreshold {
+            store.track("photo_accepted_soft")
+            return PhotoOutcome(image: best.image, title: best.title, approximate: true)
+        }
+        return outcome
     }
 
     /// The presentation saved with the selected concept (PDF and pictures on the iPhone).

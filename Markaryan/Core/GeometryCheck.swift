@@ -10,15 +10,23 @@ enum GeometryCheck {
     private static let context = CIContext(options: [.workingColorSpace: NSNull()])
     private static let width = 128
     private static let height = 96
-    /// Minimum agreement (F1 of edge maps). Below it the AI image is not used.
-    static let threshold = 0.5
+    /// Minimum agreement (F2: keeping the scan's walls and openings counts twice as much as extra decor). At or above — the photo is used.
+    static let threshold = 0.45
+    /// Below the threshold but still close: used only when no frame passed, with a note to check the proportions.
+    static let softThreshold = 0.33
+    /// The AI may reframe the shot slightly: shifts up to ±4 px of 128 (about 3 %) are searched.
+    private static let maxShift = 4
 
-    /// Edge map with a fixed density: the strongest 10 % of edges, so style and lighting do not matter, only structure.
+    /// Edge map with a fixed density: the strongest 8 % of edges of a slightly blurred picture,
+    /// so style, textures, patterns and lighting do not matter — only the big structure (walls, corners, openings, furniture outlines).
     private static func edgeMap(_ image: UIImage) -> [Bool]? {
-        guard let input = CIImage(image: image) else { return nil }
+        guard let input = CIImage(image: image), input.extent.width > 0, input.extent.height > 0 else { return nil }
         let scaled = input.transformed(by: CGAffineTransform(scaleX: CGFloat(width) / input.extent.width, y: CGFloat(height) / input.extent.height))
+        let blur = CIFilter.gaussianBlur()
+        blur.inputImage = scaled.clampedToExtent()
+        blur.radius = 1.1
         let gray = CIFilter.colorControls()
-        gray.inputImage = scaled
+        gray.inputImage = blur.outputImage
         gray.saturation = 0
         gray.contrast = 1.1
         let edges = CIFilter.edges()
@@ -30,11 +38,11 @@ enum GeometryCheck {
         var magnitude = [Int](repeating: 0, count: width * height)
         for index in 0..<(width * height) { magnitude[index] = Int(pixels[index * 4]) + Int(pixels[index * 4 + 1]) + Int(pixels[index * 4 + 2]) }
         let sorted = magnitude.sorted(by: >)
-        let cut = max(1, sorted[min(sorted.count - 1, sorted.count / 10)])
-        // Ignore a 2-pixel border (frame artefacts).
+        let cut = max(1, sorted[min(sorted.count - 1, sorted.count * 8 / 100)])
+        // Ignore a 3-pixel border (frame artefacts and the blur edge).
         return magnitude.enumerated().map { index, value in
             let x = index % width, y = index / width
-            return value >= cut && x > 1 && y > 1 && x < width - 2 && y < height - 2
+            return value >= cut && x > 2 && y > 2 && x < width - 3 && y < height - 3
         }
     }
 
@@ -49,16 +57,38 @@ enum GeometryCheck {
         return result
     }
 
-    /// 0…1: how well the candidate keeps the structure of the reference.
+    private static func shifted(_ map: [Bool], dx: Int, dy: Int) -> [Bool] {
+        guard dx != 0 || dy != 0 else { return map }
+        var result = [Bool](repeating: false, count: map.count)
+        for y in 0..<height { for x in 0..<width where map[y * width + x] {
+            let nx = x + dx, ny = y + dy
+            if nx >= 0, ny >= 0, nx < width, ny < height { result[ny * width + nx] = true }
+        } }
+        return result
+    }
+
+    /// 0…1: how well the candidate keeps the structure of the reference (the best over small reframings).
     static func score(reference: UIImage, candidate: UIImage) -> Double {
         guard let ref = edgeMap(reference), let cand = edgeMap(candidate) else { return 0 }
-        let refWide = dilate(ref, radius: 2), candWide = dilate(cand, radius: 2)
         let refCount = ref.filter { $0 }.count, candCount = cand.filter { $0 }.count
         guard refCount > 0, candCount > 0 else { return 0 }
-        let recall = Double(zip(ref, candWide).filter { $0 && $1 }.count) / Double(refCount)
-        let precision = Double(zip(cand, refWide).filter { $0 && $1 }.count) / Double(candCount)
-        guard recall + precision > 0 else { return 0 }
-        return 2 * recall * precision / (recall + precision)
+        let refWide = dilate(ref, radius: 2)
+        let candWide = dilate(cand, radius: 2)
+        var best = 0.0
+        for dy in stride(from: -maxShift, through: maxShift, by: 2) {
+            for dx in stride(from: -maxShift, through: maxShift, by: 2) {
+                let moved = shifted(cand, dx: dx, dy: dy)
+                let movedWide = shifted(candWide, dx: dx, dy: dy)
+                let movedCount = moved.filter { $0 }.count
+                guard movedCount > 0 else { continue }
+                let recall = Double(zip(ref, movedWide).filter { $0 && $1 }.count) / Double(refCount)
+                let precision = Double(zip(moved, refWide).filter { $0 && $1 }.count) / Double(movedCount)
+                guard recall + precision > 0 else { continue }
+                // F2: losing a wall or an opening of the scan weighs more than extra decor drawn by the AI.
+                best = max(best, 5 * precision * recall / (4 * precision + recall))
+            }
+        }
+        return best
     }
 }
 
