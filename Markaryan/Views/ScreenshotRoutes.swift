@@ -6,11 +6,21 @@ import SwiftUI
 enum ScreenshotRoute {
     static var current: String? { UserDefaults.standard.string(forKey: "screenshotRoute") }
 
-    /// Tab routes switch the tab bar; other routes open a single screen.
-    static var tab: Int? { ["home": 0, "calcs": 1, "design": 2, "projects": 3, "profile": 4][current ?? ""] }
+    /// Every route, tabs included, opens one screen directly.
+    static var tab: Int? { nil }
 
     @MainActor @ViewBuilder static func screen(_ route: String) -> some View {
-        if route.hasPrefix("calc:"), let kind = CalculationKind(rawValue: String(route.dropFirst(5))) {
+        if route == "home" {
+            HomeView()
+        } else if route == "calcs" {
+            CalculatorsView()
+        } else if route == "design" {
+            FloorPlansView()
+        } else if route == "projects" {
+            ProjectsTabView()
+        } else if route == "profile" {
+            ProfileTabView()
+        } else if route.hasPrefix("calc:"), let kind = CalculationKind(rawValue: String(route.dropFirst(5))) {
             CalculatorView(kind: kind)
         } else if route == "estimate" {
             HouseEstimateView(kind: .house)
