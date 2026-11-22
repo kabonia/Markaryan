@@ -67,6 +67,7 @@ jobs:
             sleep 7
             xcrun simctl io "$UDID" screenshot "shots/$(echo $r | tr ':' '-').png"
           done
+          for f in shots/*.png; do sips -s format jpeg -s formatOptions 60 -Z 800 "$f" --out "${f%.png}.jpg" >/dev/null; rm "$f"; done
           ls -la shots
 
       - uses: actions/upload-artifact@v4
