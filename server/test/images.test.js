@@ -132,6 +132,9 @@ test('picture engines through the server', async (t) => {
   r = await (await post('/v1/ai/image', { prompt: 'дом у моря' })).json();
   assert.equal(r.engine, 'openrouter:google/gemini-3-pro-image');
   assert.equal(seen.filter((s) => s.url === '/or/images').at(-1).body.input_references, undefined);
+  // …and the model picked in the app draws it first.
+  r = await (await post('/v1/ai/image', { prompt: 'дом у моря', prefer: 'openrouter:bytedance-seed/seedream-5-0-pro' })).json();
+  assert.equal(r.engine, 'openrouter:bytedance-seed/seedream-5-0-pro');
 });
 
 test('pictures by description fall back to Alice AI ART', async (t) => {

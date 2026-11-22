@@ -251,8 +251,11 @@ struct ServerAIClient: AIEngine {
     }
 
     /// Picture by description (the server's picture engines, or Kandinsky / Alice AI ART).
-    func generateImage(prompt: String) async throws -> UIImage {
-        let json = try await post("v1/ai/image", ["prompt": prompt])
+    /// A picture by description; `prefer` — the engine the user picked goes first (an older server ignores it).
+    func generateImage(prompt: String, prefer: String? = nil) async throws -> UIImage {
+        var body: [String: Any] = ["prompt": prompt]
+        if let prefer { body["prefer"] = prefer }
+        let json = try await post("v1/ai/image", body, timeout: 300)
         guard let base64 = json["image"] as? String, let data = Data(base64Encoded: base64), let result = UIImage(data: data) else { throw ClaudeError.badResponse }
         return result
     }

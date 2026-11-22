@@ -794,6 +794,7 @@ struct AIVisionStudioView: View {
     @State private var showFilePicker = false
     @State private var savedToPhotos = false
     @State private var addedToProject = false
+    @State private var showModels = false
 
     init(initialStyle: VisualizationStyle = .object) {
         _style = State(initialValue: initialStyle)
@@ -808,6 +809,9 @@ struct AIVisionStudioView: View {
                     .foregroundStyle(Theme.muted)
 
                 visualPromptComposer
+                if store.photorealAvailable || store.picturesByDescriptionAvailable {
+                    AIModelsRow(value: store.renderModel.title, title: "Модель ИИ") { showModels = true }
+                }
                 ApplePlaygroundButton(prompt: brief.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? style.subtitle : brief) { image in
                     result = image
                     error = nil
@@ -854,6 +858,7 @@ struct AIVisionStudioView: View {
         .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.image]) { importImage($0) }
         .sheet(isPresented: $showCamera) { CameraCaptureView(image: $source) }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
+        .sheet(isPresented: $showModels) { NavigationStack { AIModelsView(showsDesign: false) }.presentationDetents([.medium, .large]) }
     }
 
     private var visualPromptComposer: some View {

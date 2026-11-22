@@ -131,10 +131,11 @@ async function handle(req, res) {
     consume('image', installId, ip);
     const prompt = String(body.prompt || '').slice(0, 3000);
     try {
-      // The photoreal engines draw best; Kandinsky or Alice AI ART when none is set up or all fail.
-      if (imageEngines().length > 0) {
+      // The photoreal engines draw best (the one picked in the app first); Kandinsky or Alice AI ART when none is set up or all fail.
+      const engines = preferredEngines(body.prefer);
+      if (engines.length > 0) {
         try {
-          const { image, engine } = await renderWithFallback(imageEngines(), { prompt, aspectRatio: aspectRatio(body.aspectRatio) });
+          const { image, engine } = await renderWithFallback(engines, { prompt, aspectRatio: aspectRatio(body.aspectRatio) });
           return send(res, 200, { image, engine: engine.id, title: engine.title });
         } catch (error) {
           if (!ai.canGenerateImages()) throw error;
