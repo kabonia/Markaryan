@@ -1,6 +1,8 @@
 name: Скриншоты экранов
 
 on:
+  push:
+    branches: [ux-overhaul]
   workflow_dispatch:
     inputs:
       routes:
@@ -45,6 +47,8 @@ jobs:
             -destination "id=$UDID" -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build | tail -5
 
       - name: Скриншоты
+        env:
+          ROUTES: ${{ github.event.inputs.routes || 'onboarding home calcs design projects profile about assistant estimate calc:concreteMix calc:masonry photocount photodesign' }}
         run: |
           APP=$(ls -d dd/Build/Products/Debug-iphonesimulator/*.app | head -1)
           BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
@@ -53,7 +57,7 @@ jobs:
           xcrun simctl privacy "$UDID" grant location "$BID" || true
           xcrun simctl location "$UDID" set 43.585,39.723 || true
           mkdir -p shots
-          for r in ${{ github.event.inputs.routes }}; do
+          for r in ${ROUTES}; do
             xcrun simctl terminate "$UDID" "$BID" 2>/dev/null || true
             if [ "$r" = "onboarding" ]; then
               xcrun simctl launch "$UDID" "$BID" -onboardingCompleted NO -screenshotRoute ""
