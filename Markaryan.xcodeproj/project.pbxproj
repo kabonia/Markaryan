@@ -27,6 +27,7 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C19D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */; };
 		AA1000000000000000000C02 /* Markaryan/Views/Room3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C02 /* Markaryan/Views/Room3DView.swift */; };
 		AA1000000000000000000C03 /* Markaryan/Core/FluxClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C03 /* Markaryan/Core/FluxClient.swift */; };
 		AA1000000000000000000C05 /* Markaryan/Core/DesignPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C05 /* Markaryan/Core/DesignPresentation.swift */; };
@@ -81,6 +82,7 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ScreenshotRoutes.swift; sourceTree = "<group>"; };
 		AA2000000000000000000C02 /* Markaryan/Views/Room3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/Room3DView.swift; sourceTree = "<group>"; };
 		AA2000000000000000000C03 /* Markaryan/Core/FluxClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FluxClient.swift; sourceTree = "<group>"; };
 		AA2000000000000000000C05 /* Markaryan/Core/DesignPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignPresentation.swift; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C29D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift */,
 				AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */,
 				AA2000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift */,
 				AA2000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift */,
@@ -297,6 +300,7 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C19D5BDBD32FF7AE319B667B /* Markaryan/Views/ScreenshotRoutes.swift in Sources */,
 				AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */,
 				AA1000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift in Sources */,
 				AA1000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift in Sources */,

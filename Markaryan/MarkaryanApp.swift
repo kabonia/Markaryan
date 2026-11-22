@@ -24,14 +24,25 @@ struct LaunchGateView: View {
     @AppStorage("onboardingCompleted") private var onboardingCompleted = false
     @State private var revealsLogo = false
     @State private var opensApp = false
+    private var mainApp: some View {
+        RootView()
+            .transition(.opacity.combined(with: .scale(scale: 1.015)))
+            .fullScreenCover(isPresented: Binding(get: { !onboardingCompleted }, set: { if !$0 { onboardingCompleted = true } })) {
+                OnboardingView { onboardingCompleted = true }.environmentObject(store)
+            }
+    }
     var body: some View {
         ZStack {
             if opensApp {
-                RootView()
-                    .transition(.opacity.combined(with: .scale(scale: 1.015)))
-                    .fullScreenCover(isPresented: Binding(get: { !onboardingCompleted }, set: { if !$0 { onboardingCompleted = true } })) {
-                        OnboardingView { onboardingCompleted = true }.environmentObject(store)
-                    }
+                #if DEBUG
+                if let route = ScreenshotRoute.current, ScreenshotRoute.tab == nil {
+                    NavigationStack { ScreenshotRoute.screen(route) }
+                } else {
+                    mainApp.onAppear { if let tab = ScreenshotRoute.tab { store.tab = tab } }
+                }
+                #else
+                mainApp
+                #endif
             } else {
                 ZStack {
                     LinearGradient(colors: [Theme.background, Color(red: 0.11, green: 0.15, blue: 0.13)], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
