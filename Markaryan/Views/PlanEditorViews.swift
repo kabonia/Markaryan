@@ -401,7 +401,7 @@ struct PlanEditorView: View {
         Button { Haptics.tap(); action() } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon).foregroundStyle(Theme.orange).frame(width: 24)
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
                 Text(value).font(.subheadline).foregroundStyle(Theme.muted).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                 Image(systemName: "pencil").font(.caption).foregroundStyle(Theme.muted)

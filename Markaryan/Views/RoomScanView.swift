@@ -87,13 +87,13 @@ struct RoomScanView: View {
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12)).padding(.bottom, 20) }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 
     private var intro: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Image(systemName: "cube.transparent").font(.system(size: 52, weight: .semibold)).foregroundStyle(.black)
+                Image(systemName: "cube.transparent").font(.system(size: 52, weight: .semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 96, height: 96).background(Theme.orange, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                 Text("Планировка за минуту").font(.system(.largeTitle, weight: .bold)).tracking(-1)
                 Text("iPhone сканирует комнату лидаром: стены, окна, двери и мебель. Получите точный план сверху с размерами, 3D‑модель и дизайн‑проект от ИИ прямо по этой планировке.").foregroundStyle(Theme.muted)

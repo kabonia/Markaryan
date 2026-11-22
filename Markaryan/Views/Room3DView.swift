@@ -755,7 +755,7 @@ struct Room3DView: View {
                     .pickerStyle(.segmented).frame(maxWidth: 260)
                     .padding(6).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 Spacer()
-                Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(.white.opacity(0.85))
+                Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(Theme.ink.opacity(0.85))
                     .padding(.horizontal, 12).padding(.vertical, 7).background(.ultraThinMaterial, in: Capsule())
                 HStack(spacing: 10) {
                     Button { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode) } label: { SecondaryActionLabel(title: "Сбросить вид", icon: "arrow.counterclockwise") }

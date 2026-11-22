@@ -111,7 +111,7 @@ struct PhotoDesignView: View {
             HStack(spacing: 10) {
                 Button { showCamera = true } label: {
                     Label(source == nil ? "Снять сейчас" : "Новое фото", systemImage: "camera.fill").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.onAccent)
                         .background(Theme.sky, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -283,7 +283,7 @@ struct PhotoDesignView: View {
                     .lineLimit(1...4).padding(12).background(Theme.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 Button { correct(after) } label: {
                     Label("Применить к этому варианту", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
                         .background(Theme.sky, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -538,7 +538,7 @@ struct PhotoDesignRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 let room = PhotoDesignRoom(rawValue: record.room) ?? .other
                 let style = record.style.flatMap { id in DesignStyle.all.first { $0.id == id } }
-                Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text("\(record.date.formatted(date: .abbreviated, time: .shortened)) · вариантов: \(record.versions.count)")
                     .font(.caption).foregroundStyle(Theme.muted)
             }
@@ -564,14 +564,14 @@ struct BeforeAfterSlider: View {
                 Image(uiImage: before).resizable().scaledToFill().frame(width: width, height: height).clipped()
                     .mask(alignment: .leading) { Rectangle().frame(width: max(0, width * split)) }
                 Rectangle().fill(.white).frame(width: 2, height: height).offset(x: width * split - 1)
-                Image(systemName: "arrow.left.and.right").font(.caption.weight(.bold)).foregroundStyle(.black)
+                Image(systemName: "arrow.left.and.right").font(.caption.weight(.bold)).foregroundStyle(Theme.ink)
                     .frame(width: 34, height: 34).background(.white, in: Circle()).shadow(radius: 4)
                     .offset(x: width * split - 17)
                 Text("БЫЛО").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
                     .background(.black.opacity(0.55), in: Capsule()).foregroundStyle(.white)
                     .frame(maxHeight: .infinity, alignment: .top).padding(10)
                 Text("СТАЛО").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
-                    .background(Theme.sky, in: Capsule()).foregroundStyle(.black)
+                    .background(Theme.sky, in: Capsule()).foregroundStyle(Theme.onAccent)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(10)
             }
             .contentShape(Rectangle())

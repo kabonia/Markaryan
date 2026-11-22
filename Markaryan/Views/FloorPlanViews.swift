@@ -298,13 +298,13 @@ struct DesignStartCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 44, height: 44).background(accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 Spacer()
                 Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(accent)
             }
             Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(.white).lineLimit(2)
+            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(Theme.ink).lineLimit(2)
             Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
@@ -334,10 +334,10 @@ struct DesignStepsStrip: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: step.0).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
                                 .frame(width: 42, height: 42).background(Theme.orange.opacity(0.12), in: Circle())
-                            Text("\(index + 1)").font(.system(size: 9, weight: .heavy)).foregroundStyle(.black)
+                            Text("\(index + 1)").font(.system(size: 9, weight: .heavy)).foregroundStyle(Theme.onAccent)
                                 .frame(width: 15, height: 15).background(Theme.orange, in: Circle()).offset(x: 3, y: -3)
                         }
-                        Text(step.1).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                        Text(step.1).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
                         Text(step.2).font(.system(size: 10)).foregroundStyle(Theme.muted).multilineTextAlignment(.center).lineLimit(2)
                     }
                     .frame(maxWidth: .infinity)
@@ -356,7 +356,7 @@ struct FloorPlanRow: View {
             FloorPlanCanvas(plan: plan, proposal: plan.proposals.last, showDimensions: false, compact: true)
                 .frame(width: 92, height: 72).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 5) {
-                Text(plan.name).font(.headline).foregroundStyle(.white)
+                Text(plan.name).font(.headline).foregroundStyle(Theme.ink)
                 Text("\(CalculationEngine.format((plan.area * 10).rounded() / 10)) м² · \(plan.source == .lidar ? "лидар" : "контур AR")").font(.caption).foregroundStyle(Theme.muted)
                 Text(plan.proposals.isEmpty ? "Дизайн ещё не создан" : "Концепций: \(plan.proposals.count)").font(.caption.weight(.semibold)).foregroundStyle(plan.proposals.isEmpty ? Theme.muted : Theme.orange)
             }
@@ -600,7 +600,7 @@ struct FloorPlanDetailView: View {
                 .lineLimit(2...5).padding(12).background(Theme.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Button { applyEdits(proposal) } label: {
                 Label("Применить правки", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
                     .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .buttonStyle(PremiumPressStyle())
@@ -727,7 +727,7 @@ struct FloorPlanDetailView: View {
                 if busy { ProgressView().tint(.black) } else { Image(systemName: button.icon) }
                 Text(busy ? (progressText ?? "Готовим презентацию…") : button.title).font(.headline).lineLimit(2)
             }
-            .frame(maxWidth: .infinity).padding(16).foregroundStyle(.black)
+            .frame(maxWidth: .infinity).padding(16).foregroundStyle(Theme.onAccent)
             .background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(PremiumPressStyle())
@@ -798,7 +798,7 @@ struct FloorPlanDetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text(proposal.title).font(.title3.bold())
-            Text(proposal.summary).font(.subheadline).foregroundStyle(.white.opacity(0.88))
+            Text(proposal.summary).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.88))
             if let model = DesignModel.title(of: proposal.designModel) {
                 Label("Дизайн и расстановка: \(model)", systemImage: "cpu").font(.caption).foregroundStyle(Theme.muted)
             }
@@ -1207,9 +1207,9 @@ struct MeasurementGroupCard: View {
             Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             ForEach(rows) { row in
                 HStack(alignment: .firstTextBaseline) {
-                    Text(row.title).font(.subheadline).foregroundStyle(.white.opacity(0.9))
+                    Text(row.title).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.9))
                     Spacer(minLength: 8)
-                    Text(value(row)).font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
+                    Text(value(row)).font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink)
                 }
                 if row.id != rows.last?.id { Divider().overlay(Color.white.opacity(0.06)) }
             }
@@ -1238,7 +1238,7 @@ struct AIModelsRow: View {
                 Image(systemName: "cpu").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
                 Text(title).font(.subheadline).foregroundStyle(Theme.muted)
                 Spacer(minLength: 8)
-                Text(value).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                Text(value).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
                     .lineLimit(1).minimumScaleFactor(0.75)
                 Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
             }
@@ -1302,7 +1302,7 @@ struct AIModelsView: View {
         Button { Haptics.tap(); pick() } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.white)
+                    Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
                     Text(note).font(.caption).foregroundStyle(Theme.muted).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
@@ -1393,7 +1393,7 @@ struct PlanMaterialsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: item.kind.icon).foregroundStyle(Theme.orange).frame(width: 26)
-                            Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).multilineTextAlignment(.leading)
+                            Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).multilineTextAlignment(.leading)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
                         }
@@ -1583,7 +1583,7 @@ struct DesignRequestSheet: View {
                     ForEach(style.palette, id: \.self) { hex in Circle().fill(Color(hex: hex) ?? .gray).frame(width: 16, height: 16) }
                 }
             }
-            Text(style.summary).font(.subheadline).foregroundStyle(.white.opacity(0.85))
+            Text(style.summary).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.85))
             FlowLayout(spacing: 6) {
                 ForEach(style.materials, id: \.self) { material in
                     Text(material).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6)
@@ -1601,7 +1601,7 @@ struct DesignRequestSheet: View {
                         if loadingStyle == style.id { ProgressView().tint(.black) } else { Image(systemName: "eye.fill") }
                         Text(loadingStyle == style.id ? "ИИ рисует вашу комнату… ~30 с" : "Показать мою комнату в этом стиле").font(.subheadline.weight(.semibold))
                     }
-                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
                     .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -1656,7 +1656,7 @@ struct StyleCard: View {
                     ProgressView().tint(.white).padding(8).background(.black.opacity(0.5), in: Circle()).padding(6)
                 } else if preview != nil {
                     Text("ИИ").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
-                        .background(Theme.orange, in: Capsule()).foregroundStyle(.black).padding(6)
+                        .background(Theme.orange, in: Capsule()).foregroundStyle(Theme.onAccent).padding(6)
                 }
             }
             Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)

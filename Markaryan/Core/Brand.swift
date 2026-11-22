@@ -28,20 +28,26 @@ enum Brand {
 // MARK: - Theme
 
 enum Theme {
-    static let background = Color(red: 0.055, green: 0.072, blue: 0.064)
-    static let panel = Color(red: 0.115, green: 0.142, blue: 0.126)
-    static let panelRaised = Color(red: 0.150, green: 0.180, blue: 0.162)
-    static let stroke = Color.white.opacity(0.07)
-    static let orange = Color(red: 0.98, green: 0.43, blue: 0.22)
-    static let orangeSoft = Color(red: 0.97, green: 0.71, blue: 0.45)
-    static let muted = Color(red: 0.67, green: 0.72, blue: 0.67)
-    static let success = Color(red: 0.45, green: 0.85, blue: 0.60)
-    static let danger = Color(red: 1.0, green: 0.42, blue: 0.40)
-    static let sky = Color(red: 0.56, green: 0.70, blue: 0.98)
-    static let sage = Color(red: 0.68, green: 0.81, blue: 0.47)
+    // Light, soft palette: cool grey page, white cards with a gentle shadow, graphite text, calm emerald accent.
+    static let background = Color(red: 0.953, green: 0.961, blue: 0.969)     // #F3F5F7
+    static let panel = Color.white
+    static let panelRaised = Color(red: 0.933, green: 0.945, blue: 0.957)    // #EEF1F4
+    static let stroke = Color.black.opacity(0.06)
+    static let ink = Color(red: 0.094, green: 0.129, blue: 0.169)            // #18212B — main text
+    static let onAccent = Color.white                                         // text on accent fills
+    /// Main accent (historic name kept so every screen picks it up).
+    static let orange = Color(red: 0.067, green: 0.525, blue: 0.416)         // #11866A emerald
+    static let orangeSoft = Color(red: 0.247, green: 0.698, blue: 0.561)     // #3FB28F
+    static let accentTint = Color(red: 0.867, green: 0.945, blue: 0.918)     // #DDF1EA
+    static let muted = Color(red: 0.416, green: 0.455, blue: 0.510)          // #6A7482
+    static let success = Color(red: 0.118, green: 0.620, blue: 0.353)
+    static let danger = Color(red: 0.851, green: 0.282, blue: 0.282)
+    static let sky = Color(red: 0.243, green: 0.482, blue: 0.980)
+    static let sage = Color(red: 0.494, green: 0.639, blue: 0.353)
 
+    /// Hero cards: deep emerald gradient with white text.
     static let heroGradient = LinearGradient(
-        colors: [Color(red: 0.18, green: 0.24, blue: 0.22), Color(red: 0.08, green: 0.11, blue: 0.10)],
+        colors: [Color(red: 0.055, green: 0.420, blue: 0.341), Color(red: 0.039, green: 0.290, blue: 0.247)],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
 }
@@ -52,13 +58,14 @@ struct PanelCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.5))
+            .shadow(color: Color.black.opacity(fill == Theme.panel ? 0.05 : 0), radius: 10, y: 3)
     }
 }
 
 extension View {
-    /// Standard card surface: panel colour, continuous corners and a hairline border.
-    func panelCard(_ radius: CGFloat = 18, fill: Color = Theme.panel) -> some View {
+    /// Standard card surface: white, soft corners, hairline and a gentle shadow.
+    func panelCard(_ radius: CGFloat = 20, fill: Color = Theme.panel) -> some View {
         modifier(PanelCardModifier(radius: radius, fill: fill))
     }
 }

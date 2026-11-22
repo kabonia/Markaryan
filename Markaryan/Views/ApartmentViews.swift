@@ -63,7 +63,7 @@ struct ApartmentRow: View {
             ApartmentCanvas(layout: apartment.layout, compact: true)
                 .frame(width: 92, height: 72).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 5) {
-                Text(apartment.name).font(.headline).foregroundStyle(.white)
+                Text(apartment.name).font(.headline).foregroundStyle(Theme.ink)
                 Text("\(apartment.rooms.count) \(ApartmentView.roomsWord(apartment.rooms.count)) · \(CalculationEngine.format((apartment.area * 10).rounded() / 10)) м²")
                     .font(.caption).foregroundStyle(Theme.muted)
                 Text("Квартира целиком").font(.caption.weight(.semibold)).foregroundStyle(Theme.orange)
@@ -163,10 +163,10 @@ struct ApartmentView: View {
                 ForEach(layout.rooms) { room in
                     Button { Haptics.tap(); openRoom = room.id } label: {
                         HStack(spacing: 12) {
-                            Text("\(room.number)").font(.subheadline.weight(.bold)).foregroundStyle(.black)
+                            Text("\(room.number)").font(.subheadline.weight(.bold)).foregroundStyle(Theme.onAccent)
                                 .frame(width: 28, height: 28).background(Theme.orange, in: Circle())
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(room.name).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                                Text(room.name).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                                 let concepts = room.plan.proposals.count
                                 Text(concepts == 0 ? "Дизайн ещё не создан" : "Концепций: \(concepts)").font(.caption).foregroundStyle(Theme.muted)
                             }

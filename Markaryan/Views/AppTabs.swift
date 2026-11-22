@@ -18,7 +18,7 @@ struct ProjectsTabView: View {
                         Button { showNewProject = true } label: {
                             Label("Объект", systemImage: "plus").font(.subheadline.weight(.semibold))
                                 .padding(.horizontal, 12).padding(.vertical, 8)
-                                .background(Theme.orange, in: Capsule()).foregroundStyle(.black)
+                                .background(Theme.orange, in: Capsule()).foregroundStyle(Theme.onAccent)
                         }
                         .buttonStyle(PremiumPressStyle())
                     }
@@ -112,7 +112,7 @@ struct ProjectStatTile: View {
                 Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
             }
             Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
-            Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .padding(14)
@@ -132,7 +132,7 @@ private struct ProjectWorkspaceSelectionCard: View {
                     Text(isActive ? "АКТИВНЫЙ ОБЪЕКТ" : "ОБЪЕКТ")
                         .font(.caption2.weight(.bold)).tracking(1.1)
                         .foregroundStyle(isActive ? Theme.orange : Theme.muted)
-                    Text(workspace.displayName).font(.headline).foregroundStyle(.white)
+                    Text(workspace.displayName).font(.headline).foregroundStyle(Theme.ink)
                     Text(workspace.passport.address.isEmpty ? "Адрес не указан" : workspace.passport.address)
                         .font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
                 }
@@ -441,7 +441,7 @@ struct ObjectVisualizerHero: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 7) {
-                    Image(systemName: "wand.and.stars").font(.caption.weight(.bold)).foregroundStyle(.black).padding(8).background(Theme.orange, in: Circle())
+                    Image(systemName: "wand.and.stars").font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent).padding(8).background(Theme.orange, in: Circle())
                     Text("ВИЗУАЛИЗАТОР ОБЪЕКТА").font(.caption2.weight(.bold)).tracking(1.15).foregroundStyle(.white.opacity(0.78))
                 }
                 Text("Покажем будущее\nдо начала работ.")
@@ -451,8 +451,8 @@ struct ObjectVisualizerHero: View {
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.75))
                 HStack(spacing: 7) {
-                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(.black)
-                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(.black)
+                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(Theme.onAccent)
+                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -476,7 +476,7 @@ struct AICenterAssistCard: View {
                 .background(Color(red: 0.68, green: 0.81, blue: 0.47), in: RoundedRectangle(cornerRadius: 15))
             VStack(alignment: .leading, spacing: 6) {
                 Text("СТРОЙПОМОЩНИК").font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(Color(red: 0.68, green: 0.81, blue: 0.47))
-                Text("Смета без непонятных строк").font(.headline).foregroundStyle(.white)
+                Text("Смета без непонятных строк").font(.headline).foregroundStyle(Theme.ink)
                 Text("Материалы, этапы, объёмы и наша цена — простым языком.").font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -498,12 +498,12 @@ struct ToolFeatureCard: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(.black)
+                .foregroundStyle(Theme.onAccent)
                 .frame(width: 48, height: 48)
                 .background(accent, in: RoundedRectangle(cornerRadius: 15))
             VStack(alignment: .leading, spacing: 6) {
                 Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-                Text(title).font(.headline).foregroundStyle(.white)
+                Text(title).font(.headline).foregroundStyle(Theme.ink)
                 Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -527,7 +527,7 @@ struct AppTabRow: View {
                 .frame(width: 42, height: 42)
                 .background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 13))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -569,9 +569,9 @@ struct ProfileQuickAction: View {
     let title: String
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 46, height: 46).background(Theme.orange, in: Circle())
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.white)
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14).panelCard(18)
     }

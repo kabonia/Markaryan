@@ -194,7 +194,7 @@ struct PhotoCountView: View {
 
                 Button { showLiveCamera = true } label: {
                     HStack(spacing: 14) {
-                        Image(systemName: "camera.viewfinder").font(.title2.weight(.semibold)).foregroundStyle(.black)
+                        Image(systemName: "camera.viewfinder").font(.title2.weight(.semibold)).foregroundStyle(Theme.onAccent)
                             .frame(width: 52, height: 52).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Считать камерой").font(.headline).foregroundStyle(.white)
@@ -228,7 +228,7 @@ struct PhotoCountView: View {
                         Label("Части не должны перекрываться — каждый предмет только в одном кадре", systemImage: "square.split.2x2")
                         Label("Мелочь (гайки, болты) рассыпьте в один слой на контрастном фоне", systemImage: "circle.grid.3x3")
                     }
-                    .font(.footnote).foregroundStyle(.white.opacity(0.85))
+                    .font(.footnote).foregroundStyle(Theme.ink.opacity(0.85))
                     .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
                 } else {
                     totalCard
@@ -498,14 +498,14 @@ struct LiveCountCameraView: View {
                     .accessibilityLabel("Снять часть")
                     Spacer()
                     Button { dismiss() } label: {
-                        Text("Готово").font(.subheadline.weight(.bold)).foregroundStyle(.black).frame(width: 70, height: 44).background(Theme.orange, in: Capsule())
+                        Text("Готово").font(.subheadline.weight(.bold)).foregroundStyle(Theme.onAccent).frame(width: 70, height: 44).background(Theme.orange, in: Capsule())
                     }
                 }
                 .padding(.horizontal, 24).padding(.bottom, 24)
             }
             .padding(.top, 8)
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onAppear {
             camera.onPhoto = { image in session.add(image, store: store) }
             camera.start()
@@ -609,7 +609,7 @@ struct MarkedPhoto: View {
                             ZStack {
                                 Circle().fill(Theme.orange.opacity(0.85))
                                 Circle().stroke(.white, lineWidth: 1.5)
-                                if points.count <= 200 { Text("\(index + 1)").font(.system(size: dot * 0.42, weight: .bold)).foregroundStyle(.black).minimumScaleFactor(0.5) }
+                                if points.count <= 200 { Text("\(index + 1)").font(.system(size: dot * 0.42, weight: .bold)).foregroundStyle(Theme.onAccent).minimumScaleFactor(0.5) }
                             }
                             .frame(width: dot, height: dot)
                             .position(x: point.x * size.width, y: point.y * size.height)

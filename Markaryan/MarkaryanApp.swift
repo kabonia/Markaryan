@@ -6,7 +6,7 @@ import StoreKit
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
-            LaunchGateView().environmentObject(store).tint(Theme.orange).preferredColorScheme(.dark)
+            LaunchGateView().environmentObject(store).tint(Theme.orange).preferredColorScheme(.light)
                 .alert("Сохранение", isPresented: Binding(get: { store.storageError != nil }, set: { if !$0 { store.storageError = nil } })) {
                     Button("Понятно") { store.storageError = nil }
                 } message: { Text(store.storageError ?? "") }
@@ -45,7 +45,7 @@ struct LaunchGateView: View {
                 #endif
             } else {
                 ZStack {
-                    LinearGradient(colors: [Theme.background, Color(red: 0.11, green: 0.15, blue: 0.13)], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+                    Theme.background.ignoresSafeArea()
                     Circle().fill(Theme.orange.opacity(0.12)).frame(width: 360, height: 360).blur(radius: 36).offset(x: 110, y: -260)
                     VStack(spacing: 20) {
                         Image("BrandMark").resizable().scaledToFit().frame(width: 108, height: 108).padding(26)
@@ -75,9 +75,9 @@ struct PrimaryButton: View {
     var body: some View {
         Button { Haptics.tap(); action() } label: {
             HStack { Text(title).fontWeight(.semibold); Spacer(); Image(systemName: icon) }
-                .padding(18).foregroundStyle(.black)
-                .background(LinearGradient(colors: [Theme.orange, Color(red: 0.99, green: 0.53, blue: 0.30)], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: Theme.orange.opacity(0.25), radius: 14, y: 6)
+                .padding(18).foregroundStyle(Theme.onAccent)
+                .background(Theme.orange, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .shadow(color: Theme.orange.opacity(0.22), radius: 12, y: 5)
         }
         .buttonStyle(PremiumPressStyle())
     }
@@ -87,8 +87,8 @@ struct SecondaryActionLabel: View {
     let title: String
     let icon: String
     var body: some View {
-        Label(title, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
-            .frame(maxWidth: .infinity).padding(15).panelCard(15, fill: Theme.panelRaised)
+        Label(title, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+            .frame(maxWidth: .infinity).padding(15).background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 struct PremiumPressStyle: ButtonStyle {
@@ -105,7 +105,7 @@ struct PremiumCardPressStyle: ButtonStyle {
 struct SectionTitle: View {
     let eyebrow: String
     let title: String
-    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.uppercased()).font(.caption.weight(.semibold)).tracking(2).foregroundStyle(Theme.orange); Text(title).font(.title2.bold()).tracking(-0.7) }.accessibilityElement(children: .combine) }
+    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.uppercased()).font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(Theme.orange); Text(title).font(.title2.bold()).tracking(-0.5).foregroundStyle(Theme.ink) }.accessibilityElement(children: .combine) }
 }
 struct InfoNote: View {
     let text: String
@@ -136,7 +136,7 @@ struct RootView: View {
         .tint(Theme.orange)
         .toolbarBackground(Theme.background, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
-        .toolbarColorScheme(.dark, for: .tabBar)
+        .toolbarColorScheme(.light, for: .tabBar)
         .onChange(of: store.tab) { _, _ in Haptics.tap() }
         .onChange(of: store.meaningfulActions) { _, _ in
             if store.shouldAskForReview {

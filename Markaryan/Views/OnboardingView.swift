@@ -49,14 +49,14 @@ struct OnboardingView: View {
                 .padding(.horizontal, 24).padding(.bottom, 20)
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .interactiveDismissDisabled()
     }
 
     private func slide(_ item: (icon: String, eyebrow: String, title: String, text: String)) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             Spacer()
-            Image(systemName: item.icon).font(.system(size: 42, weight: .semibold)).foregroundStyle(.black)
+            Image(systemName: item.icon).font(.system(size: 42, weight: .semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 92, height: 92)
                 .background(Theme.orange, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .shadow(color: Theme.orange.opacity(0.35), radius: 24, y: 10)

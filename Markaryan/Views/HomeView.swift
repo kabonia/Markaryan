@@ -136,8 +136,7 @@ struct HomeBackdrop: View {
     var body: some View {
         ZStack {
             Theme.background
-            Circle().fill(Theme.orange.opacity(0.16)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
-            Circle().fill(Theme.sky.opacity(0.10)).frame(width: 360, height: 360).blur(radius: 90).offset(x: -170, y: 60)
+            Circle().fill(Theme.orange.opacity(0.08)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
         }
         .ignoresSafeArea()
     }
@@ -161,8 +160,8 @@ struct HomeHeroCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            LinearGradient(colors: [Color(red: 0.33, green: 0.20, blue: 0.13), Color(red: 0.10, green: 0.15, blue: 0.14), Color(red: 0.06, green: 0.09, blue: 0.09)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            Circle().fill(Theme.orange.opacity(glow ? 0.34 : 0.22)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
+            Theme.heroGradient
+            Circle().fill(Color.white.opacity(glow ? 0.16 : 0.10)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
             HStack(spacing: -40) {
                 StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
                     .frame(width: 150, height: 110).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -174,7 +173,7 @@ struct HomeHeroCard: View {
             }
             .offset(x: 150, y: -96)
             VStack(alignment: .leading, spacing: 10) {
-                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
+                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
                 Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
                 Text("Сфотографируйте комнату — ИИ покажет её в новом стиле.")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
@@ -183,9 +182,9 @@ struct HomeHeroCard: View {
                     Text("Попробовать дизайн по фото").font(.subheadline.weight(.semibold))
                     Image(systemName: "arrow.right").font(.caption.weight(.bold))
                 }
-                .foregroundStyle(.black).padding(.horizontal, 14).padding(.vertical, 11)
-                .background(LinearGradient(colors: [Theme.orange, Theme.orangeSoft], startPoint: .leading, endPoint: .trailing), in: Capsule())
-                .shadow(color: Theme.orange.opacity(0.35), radius: 12, y: 6)
+                .foregroundStyle(Theme.orange).padding(.horizontal, 14).padding(.vertical, 11)
+                .background(.white, in: Capsule())
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
                 .padding(.top, 4)
             }
             .padding(22)
@@ -208,7 +207,7 @@ struct HomeToolCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 44, height: 44)
                     .background(LinearGradient(colors: [accent, accent.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .shadow(color: accent.opacity(0.35), radius: 8, y: 4)
@@ -218,16 +217,13 @@ struct HomeToolCard: View {
                         .background(accent.opacity(0.18), in: Capsule()).foregroundStyle(accent)
                 }
             }
-            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.85)
+            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
             Text(text).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
         .padding(15)
         .frame(maxWidth: .infinity, minHeight: 180, alignment: .topLeading)
-        .background(
-            LinearGradient(colors: [accent.opacity(0.10), Theme.panel], startPoint: .topLeading, endPoint: .bottom),
-            in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.07)))
+        .panelCard(22)
     }
 }
 
@@ -237,10 +233,10 @@ struct HomeWideToolCard: View {
     let text: String
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 48, height: 48).background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
                 Text(text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
@@ -257,7 +253,7 @@ struct HomeCalculatorChip: View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: kind.icon).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
                 .frame(width: 36, height: 36).background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-            Text(kind.title).font(.footnote.weight(.semibold)).foregroundStyle(.white).lineLimit(2).multilineTextAlignment(.leading)
+            Text(kind.title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2).multilineTextAlignment(.leading)
             Text(kind.summary).font(.caption2).foregroundStyle(Theme.muted).lineLimit(2).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
@@ -337,7 +333,7 @@ struct HomeActionCard: View {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(accent)
                 .frame(width: 40, height: 40).background(accent.opacity(0.13), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Spacer(minLength: 4)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2)
             Text(subtitle).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
@@ -352,7 +348,7 @@ struct HomeMetric: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(value).font(.title2.bold()).monospacedDigit().foregroundStyle(.white)
+            Text(value).font(.title2.bold()).monospacedDigit().foregroundStyle(Theme.ink)
             Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -494,7 +490,7 @@ struct ProjectHubView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack { VStack(alignment: .leading, spacing: 4) { Text("Готовность проекта").font(.caption).foregroundStyle(Theme.muted); Text("\(complete) из \(store.milestones.count) этапов").font(.title3.bold()) }; Spacer(); Text("\(Int(store.projectProgress * 100))%").font(.title.bold()).monospacedDigit().foregroundStyle(Theme.orange).contentTransition(.numericText()) }
                 ProgressView(value: store.projectProgress).tint(Theme.orange)
-                Text(store.nextMilestone.map { "Следующий шаг: \($0.title)" } ?? "Все этапы закрыты — поздравляем!").font(.caption.weight(.medium)).foregroundStyle(.white)
+                Text(store.nextMilestone.map { "Следующий шаг: \($0.title)" } ?? "Все этапы закрыты — поздравляем!").font(.caption.weight(.medium)).foregroundStyle(Theme.ink)
             }.padding(20).panelCard(22)
             if let alert = store.priceAlert { PriceAlertBanner(text: alert) { store.priceAlert = nil } }
             HStack(spacing: 12) {
@@ -526,7 +522,7 @@ struct ProjectHubRow: View {
     let icon: String
     let title: String
     let subtitle: String
-    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title).font(.headline).foregroundStyle(.white); Text(subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
+    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title).font(.headline).foregroundStyle(Theme.ink); Text(subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
 }
 
 struct ProjectPlanView: View {
@@ -622,8 +618,8 @@ struct ProjectPhotoDiaryView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     TextField("Подпись к фото, например: армирование плиты", text: $caption).padding(14).panelCard(14)
                     HStack(spacing: 10) {
-                        PhotosPicker(selection: $item, matching: .images) { Label("Из галереи", systemImage: "photo.badge.plus").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous)) }.buttonStyle(.plain)
-                        Button { showCamera = true } label: { Label("Снять", systemImage: "camera.fill").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(.white).panelCard(15, fill: Theme.panelRaised) }
+                        PhotosPicker(selection: $item, matching: .images) { Label("Из галереи", systemImage: "photo.badge.plus").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.onAccent).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous)) }.buttonStyle(.plain)
+                        Button { showCamera = true } label: { Label("Снять", systemImage: "camera.fill").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.ink).panelCard(15, fill: Theme.panelRaised) }
                             .buttonStyle(.plain)
                             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                     }

@@ -25,9 +25,9 @@ struct CalculatorsView: View {
 
                 NavigationLink { FullEstimateHubView() } label: {
                     HStack(spacing: 15) {
-                        Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(.black).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("Полная смета объекта").font(.headline).foregroundStyle(.white)
+                            Text("Полная смета объекта").font(.headline).foregroundStyle(Theme.ink)
                             Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(Theme.muted)
                         }
                         Spacer(minLength: 0)
@@ -88,7 +88,7 @@ struct CalculatorRow: View {
         HStack(spacing: 15) {
             Image(systemName: kind.icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 42, height: 42).background(Theme.orange.opacity(0.11), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                Text(kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text(kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text(kind.summary).font(.caption).foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 0)
@@ -109,7 +109,7 @@ struct CompactEstimateCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange)
             Spacer(minLength: 2)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
             Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 111, alignment: .topLeading)
@@ -139,8 +139,8 @@ struct FullEstimateHubView: View {
             ForEach(FullEstimateKind.allCases) { kind in
                 NavigationLink { HouseEstimateView(kind: kind) } label: {
                     HStack(spacing: 15) {
-                        Image(systemName: kind.icon).font(.title2).foregroundStyle(.black).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(.white); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }
+                        Image(systemName: kind.icon).font(.title2).foregroundStyle(Theme.onAccent).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(Theme.ink); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }
                         Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.orange)
                     }.padding(17).panelCard(20)
                 }.buttonStyle(PremiumCardPressStyle())
@@ -576,7 +576,7 @@ struct AIAssistantView: View {
                     SectionTitle(eyebrow: "СтройПомощник", title: context.estimateType)
                     Text(context.lines.isEmpty ? "Задайте вопрос о стройке, материалах или порядке работ. Помощник не заменяет проектировщика для несущих конструкций." : "Помощник видит параметры текущего расчёта и объясняет объёмы, смету и порядок работ. Он не заменяет проектировщика для несущих конструкций.").font(.footnote).foregroundStyle(Theme.muted)
                     if store.priceServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        NavigationLink { PriceServerSettingsView() } label: { Label("Указать адрес сервера ИИ", systemImage: "gearshape").frame(maxWidth: .infinity).padding(14).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }.buttonStyle(.plain)
+                        NavigationLink { PriceServerSettingsView() } label: { Label("Указать адрес сервера ИИ", systemImage: "gearshape").frame(maxWidth: .infinity).padding(14).foregroundStyle(Theme.onAccent).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }.buttonStyle(.plain)
                     }
                     if messages.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
@@ -661,7 +661,7 @@ struct AIAssistantView: View {
                     .accessibilityLabel("Прикрепить фото к вопросу")
                 }
                 TextField(attachedPhoto == nil ? "Напишите вопрос" : "Что спросить про фото?", text: $prompt, axis: .vertical).lineLimit(1...4).focused($inputFocused).padding(12).panelCard(15).disabled(isLoading)
-                Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(.black).background(Theme.orange, in: Circle()) }
+                Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(Theme.onAccent).background(Theme.orange, in: Circle()) }
                     .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     .accessibilityLabel("Отправить вопрос")
             }.padding(16).background(Theme.background)
@@ -805,7 +805,7 @@ struct AIVisionStudioView: View {
                     HStack(spacing: 12) {
                         ProgressView().tint(Theme.orange)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Создаём визуализацию").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            Text("Создаём визуализацию").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                             Text("ИИ подбирает материалы, свет и композицию…").font(.caption).foregroundStyle(Theme.muted)
                         }
                     }
@@ -858,7 +858,7 @@ struct AIVisionStudioView: View {
                 } label: {
                     Label(style.title, systemImage: style.icon)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Theme.onAccent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 9)
                         .background(Theme.orange, in: Capsule())
@@ -886,7 +886,7 @@ struct AIVisionStudioView: View {
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 11))
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Исходное фото добавлено").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                        Text("Исходное фото добавлено").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                         Text("ИИ сохранит важные особенности объекта.").font(.caption).foregroundStyle(Theme.muted)
                     }
                     Spacer(minLength: 0)
@@ -899,7 +899,7 @@ struct AIVisionStudioView: View {
                             .frame(width: 32, height: 32)
                             .background(Theme.background, in: Circle())
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .accessibilityLabel("Убрать фото")
                 }
                 .padding(10)
@@ -917,7 +917,7 @@ struct AIVisionStudioView: View {
                 }
                 TextEditor(text: $brief)
                     .font(.body)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .frame(minHeight: 102)
                     .scrollContentBackground(.hidden)
                     .background(.clear)
@@ -929,7 +929,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 .accessibilityLabel("Снять камерой")
 
@@ -938,7 +938,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Выбрать фото из галереи")
 
                 Button { showFilePicker = true } label: {
@@ -946,7 +946,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Выбрать изображение из файлов")
 
                 Spacer(minLength: 0)
@@ -959,7 +959,7 @@ struct AIVisionStudioView: View {
                     }
                     .frame(minWidth: 50, minHeight: 42)
                     .padding(.horizontal, isLoading ? 0 : 13)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(Theme.onAccent)
                     .background(Theme.orange, in: Capsule())
                 }
                 .disabled(isLoading)
@@ -975,7 +975,7 @@ struct AIVisionStudioView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("ВАШ КОНЦЕПТ").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
-                    Text(style.title).font(.headline).foregroundStyle(.white)
+                    Text(style.title).font(.headline).foregroundStyle(Theme.ink)
                 }
                 Spacer()
                 Image(systemName: "sparkles").foregroundStyle(Theme.orange)
@@ -992,7 +992,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.background, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
 
                 Button { saveToPhotos(image) } label: {
                     Image(systemName: "square.and.arrow.down")
@@ -1000,7 +1000,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.background, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Сохранить в Фото")
 
                 Button { share(image) } label: {
@@ -1009,7 +1009,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(PremiumPressStyle())
-                .foregroundStyle(.black)
+                .foregroundStyle(Theme.onAccent)
                 .accessibilityLabel("Поделиться")
             }
         }
