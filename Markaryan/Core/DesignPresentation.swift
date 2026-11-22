@@ -29,9 +29,9 @@ enum DesignPresentationPDF {
 
     static func render(_ content: DesignPresentationContent) throws -> URL {
         let safe = content.proposal.title.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-").prefix(40)
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-проект-\(safe.isEmpty ? "АртСтрой" : String(safe)).pdf")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-проект-\(safe.isEmpty ? Brand.name : String(safe)).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: content.proposal.title, kCGPDFContextAuthor as String: "АртСтрой"]
+        format.documentInfo = [kCGPDFContextTitle as String: content.proposal.title, kCGPDFContextAuthor as String: Brand.name]
         let renderer = UIGraphicsPDFRenderer(bounds: page, format: format)
         var pageNumber = 0
 
@@ -65,7 +65,7 @@ enum DesignPresentationPDF {
             }
             func footer(dark: Bool = false) {
                 let color = dark ? UIColor(white: 1, alpha: 0.7) : muted
-                text("АРТСТРОЙ · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: margin, y: page.height - 24, width: 500, height: 12), .systemFont(ofSize: 7, weight: .medium), color)
+                text(Brand.name.uppercased(), CGRect(x: margin, y: page.height - 24, width: 500, height: 12), .systemFont(ofSize: 7, weight: .medium), color)
                 text("\(pageNumber)", CGRect(x: page.width - margin - 40, y: page.height - 24, width: 40, height: 12), .systemFont(ofSize: 7, weight: .medium), color, .right)
             }
             func imagePage(_ eyebrow: String, _ title: String, _ picture: UIImage, caption: String? = nil) {
@@ -91,7 +91,7 @@ enum DesignPresentationPDF {
             text(proposal.title, CGRect(x: margin, y: page.height * 0.56 + 20, width: page.width - margin * 2, height: 80), .systemFont(ofSize: 32, weight: .bold), .white)
             let subtitle = [content.projectName, proposal.roomPurpose, proposal.style, "\(CalculationEngine.format((content.plan.area * 10).rounded() / 10)) м²"].filter { !$0.isEmpty }.joined(separator: " · ")
             text(subtitle, CGRect(x: margin, y: page.height * 0.56 + 100, width: page.width - margin * 2, height: 20), .systemFont(ofSize: 12, weight: .medium), UIColor(white: 1, alpha: 0.85))
-            text("АРТСТРОЙ · строим в Сочи с \(Brand.foundedYear) года · \(Date().formatted(date: .long, time: .omitted))", CGRect(x: margin, y: page.height - 40, width: 600, height: 14), .systemFont(ofSize: 9, weight: .medium), UIColor(white: 1, alpha: 0.75))
+            text("\(Brand.name.uppercased()) · \(Date().formatted(date: .long, time: .omitted))", CGRect(x: margin, y: page.height - 40, width: 600, height: 14), .systemFont(ofSize: 9, weight: .medium), UIColor(white: 1, alpha: 0.75))
 
             // 2. Concept
             newPage()
@@ -235,21 +235,10 @@ enum DesignPresentationPDF {
                 accent.withAlphaComponent(0.1).setFill(); UIBezierPath(roundedRect: box, cornerRadius: 8).fill()
                 text("ОРИЕНТИР БЮДЖЕТА", CGRect(x: box.minX + 16, y: box.minY + 16, width: 214, height: 12), .systemFont(ofSize: 8, weight: .bold), accent)
                 text("\(CalculationEngine.money(proposal.budgetMin))\n– \(CalculationEngine.money(proposal.budgetMax))", CGRect(x: box.minX + 16, y: box.minY + 34, width: 214, height: 60), .systemFont(ofSize: 18, weight: .bold))
-                text("Отделка и мебель, Сочи. Точная смета — после замера.", CGRect(x: box.minX + 16, y: box.minY + 96, width: 214, height: 30), .systemFont(ofSize: 8), muted)
+                text("Отделка и мебель. Точная смета — после замера.", CGRect(x: box.minX + 16, y: box.minY + 96, width: 214, height: 30), .systemFont(ofSize: 8), muted)
             }
             footer()
 
-            // Contacts
-            newPage(dark: true)
-            text("Реализуем этот проект под ключ", CGRect(x: margin, y: 150, width: 520, height: 80), .systemFont(ofSize: 28, weight: .bold), .white)
-            text("Замер, рабочая документация, смета, черновая и чистовая отделка, мебель и комплектация. Этапы по актам и фотоотчётам.", CGRect(x: margin, y: 240, width: 470, height: 60), .systemFont(ofSize: 12), UIColor(white: 1, alpha: 0.8), lineSpacing: 4)
-            text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)\nАртСтрой · Сочи", CGRect(x: margin, y: 320, width: 470, height: 70), .systemFont(ofSize: 13, weight: .semibold), .white, lineSpacing: 5)
-            if let qr = BrandGraphics.qrCode(Brand.whatsAppURL(text: "Здравствуйте! Хочу реализовать дизайн‑проект «\(proposal.title)».").absoluteString, size: 300) {
-                UIColor.white.setFill(); UIBezierPath(roundedRect: CGRect(x: 600, y: 150, width: 200, height: 200), cornerRadius: 10).fill()
-                qr.draw(in: CGRect(x: 612, y: 162, width: 176, height: 176))
-                text("Наведите камеру — откроется WhatsApp", CGRect(x: 600, y: 360, width: 200, height: 30), .systemFont(ofSize: 8.5), UIColor(white: 1, alpha: 0.7), .center)
-            }
-            footer(dark: true)
         }
         return url
     }

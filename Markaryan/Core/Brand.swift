@@ -3,24 +3,13 @@ import UIKit
 import ImageIO
 import CoreImage.CIFilterBuiltins
 
-// MARK: - Brand constants (single source of truth for contacts and facts)
+// MARK: - Brand constants
 
 enum Brand {
-    static let name = "АртСтрой"
+    static let name = "СметаПро"
+    static let tagline = "Сметы, замеры и дизайн для стройки и ремонта"
+    /// City used until the user picks one (prices and partners need some city).
     static let city = "Сочи"
-    static let foundedYear = 2012
-    static let completedObjects = 58
-    static let phoneDisplay = "+7 928 233‑03‑33"
-    static let phoneDigits = "79282330333"
-    static let email = "m.art.v@mail.ru"
-    static let site = "sochi-art.com"
-    static let siteURL = URL(string: "http://sochi-art.com")!
-    static let phoneURL = URL(string: "tel:+79282330333")!
-    static let emailURL = URL(string: "mailto:m.art.v@mail.ru")!
-
-    static var yearsOnMarket: Int {
-        max(1, Calendar.current.component(.year, from: .now) - foundedYear)
-    }
 
     static var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -28,21 +17,11 @@ enum Brand {
         return "\(version) (\(build))"
     }
 
-    /// WhatsApp chat with an optional prefilled message.
-    static func whatsAppURL(text: String = "") -> URL {
-        var components = URLComponents(string: "https://wa.me/\(phoneDigits)")!
-        let clean = String(text.prefix(1800))
-        if !clean.isEmpty { components.queryItems = [URLQueryItem(name: "text", value: clean)] }
-        return components.url ?? URL(string: "https://wa.me/\(phoneDigits)")!
-    }
-
-    /// Footer that is appended to every shared text so each share also promotes the company.
-    static var shareFooter: String {
-        "—\n\(name)\nСтроим в Сочи с \(foundedYear) года\n\(phoneDisplay) · WhatsApp: wa.me/\(phoneDigits)\n\(site)"
-    }
+    /// Short signature for shared texts: only the app, no company contacts.
+    static var shareFooter: String { "—\nПосчитано в приложении «\(name)»" }
 
     static var inviteText: String {
-        "Считаю стройку в приложении «\(name)»: калькуляторы материалов, полная смета дома, AR‑замеры и ИИ‑помощник. Попробуй: \(site)"
+        "Считаю стройку и ремонт в приложении «\(name)»: калькуляторы, сметы по рыночным ценам, AR‑замеры, дизайн и ИИ‑помощник."
     }
 }
 
@@ -118,7 +97,7 @@ enum BrandGraphics {
         return UIGraphicsImageRenderer(size: size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
             let fontSize = max(12, size.width * 0.026)
-            let text = "\(Brand.name) · \(Brand.site) · \(Brand.phoneDisplay)" as NSString
+            let text = "\(Brand.name)" as NSString
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold),
                 .foregroundColor: UIColor.white

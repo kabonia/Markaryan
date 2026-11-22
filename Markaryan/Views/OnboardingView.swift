@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @FocusState private var focused: Bool
 
     private let slides: [(icon: String, eyebrow: String, title: String, text: String)] = [
-        ("function", "Смета за минуту", "Посчитайте стройку\nдо первого рубля.", "14 калькуляторов материалов и полная смета дома, беседки или металлоконструкций — по актуальному прайсу АртСтроя."),
+        ("function", "Смета за минуту", "Посчитайте стройку\nдо первого рубля.", "14 калькуляторов материалов и полная смета дома, беседки или металлоконструкций — по рыночным ценам вашего города."),
         ("viewfinder", "AR и ИИ", "Измерьте камерой.\nУвидьте результат.", "Замеряйте площадь в AR, размещайте макет плиты или дома на участке и получайте визуализацию будущего объекта.")
     ]
 
@@ -22,7 +22,7 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 HStack {
                     Image("BrandMark").resizable().scaledToFit().frame(width: 34, height: 34)
-                    Text("АРТСТРОЙ").font(.headline).tracking(1.4)
+                    Text(Brand.name).font(.headline)
                     Spacer()
                     if page < 2 { Button("Пропустить") { finish() }.font(.subheadline).foregroundStyle(Theme.muted) }
                 }

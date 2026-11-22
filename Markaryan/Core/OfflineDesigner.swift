@@ -218,7 +218,7 @@ enum OfflineDesigner {
         let brief = DesignBrief(items: items(room, plan: plan, wishes: wishes, purpose: purpose))
         var proposal = DesignComposer.compose(base, brief: brief, plan: plan, room: room)
         let names = proposal.furniture.map(\.name).joined(separator: ", ")
-        proposal.summary = "Концепция собрана встроенным дизайнером АртСтроя по скану: \(names.isEmpty ? "расстановка без мебели" : names.lowercased()). Предметы расставлены по правилам: дверь открывается свободно, проходы не уже 0,7 м, перед сантехникой и кухней есть место. Отделка — в стиле «\(styleName)»."
+        proposal.summary = "Концепция собрана встроенным дизайнером приложения по скану: \(names.isEmpty ? "расстановка без мебели" : names.lowercased()). Предметы расставлены по правилам: дверь открывается свободно, проходы не уже 0,7 м, перед сантехникой и кухней есть место. Отделка — в стиле «\(styleName)»."
         return proposal
     }
 

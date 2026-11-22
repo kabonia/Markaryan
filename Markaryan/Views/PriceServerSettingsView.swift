@@ -43,7 +43,7 @@ struct PriceServerSettingsView: View {
                 .disabled(!isValid || isChecking)
                 if let checkResult { Text(checkResult).font(.footnote).foregroundStyle(Theme.muted) }
                 if address.trimmingCharacters(in: .whitespacesAndNewlines) != AppStore.productionServerURL {
-                    Button("Вернуть сервер АртСтроя по умолчанию") { address = AppStore.productionServerURL; checkResult = nil }
+                    Button("Вернуть сервер по умолчанию") { address = AppStore.productionServerURL; checkResult = nil }
                 }
             } header: { Text("Адрес сервера") } footer: {
                 Text("Сервер нужен для автоматического обновления цен, заявок, ИИ‑помощника и визуализаций. Ключ модели хранится только на сервере. Без сервера прайс можно импортировать JSON‑файлом в полной смете.")

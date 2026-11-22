@@ -364,34 +364,15 @@ struct ProfileTabView: View {
                         .padding(11)
                         .panelCard(19)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("АРТСТРОЙ").font(.title3.bold()).tracking(1.3)
-                        Text("Строительство и ремонт в Сочи").font(.footnote).foregroundStyle(Theme.muted)
+                        Text(Brand.name).font(.title3.bold())
+                        Text(Brand.tagline).font(.footnote).foregroundStyle(Theme.muted)
                     }
                     Spacer()
                 }
                 .padding(.bottom, 4)
 
-                SectionTitle(eyebrow: "Связь с нами", title: "Обсудим ваш объект")
-                HStack(spacing: 12) {
-                    Link(destination: Brand.phoneURL) { ProfileQuickAction(icon: "phone.fill", title: "Позвонить") }
-                    Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Пишу из приложения АртСтрой.")) { ProfileQuickAction(icon: "message.fill", title: "WhatsApp") }
-                    Link(destination: Brand.emailURL) { ProfileQuickAction(icon: "envelope.fill", title: "Почта") }
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                Button { store.showRequest = true } label: {
-                    AppTabRow(icon: "square.and.pencil", title: "Оставить заявку", subtitle: "Ответим по телефону или в чате приложения")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PerformersHubView() } label: {
-                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: "Статусы и переписка по заявкам")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ContactView() } label: {
-                    AppTabRow(icon: "message.fill", title: "Контакты и услуги", subtitle: "Телефон, почта, адрес и направления работ")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PortfolioView() } label: {
-                    AppTabRow(icon: "building.2.fill", title: "Портфолио АртСтроя", subtitle: "\(Brand.completedObjects)+ объектов: гостиницы, жильё, рестораны")
+                NavigationLink { AboutAppView() } label: {
+                    AppTabRow(icon: "info.circle.fill", title: "О приложении", subtitle: "Версия, данные и конфиденциальность")
                 }
                 .buttonStyle(PremiumCardPressStyle())
 

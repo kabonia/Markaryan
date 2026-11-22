@@ -419,7 +419,6 @@ struct FloorPlanDetailView: View {
     @State private var showEdits = false
     @State private var showModels = false
     @State private var showAssistant = false
-    @State private var showOrder = false
     @State private var savedPictures = false
     @State private var editPlan = false
     @State private var furnitureTarget: FurnitureTarget?
@@ -468,9 +467,6 @@ struct FloorPlanDetailView: View {
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView() }.presentationDetents([.large]) }
         .navigationDestination(isPresented: $showAssistant) {
             if let plan, let proposal { AIAssistantView(context: assistantContext(proposal, plan: plan)) }
-        }
-        .navigationDestination(isPresented: $showOrder) {
-            if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
         }
         .fullScreenCover(isPresented: $show3D) {
             if let plan {
@@ -643,9 +639,8 @@ struct FloorPlanDetailView: View {
                 .font(.subheadline).foregroundStyle(Theme.muted)
         }
         mainButton(flow.main(on: .result), plan: plan)
-        if proposal != nil {
-            Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
-                .buttonStyle(PremiumPressStyle())
+        if let proposal {
+            PartnerOfferSection(category: "finishing", summary: partnerSummary(plan, proposal: proposal))
         }
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
@@ -698,7 +693,7 @@ struct FloorPlanDetailView: View {
     private func saveToPhotos(_ images: [UIImage]) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
-                DispatchQueue.main.async { error = "Разрешите приложению сохранять изображения в Фото (Настройки → АртСтрой)." }
+                DispatchQueue.main.async { error = "Разрешите приложению сохранять изображения в Фото (Настройки → \(Brand.name))." }
                 return
             }
             PHPhotoLibrary.shared().performChanges {
@@ -786,7 +781,7 @@ struct FloorPlanDetailView: View {
                 }
                 .disabled(isRendering)
             }
-            if let plan, let proposal, store.ownerUnlocked, store.imageEngines.count > 1 {
+            if let plan, let proposal, store.imageEngines.count > 1 {
                 Button { Task { await compareEngines(proposal, plan: plan) } } label: {
                     Label("Сравнить движки рендера", systemImage: "square.grid.2x2")
                 }
@@ -893,14 +888,11 @@ struct FloorPlanDetailView: View {
         return AIAssistantContext(estimateType: "Дизайн: \(proposal.title)", objectName: plan.name, area: plan.area, floors: nil, reservePercent: nil, materialTotal: nil, laborTotal: nil, total: proposal.budgetMax > 0 ? proposal.budgetMax : nil, lines: lines)
     }
 
-    /// The order for the renovation of this room: sizes from the scan, the chosen concept and its budget, the plan picture.
-    private func workOrder(_ plan: FloorPlan) -> WorkOrderDraft {
-        var details = "Нужен ремонт помещения «\(plan.name)» по скану из приложения.\nПлощадь: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², периметр \(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м, потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м, окон: \(plan.windows.count), дверей: \(plan.doors.count)."
-        if let proposal {
-            details += "\n\nВыбранная концепция: \(proposal.title) (\(proposal.style)).\n\(proposal.summary)"
-            if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
-        }
-        return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
+    /// Text the user sends to a partner contractor: room sizes, the chosen concept and its budget.
+    private func partnerSummary(_ plan: FloorPlan, proposal: DesignProposal) -> String {
+        var text = "Здравствуйте! Нужен ремонт помещения «\(plan.name)»: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м. Концепция: \(proposal.title) (\(proposal.style))."
+        if proposal.budgetMax > 0 { text += " Ориентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))." }
+        return text + " Подскажите вашу цену?"
     }
 
     @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?, wallNumbers: Bool = false) -> UIImage? {
@@ -1146,7 +1138,7 @@ struct FloorPlanDetailView: View {
         shareImage(image, name: "План-\(plan.name)")
     }
 
-    private func shareImage(_ image: UIImage, name: String = "Интерьер-АртСтрой") {
+    private func shareImage(_ image: UIImage, name: String = "Интерьер-\(Brand.name)") {
         guard let data = BrandGraphics.watermarked(image).pngData() else { return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(Int(Date().timeIntervalSince1970)).png")
         do { try data.write(to: url, options: .atomic); shareFile = SharedFile(url: url); store.track("plan_shared") }
@@ -1283,7 +1275,7 @@ struct AIModelsView: View {
                 }
                 if (showsDesign && !works.design) || !works.render {
                     Text(store.usesAIServer
-                         ? "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере АртСтроя."
+                         ? "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере приложения."
                          : "С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter.")
                         .font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
                 }
@@ -1382,7 +1374,7 @@ struct PlanMeasurementsView: View {
             if row.group != group { group = row.group; lines += ["", group.uppercased()] }
             lines.append("\(row.title): \(text(row))")
         }
-        lines += ["", "Скан и обмеры — приложение АртСтрой. Перед закупкой перепроверьте ключевые размеры рулеткой."]
+        lines += ["", "Скан и обмеры — приложение \(Brand.name). Перед закупкой перепроверьте ключевые размеры рулеткой."]
         return lines.joined(separator: "\n")
     }
 }

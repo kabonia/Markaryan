@@ -443,7 +443,7 @@ struct PhotoDesignView: View {
 
     private func share(_ image: UIImage) {
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.92) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         do {
             try data.write(to: url, options: .atomic)
             shareFile = SharedFile(url: url)

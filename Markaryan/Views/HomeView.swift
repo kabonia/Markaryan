@@ -101,10 +101,6 @@ struct HomeView: View {
                     }
                 }
 
-                NavigationLink { PortfolioView() } label: {
-                    AppTabRow(icon: "building.2.fill", title: "Объекты АртСтроя", subtitle: "Строим в Сочи с \(String(Brand.foundedYear)) года — фото и состав работ")
-                }
-                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
@@ -119,7 +115,7 @@ struct HomeView: View {
             Image("BrandMark").resizable().scaledToFit().frame(width: 40, height: 40)
                 .padding(6).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
-                Text("АРТСТРОЙ").font(.headline).tracking(1.4)
+                Text(Brand.name).font(.headline)
                 Button { store.showRegionPicker = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill").font(.system(size: 9))
@@ -131,11 +127,6 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-            Link(destination: Brand.phoneURL) {
-                Image(systemName: "phone.fill").font(.subheadline.weight(.semibold)).foregroundStyle(.black)
-                    .frame(width: 40, height: 40).background(Theme.orange, in: Circle())
-            }
-            .accessibilityLabel("Позвонить в АртСтрой")
         }
     }
 }
@@ -462,41 +453,19 @@ struct ConstructionDiaryView: View {
         (["Журнал решений · \(store.projectDisplayName)", ""] + store.diary.map { "\($0.date.formatted(date: .numeric, time: .shortened)) — \($0.text)" } + ["", Brand.shareFooter]).joined(separator: "\n")
     }
 }
-struct ServiceDetail: View {
-    @EnvironmentObject private var store: AppStore
-    let service: BuildingService
-    var body: some View {
-        ScrollView { VStack(alignment: .leading, spacing: 24) {
-            SectionTitle(eyebrow: "Виды работ", title: service.title)
-            Text(service.detail).font(.title3).foregroundStyle(Theme.muted)
-            ForEach(["Согласуем состав работ и смету до старта", "Фиксируем сроки и порядок оплаты в договоре", "Сдаём этапы по актам и фотоотчётам"], id: \.self) { Label($0, systemImage: "checkmark.circle").padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16) }
-        }.padding(20) }.background(Theme.background).navigationTitle("Услуга").navigationBarTitleDisplayMode(.inline)
-    }
-}
-struct ContactView: View {
-    @EnvironmentObject private var store: AppStore
+struct AboutAppView: View {
     var body: some View {
         List {
-            Section { Text("АртСтрой").font(.title2.bold()); Text("Строительно-монтажные и общестроительные работы. Сочи и Краснодарский край. С \(String(Brand.foundedYear)) года.") }
-            Section("Связаться") {
-                Link(destination: Brand.phoneURL) { Label(Brand.phoneDisplay, systemImage: "phone") }
-                Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Пишу из приложения АртСтрой.")) { Label("WhatsApp", systemImage: "message") }
-                Link(destination: Brand.emailURL) { Label(Brand.email, systemImage: "envelope") }
-                Link(destination: Brand.siteURL) { Label(Brand.site, systemImage: "globe") }
-            }
-            Section("Направления работ") {
-                ForEach(store.services) { service in NavigationLink(service.title) { ServiceDetail(service: service) } }
-            }
-            Section("Как работаем") { ForEach(["01 · Осмотр и уточнение задачи", "02 · Смета и договор", "03 · Подготовка площадки", "04 · Работы и контроль", "05 · Приёмка и гарантия по договору"], id: \.self) { Text($0) } }
-            Section("Конфиденциальность") {
-                Text("Избранное, расчёты, бюджет, планировки и фото-дневник сохраняются на вашем iPhone. Анонимные технические события (открытие экранов, без личных данных) отправляются на сервер АртСтроя.")
-                Text("Камера используется для AR и съёмки объекта. Фото для ИИ-визуализации отправляется только после нажатия «Создать» — на сервер визуализации и поставщику модели для одного результата.")
-                Text("Прогноз погоды запрашивается у Open‑Meteo по координатам Сочи — местоположение устройства не используется.")
-                Text("Вопросы ИИ, прикреплённые фото и кадры 3D‑модели комнаты отправляются через OpenRouter поставщику модели только для получения ответа или картинки. Скан комнаты и 3D‑модель хранятся на iPhone.")
-                Text("Расчёты удаляются в истории. Удаление приложения удаляет его локальные данные.")
+            Section { Text(Brand.name).font(.title2.bold()); Text(Brand.tagline) }
+            Section("Ваши данные") {
+                Text("Расчёты, сметы, объекты, планировки, фото и журнал хранятся только на вашем iPhone. Удаление приложения удаляет их.")
+                Text("Город нужен, чтобы подставлять рыночные цены вашего региона. Определяется по геопозиции только с вашего разрешения или выбирается вручную; точные координаты не сохраняются.")
+                Text("Камера используется для AR‑замеров, скана помещения и съёмки. Фото уходит на сервер ИИ только после нажатия кнопки — для одного ответа или одной картинки.")
+                Text("Вопросы ИИ‑помощнику и прикреплённые фото передаются через сервер приложения поставщику модели только для ответа.")
+                Text("Анонимные технические события (открытие экранов, ошибки) помогают нам исправлять проблемы и не содержат личных данных.")
             }.font(.footnote)
-            Section { Text("Версия \(Brand.appVersion) · iPhone").foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Контакты")
+            Section { Text("Версия \(Brand.appVersion)").foregroundStyle(Theme.muted) }
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("О приложении")
     }
 }
 

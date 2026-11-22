@@ -849,7 +849,7 @@ struct RenderResultView: View {
 
     private func share() {
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.92) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Визуализация-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Визуализация-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         if (try? data.write(to: url, options: .atomic)) != nil { shareFile = SharedFile(url: url) }
     }
 }

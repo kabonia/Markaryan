@@ -1,4 +1,4 @@
-# АртСтрой 1.1
+# СметаПро
 
 Откройте `Markaryan.xcodeproj` в Xcode, выберите свой iPhone и нажмите **Cmd + R**.
 

@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// Common interface of the AI the app talks to: the АртСтрой AI server (release) or Claude directly (owner's debug builds).
+/// Common interface of the AI the app talks to: the app's AI server (release) or Claude directly (owner's debug builds).
 protocol AIEngine {
     func stream(system: String, turns: [ClaudeTurn], maxTokens: Int) -> AsyncThrowingStream<String, Error>
     func complete(system: String, turns: [ClaudeTurn], maxTokens: Int) async throws -> String
@@ -108,7 +108,7 @@ struct AICapabilities: Decodable {
     }
 }
 
-/// Client of the АртСтрой AI server (GigaChat / YandexGPT behind it, keys only on the server).
+/// Client of the app's AI server (GigaChat / YandexGPT behind it, keys only on the server).
 struct ServerAIClient: AIEngine {
     let base: URL
     /// The model the user picked for the design (OpenRouter id): the server tries it first. Nil — the server's order.

@@ -10,16 +10,12 @@
 		0535AC5112474A609C984F58 /* Markaryan/Views/ARMeasureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE7A221B5C03AA02418C806D /* Markaryan/Views/ARMeasureView.swift */; };
 		1C266A10FE91061E3480EABA /* Markaryan/Core/Calculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 721F8A47068F76758275BAFC /* Markaryan/Core/Calculator.swift */; };
 		2E7482D0163F95E5A4FD5558 /* Markaryan/Core/MeasurementGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AD955F8784D5FA0FDEC1F2 /* Markaryan/Core/MeasurementGeometry.swift */; };
-		58BCC6988FA8530729C244E8 /* Markaryan/Views/RequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C1DB43F284A8B58EA9F20FB /* Markaryan/Views/RequestView.swift */; };
 		5E53AE73BB5734CB4E6D8A0A /* Markaryan/Views/HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B07921E26FD43440330870 /* Markaryan/Views/HomeView.swift */; };
 		61784222C0B589865CEAE1C0 /* Markaryan/Core/AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EA438EC5FCD030E16558C5 /* Markaryan/Core/AppStore.swift */; };
 		62CE50039C12941EF4975E4F /* Markaryan/MarkaryanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14600005F965A4565541595B /* Markaryan/MarkaryanApp.swift */; };
 		7EC411016DD3A84EE22689FE /* Markaryan/Views/CalculatorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F0A62D50EEE9C1BCE3DBDD /* Markaryan/Views/CalculatorsView.swift */; };
 		7FCFA250E8AB4FF673D67220 /* Markaryan/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */; };
-		9659162441D58E58D847890D /* Markaryan/projects.json in Resources */ = {isa = PBXBuildFile; fileRef = 61003B73C08EACA263217E74 /* Markaryan/projects.json */; };
-		9A0C390C99CE43A242E3F245 /* Markaryan/services.json in Resources */ = {isa = PBXBuildFile; fileRef = 32E7628A6C2C8F2B99026FA3 /* Markaryan/services.json */; };
 		A1B2C3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */; };
-		A8D9C0E1F2A3B4C5D6E7F809 /* Markaryan/Views/PerformersHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */; };
 		AA10000000000000000000B1 /* Markaryan/Core/Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */; };
 		AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */; };
 		AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */; };
@@ -40,10 +36,6 @@
 		AA1000000000000000000C10 /* Markaryan/AIServer.plist in Resources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C10 /* Markaryan/AIServer.plist */; };
 		AA1000000000000000000C11 /* Markaryan/Core/ServerAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C11 /* Markaryan/Core/ServerAIClient.swift */; };
 		AA1000000000000000000C12 /* Markaryan/Core/OfflineDesigner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C12 /* Markaryan/Core/OfflineDesigner.swift */; };
-		AA1000000000000000000C13 /* Markaryan/Core/HHClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C13 /* Markaryan/Core/HHClient.swift */; };
-		AA1000000000000000000C14 /* Markaryan/Views/HHViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C14 /* Markaryan/Views/HHViews.swift */; };
-		AA1000000000000000000C15 /* Markaryan/Views/MarketVacanciesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C15 /* Markaryan/Views/MarketVacanciesView.swift */; };
-		AA1000000000000000000C16 /* Markaryan/Views/ResumeSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000C16 /* Markaryan/Views/ResumeSearchView.swift */; };
 		AA1000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */; };
 		AA1000000000000000000D02 /* Markaryan/Core/DesignProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */; };
 		AA1000000000000000000D03 /* Markaryan/Core/RoomKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */; };
@@ -67,20 +59,15 @@
 		AA1000000000000000000D23 /* Markaryan/Core/AIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000D23 /* Markaryan/Core/AIModels.swift */; };
 		BED89B0B916E9CA1B5B3BC84 /* Markaryan/PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 287A87EF29FDDB1211210671 /* Markaryan/PrivacyInfo.xcprivacy */; };
 		D2A9B8C7E6F50123456789AB /* Markaryan/Views/AppTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */; };
-		F68370387F6687AD64C17FBF /* Markaryan/Views/PortfolioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C85D5415445D3C323BA5FF /* Markaryan/Views/PortfolioView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		14600005F965A4565541595B /* Markaryan/MarkaryanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/MarkaryanApp.swift; sourceTree = "<group>"; };
 		25EA438EC5FCD030E16558C5 /* Markaryan/Core/AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/AppStore.swift; sourceTree = "<group>"; };
 		287A87EF29FDDB1211210671 /* Markaryan/PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Markaryan/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		32C85D5415445D3C323BA5FF /* Markaryan/Views/PortfolioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PortfolioView.swift; sourceTree = "<group>"; };
-		32E7628A6C2C8F2B99026FA3 /* Markaryan/services.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Markaryan/services.json; sourceTree = "<group>"; };
 		38A007151ABE87CC01A5B6E9 /* Markaryan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = Markaryan.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3C1DB43F284A8B58EA9F20FB /* Markaryan/Views/RequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RequestView.swift; sourceTree = "<group>"; };
 		47B07921E26FD43440330870 /* Markaryan/Views/HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HomeView.swift; sourceTree = "<group>"; };
 		49AD955F8784D5FA0FDEC1F2 /* Markaryan/Core/MeasurementGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/MeasurementGeometry.swift; sourceTree = "<group>"; };
-		61003B73C08EACA263217E74 /* Markaryan/projects.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Markaryan/projects.json; sourceTree = "<group>"; };
 		65F0A62D50EEE9C1BCE3DBDD /* Markaryan/Views/CalculatorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/CalculatorsView.swift; sourceTree = "<group>"; };
 		721F8A47068F76758275BAFC /* Markaryan/Core/Calculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Calculator.swift; sourceTree = "<group>"; };
 		AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Brand.swift; sourceTree = "<group>"; };
@@ -103,10 +90,6 @@
 		AA2000000000000000000C10 /* Markaryan/AIServer.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Markaryan/AIServer.plist; sourceTree = "<group>"; };
 		AA2000000000000000000C11 /* Markaryan/Core/ServerAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ServerAIClient.swift; sourceTree = "<group>"; };
 		AA2000000000000000000C12 /* Markaryan/Core/OfflineDesigner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/OfflineDesigner.swift; sourceTree = "<group>"; };
-		AA2000000000000000000C13 /* Markaryan/Core/HHClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/HHClient.swift; sourceTree = "<group>"; };
-		AA2000000000000000000C14 /* Markaryan/Views/HHViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HHViews.swift; sourceTree = "<group>"; };
-		AA2000000000000000000C15 /* Markaryan/Views/MarketVacanciesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/MarketVacanciesView.swift; sourceTree = "<group>"; };
-		AA2000000000000000000C16 /* Markaryan/Views/ResumeSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ResumeSearchView.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D01 /* Markaryan/Core/PlanGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PlanGeometry.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D02 /* Markaryan/Core/DesignProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DesignProposal.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D03 /* Markaryan/Core/RoomKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/RoomKind.swift; sourceTree = "<group>"; };
@@ -129,7 +112,6 @@
 		AA2000000000000000000D22 /* Markaryan/Views/PhotoDesignView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoDesignView.swift; sourceTree = "<group>"; };
 		AA2000000000000000000D23 /* Markaryan/Core/AIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/AIModels.swift; sourceTree = "<group>"; };
 		AE7A221B5C03AA02418C806D /* Markaryan/Views/ARMeasureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ARMeasureView.swift; sourceTree = "<group>"; };
-		B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PerformersHubView.swift; sourceTree = "<group>"; };
 		C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PriceServerSettingsView.swift; sourceTree = "<group>"; };
 		D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Markaryan/Assets.xcassets; sourceTree = "<group>"; };
 		E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/AppTabs.swift; sourceTree = "<group>"; };
@@ -160,10 +142,6 @@
 				AA20000000000000000000B3 /* Markaryan/Views/OnboardingView.swift */,
 				AA2000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift */,
 				AA2000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift */,
-				AA2000000000000000000C16 /* Markaryan/Views/ResumeSearchView.swift */,
-				AA2000000000000000000C15 /* Markaryan/Views/MarketVacanciesView.swift */,
-				AA2000000000000000000C13 /* Markaryan/Core/HHClient.swift */,
-				AA2000000000000000000C14 /* Markaryan/Views/HHViews.swift */,
 				AA2000000000000000000C12 /* Markaryan/Core/OfflineDesigner.swift */,
 				AA2000000000000000000C11 /* Markaryan/Core/ServerAIClient.swift */,
 				AA2000000000000000000C09 /* Markaryan/Core/OpenAIImageClient.swift */,
@@ -201,14 +179,9 @@
 				65F0A62D50EEE9C1BCE3DBDD /* Markaryan/Views/CalculatorsView.swift */,
 				AE7A221B5C03AA02418C806D /* Markaryan/Views/ARMeasureView.swift */,
 				47B07921E26FD43440330870 /* Markaryan/Views/HomeView.swift */,
-				3C1DB43F284A8B58EA9F20FB /* Markaryan/Views/RequestView.swift */,
-				32C85D5415445D3C323BA5FF /* Markaryan/Views/PortfolioView.swift */,
 				C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */,
 				E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */,
-				B9E0D1F2A3B4C5D6E7F8091A /* Markaryan/Views/PerformersHubView.swift */,
 				D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */,
-				61003B73C08EACA263217E74 /* Markaryan/projects.json */,
-				32E7628A6C2C8F2B99026FA3 /* Markaryan/services.json */,
 				287A87EF29FDDB1211210671 /* Markaryan/PrivacyInfo.xcprivacy */,
 				FBDC4F23F93125BBEEAE800C /* Products */,
 			);
@@ -277,8 +250,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7FCFA250E8AB4FF673D67220 /* Markaryan/Assets.xcassets in Resources */,
-				9659162441D58E58D847890D /* Markaryan/projects.json in Resources */,
-				9A0C390C99CE43A242E3F245 /* Markaryan/services.json in Resources */,
 				BED89B0B916E9CA1B5B3BC84 /* Markaryan/PrivacyInfo.xcprivacy in Resources */,
 				AA1000000000000000000C10 /* Markaryan/AIServer.plist in Resources */,
 			);
@@ -320,11 +291,8 @@
 				7EC411016DD3A84EE22689FE /* Markaryan/Views/CalculatorsView.swift in Sources */,
 				0535AC5112474A609C984F58 /* Markaryan/Views/ARMeasureView.swift in Sources */,
 				5E53AE73BB5734CB4E6D8A0A /* Markaryan/Views/HomeView.swift in Sources */,
-				58BCC6988FA8530729C244E8 /* Markaryan/Views/RequestView.swift in Sources */,
-				F68370387F6687AD64C17FBF /* Markaryan/Views/PortfolioView.swift in Sources */,
 				A1B2C3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift in Sources */,
 				D2A9B8C7E6F50123456789AB /* Markaryan/Views/AppTabs.swift in Sources */,
-				A8D9C0E1F2A3B4C5D6E7F809 /* Markaryan/Views/PerformersHubView.swift in Sources */,
 				AA10000000000000000000B1 /* Markaryan/Core/Brand.swift in Sources */,
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
@@ -332,10 +300,6 @@
 				AA10000000000000000000B3 /* Markaryan/Views/OnboardingView.swift in Sources */,
 				AA1000000000000000000C06 /* Markaryan/Core/DrawingsPDF.swift in Sources */,
 				AA1000000000000000000C07 /* Markaryan/Core/GeometryCheck.swift in Sources */,
-				AA1000000000000000000C16 /* Markaryan/Views/ResumeSearchView.swift in Sources */,
-				AA1000000000000000000C15 /* Markaryan/Views/MarketVacanciesView.swift in Sources */,
-				AA1000000000000000000C13 /* Markaryan/Core/HHClient.swift in Sources */,
-				AA1000000000000000000C14 /* Markaryan/Views/HHViews.swift in Sources */,
 				AA1000000000000000000C12 /* Markaryan/Core/OfflineDesigner.swift in Sources */,
 				AA1000000000000000000C11 /* Markaryan/Core/ServerAIClient.swift in Sources */,
 				AA1000000000000000000C09 /* Markaryan/Core/OpenAIImageClient.swift in Sources */,
@@ -383,7 +347,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "АртСтрой";
+				INFOPLIST_KEY_CFBundleDisplayName = "СметаПро";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";
@@ -410,7 +374,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "АртСтрой";
+				INFOPLIST_KEY_CFBundleDisplayName = "СметаПро";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";

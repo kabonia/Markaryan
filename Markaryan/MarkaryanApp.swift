@@ -41,8 +41,8 @@ struct LaunchGateView: View {
                             .background(Theme.panel.opacity(0.92), in: RoundedRectangle(cornerRadius: 34, style: .continuous))
                             .overlay(RoundedRectangle(cornerRadius: 34, style: .continuous).stroke(Theme.orange.opacity(0.45), lineWidth: 1))
                         VStack(spacing: 7) {
-                            Text("АРТСТРОЙ").font(.title2.bold()).tracking(3)
-                            Text("СТРОИМ В СОЧИ С \(String(Brand.foundedYear)) ГОДА").font(.caption.weight(.medium)).tracking(1.5).foregroundStyle(Theme.muted)
+                            Text(Brand.name).font(.title2.bold())
+                            Text(Brand.tagline).font(.caption.weight(.medium)).foregroundStyle(Theme.muted)
                         }
                     }.opacity(revealsLogo ? 1 : 0).scaleEffect(revealsLogo ? 1 : 0.92)
                 }.transition(.opacity)
@@ -132,7 +132,6 @@ struct RootView: View {
                 Task { try? await Task.sleep(for: .seconds(1.2)); requestReview() }
             }
         }
-        .sheet(isPresented: $store.showRequest) { NavigationStack { RequestView() } }
         .sheet(isPresented: $store.showRegionPicker) { RegionPickerView() }
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }

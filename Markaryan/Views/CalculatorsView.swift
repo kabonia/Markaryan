@@ -192,7 +192,7 @@ struct HouseEstimateView: View {
     private var priceCity: String { store.priceBook.city ?? store.userRegion?.city ?? "" }
     private var isMarketPriced: Bool { store.priceBook.marketLineCount > 0 }
     private var partnerSummary: String {
-        "Здравствуйте! Посчитал в приложении АртСтрой смету «\(kind.title)» на \(area) м²\(priceCity.isEmpty ? "" : ", \(priceCity)"): рыночная оценка \(CalculationEngine.money(total)). Подскажите вашу цену за эти работы?"
+        "Здравствуйте! Посчитал в приложении \(Brand.name) смету «\(kind.title)» на \(area) м²\(priceCity.isEmpty ? "" : ", \(priceCity)"): рыночная оценка \(CalculationEngine.money(total)). Подскажите вашу цену за эти работы?"
     }
     private var inputsDescription: String {
         var parts = ["Площадь: \(area) м²"]
@@ -219,9 +219,6 @@ struct HouseEstimateView: View {
         }
         let context = AIAssistantContext(estimateType: kind.title, objectName: store.projectDisplayName, area: squareMeters, floors: Int(floorCount), reservePercent: CalculationEngine.parse(reserve), materialTotal: materialTotal, laborTotal: laborTotal, total: total, lines: assistantLines)
         return priceCity.isEmpty ? context : context.withCity(priceCity)
-    }
-    private var workOrderDraft: WorkOrderDraft {
-        WorkOrderDraft(category: "Строительство: \(kind.title)", city: store.projectCity, details: "Нужно согласовать и выполнить работы по предварительной смете.\n\n" + report, budget: CalculationEngine.money(total), attachment: nil)
     }
     private var printableDocument: PrintableEstimate {
         PrintableEstimate(title: "Локальная смета: \(kind.title)", objectName: store.projectDisplayName, inputs: [inputsDescription], lines: lines.map { line in
@@ -396,9 +393,6 @@ struct CalculatorView: View {
         }
         return AIAssistantContext(estimateType: kind.title, objectName: objectName, area: nil, floors: nil, reservePercent: CalculationEngine.parse(values["reserve"] ?? ""), materialTotal: result.cost, laborTotal: nil, total: result.cost, lines: contextLines)
     }
-    private func workOrderDraft(for snapshot: SavedCalculation) -> WorkOrderDraft {
-        WorkOrderDraft(category: "Расчёт: \(kind.title)", city: store.projectCity, details: "Нужно согласовать работы и подобрать исполнителя по расчёту.\n\n" + snapshot.report, budget: snapshot.result.cost.map { CalculationEngine.money($0) } ?? "По расчёту", attachment: nil)
-    }
     private func printableDocument(for result: CalculationResult) -> PrintableEstimate {
         let inputs = kind.fields.compactMap { field -> String? in
             guard let value = values[field.id], !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -459,7 +453,7 @@ struct CalculatorView: View {
                         ShareLink(item: snapshot.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
                     }
                     NavigationLink { AIAssistantView(context: assistantContext(for: result)) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
-                    PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении АртСтрой: «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
+                    PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении \(Brand.name): «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
                 }
             }
             InfoNote(text: kind.note)
@@ -492,16 +486,6 @@ struct CalculatorView: View {
         values = Dictionary(uniqueKeysWithValues: kind.fields.map { ($0.id, $0.initial) })
         result = try? CalculationEngine.calculate(kind, values: values)
         error = nil; saved = false
-    }
-    private func addToRequest(_ snapshot: SavedCalculation) {
-        let report = snapshot.report
-        if store.arTransfer != nil {
-            // Two sheets cannot be shown at once: close the AR transfer sheet first, then open the request.
-            store.arTransfer = nil
-            Task { try? await Task.sleep(for: .milliseconds(450)); store.appendToRequest(report) }
-        } else {
-            store.appendToRequest(report)
-        }
     }
     private func exportPDF(_ result: CalculationResult) {
         do { exportFile = SharedFile(url: try EstimatePDFRenderer.render(printableDocument(for: result))); store.registerMeaningfulAction(); store.track("pdf_calculation") }
@@ -546,7 +530,6 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-            PrimaryButton(title: "Добавить в заявку", icon: "square.and.pencil") { store.appendToRequest(item.report) }
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -1034,16 +1017,6 @@ struct AIVisionStudioView: View {
         .panelCard(22)
     }
 
-    private func workOrderDraft(for image: UIImage) -> WorkOrderDraft {
-        let description = brief.trimmingCharacters(in: .whitespacesAndNewlines)
-        return WorkOrderDraft(
-            category: "Визуализация: \(style.title)",
-            city: store.projectCity,
-            details: "Нужно согласовать и выполнить работы по приложенной визуализации.\n\nПожелания: \(description.isEmpty ? style.subtitle : description)",
-            budget: "Смета после согласования",
-            attachment: image
-        )
-    }
 
     private func loadPhoto(_ selection: PhotosPickerItem?) async {
         guard let selection else { return }
@@ -1124,9 +1097,9 @@ struct AIVisionStudioView: View {
     }
 
     private func share(_ image: UIImage) {
-        // Shared concepts carry a discreet АртСтрой caption, so every repost advertises the company.
+        // Shared concepts carry a discreet app caption.
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.9) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Концепт-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Концепт-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         do {
             try data.write(to: url, options: .atomic)
             shareFile = SharedFile(url: url)
@@ -1197,11 +1170,10 @@ enum EstimatePDFRenderer {
     static func render(_ estimate: PrintableEstimate) throws -> URL {
         let stamp = Date().formatted(.iso8601.year().month().day()).replacingOccurrences(of: "-", with: "")
         let safeTitle = estimate.objectName.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-").prefix(40)
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Смета-АртСтрой-\(safeTitle.isEmpty ? "объект" : String(safeTitle))-\(stamp).pdf")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Смета-\(Brand.name)-\(safeTitle.isEmpty ? "объект" : String(safeTitle))-\(stamp).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: "АртСтрой", kCGPDFContextCreator as String: "Приложение АртСтрой"]
+        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: Brand.name, kCGPDFContextCreator as String: "Приложение \(Brand.name)"]
         let renderer = UIGraphicsPDFRenderer(bounds: page, format: format)
-        let qr = BrandGraphics.qrCode(Brand.whatsAppURL(text: "Здравствуйте! У меня смета из приложения АртСтрой: \(estimate.title).").absoluteString, size: 180)
         try renderer.writePDF(to: url) { rendererContext in
             var y: CGFloat = 0
             var number = 0
@@ -1220,15 +1192,14 @@ enum EstimatePDFRenderer {
             func footer() {
                 let footerY = page.height - 46
                 line(CGPoint(x: left, y: footerY), CGPoint(x: left + width, y: footerY))
-                text("АртСтрой · строим в Сочи с \(Brand.foundedYear) года · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
+                text("\(Brand.name) · \(Brand.tagline)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
                 text("Стр. \(pageNumber)", CGRect(x: left + width - 80, y: footerY + 8, width: 80, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray, .right)
             }
             func header(_ continuation: Bool) {
                 if pageNumber > 0 { footer() }
                 rendererContext.beginPage(); pageNumber += 1; y = 34
-                text("АРТСТРОЙ", CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
-                text("СТРОИТЕЛЬСТВО И РЕМОНТ · СОЧИ", CGRect(x: left, y: y + 20, width: 300, height: 16), UIFont.systemFont(ofSize: 8, weight: .semibold), UIColor.darkGray)
-                text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)", CGRect(x: 355, y: y, width: 208, height: 32), UIFont.systemFont(ofSize: 8), UIColor.darkGray, .right)
+                text(Brand.name.uppercased(), CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
+                text(Brand.tagline.uppercased(), CGRect(x: left, y: y + 20, width: 400, height: 16), UIFont.systemFont(ofSize: 8, weight: .semibold), UIColor.darkGray)
                 y += 52; line(CGPoint(x: left, y: y), CGPoint(x: left + width, y: y), accent, 1); y += 14
                 if continuation { text("Продолжение", CGRect(x: left, y: y, width: width, height: 18), UIFont.boldSystemFont(ofSize: 11)); y += 24 }
             }
@@ -1277,14 +1248,13 @@ enum EstimatePDFRenderer {
             }
             y += 10
             y += text(estimate.note, CGRect(x: left, y: y, width: width, height: 60), UIFont.systemFont(ofSize: 7.5), UIColor.darkGray) + 16
-            // Call-to-action block with a QR code that opens a WhatsApp chat with АртСтрой.
-            let boxHeight: CGFloat = 84
+            // How to use the estimate: neutral advice, no company contacts.
+            let boxHeight: CGFloat = 58
             let box = CGRect(x: left, y: y, width: width, height: boxHeight)
-            rendererContext.cgContext.setFillColor(UIColor(red: 1, green: 0.95, blue: 0.91, alpha: 1).cgColor)
+            rendererContext.cgContext.setFillColor(UIColor(red: 0.95, green: 0.97, blue: 1, alpha: 1).cgColor)
             rendererContext.cgContext.fill(box)
-            if let qr { qr.draw(in: CGRect(x: box.maxX - 74, y: box.minY + 7, width: 70, height: 70)) }
-            text("Нужна точная смета или выезд на объект?", CGRect(x: box.minX + 14, y: box.minY + 14, width: width - 110, height: 16), UIFont.boldSystemFont(ofSize: 10.5))
-            text("Наведите камеру на QR‑код — откроется чат WhatsApp с АртСтроем. Или позвоните: \(Brand.phoneDisplay). Сметы, договор, этапы по актам и фотоотчётам.", CGRect(x: box.minX + 14, y: box.minY + 34, width: width - 110, height: 40), UIFont.systemFont(ofSize: 8), UIColor.darkGray)
+            text("Как пользоваться сметой", CGRect(x: box.minX + 14, y: box.minY + 12, width: width - 28, height: 16), UIFont.boldSystemFont(ofSize: 10.5))
+            text("Покажите её 2–3 подрядчикам и сравните их цены с рыночной оценкой построчно. Объёмы перед закупкой перепроверьте по проекту.", CGRect(x: box.minX + 14, y: box.minY + 30, width: width - 28, height: 28), UIFont.systemFont(ofSize: 8), UIColor.darkGray)
             y += boxHeight + 22
             if y + 20 > contentBottom { header(true) }
             text("Заказчик ____________________    Исполнитель ____________________", CGRect(x: left, y: y, width: width, height: 20), UIFont.systemFont(ofSize: 8), UIColor.darkGray)

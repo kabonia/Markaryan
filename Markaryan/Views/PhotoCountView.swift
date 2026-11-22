@@ -353,11 +353,8 @@ struct PhotoCountView: View {
             case .board, .timber: row("Объём", "\(CalculationEngine.format((volumeM3 * 1000).rounded() / 1000)) м³")
             }
             if let cost { Divider(); row("Стоимость по вашей цене", CalculationEngine.money(cost)) }
-            HStack(spacing: 10) {
-                Button { share() } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-                Button { store.appendToRequest(reportText) } label: { SecondaryActionLabel(title: "В заявку", icon: "square.and.pencil") }.buttonStyle(PremiumPressStyle())
-            }
-            .padding(.top, 4)
+            Button { share() } label: { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+                .padding(.top, 4)
         }
         .padding(18).panelCard(20)
     }
