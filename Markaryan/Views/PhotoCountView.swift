@@ -243,7 +243,7 @@ struct PhotoCountView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Счёт по фото")
+        .navigationTitle("Счёт по фото").helperScreen("Счёт по фото")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !session.parts.isEmpty {

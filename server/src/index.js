@@ -10,6 +10,7 @@ import { designChoices } from './providers/openrouter.js';
 import * as hh from './hh.js';
 import * as avito from './avito.js';
 import * as market from './market.js';
+import * as reports from './reports.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -50,6 +51,7 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/v1/market/price-book') return send(res, 200, market.priceBook(url));
   if (url.pathname.startsWith('/v1/partners') || url.pathname.startsWith('/v1/admin/partners')) return handlePartners(req, res, url);
+  if (req.method === 'POST' && url.pathname === '/v1/report') return send(res, 200, await reports.report(await readBody(req), clientIP(req)));
   if (url.pathname.startsWith('/v1/auth/hh/') || url.pathname.startsWith('/v1/hh/')) return handleHH(req, res, url);
   if (req.method === 'GET' && url.pathname === '/v1/market/vacancies') return handleMarketSearch(req, res, url);
   if (req.method === 'GET' && (url.pathname === '/v1/market/resumes' || url.pathname === '/v1/market/owner')) return handleResumeSearch(req, res, url);
@@ -77,7 +79,7 @@ async function handle(req, res) {
     const messages = cleanMessages(body.messages);
     const kind = messages.some((m) => m.image) ? 'vision' : 'chat';
     consume(kind, installId, ip);
-    const params = { system: String(body.system || '').slice(0, 40_000), messages, maxTokens: Number(body.maxTokens) || 2000 };
+    const params = { system: String(body.system || '').slice(0, 40_000), messages, maxTokens: Number(body.maxTokens) || 2000, tier: body.tier === 'helper' ? 'helper' : undefined };
     if (!body.stream) {
       try { return send(res, 200, { text: await ai.chat(params) }); } catch (error) { refund(kind, installId, ip); throw error; }
     }

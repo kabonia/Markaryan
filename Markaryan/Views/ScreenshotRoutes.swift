@@ -10,7 +10,13 @@ enum ScreenshotRoute {
     static var tab: Int? { nil }
 
     @MainActor @ViewBuilder static func screen(_ route: String) -> some View {
-        if route == "home" {
+        if route == "root" {
+            RootView()
+        } else if route == "helper" {
+            HelperChatView()
+        } else if route == "tour" {
+            RootView().onAppear { HelperCenter.shared.startTour() }
+        } else if route == "home" {
             HomeView()
         } else if route == "calcs" {
             CalculatorsView()

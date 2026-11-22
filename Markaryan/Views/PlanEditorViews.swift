@@ -31,7 +31,7 @@ struct FurnitureEditorView: View {
             else { ContentUnavailableView("Концепция удалена", systemImage: "trash") }
         }
         .background(Theme.background)
-        .navigationTitle("Мебель")
+        .navigationTitle("Мебель").helperScreen("Мебель")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -55,7 +55,7 @@ struct FurnitureEditorView: View {
                         }
                     }
                 }
-                .navigationTitle("Добавить предмет")
+                .navigationTitle("Добавить предмет").helperScreen("Добавить предмет")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { showCatalog = false } } }
             }
@@ -308,7 +308,7 @@ struct PlanEditorView: View {
             else { ProgressView().tint(Theme.orange).frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
         .background(Theme.background)
-        .navigationTitle("Правка плана")
+        .navigationTitle("Правка плана").helperScreen("Правка плана")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -434,7 +434,7 @@ struct PlanEditorView: View {
             notice = text
             Haptics.success()
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.localizedDescription; HelperCenter.shared.failed(error)
             notice = nil
             Haptics.warning()
         }
@@ -462,7 +462,7 @@ struct PlanEditorView: View {
             notice = "Выпрямлено углов: \(result.corners)."
             Haptics.success()
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.localizedDescription; HelperCenter.shared.failed(error)
             notice = nil
             Haptics.warning()
         }
@@ -615,7 +615,7 @@ struct OpeningFormView: View {
             try onSave(PlanEditor.OpeningSpec(kind: kind, wall: wall, from: start, width: size, height: tall, sill: bottom, hingeAtEnd: kind == .door && hingeAtEnd))
             dismiss()
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.localizedDescription; HelperCenter.shared.failed(error)
         }
     }
 }

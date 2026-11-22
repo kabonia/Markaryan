@@ -62,7 +62,7 @@ struct RegionPickerView: View {
                 }
             }
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Город")
-            .navigationTitle("Город для цен")
+            .navigationTitle("Город для цен").helperScreen("Город для цен")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Закрыть") { dismiss() } } }
         }

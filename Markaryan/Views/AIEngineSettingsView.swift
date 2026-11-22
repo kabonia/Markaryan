@@ -73,7 +73,7 @@ struct AIEngineSettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("ИИ‑движок")
+        .navigationTitle("ИИ‑движок").helperScreen("ИИ‑движок")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

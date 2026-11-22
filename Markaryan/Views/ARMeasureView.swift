@@ -401,6 +401,7 @@ struct ARMeasureView: View {
             }.padding(.top, 12)
         }.onDisappear { model.stop() }
             .onAppear { model.checkExistingAccess() }
+            .helperScreen("AR‑замер")
             .confirmationDialog("Использовать площадь в расчёте", isPresented: $showTransfer, titleVisibility: .visible) {
                 ForEach([CalculationKind.tiles, .screed, .paint, .plaster, .drywall, .insulation]) { kind in Button(kind.title) { transfer(kind, key: "area", value: model.area) } }
             }

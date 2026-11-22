@@ -769,7 +769,7 @@ struct Room3DView: View {
             .frame(maxHeight: .infinity)
         }
         .background(Theme.background)
-        .navigationTitle(proposal?.title ?? plan.name)
+        .navigationTitle(proposal?.title ?? plan.name).helperScreen(proposal?.title ?? plan.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
         .task { if scene == nil { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode); store.track("room_3d_open") } }
@@ -841,7 +841,7 @@ struct RenderResultView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Фотореализм")
+        .navigationTitle("Фотореализм").helperScreen("Фотореализм")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }

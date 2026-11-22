@@ -48,7 +48,7 @@ jobs:
 
       - name: Скриншоты
         env:
-          ROUTES: ${{ github.event.inputs.routes || 'onboarding home calcs design projects profile about assistant estimate calc:concreteMix calc:masonry photocount photodesign' }}
+          ROUTES: ${{ github.event.inputs.routes || 'onboarding root tour helper calcs design projects profile estimate calc:concreteMix calc:masonry photocount photodesign about' }}
         run: |
           APP=$(ls -d dd/Build/Products/Debug-iphonesimulator/*.app | head -1)
           BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")

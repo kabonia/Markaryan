@@ -28,7 +28,7 @@ struct LaunchGateView: View {
         RootView()
             .transition(.opacity.combined(with: .scale(scale: 1.015)))
             .fullScreenCover(isPresented: Binding(get: { !onboardingCompleted }, set: { if !$0 { onboardingCompleted = true } })) {
-                OnboardingView { onboardingCompleted = true }.environmentObject(store)
+                OnboardingView { onboardingCompleted = true; HelperCenter.shared.offerTour() }.environmentObject(store)
             }
     }
     var body: some View {
@@ -111,6 +111,7 @@ struct InfoNote: View {
 }
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
+    @ObservedObject private var helper = HelperCenter.shared
     @Environment(\.requestReview) private var requestReview
 
     var body: some View {
@@ -142,6 +143,10 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $store.showRegionPicker) { RegionPickerView() }
+        .sheet(isPresented: $helper.isOpen) { HelperChatView().presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
+        .overlay(alignment: .bottomTrailing) { if helper.tourStep == nil { HelperButton().padding(.trailing, 18).padding(.bottom, 92) } }
+        .overlay(alignment: .top) { HelperNoticeBanner().padding(.top, 4).animation(.spring(response: 0.4), value: helper.notice) }
+        .overlay { HelperTourOverlay().animation(.easeInOut(duration: 0.2), value: helper.tourStep) }
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }
         .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 2 } }

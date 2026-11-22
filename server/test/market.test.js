@@ -88,3 +88,16 @@ test('build-price-book: median, outliers, duplicates, old offers', () => {
     assert.equal(c.unit, 'м³');
   } finally { fs.rmSync(out, { force: true }); fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('error reports are accepted and logged without Telegram', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reports-'));
+  const PORT = 18_767;
+  const child = spawn(process.execPath, ['src/index.js'], { env: { ...process.env, PORT: String(PORT), DATA_DIR: dir, TELEGRAM_BOT_TOKEN: '', GIGACHAT_AUTH_KEY: '', YANDEX_API_KEY: '' }, stdio: 'pipe' });
+  t.after(() => { child.kill(); fs.rmSync(dir, { recursive: true, force: true }); });
+  await new Promise((resolve) => child.stdout.once('data', resolve));
+  const base = `http://127.0.0.1:${PORT}`;
+  const ok = await fetch(`${base}/v1/report`, { method: 'POST', body: JSON.stringify({ screen: 'Дизайн по фото', error: 'timeout', appVersion: '1.3 (5)' }) });
+  assert.deepEqual(await ok.json(), { ok: true, telegram: false });
+  assert.equal((await fetch(`${base}/v1/report`, { method: 'POST', body: '{}' })).status, 400);
+  assert.match(fs.readFileSync(path.join(dir, 'reports.log'), 'utf8'), /Дизайн по фото/);
+});

@@ -394,6 +394,7 @@ enum VisualizationError: LocalizedError {
         priceServerURL = savedServerURL.isEmpty ? Self.productionServerURL : savedServerURL
         priceAlert = UserDefaults.standard.string(forKey: "priceAlert")
         lastPriceSync = UserDefaults.standard.object(forKey: "lastPriceSync") as? Date
+        HelperCenter.shared.store = self
 
         if let savedWorkspaces: [ProjectWorkspace] = Self.read("projectWorkspaces"), !savedWorkspaces.isEmpty {
             projectWorkspaces = savedWorkspaces
@@ -837,6 +838,12 @@ enum VisualizationError: LocalizedError {
         if let base = AIServerConfig.baseURL { return ServerAIClient(base: base) }
         guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
         return ClaudeClient(apiKey: key, model: claudeModel.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
+    }
+    /// The helper's AI: the server's cheap fast model; with the owner's own key — Claude Haiku.
+    var helperEngine: (any AIEngine)? {
+        if let base = AIServerConfig.baseURL { return ServerAIClient(base: base, tier: "helper") }
+        guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
+        return ClaudeClient(apiKey: key, model: ClaudeModel.haiku.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
     }
     /// The AI for the concept and the layout: the same engine as `claudeClient`, with the model picked on the
     /// «Дизайн» step first and the other models behind it. A key of Anthropic itself runs Claude models only.

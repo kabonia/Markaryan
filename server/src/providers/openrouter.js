@@ -66,12 +66,16 @@ export function modelOrder(requested) {
  * Common request body. All four flagship models think before answering (reasoning cannot be switched off),
  * so the reply gets its own budget on top of the reasoning; the reasoning text itself is not sent back.
  */
-function body({ system, messages, maxTokens, effort, requireParameters = false, model }) {
-  const [primary, ...fallbacks] = modelOrder(model);
+function body({ system, messages, maxTokens, effort, requireParameters = false, model, tier }) {
+  const helper = tier === 'helper' && config.openrouter.helperModels.length > 0;
+  const [primary, ...fallbacks] = helper ? config.openrouter.helperModels : modelOrder(model);
   const result = {
     model: primary,
     messages: toMessages(system, messages),
-    max_tokens: Math.min(64_000, Math.max(1_000, Number(maxTokens) || 2_000) + 16_000),
+    // The helper is a small, cheap model: no large reasoning budget on top of the answer.
+    max_tokens: helper
+      ? Math.min(4_000, Math.max(300, Number(maxTokens) || 1_200) + 1_000)
+      : Math.min(64_000, Math.max(1_000, Number(maxTokens) || 2_000) + 16_000),
   };
   if (isOpenRouter()) {
     if (fallbacks.length) result.models = fallbacks;
@@ -101,8 +105,8 @@ export function strictSchema(schema) {
   return copy;
 }
 
-export async function chat({ system, messages, maxTokens = 2000, onDelta }) {
-  const payload = { ...body({ system, messages, maxTokens, effort: 'medium' }), stream: Boolean(onDelta) };
+export async function chat({ system, messages, maxTokens = 2000, onDelta, tier }) {
+  const payload = { ...body({ system, messages, maxTokens, effort: tier === 'helper' ? 'low' : 'medium', tier }), stream: Boolean(onDelta) };
   const response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(payload) });
   if (!response.ok) throw failure(response.status, await readJSON(response));
   if (!onDelta) return (await readJSON(response))?.choices?.[0]?.message?.content ?? '';

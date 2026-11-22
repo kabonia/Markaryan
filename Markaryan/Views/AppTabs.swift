@@ -85,7 +85,7 @@ struct ProjectsTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проект")
+        .navigationTitle("Проект").helperScreen("Проект")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in
@@ -177,7 +177,7 @@ private struct NewProjectSheet: View {
                         .font(.footnote).foregroundStyle(Theme.muted)
                 }
             }
-            .navigationTitle("Добавить объект")
+            .navigationTitle("Добавить объект").helperScreen("Добавить объект")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -236,7 +236,7 @@ struct ProjectTasksView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("Задачи команды")
+        .navigationTitle("Задачи команды").helperScreen("Задачи команды")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showNewTask = true } label: { Image(systemName: "plus") }
@@ -322,7 +322,7 @@ private struct NewProjectTaskSheet: View {
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("Новая задача")
+            .navigationTitle("Новая задача").helperScreen("Новая задача")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -366,6 +366,10 @@ struct ProfileTabView: View {
                 }
                 .padding(.bottom, 4)
 
+                Button { HelperCenter.shared.startTour() } label: {
+                    AppTabRow(icon: "map.fill", title: "Экскурсия по приложению", subtitle: "Что где находится и для чего — за минуту")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 NavigationLink { AboutAppView() } label: {
                     AppTabRow(icon: "info.circle.fill", title: "О приложении", subtitle: "Версия, данные и конфиденциальность")
                 }
@@ -404,7 +408,7 @@ struct ProfileTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Профиль")
+        .navigationTitle("Профиль").helperScreen("Профиль")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

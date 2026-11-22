@@ -52,7 +52,7 @@ struct PriceServerSettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("Цены и сервер")
+        .navigationTitle("Цены и сервер").helperScreen("Цены и сервер")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { address = store.priceServerURL }
         .alert("Прайс", isPresented: Binding(get: { store.priceSyncMessage != nil }, set: { if !$0 { store.priceSyncMessage = nil } })) {

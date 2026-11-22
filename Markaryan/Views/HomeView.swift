@@ -43,8 +43,8 @@ struct HomeView: View {
                         NavigationLink { PhotoCountView() } label: {
                             HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.orangeSoft)
                         }
-                        NavigationLink { AIAssistantView(context: .general) } label: {
-                            HomeToolCard(icon: "sparkles", title: "СтройПомощник", text: "Ответит на любой вопрос о стройке и ремонте, разберёт смету и фото.", accent: Color(red: 0.68, green: 0.81, blue: 0.47))
+                        Button { HelperCenter.shared.isOpen = true } label: {
+                            HomeToolCard(icon: "sparkles", title: "ИИ‑помощник", text: "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.", accent: Theme.orangeSoft)
                         }
                         NavigationLink { FullEstimateHubView() } label: {
                             HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Color(red: 0.62, green: 0.70, blue: 0.95))
@@ -106,6 +106,7 @@ struct HomeView: View {
         }
         .background(HomeBackdrop())
         .toolbar(.hidden, for: .navigationBar)
+        .helperScreen("Главная")
         .refreshable { await store.refreshPriceBook(silent: true) }
         .onAppear { if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
     }
@@ -375,7 +376,7 @@ struct ObjectPassportView: View {
                 NavigationLink { ConstructionDiaryView() } label: { Label("Журнал решений", systemImage: "book.closed") }
             }
             Section { Text("Паспорт, чек-листы и дневник хранятся только на этом iPhone.").font(.footnote).foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Паспорт объекта")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Паспорт объекта").helperScreen("Паспорт объекта")
     }
 }
 
@@ -424,7 +425,7 @@ struct ChecklistView: View {
                 }
             }
             Section { Text("Это личный список контроля. Он не заменяет проект, технадзор и условия договора.").font(.footnote).foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Чек-листы")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Чек-листы").helperScreen("Чек-листы")
     }
 }
 
@@ -442,7 +443,7 @@ struct ConstructionDiaryView: View {
                 else { ForEach(store.diary) { item in VStack(alignment: .leading, spacing: 6) { Text(item.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(Theme.orange); Text(item.text).textSelection(.enabled) } }.onDelete { store.diary.remove(atOffsets: $0) } }
             }
         }
-        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Журнал решений")
+        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Журнал решений").helperScreen("Журнал решений")
         .toolbar { if !store.diary.isEmpty { ShareLink(item: diaryText) { Image(systemName: "square.and.arrow.up") } } }
     }
     private var diaryText: String {
@@ -461,7 +462,7 @@ struct AboutAppView: View {
                 Text("Анонимные технические события (открытие экранов, ошибки) помогают нам исправлять проблемы и не содержат личных данных.")
             }.font(.footnote)
             Section { Text("Версия \(Brand.appVersion)").foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("О приложении")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("О приложении").helperScreen("О приложении")
     }
 }
 
@@ -508,7 +509,7 @@ struct ProjectHubView: View {
             NavigationLink { ChecklistView() } label: { ProjectHubRow(icon: "checkmark.shield", title: "Чек‑листы контроля", subtitle: "Перед стартом, во время работ и при приёмке") }.buttonStyle(PremiumCardPressStyle())
             ShareLink(item: projectReport, subject: Text("Отчёт по объекту")) { SecondaryActionLabel(title: "Поделиться отчётом по объекту", icon: "square.and.arrow.up") }
             InfoNote(text: "Проект, бюджет и фото хранятся на этом iPhone. Они отправляются исполнителям только после вашего действия.")
-        }.padding(20) }.background(Theme.background).navigationTitle("Мой проект").navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle("Мой проект").helperScreen("Мой проект").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -533,7 +534,7 @@ struct ProjectPlanView: View {
             Section("Дорожная карта") { ForEach($store.milestones) { $milestone in
                 Button { Haptics.tap(); withAnimation(.snappy) { milestone.completed.toggle() } } label: { HStack(spacing: 14) { Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(milestone.completed ? Theme.orange : Theme.muted); VStack(alignment: .leading, spacing: 4) { Text(milestone.title).foregroundStyle(.primary); Text(milestone.subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer() } }.buttonStyle(.plain)
             } }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("План стройки")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("План стройки").helperScreen("План стройки")
     }
 }
 
@@ -575,7 +576,7 @@ struct ProjectBudgetTrackerView: View {
             }
             Section { Text("Совет: в полной смете нажмите «В бюджет проекта» — плановые суммы заполнятся автоматически. Фактические суммы не передаются на сервер.").font(.footnote).foregroundStyle(Theme.muted) }
         }
-        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Бюджет")
+        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Бюджет").helperScreen("Бюджет")
         .scrollDismissesKeyboard(.interactively)
     }
     private func addItem() {
@@ -644,7 +645,7 @@ struct ProjectPhotoDiaryView: View {
                     }
                 }
             }.padding(20)
-        }.background(Theme.background).navigationTitle("Фото‑дневник").navigationBarTitleDisplayMode(.inline)
+        }.background(Theme.background).navigationTitle("Фото‑дневник").helperScreen("Фото‑дневник").navigationBarTitleDisplayMode(.inline)
             .onChange(of: item) { _, selected in Task { await importPhoto(selected) } }
             .sheet(isPresented: $showCamera) { CameraCaptureView(image: $cameraImage).ignoresSafeArea() }
             .onChange(of: cameraImage) { _, image in
@@ -660,13 +661,13 @@ struct ProjectPhotoDiaryView: View {
     }
     private func save(_ image: UIImage) {
         do { try store.addProjectPhoto(image, caption: caption); caption = ""; error = nil; Haptics.success() }
-        catch { self.error = error.localizedDescription }
+        catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
     private func importPhoto(_ selected: PhotosPickerItem?) async {
         guard let selected else { return }
         do {
             guard let data = try await selected.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw ProjectPhotoError.encoding }
             save(image); item = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 }

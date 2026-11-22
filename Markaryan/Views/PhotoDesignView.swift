@@ -61,7 +61,7 @@ struct PhotoDesignView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Дизайн по фото")
+        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in Task { await load(item) } }
         .sheet(isPresented: $showCamera) { CameraCaptureView(image: $captured).ignoresSafeArea() }
@@ -370,7 +370,7 @@ struct PhotoDesignView: View {
             }
             pickerItem = nil
             start(with: image)
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     /// A new variant from the source photo.
@@ -409,7 +409,7 @@ struct PhotoDesignView: View {
                 store.registerMeaningfulAction()
                 Haptics.success()
             } catch {
-                self.error = error.localizedDescription
+                self.error = error.localizedDescription; HelperCenter.shared.failed(error)
                 Haptics.warning()
             }
             isLoading = false
@@ -438,7 +438,7 @@ struct PhotoDesignView: View {
             try store.addProjectPhoto(image, caption: "Дизайн по фото: \((room ?? .other).title.lowercased())\(style.map { ", \($0.title.lowercased())" } ?? "")")
             addedToProject = true
             Haptics.success()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func share(_ image: UIImage) {
@@ -448,7 +448,7 @@ struct PhotoDesignView: View {
             try data.write(to: url, options: .atomic)
             shareFile = SharedFile(url: url)
             store.track("photo_design_shared")
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 }
 

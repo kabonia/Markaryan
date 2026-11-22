@@ -254,7 +254,7 @@ struct FloorPlansView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Дизайн")
+        .navigationTitle("Дизайн").helperScreen("Дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
         .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }
@@ -450,7 +450,7 @@ struct FloorPlanDetailView: View {
             else { ContentUnavailableView("План удалён", systemImage: "trash") }
         }
         .background(Theme.background)
-        .navigationTitle(plan?.name ?? "План")
+        .navigationTitle(plan?.name ?? "План").helperScreen(plan?.name ?? "План")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { moreMenu } }
         .sheet(isPresented: $showDesignSheet) {
@@ -924,7 +924,7 @@ struct FloorPlanDetailView: View {
                 }
                 withAnimation(.snappy) { selectedProposal = result.id }
                 Haptics.success()
-            } catch { self.error = error.localizedDescription; Haptics.warning() }
+            } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error); Haptics.warning() }
             isGenerating = false
             UIApplication.shared.isIdleTimerDisabled = false
         }
@@ -1142,7 +1142,7 @@ struct FloorPlanDetailView: View {
         guard let data = BrandGraphics.watermarked(image).pngData() else { return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(Int(Date().timeIntervalSince1970)).png")
         do { try data.write(to: url, options: .atomic); shareFile = SharedFile(url: url); store.track("plan_shared") }
-        catch { self.error = error.localizedDescription }
+        catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func rename() {
@@ -1285,7 +1285,7 @@ struct AIModelsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Модели ИИ")
+        .navigationTitle("Модели ИИ").helperScreen("Модели ИИ")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
     }
@@ -1358,7 +1358,7 @@ struct PlanMeasurementsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Все обмеры")
+        .navigationTitle("Все обмеры").helperScreen("Все обмеры")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -1408,7 +1408,7 @@ struct PlanMaterialsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Материалы и смета")
+        .navigationTitle("Материалы и смета").helperScreen("Материалы и смета")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -1453,7 +1453,7 @@ struct EngineComparisonView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Сравнение движков")
+        .navigationTitle("Сравнение движков").helperScreen("Сравнение движков")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
         .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Сравнение движков") } }
@@ -1567,7 +1567,7 @@ struct DesignRequestSheet: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Новый дизайн")
+        .navigationTitle("Новый дизайн").helperScreen("Новый дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
         .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Превью · \(style?.title ?? "стиль")") } }

@@ -76,7 +76,7 @@ struct CalculatorsView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .background(Theme.background)
-        .navigationTitle("Смета")
+        .navigationTitle("Смета").helperScreen("Смета")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -146,7 +146,7 @@ struct FullEstimateHubView: View {
                 }.buttonStyle(PremiumCardPressStyle())
             }
             InfoNote(text: "Наша цена формируется из актуального прайса. Она предварительная и уточняется после проекта и выезда на объект.")
-        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").helperScreen("Полные сметы").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -251,7 +251,7 @@ struct HouseEstimateView: View {
             PriceSourceNote()
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background).navigationTitle(kind.screenTitle).navigationBarTitleDisplayMode(.inline)
+            .background(Theme.background).navigationTitle(kind.screenTitle).helperScreen(kind.screenTitle, details: report).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -460,7 +460,7 @@ struct CalculatorView: View {
             Text("Значения по умолчанию приведены для примера. Последние введённые размеры запоминаются при сохранении расчёта.").font(.caption).foregroundStyle(Theme.muted)
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background).navigationTitle(kind.title).navigationBarTitleDisplayMode(.inline)
+            .background(Theme.background).navigationTitle(kind.title).helperScreen("Калькулятор: \(kind.title)", details: kind.note).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focusedField = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -512,7 +512,7 @@ struct CalculationHistoryView: View {
                     }.padding(.vertical, 4)
                 }
             }.onDelete { store.calculations.remove(atOffsets: $0) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Мои расчёты").toolbar { if !store.calculations.isEmpty { EditButton() } }
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Мои расчёты").helperScreen("Мои расчёты").toolbar { if !store.calculations.isEmpty { EditButton() } }
     }
 }
 struct SavedCalculationView: View {
@@ -530,7 +530,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-        }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle(item.object).helperScreen(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -712,7 +712,7 @@ struct AIAssistantView: View {
                     }
                     Haptics.success()
                 } catch {
-                    self.error = error.localizedDescription
+                    self.error = error.localizedDescription; HelperCenter.shared.failed(error)
                     if let index = messages.firstIndex(where: { $0.id == answer.id }), messages[index].text.isEmpty { messages.remove(at: index) }
                 }
                 streamingID = nil
@@ -721,7 +721,7 @@ struct AIAssistantView: View {
                     let reply = try await store.askAssistant(question: question, context: fullContext, history: previous)
                     messages.append(AssistantChatMessage(role: .assistant, text: reply.answer, links: reply.localLinks))
                     Haptics.success()
-                } catch { self.error = error.localizedDescription }
+                } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
             }
             isLoading = false
         }
@@ -835,7 +835,7 @@ struct AIVisionStudioView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Визуализация ИИ")
+        .navigationTitle("Визуализация ИИ").helperScreen("Визуализация ИИ")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item) { _, item in Task { await loadPhoto(item) } }
         .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.image]) { importImage($0) }
@@ -1027,7 +1027,7 @@ struct AIVisionStudioView: View {
             source = image
             item = nil
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func importImage(_ importResult: Result<URL, Error>) {
@@ -1038,7 +1038,7 @@ struct AIVisionStudioView: View {
             guard let image = UIImage(data: try Data(contentsOf: url)) else { throw VisualizationError.imagePreparation }
             source = image
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func generate() {
@@ -1065,7 +1065,7 @@ struct AIVisionStudioView: View {
                 store.track("visualization_created")
                 store.registerMeaningfulAction()
                 Haptics.success()
-            } catch { self.error = error.localizedDescription }
+            } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
             isLoading = false
         }
     }
@@ -1076,7 +1076,7 @@ struct AIVisionStudioView: View {
             error = nil
             addedToProject = true
             Haptics.success()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func saveToPhotos(_ image: UIImage) {

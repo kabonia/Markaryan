@@ -113,6 +113,8 @@ struct ServerAIClient: AIEngine {
     let base: URL
     /// The model the user picked for the design (OpenRouter id): the server tries it first. Nil — the server's order.
     var designModel: String? = nil
+    /// "helper": the server answers with its cheap, fast model (the in-app helper).
+    var tier: String? = nil
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -164,7 +166,8 @@ struct ServerAIClient: AIEngine {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens, "stream": true]
+                    var body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens, "stream": true]
+                    if let tier { body["tier"] = tier }
                     let (bytes, response) = try await Self.session.bytes(for: try request("v1/ai/chat", body: body, accept: "text/event-stream"))
                     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
                     guard (200...299).contains(status) else {
@@ -188,7 +191,9 @@ struct ServerAIClient: AIEngine {
     }
 
     func complete(system: String, turns: [ClaudeTurn], maxTokens: Int) async throws -> String {
-        let json = try await post("v1/ai/chat", ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens])
+        var body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens]
+        if let tier { body["tier"] = tier }
+        let json = try await post("v1/ai/chat", body)
         guard let text = json["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw ClaudeError.emptyAnswer }
         return text
     }
