@@ -12,6 +12,7 @@ import * as avito from './avito.js';
 import * as market from './market.js';
 import * as reports from './reports.js';
 import * as estimate from './estimate.js';
+import * as smeta from './smeta.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -21,12 +22,12 @@ function send(res, status, body) {
   res.end(data);
 }
 
-async function readBody(req) {
+async function readBody(req, limit = config.maxBodyBytes) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > config.maxBodyBytes) throw new ApiError(413, 'Слишком большой запрос (фото больше допустимого).');
+    if (size > limit) throw new ApiError(413, 'Слишком большой запрос (фото больше допустимого).');
     chunks.push(chunk);
   }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { throw new ApiError(400, 'Неверный формат запроса.'); }
@@ -72,6 +73,18 @@ async function handle(req, res) {
       // What the app offers to choose on the «Дизайн» step.
       designModels: providers.includes('openrouter') ? designChoices() : [], renderModels: renderChoices(),
     });
+  }
+  // «Смета по документам»: create a job (drawings as page pictures — a bigger body), follow it, long-poll for the end.
+  const smetaPath = url.pathname.match(/^\/v1\/ai\/smeta(?:\/([0-9a-f-]{36}))?(\/wait)?$/);
+  if (smetaPath) {
+    if (req.method === 'POST' && !smetaPath[1]) {
+      const input = await readBody(req, 60 * 1024 * 1024);
+      consume('smeta', installId, ip);
+      try { return send(res, 200, smeta.create(input, installId)); } catch (error) { refund('smeta', installId, ip); throw error; }
+    }
+    if (req.method === 'GET' && smetaPath[1] && !smetaPath[2]) return send(res, 200, smeta.status(smetaPath[1], installId));
+    if (smetaPath[1] && smetaPath[2]) return send(res, 200, await smeta.wait(smetaPath[1], installId));
+    return send(res, 404, { error: 'Не найдено' });
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
   const body = await readBody(req);

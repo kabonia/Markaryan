@@ -132,17 +132,17 @@ export async function chat({ system, messages, maxTokens = 2000, onDelta, tier }
  * Structured answer: the JSON schema is enforced by the model; if a route rejects the schema, plain JSON is repaired.
  * `model` — the model the app picked (see modelOrder); `meta.model` receives the model that really answered.
  */
-export async function json({ system, messages, schema, name = 'result', maxTokens = 8000, model, meta }) {
+export async function json({ system, messages, schema, name = 'result', maxTokens = 8000, model, meta, timeoutMs }) {
   const strictSystem = `${system}\n\nОтветь ТОЛЬКО одним JSON‑объектом по схеме, без текста вокруг.`;
   const strict = {
     ...body({ system: strictSystem, messages, maxTokens, effort: 'high', requireParameters: true, model }),
     response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: strictSchema(schema) } },
   };
-  let response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(strict) });
+  let response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(strict) }, timeoutMs);
   if (response.status === 400) {
     await readJSON(response);
     const loose = { ...body({ system: strictSystem, messages, maxTokens, effort: 'high', model }), response_format: { type: 'json_object' } };
-    response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(loose) });
+    response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(loose) }, timeoutMs);
   }
   const result = await readJSON(response);
   if (!response.ok) throw failure(response.status, result);

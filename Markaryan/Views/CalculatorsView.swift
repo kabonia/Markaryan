@@ -23,6 +23,21 @@ struct CalculatorsView: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
 
+                NavigationLink { DocEstimateHubView() } label: {
+                    HStack(spacing: 15) {
+                        Image(systemName: "doc.text.magnifyingglass").font(.title3).foregroundStyle(Theme.orange).frame(width: 50, height: 50).background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Смета по документам").font(.headline).foregroundStyle(.white)
+                            Text("АР, КР, ТЗ, готовая смета или перечень работ — точный расчёт ИИ‑сметчиками").font(.caption).foregroundStyle(.white.opacity(0.8))
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding(18)
+                    .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                }
+                .buttonStyle(PremiumCardPressStyle())
+
                 NavigationLink { FullEstimateHubView() } label: {
                     HStack(spacing: 15) {
                         Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
