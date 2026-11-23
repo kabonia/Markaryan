@@ -8,6 +8,10 @@ import { ApiError, request, readJSON, parseLooseJSON } from './util.js';
 import { normalizePlace } from './market.js';
 
 const CACHE_DAYS = 7;
+const BATCH = 5;
+/** Replaced in tests. */
+let ask = (city, items) => askModel(city, items);
+export function setAsk(fn) { ask = fn || ((city, items) => askModel(city, items)); }
 const cacheFile = () => path.join(config.dataDir, 'estimate-cache.json');
 const readCache = () => { try { return JSON.parse(fs.readFileSync(cacheFile(), 'utf8')); } catch { return {}; } };
 const writeCache = (cache) => { fs.mkdirSync(config.dataDir, { recursive: true }); fs.writeFileSync(cacheFile(), JSON.stringify(cache)); };
@@ -63,12 +67,24 @@ export async function priceEstimate(body) {
   const fresh = (entry) => entry && Date.now() - entry.at < CACHE_DAYS * 86_400_000;
   const missing = items.filter((it) => !fresh(cache[key(city, it)]));
   if (missing.length) {
-    const found = await askModel(city, missing);
-    missing.forEach((it, i) => {
-      const row = sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i]?.quantity });
-      if (row) cache[key(city, it)] = { at: Date.now(), row };
+    // Small batches in parallel: a long list makes the web-search model answer with prose instead of JSON.
+    // A batch that fails twice only leaves its lines without a price; the rest of the estimate still comes back.
+    const batches = [];
+    for (let i = 0; i < missing.length; i += BATCH) batches.push(missing.slice(i, i + BATCH));
+    const errors = [];
+    const tryAsk = async (batch) => { try { return await ask(city, batch); } catch (error) { errors.push(error); return []; } };
+    let priced = 0;
+    const left = [];
+    const keep = (batch, found) => batch.forEach((it, i) => {
+      const row = found[i] && sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i].quantity });
+      if (row) { cache[key(city, it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
     });
-    writeCache(cache);
+    (await Promise.all(batches.map(tryAsk))).forEach((found, b) => keep(batches[b], found));
+    // Second pass: every line still without a price on its own — a single item is found far more reliably.
+    const retry = left.splice(0, left.length);
+    (await Promise.all(retry.map((it) => tryAsk([it])))).forEach((found, i) => keep([retry[i]], found));
+    if (priced) writeCache(cache);
+    else if (!items.some((it) => fresh(cache[key(city, it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
   }
   const rows = items.map((it) => {
     const cached = cache[key(city, it)]?.row;
