@@ -91,12 +91,14 @@ async function download(url, name) {
 
 // MARK: OpenRouter Image API (https://openrouter.ai/docs/guides/overview/multimodal/image-generation)
 
-async function openrouterImage(model, { image, prompt, aspectRatio }) {
+async function openrouterImage(model, { image, prompt, aspectRatio, references = [] }) {
   const vendor = model.split('/')[0];
   const body = { model, prompt: String(prompt).slice(0, 30_000), n: 1, aspect_ratio: aspectRatio };
   if (vendor === 'openai') body.quality = 'high';
   else if (['google', 'black-forest-labs', 'bytedance-seed'].includes(vendor)) body.resolution = config.images.resolution;
-  if (image) body.input_references = [{ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image}` } }];
+  // The photo to edit first, then the client's own materials and products (tile, facade, toilet…) as extra references.
+  const inputs = [image, ...references].filter(Boolean);
+  if (inputs.length) body.input_references = inputs.map((b64) => ({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } }));
   if (config.openrouter.dataCollection === 'deny') body.provider = { data_collection: 'deny' };
   const response = await request(`${config.openrouter.base}/images`, {
     method: 'POST', headers: { Authorization: `Bearer ${config.openrouter.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -111,7 +113,7 @@ async function openrouterImage(model, { image, prompt, aspectRatio }) {
 
 // MARK: OpenAI Images API (edits with the reference, generations without it)
 
-async function openaiImage(model, { image, prompt, size }) {
+async function openaiImage(model, { image, prompt, size, references = [] }) {
   const name = title(model);
   const headers = { Authorization: `Bearer ${config.openai.apiKey}` };
   let response;
@@ -124,6 +126,7 @@ async function openaiImage(model, { image, prompt, size }) {
     form.append('output_format', 'jpeg');
     form.append('n', '1');
     form.append('image[]', new Blob([Buffer.from(image, 'base64')], { type: 'image/jpeg' }), 'render.jpg');
+    references.forEach((ref, i) => form.append('image[]', new Blob([Buffer.from(ref, 'base64')], { type: 'image/jpeg' }), `material-${i + 1}.jpg`));
     response = await request(`${config.openai.base}/images/edits`, { method: 'POST', headers, body: form }, 300_000);
   } else {
     response = await request(`${config.openai.base}/images/generations`, {
@@ -140,11 +143,11 @@ async function openaiImage(model, { image, prompt, size }) {
 
 // MARK: Black Forest Labs (FLUX 3 Image; FLUX.1 Kontext for older keys)
 
-async function bflImage(model, { image, prompt, aspectRatio }) {
+async function bflImage(model, { image, prompt, aspectRatio, references = [] }) {
   const name = title(model);
   const body = /kontext/i.test(model)
     ? { prompt: String(prompt).slice(0, 2500), ...(image ? { input_image: image } : {}), output_format: 'jpeg', safety_tolerance: 2, prompt_upsampling: false }
-    : { prompt: String(prompt).slice(0, 10_000), ...(image ? { images: [image], resolution: 'match_input' } : { aspect_ratio: aspectRatio, resolution: config.images.resolution.toLowerCase() }), safety_tolerance: 2, grounding: false };
+    : { prompt: String(prompt).slice(0, 10_000), ...(image ? { images: [image, ...references], resolution: 'match_input' } : { aspect_ratio: aspectRatio, resolution: config.images.resolution.toLowerCase() }), safety_tolerance: 2, grounding: false };
   const start = await request(`${config.bfl.base}/${model}`, {
     method: 'POST', headers: { 'x-key': config.bfl.apiKey, 'Content-Type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body),
   }, 60_000);

@@ -383,6 +383,8 @@ struct FloorPlanDetailView: View {
     @State private var isRendering = false
     @State private var progressText: String?
     @State private var presentation: PresentationResult?
+    /// The client's own tile, facade, sanitary ware… for the photoreal renders.
+    @State private var materials: [MaterialReference] = []
     @State private var isComparing = false
     @State private var comparison: EngineComparison?
 
@@ -628,7 +630,11 @@ struct FloorPlanDetailView: View {
             }
             if let presentation, presentation.proposalID == proposal.id {
                 presentationGallery(presentation)
-            } else if flow.conceptReady && !isRendering {
+            }
+            if flow.conceptReady && !isRendering && flow.canRender {
+                MaterialReferencesSection(items: $materials, screen: "Дизайн комнаты по скану", room: RoomKind.detect(plan: plan, proposal: proposal).russianName)
+            }
+            if presentation?.proposalID != proposal.id && flow.conceptReady && !isRendering {
                 Text(flow.canRender
                      ? "ИИ превратит точную 3D‑модель комнаты в фотореалистичный рендер в стиле «\(proposal.style)», не сдвигая стены и мебель. Около 1–2 минут."
                      : "Фотореализм сейчас недоступен — PDF соберётся с планами и концепцией, без визуализаций.")
@@ -968,10 +974,11 @@ struct FloorPlanDetailView: View {
         let painter = store.modelChoiceWorks.render ? store.renderModel.title : "ИИ"
         let minutes = store.modelChoiceWorks.render && store.renderModel == .seedream ? "2–4" : "1–2"
         progressText = exact.isEmpty ? "Собираем PDF‑презентацию…" : "\(painter) делает фотореализм по точной модели… \(minutes) мин"
-        async let first = verifiedPhoto(references.count > 0 ? references[0] : nil, prompt: photoPrompt)
-        async let second = verifiedPhoto(references.count > 1 ? references[1] : nil, prompt: photoPrompt)
-        async let third = verifiedPhoto(references.count > 2 ? references[2] : nil, prompt: photoPrompt)
-        async let fourth = verifiedPhoto(references.count > 3 ? references[3] : nil, prompt: photoPrompt)
+        let samples = await materials.preparedForRender(store)
+        async let first = verifiedPhoto(references.count > 0 ? references[0] : nil, prompt: photoPrompt, samples: samples)
+        async let second = verifiedPhoto(references.count > 1 ? references[1] : nil, prompt: photoPrompt, samples: samples)
+        async let third = verifiedPhoto(references.count > 2 ? references[2] : nil, prompt: photoPrompt, samples: samples)
+        async let fourth = verifiedPhoto(references.count > 3 ? references[3] : nil, prompt: photoPrompt, samples: samples)
         let photos = await [first, second, third, fourth]
 
         var interiors: [(title: String, image: UIImage)] = []
@@ -1026,13 +1033,13 @@ struct FloorPlanDetailView: View {
         var rejected = false
     }
 
-    private func verifiedPhoto(_ reference: UIImage?, prompt: String) async -> PhotoOutcome {
+    private func verifiedPhoto(_ reference: UIImage?, prompt: String, samples: [MaterialReference] = []) async -> PhotoOutcome {
         guard let reference, store.photorealAvailable else { return PhotoOutcome() }
         var outcome = PhotoOutcome()
         var best: (image: UIImage, title: String, score: Double)?
         for _ in 0..<2 {
             let rendered: RenderedImage
-            do { rendered = try await store.photorealRender(reference, prompt: prompt) }
+            do { rendered = try await store.photorealRender(reference, prompt: prompt, references: samples) }
             catch { outcome.failure = error.localizedDescription; continue }
             outcome.failure = nil
             guard RenderQuality.isUsable(rendered.image) else { outcome.rejected = true; continue }

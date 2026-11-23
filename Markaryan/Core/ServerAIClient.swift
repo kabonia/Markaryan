@@ -253,7 +253,7 @@ struct ServerAIClient: AIEngine {
     /// Photoreal edit of an image (the exact 3D render or a photo) on the server.
     /// `engine`: "auto" — the server's engines in order, the next one when one fails; an engine id — only that engine.
     /// `prefer`: with "auto", the engine the user picked goes first (an older server ignores it).
-    func editImage(_ image: UIImage, prompt: String, engine: String = "auto", prefer: String? = nil) async throws -> RenderedImage {
+    func editImage(_ image: UIImage, prompt: String, engine: String = "auto", prefer: String? = nil, references: [MaterialReference] = []) async throws -> RenderedImage {
         let maxSide: CGFloat = 1536
         let scale = min(1, maxSide / max(image.size.width, image.size.height))
         let size = CGSize(width: max(1, image.size.width * scale), height: max(1, image.size.height * scale))
@@ -261,7 +261,10 @@ struct ServerAIClient: AIEngine {
         let resized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
         guard let jpeg = resized.jpegData(compressionQuality: 0.88) else { throw ClaudeError.api("Не удалось подготовить изображение.") }
         let shape = Self.shape(of: image)
-        var body: [String: Any] = ["image": jpeg.base64EncodedString(), "prompt": prompt, "engine": engine, "size": shape.size, "aspectRatio": shape.ratio]
+        var body: [String: Any] = ["image": jpeg.base64EncodedString(), "prompt": prompt + MaterialReference.prompt(references), "engine": engine, "size": shape.size, "aspectRatio": shape.ratio]
+        // The client's own materials and products go as extra reference pictures after the scene.
+        let samples = references.filter(\.ready).compactMap { $0.jpeg?.base64EncodedString() }
+        if !samples.isEmpty { body["references"] = samples }
         if let prefer { body["prefer"] = prefer }
         // Seedream takes about two minutes for a frame, a fallback after it a bit more.
         let json = try await post("v1/ai/image-edit", body, timeout: 300)

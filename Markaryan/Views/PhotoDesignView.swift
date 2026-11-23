@@ -30,6 +30,8 @@ struct PhotoDesignView: View {
     @State private var saved = false
     @State private var addedToProject = false
     @State private var opened: FloorPlanDetailView.PhotoSheetItem?
+    /// The client's own tile, facade, sanitary ware… for the render.
+    @State private var materials: [MaterialReference] = []
 
     private var current: UIImage? { results.indices.contains(shown) ? results[shown] : nil }
 
@@ -40,6 +42,7 @@ struct PhotoDesignView: View {
                 sourceCard
                 if source != nil {
                     settings
+                    MaterialReferencesSection(items: $materials, screen: "Дизайн по фото / Live", room: room?.title ?? "не выбрано")
                     if store.photorealAvailable {
                         AIModelsRow(value: store.renderModel.title, title: "Модель ИИ") { showModels = true }
                     }
@@ -397,8 +400,9 @@ struct PhotoDesignView: View {
         Task {
             let english = wishes.isEmpty ? "" : await store.englishPrompt(wishes)
             let prompt = mode.prompt(room: room ?? .other, style: style, wishesEnglish: english)
+            let samples = await materials.preparedForRender(store)
             do {
-                let result = try await store.photorealRender(base, prompt: prompt)
+                let result = try await store.photorealRender(base, prompt: prompt, references: samples)
                 withAnimation(.snappy) {
                     results.append(result.image)
                     resultModels.append(result.title)
