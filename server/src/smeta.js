@@ -15,9 +15,10 @@ import { ApiError, mapLimit } from './util.js';
 import * as ai from './ai.js';
 import { priceEstimate } from './estimate.js';
 import { xlsxToText } from './xlsx.js';
+import * as billing from './billing.js';
 
 const AI_TIMEOUT = 420_000;
-const MAX_PAGES = 40;
+const MAX_PAGES = 100;
 const PAGES_PER_READER = 2;
 /** Price search for estimates from documents: a strong model, more sources, its own cache. */
 const QUALITY = { model: 'anthropic/claude-sonnet-5.5', maxResults: 8, strict: true, cacheTag: 'q:', batch: 4, maxTokens: 8000 };
@@ -464,14 +465,18 @@ export async function run(job, input) {
     };
     update(job, { status: 'done', stage: 'done', stageTitle: 'Готово', progress: 1, result });
   } catch (error) {
+    const failedAt = job.stage;
     update(job, { status: 'failed', error: error instanceof ApiError ? error.message : 'Не удалось посчитать смету. Попробуйте ещё раз.' });
+    // The credits come back when the estimate could not be made.
+    // Before the expensive stages — everything back; after them — half (the AI work was already paid for).
+    if (job.credits) billing.refund(job.installId, 'smeta', ['queued', 'read', 'merge'].includes(failedAt) ? job.credits : Math.floor(job.credits / 2));
     if (!(error instanceof ApiError)) console.error('[smeta]', error);
   }
 }
 
-export function create(body, installId) {
+export function create(body, installId, { credits = 0 } = {}) {
   const input = cleanInput(body);
-  const job = { id: crypto.randomUUID(), installId, status: 'running', stage: 'queued', stageTitle: 'В очереди', progress: 0, createdAt: new Date().toISOString(), title: input.title, pages: input.docs.reduce((t, d) => t + d.pages.length, 0) };
+  const job = { id: crypto.randomUUID(), installId, status: 'running', stage: 'queued', stageTitle: 'В очереди', progress: 0, createdAt: new Date().toISOString(), credits, title: input.title, pages: input.docs.reduce((t, d) => t + d.pages.length, 0) };
   jobs.set(job.id, job);
   run(job, input);
   return view(job);

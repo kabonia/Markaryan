@@ -108,6 +108,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         BackgroundAI.shared.reconnect()
         UIWindow.appearance().overrideUserInterfaceStyle = .light
         AppAppearance.apply()
+        Task { @MainActor in await BillingCenter.shared.start() }
         // The design is light: keep every window, sheet and alert light even when the iPhone is in dark mode.
         NotificationCenter.default.addObserver(forName: UIWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
             (note.object as? UIWindow)?.overrideUserInterfaceStyle = .light

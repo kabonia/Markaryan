@@ -366,6 +366,10 @@ struct ProfileTabView: View {
                 }
                 .padding(.bottom, 4)
 
+                NavigationLink { BillingView() } label: {
+                    AppTabRow(icon: "creditcard.fill", title: "Тарифы и баланс", subtitle: "Кредиты, подписка и цены функций")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 Button { HelperCenter.shared.startTour() } label: {
                     AppTabRow(icon: "map.fill", title: "Экскурсия по приложению", subtitle: "Что где находится и для чего — за минуту")
                 }

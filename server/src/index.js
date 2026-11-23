@@ -3,7 +3,10 @@ import crypto from 'node:crypto';
 import http from 'node:http';
 import { config } from './config.js';
 import { ApiError } from './util.js';
-import { consume, refund, remaining } from './limits.js';
+import { consume as limitConsume, refund as limitRefund, remaining } from './limits.js';
+import * as billing from './billing.js';
+import * as payments from './payments.js';
+import { payPage, donePage } from './paypage.js';
 import * as ai from './ai.js';
 import { imageEngines, legacyEditEngines, preferredEngines, renderChoices, renderWithFallback, resolveEngines } from './providers/images.js';
 import { designChoices } from './providers/openrouter.js';
@@ -13,6 +16,7 @@ import * as market from './market.js';
 import * as reports from './reports.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
+import { xlsxToText } from './xlsx.js';
 import * as materials from './materials.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
@@ -44,6 +48,20 @@ function cleanMessages(list) {
   }));
 }
 
+// Daily limits + credits (when billing is on): credits are taken before the AI runs and given back when it fails.
+function consume(kind, installId, ip, units, billingKind) {
+  limitConsume(kind, installId, ip);
+  try { return billing.charge(installId, billingKind ?? kind, units, ip); } catch (error) { limitRefund(kind, installId, ip); throw error; }
+}
+function refund(kind, installId, ip, amount) {
+  limitRefund(kind, installId, ip);
+  billing.refund(installId, kind, amount);
+}
+function html(res, page) {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.end(page);
+}
+
 function clientIP(req) {
   return String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 }
@@ -59,11 +77,23 @@ async function handle(req, res) {
   if (req.method === 'GET' && url.pathname === '/v1/market/vacancies') return handleMarketSearch(req, res, url);
   if (req.method === 'GET' && (url.pathname === '/v1/market/resumes' || url.pathname === '/v1/market/owner')) return handleResumeSearch(req, res, url);
   if (url.pathname.startsWith('/v1/auth/avito/') || url.pathname.startsWith('/v1/avito/')) return handleMarket(req, res, url, avito, 'avito', 'Avito');
-  if (!url.pathname.startsWith('/v1/ai/')) return send(res, 404, { error: 'Не найдено' });
+  // Payments: the page (Russia), ЮKassa and App Store notifications — no app token, every payment is checked with its provider.
+  if (req.method === 'GET' && url.pathname === '/pay') return html(res, payPage());
+  if (req.method === 'GET' && url.pathname === '/pay/done') return html(res, donePage());
+  if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/create') return send(res, 200, await payments.createYookassa(await readBody(req, 64 * 1024)));
+  if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
+  if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
+  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
   if (config.appToken && req.headers['x-app-token'] !== config.appToken) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
   const ip = clientIP(req);
+
+  // Balance, plan and purchases of this installation.
+  if (req.method === 'GET' && url.pathname === '/v1/billing/me') return send(res, 200, billing.me(installId));
+  if (req.method === 'POST' && url.pathname === '/v1/billing/apple') return send(res, 200, { ...payments.appleSync(installId, await readBody(req, 1024 * 1024)), me: billing.me(installId) });
+  if (req.method === 'POST' && url.pathname === '/v1/billing/autopay') { billing.setAutopay(installId, (await readBody(req, 4096)).on); return send(res, 200, billing.me(installId)); }
+  if (url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
@@ -80,8 +110,13 @@ async function handle(req, res) {
   if (smetaPath) {
     if (req.method === 'POST' && !smetaPath[1]) {
       const input = await readBody(req, 60 * 1024 * 1024);
-      consume('smeta', installId, ip);
-      try { return send(res, 200, smeta.create(input, installId)); } catch (error) { refund('smeta', installId, ip); throw error; }
+      const docs = Array.isArray(input?.docs) ? input.docs : [];
+      const pages = docs.reduce((t, d) => t + (Array.isArray(d?.pages) ? d.pages.length : 0), 0);
+      if (pages > billing.SMETA_MAX_PAGES) throw new ApiError(400, `Не больше ${billing.SMETA_MAX_PAGES} листов в одной смете — разделите проект на части.`);
+      // Text and Excel are paid by size too: every 6 000 characters count as a sheet.
+      const textChars = String(input?.text || '').length + docs.reduce((t, d) => t + String(d?.text || '').length + (typeof d?.xlsx === 'string' ? (() => { try { return xlsxToText(d.xlsx).length; } catch { return 0; } })() : 0), 0);
+      const credits = consume('smeta', installId, ip, { pages, textChars });
+      try { return send(res, 200, smeta.create(input, installId, { credits })); } catch (error) { refund('smeta', installId, ip, credits); throw error; }
     }
     if (req.method === 'GET' && smetaPath[1] && !smetaPath[2]) return send(res, 200, smeta.status(smetaPath[1], installId));
     if (smetaPath[1] && smetaPath[2]) return send(res, 200, await smeta.wait(smetaPath[1], installId));
@@ -93,10 +128,10 @@ async function handle(req, res) {
   if (url.pathname === '/v1/ai/chat') {
     const messages = cleanMessages(body.messages);
     const kind = messages.some((m) => m.image) ? 'vision' : 'chat';
-    consume(kind, installId, ip);
+    const paid = consume(kind, installId, ip, undefined, kind === 'vision' ? 'vision' : body.tier === 'helper' ? 'helper' : 'chat');
     const params = { system: String(body.system || '').slice(0, 40_000), messages, maxTokens: Number(body.maxTokens) || 2000, tier: body.tier === 'helper' ? 'helper' : undefined };
     if (!body.stream) {
-      try { return send(res, 200, { text: await ai.chat(params) }); } catch (error) { refund(kind, installId, ip); throw error; }
+      try { return send(res, 200, { text: await ai.chat(params) }); } catch (error) { refund(kind, installId, ip, paid); throw error; }
     }
     // Server‑sent events: data: {"delta":"…"} … data: {"done":true}
     res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
@@ -106,7 +141,7 @@ async function handle(req, res) {
       await ai.chat({ ...params, onDelta: (delta) => { started = true; res.write(`data: ${JSON.stringify({ delta })}\n\n`); } });
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     } catch (error) {
-      if (!started) refund(kind, installId, ip);
+      if (!started) refund(kind, installId, ip, paid);
       res.write(`data: ${JSON.stringify({ error: error instanceof ApiError ? error.message : 'Ошибка ИИ. Попробуйте ещё раз.' })}\n\n`);
     } finally {
       clearInterval(heartbeat);
@@ -116,28 +151,29 @@ async function handle(req, res) {
   }
 
   if (url.pathname === '/v1/ai/price-estimate') {
-    consume('chat', installId, ip);
-    try { return send(res, 200, await estimate.priceEstimate(body)); } catch (error) { refund('chat', installId, ip); throw error; }
+    const items = Math.min(40, Array.isArray(body.items) ? body.items.length : 0);
+    const paid = consume('chat', installId, ip, { items }, 'priceEstimate');
+    try { return send(res, 200, await estimate.priceEstimate(body)); } catch (error) { refund('chat', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/json') {
     const messages = cleanMessages(body.messages);
     const kind = messages.some((m) => m.image) ? 'vision' : 'json';
     if (!body.schema || typeof body.schema !== 'object') throw new ApiError(400, 'Нет схемы ответа.');
-    consume(kind, installId, ip);
+    const paid = consume(kind, installId, ip);
     // `model` — the model the user picked on the «Дизайн» step; the answer says which model really answered.
     const meta = {};
     const model = typeof body.model === 'string' ? body.model.slice(0, 120) : undefined;
     try {
       const result = await ai.json({ system: String(body.system || ''), messages, schema: body.schema, name: String(body.name || 'result').replace(/[^A-Za-z0-9_]/g, '_'), description: String(body.description || ''), maxTokens: Number(body.maxTokens) || 8000, model, meta });
       return send(res, 200, { json: result, model: meta.model || meta.provider || null });
-    } catch (error) { refund(kind, installId, ip); throw error; }
+    } catch (error) { refund(kind, installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/material-identify') {
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
-    consume('vision', installId, ip);
-    try { return send(res, 200, await materials.identify(body)); } catch (error) { refund('vision', installId, ip); throw error; }
+    const paid = consume('vision', installId, ip, undefined, 'material');
+    try { return send(res, 200, await materials.identify(body)); } catch (error) { refund('vision', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image-edit') {
@@ -147,17 +183,17 @@ async function handle(req, res) {
     const engines = requested === 'auto' ? preferredEngines(body.prefer) : resolveEngines(requested);
     if (engines.length === 0) throw new ApiError(400, 'Этот генератор не подключён на сервере.');
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
-    consume('imageEdit', installId, ip);
+    const paid = consume('imageEdit', installId, ip);
     try {
       const references = (Array.isArray(body.references) ? body.references : []).filter((r) => typeof r === 'string' && r.length > 1000).slice(0, 4);
       const params = { image: body.image, prompt: String(body.prompt || ''), size: body.size, aspectRatio: aspectRatio(body.aspectRatio), references };
       const { image, engine } = await renderWithFallback(engines, params);
       return send(res, 200, { image, engine: engine.id, title: engine.title });
-    } catch (error) { refund('imageEdit', installId, ip); throw error; }
+    } catch (error) { refund('imageEdit', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image') {
-    consume('image', installId, ip);
+    const paid = consume('image', installId, ip);
     const prompt = String(body.prompt || '').slice(0, 3000);
     try {
       // The photoreal engines draw best (the one picked in the app first); Kandinsky or Alice AI ART when none is set up or all fail.
@@ -171,7 +207,7 @@ async function handle(req, res) {
         }
       }
       return send(res, 200, { image: await ai.generateImage({ prompt }) });
-    } catch (error) { refund('image', installId, ip); throw error; }
+    } catch (error) { refund('image', installId, ip, paid); throw error; }
   }
 
   return send(res, 404, { error: 'Не найдено' });
@@ -354,6 +390,8 @@ const server = http.createServer((req, res) => {
     else res.end();
   });
 });
+// ЮKassa autopay of plans: checked every hour.
+setInterval(() => payments.renewPlans().catch((error) => console.warn('[pay]', error.message)), 3_600_000).unref();
 server.requestTimeout = 300_000;
 server.headersTimeout = 60_000;
 server.listen(config.port, () => console.log(`АртСтрой server on :${config.port}, AI: ${ai.activeProviders().join(', ') || 'нет ключей'}; pictures: ${imageEngines().map((e) => e.title).join(', ') || 'нет'}; hh.ru: ${hh.hhEnabled() ? 'настроен' : 'нет'}; Avito: ${avito.avitoEnabled() ? 'настроен' : 'нет'}`));
