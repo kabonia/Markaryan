@@ -26,7 +26,7 @@ struct AIEngineSettingsView: View {
                 Picker("Модель Claude", selection: $store.claudeModel) { ForEach(ClaudeModel.allCases) { Text($0.title).tag($0) } }
                     .disabled(store.aiPreference == .server)
             } header: { Text("ИИ‑движок") } footer: {
-                Text("Claude отвечает с учётом всей переписки, видит фото, читает сметы и рисует расстановку мебели на плане комнаты. Без ключа работает сервер АртСтроя.")
+                Text("Claude отвечает с учётом всей переписки, видит фото, читает сметы и рисует расстановку мебели на плане комнаты. Без ключа работает сервер приложения.")
             }
             Section {
                 if ClaudeClient.bundledKey != nil && KeychainStore.read(ClaudeClient.keyAccount) == nil {
@@ -61,7 +61,7 @@ struct AIEngineSettingsView: View {
                 }
                 Link("Получить ключ на console.anthropic.com", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
             } header: { Text("Ключ Claude API") } footer: {
-                Text("Ключ хранится только в зашифрованной Связке ключей этого iPhone и отправляется только на api.anthropic.com. Не публикуйте сборку для клиентов с вашим ключом: для App Store ключ должен лежать на сервере АртСтроя.")
+                Text("Ключ хранится только в зашифрованной Связке ключей этого iPhone и отправляется только на api.anthropic.com. Не публикуйте сборку для клиентов с вашим ключом: для App Store ключ должен лежать на сервере приложения.")
             }
             Section("Что умеет ИИ") {
                 Label("Отвечает потоком, как в чате, и помнит контекст разговора", systemImage: "text.bubble")
@@ -73,7 +73,7 @@ struct AIEngineSettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("ИИ‑движок")
+        .navigationTitle("ИИ‑движок").helperScreen("ИИ‑движок")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

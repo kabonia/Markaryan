@@ -662,7 +662,7 @@ extension Room3DBuilder {
             if let seating = centroid(all.filter { $0.model == "sofa" || $0.model == "tv" }) { add("Гостиная зона", eye: facing(seating, distance: min(3.5, max(2.2, size * 0.5))), target: seating) }
         case .bedroom, .kids:
             if let bed = centroid(all.filter { $0.model == "bed" }) { add("Спальная зона", eye: facing(bed, distance: min(3.5, max(2.2, size * 0.5))), target: bed) }
-        case .hall, .office:
+        case .hall, .office, .garage, .shop, .cafe, .warehouse, .other:
             if let main = centroid(all.filter { ["storage", "desk", "table"].contains($0.model) }) { add(room == .office ? "Рабочая зона" : "Системы хранения", eye: facing(main, distance: min(3, max(1.8, size * 0.45))), target: main) }
         }
         // Far corner view as a general shot.
@@ -755,7 +755,7 @@ struct Room3DView: View {
                     .pickerStyle(.segmented).frame(maxWidth: 260)
                     .padding(6).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 Spacer()
-                Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(.white.opacity(0.85))
+                Text(mode == .interior ? "Смотрите по сторонам пальцем, шагайте двумя пальцами" : "Вращайте одним пальцем, двигайте двумя, приближайте щипком").font(.caption).foregroundStyle(Theme.ink.opacity(0.85))
                     .padding(.horizontal, 12).padding(.vertical, 7).background(.ultraThinMaterial, in: Capsule())
                 HStack(spacing: 10) {
                     Button { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode) } label: { SecondaryActionLabel(title: "Сбросить вид", icon: "arrow.counterclockwise") }
@@ -769,7 +769,7 @@ struct Room3DView: View {
             .frame(maxHeight: .infinity)
         }
         .background(Theme.background)
-        .navigationTitle(proposal?.title ?? plan.name)
+        .navigationTitle(proposal?.title ?? plan.name).helperScreen(proposal?.title ?? plan.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
         .task { if scene == nil { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode); store.track("room_3d_open") } }
@@ -841,7 +841,7 @@ struct RenderResultView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Фотореализм")
+        .navigationTitle("Фотореализм").helperScreen("Фотореализм")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
@@ -849,7 +849,7 @@ struct RenderResultView: View {
 
     private func share() {
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.92) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Визуализация-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Визуализация-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         if (try? data.write(to: url, options: .atomic)) != nil { shareFile = SharedFile(url: url) }
     }
 }

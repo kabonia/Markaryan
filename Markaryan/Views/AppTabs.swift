@@ -18,7 +18,7 @@ struct ProjectsTabView: View {
                         Button { showNewProject = true } label: {
                             Label("Объект", systemImage: "plus").font(.subheadline.weight(.semibold))
                                 .padding(.horizontal, 12).padding(.vertical, 8)
-                                .background(Theme.orange, in: Capsule()).foregroundStyle(.black)
+                                .background(Theme.orange, in: Capsule()).foregroundStyle(Theme.onAccent)
                         }
                         .buttonStyle(PremiumPressStyle())
                     }
@@ -85,7 +85,7 @@ struct ProjectsTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проект")
+        .navigationTitle("Проект").helperScreen("Проект")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in
@@ -112,7 +112,7 @@ struct ProjectStatTile: View {
                 Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
             }
             Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
-            Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .padding(14)
@@ -132,7 +132,7 @@ private struct ProjectWorkspaceSelectionCard: View {
                     Text(isActive ? "АКТИВНЫЙ ОБЪЕКТ" : "ОБЪЕКТ")
                         .font(.caption2.weight(.bold)).tracking(1.1)
                         .foregroundStyle(isActive ? Theme.orange : Theme.muted)
-                    Text(workspace.displayName).font(.headline).foregroundStyle(.white)
+                    Text(workspace.displayName).font(.headline).foregroundStyle(Theme.ink)
                     Text(workspace.passport.address.isEmpty ? "Адрес не указан" : workspace.passport.address)
                         .font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
                 }
@@ -177,7 +177,7 @@ private struct NewProjectSheet: View {
                         .font(.footnote).foregroundStyle(Theme.muted)
                 }
             }
-            .navigationTitle("Добавить объект")
+            .navigationTitle("Добавить объект").helperScreen("Добавить объект")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -236,7 +236,7 @@ struct ProjectTasksView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("Задачи команды")
+        .navigationTitle("Задачи команды").helperScreen("Задачи команды")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showNewTask = true } label: { Image(systemName: "plus") }
@@ -265,7 +265,7 @@ private struct ProjectTaskRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text(task.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                Text(task.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
                 Button {
                     withAnimation(.snappy) { task.status = task.status.next }
@@ -322,7 +322,7 @@ private struct NewProjectTaskSheet: View {
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("Новая задача")
+            .navigationTitle("Новая задача").helperScreen("Новая задача")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -357,41 +357,21 @@ struct ProfileTabView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 14) {
-                    Image("BrandMark")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 58, height: 58)
-                        .padding(11)
-                        .panelCard(19)
+                    AppMark(size: 64)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("АРТСТРОЙ").font(.title3.bold()).tracking(1.3)
-                        Text("Строительство и ремонт в Сочи").font(.footnote).foregroundStyle(Theme.muted)
+                        Text(Brand.name).font(.title3.bold())
+                        Text(Brand.tagline).font(.footnote).foregroundStyle(Theme.muted)
                     }
                     Spacer()
                 }
                 .padding(.bottom, 4)
 
-                SectionTitle(eyebrow: "Связь с нами", title: "Обсудим ваш объект")
-                HStack(spacing: 12) {
-                    Link(destination: Brand.phoneURL) { ProfileQuickAction(icon: "phone.fill", title: "Позвонить") }
-                    Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Пишу из приложения АртСтрой.")) { ProfileQuickAction(icon: "message.fill", title: "WhatsApp") }
-                    Link(destination: Brand.emailURL) { ProfileQuickAction(icon: "envelope.fill", title: "Почта") }
+                Button { HelperCenter.shared.startTour() } label: {
+                    AppTabRow(icon: "map.fill", title: "Экскурсия по приложению", subtitle: "Что где находится и для чего — за минуту")
                 }
                 .buttonStyle(PremiumCardPressStyle())
-                Button { store.showRequest = true } label: {
-                    AppTabRow(icon: "square.and.pencil", title: "Оставить заявку", subtitle: "Ответим по телефону или в чате приложения")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PerformersHubView() } label: {
-                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Мои заявки и чаты", subtitle: "Статусы и переписка по заявкам")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { ContactView() } label: {
-                    AppTabRow(icon: "message.fill", title: "Контакты и услуги", subtitle: "Телефон, почта, адрес и направления работ")
-                }
-                .buttonStyle(PremiumCardPressStyle())
-                NavigationLink { PortfolioView() } label: {
-                    AppTabRow(icon: "building.2.fill", title: "Портфолио АртСтроя", subtitle: "\(Brand.completedObjects)+ объектов: гостиницы, жильё, рестораны")
+                NavigationLink { AboutAppView() } label: {
+                    AppTabRow(icon: "info.circle.fill", title: "О приложении", subtitle: "Версия, данные и конфиденциальность")
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
@@ -428,7 +408,7 @@ struct ProfileTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Профиль")
+        .navigationTitle("Профиль").helperScreen("Профиль")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -460,7 +440,7 @@ struct ObjectVisualizerHero: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 7) {
-                    Image(systemName: "wand.and.stars").font(.caption.weight(.bold)).foregroundStyle(.black).padding(8).background(Theme.orange, in: Circle())
+                    Image(systemName: "wand.and.stars").font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent).padding(8).background(Theme.orange, in: Circle())
                     Text("ВИЗУАЛИЗАТОР ОБЪЕКТА").font(.caption2.weight(.bold)).tracking(1.15).foregroundStyle(.white.opacity(0.78))
                 }
                 Text("Покажем будущее\nдо начала работ.")
@@ -470,8 +450,8 @@ struct ObjectVisualizerHero: View {
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.75))
                 HStack(spacing: 7) {
-                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(.black)
-                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(.black)
+                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
+                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(Theme.ink)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -495,7 +475,7 @@ struct AICenterAssistCard: View {
                 .background(Color(red: 0.68, green: 0.81, blue: 0.47), in: RoundedRectangle(cornerRadius: 15))
             VStack(alignment: .leading, spacing: 6) {
                 Text("СТРОЙПОМОЩНИК").font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(Color(red: 0.68, green: 0.81, blue: 0.47))
-                Text("Смета без непонятных строк").font(.headline).foregroundStyle(.white)
+                Text("Смета без непонятных строк").font(.headline).foregroundStyle(Theme.ink)
                 Text("Материалы, этапы, объёмы и наша цена — простым языком.").font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -517,12 +497,12 @@ struct ToolFeatureCard: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(.black)
+                .foregroundStyle(Theme.onAccent)
                 .frame(width: 48, height: 48)
                 .background(accent, in: RoundedRectangle(cornerRadius: 15))
             VStack(alignment: .leading, spacing: 6) {
                 Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-                Text(title).font(.headline).foregroundStyle(.white)
+                Text(title).font(.headline).foregroundStyle(Theme.ink)
                 Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -546,7 +526,7 @@ struct AppTabRow: View {
                 .frame(width: 42, height: 42)
                 .background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 13))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -588,9 +568,9 @@ struct ProfileQuickAction: View {
     let title: String
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 46, height: 46).background(Theme.orange, in: Circle())
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.white)
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14).panelCard(18)
     }

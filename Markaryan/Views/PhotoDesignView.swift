@@ -61,7 +61,7 @@ struct PhotoDesignView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Дизайн по фото")
+        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in Task { await load(item) } }
         .sheet(isPresented: $showCamera) { CameraCaptureView(image: $captured).ignoresSafeArea() }
@@ -111,14 +111,14 @@ struct PhotoDesignView: View {
             HStack(spacing: 10) {
                 Button { showCamera = true } label: {
                     Label(source == nil ? "Снять сейчас" : "Новое фото", systemImage: "camera.fill").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.onAccent)
                         .background(Theme.sky, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
                 .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 PhotosPicker(selection: $pickerItem, matching: .images) {
                     Label("Из галереи", systemImage: "photo.on.rectangle").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.ink)
                         .panelCard(15, fill: Theme.panelRaised)
                 }
                 .buttonStyle(.plain)
@@ -132,7 +132,7 @@ struct PhotoDesignView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Что на фото").font(.headline)
-                    .foregroundStyle(room == nil ? Theme.sky : .white)
+                    .foregroundStyle(room == nil ? Theme.sky : Theme.ink)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(PhotoDesignRoom.allCases) { item in
@@ -140,7 +140,7 @@ struct PhotoDesignView: View {
                                 Label(item.title, systemImage: item.icon).font(.subheadline.weight(.medium))
                                     .padding(.horizontal, 12).padding(.vertical, 9)
                                     .background(room == item ? Theme.sky : Theme.panel, in: Capsule())
-                                    .foregroundStyle(room == item ? .black : .white)
+                                    .foregroundStyle(room == item ? Theme.onAccent : Theme.ink)
                             }
                             .buttonStyle(.plain)
                         }
@@ -157,7 +157,7 @@ struct PhotoDesignView: View {
                                 Text(item.subtitle).font(.caption2).foregroundStyle(mode == item ? .black.opacity(0.7) : Theme.muted).fixedSize(horizontal: false, vertical: true)
                             }
                             .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading).padding(12)
-                            .foregroundStyle(mode == item ? .black : .white)
+                            .foregroundStyle(mode == item ? Theme.onAccent : Theme.ink)
                             .background(mode == item ? Theme.sky : Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                         .buttonStyle(.plain)
@@ -166,7 +166,7 @@ struct PhotoDesignView: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 Text(mode == .redesign ? "Стиль" : "Стиль (необязательно)").font(.headline)
-                    .foregroundStyle(mode == .redesign && style == nil ? Theme.sky : .white)
+                    .foregroundStyle(mode == .redesign && style == nil ? Theme.sky : Theme.ink)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         if mode == .refine {
@@ -283,7 +283,7 @@ struct PhotoDesignView: View {
                     .lineLimit(1...4).padding(12).background(Theme.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 Button { correct(after) } label: {
                     Label("Применить к этому варианту", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
+                        .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
                         .background(Theme.sky, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -370,7 +370,7 @@ struct PhotoDesignView: View {
             }
             pickerItem = nil
             start(with: image)
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     /// A new variant from the source photo.
@@ -409,7 +409,7 @@ struct PhotoDesignView: View {
                 store.registerMeaningfulAction()
                 Haptics.success()
             } catch {
-                self.error = error.localizedDescription
+                self.error = error.localizedDescription; HelperCenter.shared.failed(error)
                 Haptics.warning()
             }
             isLoading = false
@@ -438,17 +438,17 @@ struct PhotoDesignView: View {
             try store.addProjectPhoto(image, caption: "Дизайн по фото: \((room ?? .other).title.lowercased())\(style.map { ", \($0.title.lowercased())" } ?? "")")
             addedToProject = true
             Haptics.success()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func share(_ image: UIImage) {
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.92) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Дизайн-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         do {
             try data.write(to: url, options: .atomic)
             shareFile = SharedFile(url: url)
             store.track("photo_design_shared")
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 }
 
@@ -538,7 +538,7 @@ struct PhotoDesignRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 let room = PhotoDesignRoom(rawValue: record.room) ?? .other
                 let style = record.style.flatMap { id in DesignStyle.all.first { $0.id == id } }
-                Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text("\(room.title)\(style.map { " · \($0.title)" } ?? "")").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text("\(record.date.formatted(date: .abbreviated, time: .shortened)) · вариантов: \(record.versions.count)")
                     .font(.caption).foregroundStyle(Theme.muted)
             }
@@ -564,14 +564,14 @@ struct BeforeAfterSlider: View {
                 Image(uiImage: before).resizable().scaledToFill().frame(width: width, height: height).clipped()
                     .mask(alignment: .leading) { Rectangle().frame(width: max(0, width * split)) }
                 Rectangle().fill(.white).frame(width: 2, height: height).offset(x: width * split - 1)
-                Image(systemName: "arrow.left.and.right").font(.caption.weight(.bold)).foregroundStyle(.black)
+                Image(systemName: "arrow.left.and.right").font(.caption.weight(.bold)).foregroundStyle(Theme.ink)
                     .frame(width: 34, height: 34).background(.white, in: Circle()).shadow(radius: 4)
                     .offset(x: width * split - 17)
                 Text("БЫЛО").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
                     .background(.black.opacity(0.55), in: Capsule()).foregroundStyle(.white)
                     .frame(maxHeight: .infinity, alignment: .top).padding(10)
                 Text("СТАЛО").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
-                    .background(Theme.sky, in: Capsule()).foregroundStyle(.black)
+                    .background(Theme.sky, in: Capsule()).foregroundStyle(Theme.onAccent)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(10)
             }
             .contentShape(Rectangle())

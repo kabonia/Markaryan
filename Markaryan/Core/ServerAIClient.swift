@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// Common interface of the AI the app talks to: the АртСтрой AI server (release) or Claude directly (owner's debug builds).
+/// Common interface of the AI the app talks to: the app's AI server (release) or Claude directly (owner's debug builds).
 protocol AIEngine {
     func stream(system: String, turns: [ClaudeTurn], maxTokens: Int) -> AsyncThrowingStream<String, Error>
     func complete(system: String, turns: [ClaudeTurn], maxTokens: Int) async throws -> String
@@ -108,11 +108,13 @@ struct AICapabilities: Decodable {
     }
 }
 
-/// Client of the АртСтрой AI server (GigaChat / YandexGPT behind it, keys only on the server).
+/// Client of the app's AI server (GigaChat / YandexGPT behind it, keys only on the server).
 struct ServerAIClient: AIEngine {
     let base: URL
     /// The model the user picked for the design (OpenRouter id): the server tries it first. Nil — the server's order.
     var designModel: String? = nil
+    /// "helper": the server answers with its cheap, fast model (the in-app helper).
+    var tier: String? = nil
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -143,6 +145,22 @@ struct ServerAIClient: AIEngine {
         }
     }
 
+    /// Market prices with sources for every material and work of a design project (the server searches the web).
+    func priceEstimate(city: String, items: [MarketEstimateRequestItem]) async throws -> MarketEstimate {
+        let json = try await post("v1/ai/price-estimate", ["city": city, "items": items.map(\.dictionary)], timeout: 280)
+        return try JSONDecoder().decode(MarketEstimate.self, from: JSONSerialization.data(withJSONObject: json))
+    }
+
+    /// Name of a long job for the «готово» notification; nil — a quick request that does not need the background session.
+    private static func backgroundTitle(_ path: String) -> String? {
+        switch path {
+        case "v1/ai/image-edit", "v1/ai/image": return "Визуализация"
+        case "v1/ai/json": return "Дизайн‑проект"
+        case "v1/ai/price-estimate": return "Смета по рынку"
+        default: return nil
+        }
+    }
+
     private static func failure(_ data: Data, status: Int) -> Error {
         let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
         switch status {
@@ -153,8 +171,16 @@ struct ServerAIClient: AIEngine {
     }
 
     private func post(_ path: String, _ body: [String: Any], timeout: TimeInterval = 200) async throws -> [String: Any] {
-        let (data, response) = try await Self.session.data(for: try request(path, body: body, timeout: timeout))
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let data: Data
+        let status: Int
+        if let title = Self.backgroundTitle(path) {
+            // Long jobs survive minimising the app; a notification tells when they are done.
+            let (received, response) = try await BackgroundAI.shared.send(try request(path, body: body, timeout: timeout), title: title)
+            data = received; status = response.statusCode
+        } else {
+            let (received, response) = try await Self.session.data(for: try request(path, body: body, timeout: timeout))
+            data = received; status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        }
         guard (200...299).contains(status) else { throw Self.failure(data, status: status) }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ClaudeError.badResponse }
         return json
@@ -164,7 +190,8 @@ struct ServerAIClient: AIEngine {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens, "stream": true]
+                    var body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens, "stream": true]
+                    if let tier { body["tier"] = tier }
                     let (bytes, response) = try await Self.session.bytes(for: try request("v1/ai/chat", body: body, accept: "text/event-stream"))
                     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
                     guard (200...299).contains(status) else {
@@ -188,7 +215,9 @@ struct ServerAIClient: AIEngine {
     }
 
     func complete(system: String, turns: [ClaudeTurn], maxTokens: Int) async throws -> String {
-        let json = try await post("v1/ai/chat", ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens])
+        var body: [String: Any] = ["system": system, "messages": Self.messages(turns), "maxTokens": maxTokens]
+        if let tier { body["tier"] = tier }
+        let json = try await post("v1/ai/chat", body)
         guard let text = json["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw ClaudeError.emptyAnswer }
         return text
     }

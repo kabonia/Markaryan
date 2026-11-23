@@ -327,7 +327,7 @@ struct SavedCalculation: Codable, Identifiable {
     let result: CalculationResult
     var measurementNote: String? = nil
     var report: String {
-        var parts = ["АРТСТРОЙ · СТРОИТЕЛЬНЫЙ РАСЧЁТ", object, kind.title, date.formatted(date: .numeric, time: .shortened), "", "ИСХОДНЫЕ ДАННЫЕ"]
+        var parts = ["СМЕТАПРО · СТРОИТЕЛЬНЫЙ РАСЧЁТ", object, kind.title, date.formatted(date: .numeric, time: .shortened), "", "ИСХОДНЫЕ ДАННЫЕ"]
         parts += kind.fields.compactMap { field in
             guard let value = values[field.id], !value.isEmpty else { return nil }
             return "\(field.title): \(value) \(field.unit)"
@@ -335,7 +335,7 @@ struct SavedCalculation: Codable, Identifiable {
         if let measurementNote { parts += ["", measurementNote] }
         parts += ["", "РЕЗУЛЬТАТ"] + result.lines.map { "\($0.label): \($0.formatted)" }
         if let cost = result.cost { parts.append("Материалы: \(CalculationEngine.format(cost)) ₽") }
-        parts += ["", "Стоимость только материалов по введённой цене, без работ и доставки.", kind.note, "Оценка количества материалов, не проектный расчёт несущих конструкций.", "", "—", "АртСтрой · строим в Сочи с 2012 года", "+7 928 233-03-33 · WhatsApp: wa.me/79282330333 · sochi-art.com"]
+        parts += ["", "Стоимость только материалов по введённой цене, без работ и доставки.", kind.note, "Оценка количества материалов, не проектный расчёт несущих конструкций.", "", "—", "Посчитано в приложении «СметаПро»"]
         return parts.joined(separator: "\n")
     }
 }

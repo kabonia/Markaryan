@@ -380,7 +380,7 @@ struct ARMeasureView: View {
                 Image(systemName: "plus").font(.system(size: 30, weight: .light)).foregroundStyle(model.ready ? Theme.orange : .white).shadow(radius: 3).accessibilityHidden(true)
             }
             VStack(spacing: 12) {
-                HStack { Text("AR-СТУДИЯ").font(.headline).tracking(2); Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть AR") }.padding(.horizontal, 20)
+                HStack(spacing: 10) { Text("AR-СТУДИЯ").font(.headline).tracking(2); Spacer(); if model.supported && model.permission { TorchButton() }; Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть AR") }.padding(.horizontal, 20)
                 if model.permission && model.supported {
                     Picker("Режим AR", selection: $model.mode) { ForEach(ARMode.allCases) { Text($0.rawValue).tag($0) } }.pickerStyle(.segmented).padding(.horizontal, 20).onChange(of: model.mode) { _, _ in model.reset() }
                     Text(model.status).font(.footnote).multilineTextAlignment(.center).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14)).padding(.horizontal, 20)
@@ -401,6 +401,7 @@ struct ARMeasureView: View {
             }.padding(.top, 12)
         }.onDisappear { model.stop() }
             .onAppear { model.checkExistingAccess() }
+            .helperScreen("AR‑замер")
             .confirmationDialog("Использовать площадь в расчёте", isPresented: $showTransfer, titleVisibility: .visible) {
                 ForEach([CalculationKind.tiles, .screed, .paint, .plaster, .drywall, .insulation]) { kind in Button(kind.title) { transfer(kind, key: "area", value: model.area) } }
             }
@@ -443,7 +444,7 @@ struct ARMeasureView: View {
             if model.mode == .distance && model.points.count == 2 {
                 Button("Использовать длину в калькуляторе") { showLengthTransfer = true }.font(.subheadline.weight(.semibold))
             }
-            Text("Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций.").font(.caption2).foregroundStyle(.secondary)
+            Text("Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций.").font(.caption2).foregroundStyle(Theme.muted)
         }.padding(20).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26)).padding(12)
     }
     func dimension(_ label: String, _ binding: Binding<String>) -> some View {

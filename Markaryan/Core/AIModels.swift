@@ -88,7 +88,7 @@ enum RenderModel: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// The engine id of the АртСтрой AI server.
+    /// The engine id of the app's AI server.
     var engineID: String { "openrouter:" + rawValue }
 
     /// Models to try with the app's own OpenRouter key: the chosen one, the other two, FLUX 3 last.

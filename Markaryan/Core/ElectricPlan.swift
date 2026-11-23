@@ -327,6 +327,8 @@ enum ElectricPlanner {
             case .hall: required = max(1, Int((plan.area / 10).rounded(.up)))
             case .kitchen: required = hasKitchen ? 0 : 4
             case .bathroom: required = 0
+            case .garage, .warehouse: required = max(2, Int((plan.perimeter / 6).rounded(.up)))
+            case .shop, .cafe, .other: required = Int((plan.perimeter / 4).rounded(.up))
             }
             let group = roomSockets
             if room == .hall, let entrance = plan.doors.first {

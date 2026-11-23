@@ -3,24 +3,13 @@ import UIKit
 import ImageIO
 import CoreImage.CIFilterBuiltins
 
-// MARK: - Brand constants (single source of truth for contacts and facts)
+// MARK: - Brand constants
 
 enum Brand {
-    static let name = "АртСтрой"
+    static let name = "СметаПро"
+    static let tagline = "Сметы, замеры и дизайн для стройки и ремонта"
+    /// City used until the user picks one (prices and partners need some city).
     static let city = "Сочи"
-    static let foundedYear = 2012
-    static let completedObjects = 58
-    static let phoneDisplay = "+7 928 233‑03‑33"
-    static let phoneDigits = "79282330333"
-    static let email = "m.art.v@mail.ru"
-    static let site = "sochi-art.com"
-    static let siteURL = URL(string: "http://sochi-art.com")!
-    static let phoneURL = URL(string: "tel:+79282330333")!
-    static let emailURL = URL(string: "mailto:m.art.v@mail.ru")!
-
-    static var yearsOnMarket: Int {
-        max(1, Calendar.current.component(.year, from: .now) - foundedYear)
-    }
 
     static var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -28,41 +17,37 @@ enum Brand {
         return "\(version) (\(build))"
     }
 
-    /// WhatsApp chat with an optional prefilled message.
-    static func whatsAppURL(text: String = "") -> URL {
-        var components = URLComponents(string: "https://wa.me/\(phoneDigits)")!
-        let clean = String(text.prefix(1800))
-        if !clean.isEmpty { components.queryItems = [URLQueryItem(name: "text", value: clean)] }
-        return components.url ?? URL(string: "https://wa.me/\(phoneDigits)")!
-    }
-
-    /// Footer that is appended to every shared text so each share also promotes the company.
-    static var shareFooter: String {
-        "—\n\(name)\nСтроим в Сочи с \(foundedYear) года\n\(phoneDisplay) · WhatsApp: wa.me/\(phoneDigits)\n\(site)"
-    }
+    /// Short signature for shared texts: only the app, no company contacts.
+    static var shareFooter: String { "—\nПосчитано в приложении «\(name)»" }
 
     static var inviteText: String {
-        "Считаю стройку в приложении «\(name)»: калькуляторы материалов, полная смета дома, AR‑замеры и ИИ‑помощник. Попробуй: \(site)"
+        "Считаю стройку и ремонт в приложении «\(name)»: калькуляторы, сметы по рыночным ценам, AR‑замеры, дизайн и ИИ‑помощник."
     }
 }
 
 // MARK: - Theme
 
 enum Theme {
-    static let background = Color(red: 0.055, green: 0.072, blue: 0.064)
-    static let panel = Color(red: 0.115, green: 0.142, blue: 0.126)
-    static let panelRaised = Color(red: 0.150, green: 0.180, blue: 0.162)
-    static let stroke = Color.white.opacity(0.07)
-    static let orange = Color(red: 0.98, green: 0.43, blue: 0.22)
-    static let orangeSoft = Color(red: 0.97, green: 0.71, blue: 0.45)
-    static let muted = Color(red: 0.67, green: 0.72, blue: 0.67)
-    static let success = Color(red: 0.45, green: 0.85, blue: 0.60)
-    static let danger = Color(red: 1.0, green: 0.42, blue: 0.40)
-    static let sky = Color(red: 0.56, green: 0.70, blue: 0.98)
-    static let sage = Color(red: 0.68, green: 0.81, blue: 0.47)
+    // Soft, calm palette (not stark white): sage-grey page, milky cards, deep green-graphite text, emerald accent.
+    static let background = Color(red: 0.914, green: 0.933, blue: 0.918)     // #E9EEEA
+    static let panel = Color(red: 0.969, green: 0.976, blue: 0.965)          // #F7F9F6
+    static let panelRaised = Color(red: 0.882, green: 0.910, blue: 0.890)    // #E1E8E3
+    static let stroke = Color(red: 0.11, green: 0.16, blue: 0.14).opacity(0.08)
+    static let ink = Color(red: 0.114, green: 0.165, blue: 0.149)            // #1D2A26 — main text
+    static let onAccent = Color.white                                         // text on accent fills
+    /// Main accent (historic name kept so every screen picks it up).
+    static let orange = Color(red: 0.067, green: 0.525, blue: 0.416)         // #11866A emerald
+    static let orangeSoft = Color(red: 0.247, green: 0.698, blue: 0.561)     // #3FB28F
+    static let accentTint = Color(red: 0.835, green: 0.918, blue: 0.886)     // #D5EAE2
+    static let muted = Color(red: 0.369, green: 0.420, blue: 0.400)          // #5E6B66
+    static let success = Color(red: 0.118, green: 0.620, blue: 0.353)
+    static let danger = Color(red: 0.851, green: 0.282, blue: 0.282)
+    static let sky = Color(red: 0.243, green: 0.482, blue: 0.980)
+    static let sage = Color(red: 0.494, green: 0.639, blue: 0.353)
 
+    /// Hero cards: deep emerald gradient with white text.
     static let heroGradient = LinearGradient(
-        colors: [Color(red: 0.18, green: 0.24, blue: 0.22), Color(red: 0.08, green: 0.11, blue: 0.10)],
+        colors: [Color(red: 0.055, green: 0.420, blue: 0.341), Color(red: 0.039, green: 0.290, blue: 0.247)],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
 }
@@ -73,14 +58,29 @@ struct PanelCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.5))
+            .shadow(color: Theme.ink.opacity(fill == Theme.panel ? 0.07 : 0), radius: 14, y: 5)
     }
 }
 
 extension View {
-    /// Standard card surface: panel colour, continuous corners and a hairline border.
-    func panelCard(_ radius: CGFloat = 18, fill: Color = Theme.panel) -> some View {
+    /// Standard card surface: white, soft corners, hairline and a gentle shadow.
+    func panelCard(_ radius: CGFloat = 20, fill: Color = Theme.panel) -> some View {
         modifier(PanelCardModifier(radius: radius, fill: fill))
+    }
+}
+
+/// App logo drawn in code: an emerald tile with a tape measure.
+struct AppMark: View {
+    var size: CGFloat = 40
+    var body: some View {
+        Image(systemName: "ruler.fill")
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .rotationEffect(.degrees(-45))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
+            .accessibilityHidden(true)
     }
 }
 
@@ -118,7 +118,7 @@ enum BrandGraphics {
         return UIGraphicsImageRenderer(size: size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
             let fontSize = max(12, size.width * 0.026)
-            let text = "\(Brand.name) · \(Brand.site) · \(Brand.phoneDisplay)" as NSString
+            let text = "\(Brand.name)" as NSString
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold),
                 .foregroundColor: UIColor.white

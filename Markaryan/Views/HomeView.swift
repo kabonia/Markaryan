@@ -43,8 +43,8 @@ struct HomeView: View {
                         NavigationLink { PhotoCountView() } label: {
                             HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.orangeSoft)
                         }
-                        NavigationLink { AIAssistantView(context: .general) } label: {
-                            HomeToolCard(icon: "sparkles", title: "СтройПомощник", text: "Ответит на любой вопрос о стройке и ремонте, разберёт смету и фото.", accent: Color(red: 0.68, green: 0.81, blue: 0.47))
+                        Button { HelperCenter.shared.isOpen = true } label: {
+                            HomeToolCard(icon: "sparkles", title: "ИИ‑помощник", text: "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.", accent: Theme.orangeSoft)
                         }
                         NavigationLink { FullEstimateHubView() } label: {
                             HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Color(red: 0.62, green: 0.70, blue: 0.95))
@@ -101,25 +101,21 @@ struct HomeView: View {
                     }
                 }
 
-                NavigationLink { PortfolioView() } label: {
-                    AppTabRow(icon: "building.2.fill", title: "Объекты АртСтроя", subtitle: "Строим в Сочи с \(String(Brand.foundedYear)) года — фото и состав работ")
-                }
-                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
         .background(HomeBackdrop())
         .toolbar(.hidden, for: .navigationBar)
+        .helperScreen("Главная")
         .refreshable { await store.refreshPriceBook(silent: true) }
         .onAppear { if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
     }
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image("BrandMark").resizable().scaledToFit().frame(width: 40, height: 40)
-                .padding(6).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            AppMark(size: 44)
             VStack(alignment: .leading, spacing: 2) {
-                Text("АРТСТРОЙ").font(.headline).tracking(1.4)
+                Text(Brand.name).font(.headline)
                 Button { store.showRegionPicker = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill").font(.system(size: 9))
@@ -131,11 +127,6 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-            Link(destination: Brand.phoneURL) {
-                Image(systemName: "phone.fill").font(.subheadline.weight(.semibold)).foregroundStyle(.black)
-                    .frame(width: 40, height: 40).background(Theme.orange, in: Circle())
-            }
-            .accessibilityLabel("Позвонить в АртСтрой")
         }
     }
 }
@@ -145,8 +136,7 @@ struct HomeBackdrop: View {
     var body: some View {
         ZStack {
             Theme.background
-            Circle().fill(Theme.orange.opacity(0.16)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
-            Circle().fill(Theme.sky.opacity(0.10)).frame(width: 360, height: 360).blur(radius: 90).offset(x: -170, y: 60)
+            Circle().fill(Theme.orange.opacity(0.08)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
         }
         .ignoresSafeArea()
     }
@@ -170,20 +160,21 @@ struct HomeHeroCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            LinearGradient(colors: [Color(red: 0.33, green: 0.20, blue: 0.13), Color(red: 0.10, green: 0.15, blue: 0.14), Color(red: 0.06, green: 0.09, blue: 0.09)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            Circle().fill(Theme.orange.opacity(glow ? 0.34 : 0.22)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
+            Theme.heroGradient
+            Circle().fill(Color.white.opacity(glow ? 0.16 : 0.10)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
             HStack(spacing: -40) {
                 StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
-                    .frame(width: 150, height: 110).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .rotationEffect(.degrees(-8)).offset(y: 18)
+                    .frame(width: 120, height: 88).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .rotationEffect(.degrees(-8)).offset(y: 14)
                 StyleRoomIllustration(palette: ["#1F3B3A", "#C8A15A", "#EDE3D1", "#6B2D3A"])
-                    .frame(width: 160, height: 118).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .frame(width: 128, height: 94).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .rotationEffect(.degrees(6))
                     .shadow(color: .black.opacity(0.4), radius: 14, y: 8)
             }
-            .offset(x: 150, y: -96)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .padding(.top, 18).padding(.trailing, -18)
             VStack(alignment: .leading, spacing: 10) {
-                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
+                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
                 Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
                 Text("Сфотографируйте комнату — ИИ покажет её в новом стиле.")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
@@ -192,14 +183,14 @@ struct HomeHeroCard: View {
                     Text("Попробовать дизайн по фото").font(.subheadline.weight(.semibold))
                     Image(systemName: "arrow.right").font(.caption.weight(.bold))
                 }
-                .foregroundStyle(.black).padding(.horizontal, 14).padding(.vertical, 11)
-                .background(LinearGradient(colors: [Theme.orange, Theme.orangeSoft], startPoint: .leading, endPoint: .trailing), in: Capsule())
-                .shadow(color: Theme.orange.opacity(0.35), radius: 12, y: 6)
+                .foregroundStyle(Theme.orange).padding(.horizontal, 14).padding(.vertical, 11)
+                .background(.white, in: Capsule())
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
                 .padding(.top, 4)
             }
             .padding(22)
         }
-        .frame(maxWidth: .infinity, minHeight: 300, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: 330, alignment: .bottomLeading)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.07)))
         .onAppear { withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { glow = true } }
@@ -217,7 +208,7 @@ struct HomeToolCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 44, height: 44)
                     .background(LinearGradient(colors: [accent, accent.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .shadow(color: accent.opacity(0.35), radius: 8, y: 4)
@@ -227,16 +218,13 @@ struct HomeToolCard: View {
                         .background(accent.opacity(0.18), in: Capsule()).foregroundStyle(accent)
                 }
             }
-            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.85)
+            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
             Text(text).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
         .padding(15)
         .frame(maxWidth: .infinity, minHeight: 180, alignment: .topLeading)
-        .background(
-            LinearGradient(colors: [accent.opacity(0.10), Theme.panel], startPoint: .topLeading, endPoint: .bottom),
-            in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.07)))
+        .panelCard(22)
     }
 }
 
@@ -246,10 +234,10 @@ struct HomeWideToolCard: View {
     let text: String
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
-                .frame(width: 48, height: 48).background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
+                .frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(.white)
+                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
                 Text(text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
@@ -266,7 +254,7 @@ struct HomeCalculatorChip: View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: kind.icon).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
                 .frame(width: 36, height: 36).background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-            Text(kind.title).font(.footnote.weight(.semibold)).foregroundStyle(.white).lineLimit(2).multilineTextAlignment(.leading)
+            Text(kind.title).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2).multilineTextAlignment(.leading)
             Text(kind.summary).font(.caption2).foregroundStyle(Theme.muted).lineLimit(2).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
@@ -312,7 +300,7 @@ struct HomeProjectCard: View {
             HStack {
                 Text("ТЕКУЩИЙ ОБЪЕКТ").font(.caption2.weight(.bold)).tracking(1.25).foregroundStyle(.white.opacity(0.62))
                 Spacer()
-                Text("\(Int(progress * 100))%").font(.headline.bold()).monospacedDigit().foregroundStyle(Theme.orange)
+                Text("\(Int(progress * 100))%").font(.headline.bold()).monospacedDigit().foregroundStyle(.white)
             }
             Text(name).font(.title3.bold()).foregroundStyle(.white)
             ProgressView(value: progress).tint(Theme.orange)
@@ -346,7 +334,7 @@ struct HomeActionCard: View {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(accent)
                 .frame(width: 40, height: 40).background(accent.opacity(0.13), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Spacer(minLength: 4)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2)
             Text(subtitle).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
@@ -361,7 +349,7 @@ struct HomeMetric: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(value).font(.title2.bold()).monospacedDigit().foregroundStyle(.white)
+            Text(value).font(.title2.bold()).monospacedDigit().foregroundStyle(Theme.ink)
             Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -388,7 +376,7 @@ struct ObjectPassportView: View {
                 NavigationLink { ConstructionDiaryView() } label: { Label("Журнал решений", systemImage: "book.closed") }
             }
             Section { Text("Паспорт, чек-листы и дневник хранятся только на этом iPhone.").font(.footnote).foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Паспорт объекта")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Паспорт объекта").helperScreen("Паспорт объекта")
     }
 }
 
@@ -427,7 +415,7 @@ struct ChecklistView: View {
                         Button { Haptics.tap(); store.toggleChecklist(item.0) } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: checked ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(checked ? Theme.orange : Theme.muted)
-                                Text(item.1).foregroundStyle(checked ? Theme.muted : .primary).strikethrough(checked, color: Theme.muted)
+                                Text(item.1).foregroundStyle(checked ? Theme.muted : Theme.ink).strikethrough(checked, color: Theme.muted)
                                 Spacer()
                             }
                         }
@@ -437,7 +425,7 @@ struct ChecklistView: View {
                 }
             }
             Section { Text("Это личный список контроля. Он не заменяет проект, технадзор и условия договора.").font(.footnote).foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Чек-листы")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Чек-листы").helperScreen("Чек-листы")
     }
 }
 
@@ -455,48 +443,26 @@ struct ConstructionDiaryView: View {
                 else { ForEach(store.diary) { item in VStack(alignment: .leading, spacing: 6) { Text(item.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(Theme.orange); Text(item.text).textSelection(.enabled) } }.onDelete { store.diary.remove(atOffsets: $0) } }
             }
         }
-        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Журнал решений")
+        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Журнал решений").helperScreen("Журнал решений")
         .toolbar { if !store.diary.isEmpty { ShareLink(item: diaryText) { Image(systemName: "square.and.arrow.up") } } }
     }
     private var diaryText: String {
         (["Журнал решений · \(store.projectDisplayName)", ""] + store.diary.map { "\($0.date.formatted(date: .numeric, time: .shortened)) — \($0.text)" } + ["", Brand.shareFooter]).joined(separator: "\n")
     }
 }
-struct ServiceDetail: View {
-    @EnvironmentObject private var store: AppStore
-    let service: BuildingService
-    var body: some View {
-        ScrollView { VStack(alignment: .leading, spacing: 24) {
-            SectionTitle(eyebrow: "Виды работ", title: service.title)
-            Text(service.detail).font(.title3).foregroundStyle(Theme.muted)
-            ForEach(["Согласуем состав работ и смету до старта", "Фиксируем сроки и порядок оплаты в договоре", "Сдаём этапы по актам и фотоотчётам"], id: \.self) { Label($0, systemImage: "checkmark.circle").padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16) }
-        }.padding(20) }.background(Theme.background).navigationTitle("Услуга").navigationBarTitleDisplayMode(.inline)
-    }
-}
-struct ContactView: View {
-    @EnvironmentObject private var store: AppStore
+struct AboutAppView: View {
     var body: some View {
         List {
-            Section { Text("АртСтрой").font(.title2.bold()); Text("Строительно-монтажные и общестроительные работы. Сочи и Краснодарский край. С \(String(Brand.foundedYear)) года.") }
-            Section("Связаться") {
-                Link(destination: Brand.phoneURL) { Label(Brand.phoneDisplay, systemImage: "phone") }
-                Link(destination: Brand.whatsAppURL(text: "Здравствуйте! Пишу из приложения АртСтрой.")) { Label("WhatsApp", systemImage: "message") }
-                Link(destination: Brand.emailURL) { Label(Brand.email, systemImage: "envelope") }
-                Link(destination: Brand.siteURL) { Label(Brand.site, systemImage: "globe") }
-            }
-            Section("Направления работ") {
-                ForEach(store.services) { service in NavigationLink(service.title) { ServiceDetail(service: service) } }
-            }
-            Section("Как работаем") { ForEach(["01 · Осмотр и уточнение задачи", "02 · Смета и договор", "03 · Подготовка площадки", "04 · Работы и контроль", "05 · Приёмка и гарантия по договору"], id: \.self) { Text($0) } }
-            Section("Конфиденциальность") {
-                Text("Избранное, расчёты, бюджет, планировки и фото-дневник сохраняются на вашем iPhone. Анонимные технические события (открытие экранов, без личных данных) отправляются на сервер АртСтроя.")
-                Text("Камера используется для AR и съёмки объекта. Фото для ИИ-визуализации отправляется только после нажатия «Создать» — на сервер визуализации и поставщику модели для одного результата.")
-                Text("Прогноз погоды запрашивается у Open‑Meteo по координатам Сочи — местоположение устройства не используется.")
-                Text("Вопросы ИИ, прикреплённые фото и кадры 3D‑модели комнаты отправляются через OpenRouter поставщику модели только для получения ответа или картинки. Скан комнаты и 3D‑модель хранятся на iPhone.")
-                Text("Расчёты удаляются в истории. Удаление приложения удаляет его локальные данные.")
+            Section { Text(Brand.name).font(.title2.bold()); Text(Brand.tagline) }
+            Section("Ваши данные") {
+                Text("Расчёты, сметы, объекты, планировки, фото и журнал хранятся только на вашем iPhone. Удаление приложения удаляет их.")
+                Text("Город нужен, чтобы подставлять рыночные цены вашего региона. Определяется по геопозиции только с вашего разрешения или выбирается вручную; точные координаты не сохраняются.")
+                Text("Камера используется для AR‑замеров, скана помещения и съёмки. Фото уходит на сервер ИИ только после нажатия кнопки — для одного ответа или одной картинки.")
+                Text("Вопросы ИИ‑помощнику и прикреплённые фото передаются через сервер приложения поставщику модели только для ответа.")
+                Text("Анонимные технические события (открытие экранов, ошибки) помогают нам исправлять проблемы и не содержат личных данных.")
             }.font(.footnote)
-            Section { Text("Версия \(Brand.appVersion) · iPhone").foregroundStyle(Theme.muted) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Контакты")
+            Section { Text("Версия \(Brand.appVersion)").foregroundStyle(Theme.muted) }
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("О приложении").helperScreen("О приложении")
     }
 }
 
@@ -525,7 +491,7 @@ struct ProjectHubView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack { VStack(alignment: .leading, spacing: 4) { Text("Готовность проекта").font(.caption).foregroundStyle(Theme.muted); Text("\(complete) из \(store.milestones.count) этапов").font(.title3.bold()) }; Spacer(); Text("\(Int(store.projectProgress * 100))%").font(.title.bold()).monospacedDigit().foregroundStyle(Theme.orange).contentTransition(.numericText()) }
                 ProgressView(value: store.projectProgress).tint(Theme.orange)
-                Text(store.nextMilestone.map { "Следующий шаг: \($0.title)" } ?? "Все этапы закрыты — поздравляем!").font(.caption.weight(.medium)).foregroundStyle(.white)
+                Text(store.nextMilestone.map { "Следующий шаг: \($0.title)" } ?? "Все этапы закрыты — поздравляем!").font(.caption.weight(.medium)).foregroundStyle(Theme.ink)
             }.padding(20).panelCard(22)
             if let alert = store.priceAlert { PriceAlertBanner(text: alert) { store.priceAlert = nil } }
             HStack(spacing: 12) {
@@ -543,7 +509,7 @@ struct ProjectHubView: View {
             NavigationLink { ChecklistView() } label: { ProjectHubRow(icon: "checkmark.shield", title: "Чек‑листы контроля", subtitle: "Перед стартом, во время работ и при приёмке") }.buttonStyle(PremiumCardPressStyle())
             ShareLink(item: projectReport, subject: Text("Отчёт по объекту")) { SecondaryActionLabel(title: "Поделиться отчётом по объекту", icon: "square.and.arrow.up") }
             InfoNote(text: "Проект, бюджет и фото хранятся на этом iPhone. Они отправляются исполнителям только после вашего действия.")
-        }.padding(20) }.background(Theme.background).navigationTitle("Мой проект").navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle("Мой проект").helperScreen("Мой проект").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -557,7 +523,7 @@ struct ProjectHubRow: View {
     let icon: String
     let title: String
     let subtitle: String
-    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title).font(.headline).foregroundStyle(.white); Text(subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
+    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title).font(.headline).foregroundStyle(Theme.ink); Text(subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
 }
 
 struct ProjectPlanView: View {
@@ -566,9 +532,9 @@ struct ProjectPlanView: View {
         List {
             Section { Text("Отмечайте закрытые этапы. Карточка «Мой проект» покажет общий прогресс и поможет не потерять следующий шаг.").font(.footnote).foregroundStyle(Theme.muted) }
             Section("Дорожная карта") { ForEach($store.milestones) { $milestone in
-                Button { Haptics.tap(); withAnimation(.snappy) { milestone.completed.toggle() } } label: { HStack(spacing: 14) { Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(milestone.completed ? Theme.orange : Theme.muted); VStack(alignment: .leading, spacing: 4) { Text(milestone.title).foregroundStyle(.primary); Text(milestone.subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer() } }.buttonStyle(.plain)
+                Button { Haptics.tap(); withAnimation(.snappy) { milestone.completed.toggle() } } label: { HStack(spacing: 14) { Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(milestone.completed ? Theme.orange : Theme.muted); VStack(alignment: .leading, spacing: 4) { Text(milestone.title).foregroundStyle(Theme.ink); Text(milestone.subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer() } }.buttonStyle(.plain)
             } }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("План стройки")
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("План стройки").helperScreen("План стройки")
     }
 }
 
@@ -586,7 +552,7 @@ struct ProjectBudgetTrackerView: View {
                     HStack {
                         Text(remaining < 0 ? "Перерасход" : "Остаток").fontWeight(.semibold)
                         Spacer()
-                        Text(CalculationEngine.money(abs(remaining))).fontWeight(.bold).monospacedDigit().foregroundStyle(remaining < 0 ? Theme.danger : .white)
+                        Text(CalculationEngine.money(abs(remaining))).fontWeight(.bold).monospacedDigit().foregroundStyle(remaining < 0 ? Theme.danger : Theme.ink)
                     }
                 }.font(.subheadline)
             }
@@ -610,7 +576,7 @@ struct ProjectBudgetTrackerView: View {
             }
             Section { Text("Совет: в полной смете нажмите «В бюджет проекта» — плановые суммы заполнятся автоматически. Фактические суммы не передаются на сервер.").font(.footnote).foregroundStyle(Theme.muted) }
         }
-        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Бюджет")
+        .scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Бюджет").helperScreen("Бюджет")
         .scrollDismissesKeyboard(.interactively)
     }
     private func addItem() {
@@ -653,8 +619,8 @@ struct ProjectPhotoDiaryView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     TextField("Подпись к фото, например: армирование плиты", text: $caption).padding(14).panelCard(14)
                     HStack(spacing: 10) {
-                        PhotosPicker(selection: $item, matching: .images) { Label("Из галереи", systemImage: "photo.badge.plus").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous)) }.buttonStyle(.plain)
-                        Button { showCamera = true } label: { Label("Снять", systemImage: "camera.fill").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(.white).panelCard(15, fill: Theme.panelRaised) }
+                        PhotosPicker(selection: $item, matching: .images) { Label("Из галереи", systemImage: "photo.badge.plus").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.onAccent).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous)) }.buttonStyle(.plain)
+                        Button { showCamera = true } label: { Label("Снять", systemImage: "camera.fill").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.ink).panelCard(15, fill: Theme.panelRaised) }
                             .buttonStyle(.plain)
                             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                     }
@@ -679,7 +645,7 @@ struct ProjectPhotoDiaryView: View {
                     }
                 }
             }.padding(20)
-        }.background(Theme.background).navigationTitle("Фото‑дневник").navigationBarTitleDisplayMode(.inline)
+        }.background(Theme.background).navigationTitle("Фото‑дневник").helperScreen("Фото‑дневник").navigationBarTitleDisplayMode(.inline)
             .onChange(of: item) { _, selected in Task { await importPhoto(selected) } }
             .sheet(isPresented: $showCamera) { CameraCaptureView(image: $cameraImage).ignoresSafeArea() }
             .onChange(of: cameraImage) { _, image in
@@ -695,13 +661,13 @@ struct ProjectPhotoDiaryView: View {
     }
     private func save(_ image: UIImage) {
         do { try store.addProjectPhoto(image, caption: caption); caption = ""; error = nil; Haptics.success() }
-        catch { self.error = error.localizedDescription }
+        catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
     private func importPhoto(_ selected: PhotosPickerItem?) async {
         guard let selected else { return }
         do {
             guard let data = try await selected.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw ProjectPhotoError.encoding }
             save(image); item = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 }

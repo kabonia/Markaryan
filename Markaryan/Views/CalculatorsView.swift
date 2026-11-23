@@ -19,16 +19,16 @@ struct CalculatorsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 SectionTitle(eyebrow: "Расчёты и сметы", title: "Сначала цифры.\nПотом стройка.")
-                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF, WhatsApp или заявку.")
+                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF и с рыночными ценами вашего города.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
 
                 NavigationLink { FullEstimateHubView() } label: {
                     HStack(spacing: 15) {
-                        Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(.black).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Полная смета объекта").font(.headline).foregroundStyle(.white)
-                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(Theme.muted)
+                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(.white.opacity(0.78))
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.orange)
@@ -76,7 +76,7 @@ struct CalculatorsView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .background(Theme.background)
-        .navigationTitle("Смета")
+        .navigationTitle("Смета").helperScreen("Смета")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -88,7 +88,7 @@ struct CalculatorRow: View {
         HStack(spacing: 15) {
             Image(systemName: kind.icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 42, height: 42).background(Theme.orange.opacity(0.11), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                Text(kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                Text(kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text(kind.summary).font(.caption).foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 0)
@@ -109,7 +109,7 @@ struct CompactEstimateCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange)
             Spacer(minLength: 2)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
             Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 111, alignment: .topLeading)
@@ -139,14 +139,14 @@ struct FullEstimateHubView: View {
             ForEach(FullEstimateKind.allCases) { kind in
                 NavigationLink { HouseEstimateView(kind: kind) } label: {
                     HStack(spacing: 15) {
-                        Image(systemName: kind.icon).font(.title2).foregroundStyle(.black).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(.white); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }
+                        Image(systemName: kind.icon).font(.title2).foregroundStyle(Theme.onAccent).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(Theme.ink); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }
                         Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.orange)
                     }.padding(17).panelCard(20)
                 }.buttonStyle(PremiumCardPressStyle())
             }
             InfoNote(text: "Наша цена формируется из актуального прайса. Она предварительная и уточняется после проекта и выезда на объект.")
-        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").helperScreen("Полные сметы").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -192,7 +192,7 @@ struct HouseEstimateView: View {
     private var priceCity: String { store.priceBook.city ?? store.userRegion?.city ?? "" }
     private var isMarketPriced: Bool { store.priceBook.marketLineCount > 0 }
     private var partnerSummary: String {
-        "Здравствуйте! Посчитал в приложении АртСтрой смету «\(kind.title)» на \(area) м²\(priceCity.isEmpty ? "" : ", \(priceCity)"): рыночная оценка \(CalculationEngine.money(total)). Подскажите вашу цену за эти работы?"
+        "Здравствуйте! Посчитал в приложении \(Brand.name) смету «\(kind.title)» на \(area) м²\(priceCity.isEmpty ? "" : ", \(priceCity)"): рыночная оценка \(CalculationEngine.money(total)). Подскажите вашу цену за эти работы?"
     }
     private var inputsDescription: String {
         var parts = ["Площадь: \(area) м²"]
@@ -219,9 +219,6 @@ struct HouseEstimateView: View {
         }
         let context = AIAssistantContext(estimateType: kind.title, objectName: store.projectDisplayName, area: squareMeters, floors: Int(floorCount), reservePercent: CalculationEngine.parse(reserve), materialTotal: materialTotal, laborTotal: laborTotal, total: total, lines: assistantLines)
         return priceCity.isEmpty ? context : context.withCity(priceCity)
-    }
-    private var workOrderDraft: WorkOrderDraft {
-        WorkOrderDraft(category: "Строительство: \(kind.title)", city: store.projectCity, details: "Нужно согласовать и выполнить работы по предварительной смете.\n\n" + report, budget: CalculationEngine.money(total), attachment: nil)
     }
     private var printableDocument: PrintableEstimate {
         PrintableEstimate(title: "Локальная смета: \(kind.title)", objectName: store.projectDisplayName, inputs: [inputsDescription], lines: lines.map { line in
@@ -254,7 +251,7 @@ struct HouseEstimateView: View {
             PriceSourceNote()
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background).navigationTitle(kind.screenTitle).navigationBarTitleDisplayMode(.inline)
+            .background(Theme.background).navigationTitle(kind.screenTitle).helperScreen(kind.screenTitle, details: report).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -284,11 +281,11 @@ struct HouseEstimateView: View {
 
     private var totalCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
-            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
+            Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
+            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).foregroundStyle(.white).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
             if perSquareMeter > 0 { Text("≈ \(CalculationEngine.money(perSquareMeter)) за м²").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85)) }
-            if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.orangeSoft) }
-            HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(Theme.muted)
+            if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(.white) }
+            HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(.white.opacity(0.8))
             if total > 0 {
                 GeometryReader { proxy in
                     HStack(spacing: 2) {
@@ -317,7 +314,7 @@ struct HouseEstimateView: View {
                     Image(systemName: isOn ? "checkmark.square.fill" : "square").foregroundStyle(isOn ? Theme.orange : Theme.muted)
                     Text(section.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(isOn ? Theme.orange : Theme.muted)
                     Spacer()
-                    Text(CalculationEngine.money(sectionTotal(section))).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(isOn ? .white : Theme.muted).strikethrough(!isOn)
+                    Text(CalculationEngine.money(sectionTotal(section))).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(isOn ? Theme.ink : Theme.muted).strikethrough(!isOn)
                 }
             }
             .buttonStyle(.plain)
@@ -396,9 +393,6 @@ struct CalculatorView: View {
         }
         return AIAssistantContext(estimateType: kind.title, objectName: objectName, area: nil, floors: nil, reservePercent: CalculationEngine.parse(values["reserve"] ?? ""), materialTotal: result.cost, laborTotal: nil, total: result.cost, lines: contextLines)
     }
-    private func workOrderDraft(for snapshot: SavedCalculation) -> WorkOrderDraft {
-        WorkOrderDraft(category: "Расчёт: \(kind.title)", city: store.projectCity, details: "Нужно согласовать работы и подобрать исполнителя по расчёту.\n\n" + snapshot.report, budget: snapshot.result.cost.map { CalculationEngine.money($0) } ?? "По расчёту", attachment: nil)
-    }
     private func printableDocument(for result: CalculationResult) -> PrintableEstimate {
         let inputs = kind.fields.compactMap { field -> String? in
             guard let value = values[field.id], !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -459,14 +453,14 @@ struct CalculatorView: View {
                         ShareLink(item: snapshot.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
                     }
                     NavigationLink { AIAssistantView(context: assistantContext(for: result)) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
-                    PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении АртСтрой: «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
+                    PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении \(Brand.name): «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
                 }
             }
             InfoNote(text: kind.note)
             Text("Значения по умолчанию приведены для примера. Последние введённые размеры запоминаются при сохранении расчёта.").font(.caption).foregroundStyle(Theme.muted)
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background).navigationTitle(kind.title).navigationBarTitleDisplayMode(.inline)
+            .background(Theme.background).navigationTitle(kind.title).helperScreen("Калькулятор: \(kind.title)", details: kind.note).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focusedField = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -493,16 +487,6 @@ struct CalculatorView: View {
         result = try? CalculationEngine.calculate(kind, values: values)
         error = nil; saved = false
     }
-    private func addToRequest(_ snapshot: SavedCalculation) {
-        let report = snapshot.report
-        if store.arTransfer != nil {
-            // Two sheets cannot be shown at once: close the AR transfer sheet first, then open the request.
-            store.arTransfer = nil
-            Task { try? await Task.sleep(for: .milliseconds(450)); store.appendToRequest(report) }
-        } else {
-            store.appendToRequest(report)
-        }
-    }
     private func exportPDF(_ result: CalculationResult) {
         do { exportFile = SharedFile(url: try EstimatePDFRenderer.render(printableDocument(for: result))); store.registerMeaningfulAction(); store.track("pdf_calculation") }
         catch let renderError { error = "Не удалось подготовить PDF: \(renderError.localizedDescription)" }
@@ -528,7 +512,7 @@ struct CalculationHistoryView: View {
                     }.padding(.vertical, 4)
                 }
             }.onDelete { store.calculations.remove(atOffsets: $0) }
-        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Мои расчёты").toolbar { if !store.calculations.isEmpty { EditButton() } }
+        }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("Мои расчёты").helperScreen("Мои расчёты").toolbar { if !store.calculations.isEmpty { EditButton() } }
     }
 }
 struct SavedCalculationView: View {
@@ -546,8 +530,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
-            PrimaryButton(title: "Добавить в заявку", icon: "square.and.pencil") { store.appendToRequest(item.report) }
-        }.padding(20) }.background(Theme.background).navigationTitle(item.object).navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle(item.object).helperScreen(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -593,7 +576,7 @@ struct AIAssistantView: View {
                     SectionTitle(eyebrow: "СтройПомощник", title: context.estimateType)
                     Text(context.lines.isEmpty ? "Задайте вопрос о стройке, материалах или порядке работ. Помощник не заменяет проектировщика для несущих конструкций." : "Помощник видит параметры текущего расчёта и объясняет объёмы, смету и порядок работ. Он не заменяет проектировщика для несущих конструкций.").font(.footnote).foregroundStyle(Theme.muted)
                     if store.priceServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        NavigationLink { PriceServerSettingsView() } label: { Label("Указать адрес сервера ИИ", systemImage: "gearshape").frame(maxWidth: .infinity).padding(14).foregroundStyle(.black).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }.buttonStyle(.plain)
+                        NavigationLink { PriceServerSettingsView() } label: { Label("Указать адрес сервера ИИ", systemImage: "gearshape").frame(maxWidth: .infinity).padding(14).foregroundStyle(Theme.onAccent).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous)) }.buttonStyle(.plain)
                     }
                     if messages.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
@@ -611,7 +594,7 @@ struct AIAssistantView: View {
                             Text(message.text.isEmpty && message.id == streamingID ? "…" : message.text)
                                 .textSelection(.enabled)
                                 .font(.body)
-                                .foregroundStyle(message.role == .client ? .black : .white)
+                                .foregroundStyle(message.role == .client ? Theme.onAccent : Theme.ink)
                             if message.role == .assistant && !message.links.isEmpty {
                                 ForEach(message.links) { link in
                                     if let destination = link.destination {
@@ -678,7 +661,7 @@ struct AIAssistantView: View {
                     .accessibilityLabel("Прикрепить фото к вопросу")
                 }
                 TextField(attachedPhoto == nil ? "Напишите вопрос" : "Что спросить про фото?", text: $prompt, axis: .vertical).lineLimit(1...4).focused($inputFocused).padding(12).panelCard(15).disabled(isLoading)
-                Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(.black).background(Theme.orange, in: Circle()) }
+                Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(Theme.onAccent).background(Theme.orange, in: Circle()) }
                     .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     .accessibilityLabel("Отправить вопрос")
             }.padding(16).background(Theme.background)
@@ -729,7 +712,7 @@ struct AIAssistantView: View {
                     }
                     Haptics.success()
                 } catch {
-                    self.error = error.localizedDescription
+                    self.error = error.localizedDescription; HelperCenter.shared.failed(error)
                     if let index = messages.firstIndex(where: { $0.id == answer.id }), messages[index].text.isEmpty { messages.remove(at: index) }
                 }
                 streamingID = nil
@@ -738,7 +721,7 @@ struct AIAssistantView: View {
                     let reply = try await store.askAssistant(question: question, context: fullContext, history: previous)
                     messages.append(AssistantChatMessage(role: .assistant, text: reply.answer, links: reply.localLinks))
                     Haptics.success()
-                } catch { self.error = error.localizedDescription }
+                } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
             }
             isLoading = false
         }
@@ -822,7 +805,7 @@ struct AIVisionStudioView: View {
                     HStack(spacing: 12) {
                         ProgressView().tint(Theme.orange)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Создаём визуализацию").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            Text("Создаём визуализацию").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                             Text("ИИ подбирает материалы, свет и композицию…").font(.caption).foregroundStyle(Theme.muted)
                         }
                     }
@@ -852,7 +835,7 @@ struct AIVisionStudioView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Визуализация ИИ")
+        .navigationTitle("Визуализация ИИ").helperScreen("Визуализация ИИ")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item) { _, item in Task { await loadPhoto(item) } }
         .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.image]) { importImage($0) }
@@ -875,7 +858,7 @@ struct AIVisionStudioView: View {
                 } label: {
                     Label(style.title, systemImage: style.icon)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Theme.onAccent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 9)
                         .background(Theme.orange, in: Capsule())
@@ -903,7 +886,7 @@ struct AIVisionStudioView: View {
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 11))
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Исходное фото добавлено").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                        Text("Исходное фото добавлено").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                         Text("ИИ сохранит важные особенности объекта.").font(.caption).foregroundStyle(Theme.muted)
                     }
                     Spacer(minLength: 0)
@@ -916,7 +899,7 @@ struct AIVisionStudioView: View {
                             .frame(width: 32, height: 32)
                             .background(Theme.background, in: Circle())
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .accessibilityLabel("Убрать фото")
                 }
                 .padding(10)
@@ -934,7 +917,7 @@ struct AIVisionStudioView: View {
                 }
                 TextEditor(text: $brief)
                     .font(.body)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .frame(minHeight: 102)
                     .scrollContentBackground(.hidden)
                     .background(.clear)
@@ -946,7 +929,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 .accessibilityLabel("Снять камерой")
 
@@ -955,7 +938,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Выбрать фото из галереи")
 
                 Button { showFilePicker = true } label: {
@@ -963,7 +946,7 @@ struct AIVisionStudioView: View {
                         .frame(width: 38, height: 38)
                         .background(Theme.background, in: Circle())
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Выбрать изображение из файлов")
 
                 Spacer(minLength: 0)
@@ -976,7 +959,7 @@ struct AIVisionStudioView: View {
                     }
                     .frame(minWidth: 50, minHeight: 42)
                     .padding(.horizontal, isLoading ? 0 : 13)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(Theme.onAccent)
                     .background(Theme.orange, in: Capsule())
                 }
                 .disabled(isLoading)
@@ -992,7 +975,7 @@ struct AIVisionStudioView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("ВАШ КОНЦЕПТ").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
-                    Text(style.title).font(.headline).foregroundStyle(.white)
+                    Text(style.title).font(.headline).foregroundStyle(Theme.ink)
                 }
                 Spacer()
                 Image(systemName: "sparkles").foregroundStyle(Theme.orange)
@@ -1009,7 +992,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.background, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
 
                 Button { saveToPhotos(image) } label: {
                     Image(systemName: "square.and.arrow.down")
@@ -1017,7 +1000,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.background, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
                 .accessibilityLabel("Сохранить в Фото")
 
                 Button { share(image) } label: {
@@ -1026,7 +1009,7 @@ struct AIVisionStudioView: View {
                         .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(PremiumPressStyle())
-                .foregroundStyle(.black)
+                .foregroundStyle(Theme.onAccent)
                 .accessibilityLabel("Поделиться")
             }
         }
@@ -1034,16 +1017,6 @@ struct AIVisionStudioView: View {
         .panelCard(22)
     }
 
-    private func workOrderDraft(for image: UIImage) -> WorkOrderDraft {
-        let description = brief.trimmingCharacters(in: .whitespacesAndNewlines)
-        return WorkOrderDraft(
-            category: "Визуализация: \(style.title)",
-            city: store.projectCity,
-            details: "Нужно согласовать и выполнить работы по приложенной визуализации.\n\nПожелания: \(description.isEmpty ? style.subtitle : description)",
-            budget: "Смета после согласования",
-            attachment: image
-        )
-    }
 
     private func loadPhoto(_ selection: PhotosPickerItem?) async {
         guard let selection else { return }
@@ -1054,7 +1027,7 @@ struct AIVisionStudioView: View {
             source = image
             item = nil
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func importImage(_ importResult: Result<URL, Error>) {
@@ -1065,7 +1038,7 @@ struct AIVisionStudioView: View {
             guard let image = UIImage(data: try Data(contentsOf: url)) else { throw VisualizationError.imagePreparation }
             source = image
             error = nil
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func generate() {
@@ -1092,7 +1065,7 @@ struct AIVisionStudioView: View {
                 store.track("visualization_created")
                 store.registerMeaningfulAction()
                 Haptics.success()
-            } catch { self.error = error.localizedDescription }
+            } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
             isLoading = false
         }
     }
@@ -1103,7 +1076,7 @@ struct AIVisionStudioView: View {
             error = nil
             addedToProject = true
             Haptics.success()
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func saveToPhotos(_ image: UIImage) {
@@ -1124,9 +1097,9 @@ struct AIVisionStudioView: View {
     }
 
     private func share(_ image: UIImage) {
-        // Shared concepts carry a discreet АртСтрой caption, so every repost advertises the company.
+        // Shared concepts carry a discreet app caption.
         guard let data = BrandGraphics.watermarked(image).jpegData(compressionQuality: 0.9) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Концепт-АртСтрой-\(Int(Date().timeIntervalSince1970)).jpg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Концепт-\(Brand.name)-\(Int(Date().timeIntervalSince1970)).jpg")
         do {
             try data.write(to: url, options: .atomic)
             shareFile = SharedFile(url: url)
@@ -1197,11 +1170,10 @@ enum EstimatePDFRenderer {
     static func render(_ estimate: PrintableEstimate) throws -> URL {
         let stamp = Date().formatted(.iso8601.year().month().day()).replacingOccurrences(of: "-", with: "")
         let safeTitle = estimate.objectName.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: "-").prefix(40)
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Смета-АртСтрой-\(safeTitle.isEmpty ? "объект" : String(safeTitle))-\(stamp).pdf")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Смета-\(Brand.name)-\(safeTitle.isEmpty ? "объект" : String(safeTitle))-\(stamp).pdf")
         let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: "АртСтрой", kCGPDFContextCreator as String: "Приложение АртСтрой"]
+        format.documentInfo = [kCGPDFContextTitle as String: estimate.title, kCGPDFContextAuthor as String: Brand.name, kCGPDFContextCreator as String: "Приложение \(Brand.name)"]
         let renderer = UIGraphicsPDFRenderer(bounds: page, format: format)
-        let qr = BrandGraphics.qrCode(Brand.whatsAppURL(text: "Здравствуйте! У меня смета из приложения АртСтрой: \(estimate.title).").absoluteString, size: 180)
         try renderer.writePDF(to: url) { rendererContext in
             var y: CGFloat = 0
             var number = 0
@@ -1220,15 +1192,14 @@ enum EstimatePDFRenderer {
             func footer() {
                 let footerY = page.height - 46
                 line(CGPoint(x: left, y: footerY), CGPoint(x: left + width, y: footerY))
-                text("АртСтрой · строим в Сочи с \(Brand.foundedYear) года · \(Brand.phoneDisplay) · \(Brand.site)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
+                text("\(Brand.name) · \(Brand.tagline)", CGRect(x: left, y: footerY + 8, width: 440, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray)
                 text("Стр. \(pageNumber)", CGRect(x: left + width - 80, y: footerY + 8, width: 80, height: 14), UIFont.systemFont(ofSize: 7), UIColor.darkGray, .right)
             }
             func header(_ continuation: Bool) {
                 if pageNumber > 0 { footer() }
                 rendererContext.beginPage(); pageNumber += 1; y = 34
-                text("АРТСТРОЙ", CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
-                text("СТРОИТЕЛЬСТВО И РЕМОНТ · СОЧИ", CGRect(x: left, y: y + 20, width: 300, height: 16), UIFont.systemFont(ofSize: 8, weight: .semibold), UIColor.darkGray)
-                text("\(Brand.phoneDisplay)\nWhatsApp · \(Brand.site)", CGRect(x: 355, y: y, width: 208, height: 32), UIFont.systemFont(ofSize: 8), UIColor.darkGray, .right)
+                text(Brand.name.uppercased(), CGRect(x: left, y: y, width: 300, height: 20), UIFont.boldSystemFont(ofSize: 14), UIColor(red: 0.20, green: 0.20, blue: 0.20, alpha: 1))
+                text(Brand.tagline.uppercased(), CGRect(x: left, y: y + 20, width: 400, height: 16), UIFont.systemFont(ofSize: 8, weight: .semibold), UIColor.darkGray)
                 y += 52; line(CGPoint(x: left, y: y), CGPoint(x: left + width, y: y), accent, 1); y += 14
                 if continuation { text("Продолжение", CGRect(x: left, y: y, width: width, height: 18), UIFont.boldSystemFont(ofSize: 11)); y += 24 }
             }
@@ -1277,14 +1248,13 @@ enum EstimatePDFRenderer {
             }
             y += 10
             y += text(estimate.note, CGRect(x: left, y: y, width: width, height: 60), UIFont.systemFont(ofSize: 7.5), UIColor.darkGray) + 16
-            // Call-to-action block with a QR code that opens a WhatsApp chat with АртСтрой.
-            let boxHeight: CGFloat = 84
+            // How to use the estimate: neutral advice, no company contacts.
+            let boxHeight: CGFloat = 58
             let box = CGRect(x: left, y: y, width: width, height: boxHeight)
-            rendererContext.cgContext.setFillColor(UIColor(red: 1, green: 0.95, blue: 0.91, alpha: 1).cgColor)
+            rendererContext.cgContext.setFillColor(UIColor(red: 0.95, green: 0.97, blue: 1, alpha: 1).cgColor)
             rendererContext.cgContext.fill(box)
-            if let qr { qr.draw(in: CGRect(x: box.maxX - 74, y: box.minY + 7, width: 70, height: 70)) }
-            text("Нужна точная смета или выезд на объект?", CGRect(x: box.minX + 14, y: box.minY + 14, width: width - 110, height: 16), UIFont.boldSystemFont(ofSize: 10.5))
-            text("Наведите камеру на QR‑код — откроется чат WhatsApp с АртСтроем. Или позвоните: \(Brand.phoneDisplay). Сметы, договор, этапы по актам и фотоотчётам.", CGRect(x: box.minX + 14, y: box.minY + 34, width: width - 110, height: 40), UIFont.systemFont(ofSize: 8), UIColor.darkGray)
+            text("Как пользоваться сметой", CGRect(x: box.minX + 14, y: box.minY + 12, width: width - 28, height: 16), UIFont.boldSystemFont(ofSize: 10.5))
+            text("Покажите её 2–3 подрядчикам и сравните их цены с рыночной оценкой построчно. Объёмы перед закупкой перепроверьте по проекту.", CGRect(x: box.minX + 14, y: box.minY + 30, width: width - 28, height: 28), UIFont.systemFont(ofSize: 8), UIColor.darkGray)
             y += boxHeight + 22
             if y + 20 > contentBottom { header(true) }
             text("Заказчик ____________________    Исполнитель ____________________", CGRect(x: left, y: y, width: width, height: 20), UIFont.systemFont(ofSize: 8), UIColor.darkGray)

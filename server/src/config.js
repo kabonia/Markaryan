@@ -15,6 +15,8 @@ export const config = {
 
   /** OpenRouter (or another OpenAI-compatible gateway): the first model answers, the others are automatic fallbacks. */
   openrouter: {
+    /** Cheap, fast model(s) for the in-app helper: quick answers, hints, photos. */
+    helperModels: (env.OPENROUTER_HELPER_MODELS || 'anthropic/claude-haiku-5.5').split(',').map((s) => s.trim()).filter(Boolean),
     apiKey: env.OPENROUTER_API_KEY || '',
     base: (env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1').trim().replace(/\/$/, ''),
     models: (env.OPENROUTER_MODELS || 'anthropic/claude-opus-5.5,openai/gpt-6.2-astra,google/gemini-4-carbon')

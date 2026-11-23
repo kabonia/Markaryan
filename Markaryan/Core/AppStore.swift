@@ -2,38 +2,6 @@ import SwiftUI
 import Combine
 import UIKit
 
-struct BuildingProject: Codable, Identifiable {
-    var id: String { name }
-    let name: String
-    let location: String
-    let tag: String
-    let photos: [String]
-    let works: [String]
-}
-struct BuildingService: Codable, Identifiable {
-    var id: String { title }
-    let title: String
-    let detail: String
-}
-struct RequestDraft: Codable {
-    var name = ""
-    var phone = ""
-    var address = ""
-    var stage = "Планирование"
-    var services: Set<String> = []
-    var details = ""
-    var text: String {
-        "Заявка на строительные работы\n\nИмя: \(name)\nТелефон: \(phone)\nОбъект: \(address)\nСтадия: \(stage)\nРаботы: \(services.sorted().joined(separator: ", "))\n\n\(details)"
-    }
-    var validation: String? {
-        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Укажите ваше имя." }
-        let digits = phone.filter(\.isNumber)
-        if !(10...15).contains(digits.count) { return "Укажите телефон: от 10 до 15 цифр." }
-        if address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Укажите адрес или район объекта." }
-        if services.isEmpty { return "Выберите хотя бы один вид работ." }
-        return nil
-    }
-}
 struct ObjectPassport: Codable {
     var name = "Мой объект"
     var address = ""
@@ -343,92 +311,11 @@ enum VisualizationError: LocalizedError {
     } }
 }
 
-struct WorkOrder: Decodable, Identifiable {
-    let id: String
-    let category: String
-    let city: String
-    let details: String
-    let budget: String
-    let attachmentBase64: String?
-    let status: String
-    let createdAt: String
-    let updatedAt: String
-
-    var statusTitle: String {
-        switch status {
-        case "published": return "Ищем исполнителя"
-        case "in_discussion": return "Идёт согласование"
-        case "approved": return "Исполнитель выбран"
-        case "closed": return "Заявка закрыта"
-        default: return "Заявка принята"
-        }
-    }
-}
-
-struct WorkOrderMessage: Decodable, Identifiable {
-    let id: String
-    let sender: String
-    let text: String
-    let createdAt: String
-    var isClient: Bool { sender == "client" }
-}
-
-struct WorkOrderDraft {
-    var category: String
-    var city: String
-    var details: String
-    var budget: String
-    var attachment: UIImage?
-
-    static let empty = WorkOrderDraft(
-        category: "Строительные работы",
-        city: "Сочи",
-        details: "",
-        budget: "",
-        attachment: nil
-    )
-}
-
-private struct WorkOrderListResponse: Decodable { let orders: [WorkOrder] }
-private struct WorkOrderResponse: Decodable { let order: WorkOrder }
-private struct WorkOrderMessagesResponse: Decodable { let messages: [WorkOrderMessage] }
-private struct WorkOrderMessageResponse: Decodable { let message: WorkOrderMessage }
-private struct WorkOrderRequest: Encodable {
-    let deviceId: String
-    let category: String
-    let city: String
-    let details: String
-    let budget: String
-    let attachment: Data
-
-    private enum CodingKeys: String, CodingKey {
-        case deviceId, category, city, details, budget
-        case attachment = "attachmentBase64"
-    }
-}
-private struct WorkOrderMessageRequest: Encodable {
-    let deviceId: String
-    let text: String
-}
-
-enum WorkOrderError: LocalizedError {
-    case serverAddress, server, attachment, message(String)
-    var errorDescription: String? {
-        switch self {
-        case .serverAddress: return "Не указан адрес сервера заявок."
-        case .server: return "Сервер заявок не ответил. Попробуйте ещё раз."
-        case .attachment: return "Не удалось подготовить изображение для заявки."
-        case .message(let text): return text
-        }
-    }
-}
-
 @MainActor final class AppStore: ObservableObject {
     static let productionServerURL = "https://pastura.2-26-100-30.sslip.io"
     @Published var tab = 0
     @Published var favorites: Set<String> = [] { didSet { scheduleSave(favorites, key: "favorites") } }
     @Published var calculations: [SavedCalculation] = [] { didSet { scheduleSave(calculations, key: "calculations") } }
-    @Published var draft = RequestDraft() { didSet { scheduleSave(draft, key: "draft") } }
     @Published private(set) var projectWorkspaces: [ProjectWorkspace] = []
     @Published private(set) var activeProjectID: UUID?
     @Published var passport = ObjectPassport() { didSet { scheduleSave(passport, key: "passport"); persistActiveWorkspace() } }
@@ -445,7 +332,7 @@ enum WorkOrderError: LocalizedError {
     /// An apartment to show after a multi-room scan.
     @Published var apartmentToOpen: UUID?
     @Published var showRoomScan = false
-    // AI engine: Claude directly (key in Keychain) or the АртСтрой server.
+    // AI engine: Claude directly (key in Keychain) or the app's server.
     @Published var aiPreference: AIPreference = .auto { didSet { UserDefaults.standard.set(aiPreference.rawValue, forKey: "aiPreference") } }
     @Published var claudeModel: ClaudeModel = .sonnet { didSet { UserDefaults.standard.set(claudeModel.rawValue, forKey: "claudeModel") } }
     /// Picked on the «Дизайн» step: the AI that designs and lays out the room, and the one that draws the 3D render.
@@ -458,10 +345,7 @@ enum WorkOrderError: LocalizedError {
     @Published var priceAlert: String? { didSet { UserDefaults.standard.set(priceAlert, forKey: "priceAlert") } }
     @Published var storageError: String?
     @Published var arTransfer: ARTransfer?
-    @Published var showRequest = false
     @Published var showAR = false
-    @Published var workOrders: [WorkOrder] = []
-    @Published var workOrdersLoading = false
     @Published var lastPriceSync: Date? { didSet { UserDefaults.standard.set(lastPriceSync, forKey: "lastPriceSync") } }
     /// City for market prices and partner contractors.
     @Published var userRegion: UserRegion? { didSet { scheduleSave(userRegion, key: "userRegion") } }
@@ -471,12 +355,9 @@ enum WorkOrderError: LocalizedError {
     private let locationService = LocationService()
     /// Number of meaningful results (saved calculation, PDF, sent request). Used to ask for an App Store rating at a good moment.
     @Published private(set) var meaningfulActions = UserDefaults.standard.integer(forKey: "meaningfulActions")
-    private let workOrdersDeviceID: String
     private var pendingSaves: [String: () -> Void] = [:]
     private var saveTask: Task<Void, Never>?
     private var isRestoringWorkspace = false
-    let projects: [BuildingProject]
-    let services: [BuildingService]
 
     /// Short timeouts: the app must never hang on a slow mobile network.
     private let session: URLSession = {
@@ -489,12 +370,8 @@ enum WorkOrderError: LocalizedError {
     }()
 
     init() {
-        workOrdersDeviceID = Self.persistedWorkOrdersDeviceID()
-        projects = Self.bundle("projects")
-        services = Self.bundle("services")
         favorites = Self.read("favorites") ?? []
         calculations = Self.read("calculations") ?? []
-        draft = Self.read("draft") ?? RequestDraft()
         passport = Self.read("passport") ?? ObjectPassport()
         checklistDone = Self.read("checklistDone") ?? []
         diary = Self.read("diary") ?? []
@@ -517,6 +394,7 @@ enum WorkOrderError: LocalizedError {
         priceServerURL = savedServerURL.isEmpty ? Self.productionServerURL : savedServerURL
         priceAlert = UserDefaults.standard.string(forKey: "priceAlert")
         lastPriceSync = UserDefaults.standard.object(forKey: "lastPriceSync") as? Date
+        HelperCenter.shared.store = self
 
         if let savedWorkspaces: [ProjectWorkspace] = Self.read("projectWorkspaces"), !savedWorkspaces.isEmpty {
             projectWorkspaces = savedWorkspaces
@@ -668,12 +546,6 @@ enum WorkOrderError: LocalizedError {
         var copy = values
         copy["price"] = values["price"] ?? ""
         lastInputs[kind.rawValue] = copy
-    }
-    func appendToRequest(_ text: String) {
-        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty, !draft.details.contains(clean) else { showRequest = true; return }
-        draft.details += (draft.details.isEmpty ? "" : "\n\n") + clean
-        showRequest = true
     }
     func registerMeaningfulAction() {
         meaningfulActions += 1
@@ -956,16 +828,22 @@ enum WorkOrderError: LocalizedError {
 
     var usesClaude: Bool { aiPreference != .server && hasClaudeKey }
     var aiEngineTitle: String {
-        guard usesClaude && AIServerConfig.baseURL == nil else { return "Сервер АртСтроя" }
+        guard usesClaude && AIServerConfig.baseURL == nil else { return "Сервер приложения" }
         let model = claudeModel.title.components(separatedBy: " — ").first ?? "Claude"
         return OpenRouterImageClient.isConfigured ? "\(model) через OpenRouter" : model
     }
-    /// The AI the app talks to: the АртСтрой AI server when its address is set; otherwise the user's own key
+    /// The AI the app talks to: the app's AI server when its address is set; otherwise the user's own key
     /// (Anthropic or OpenRouter) from the Keychain of this iPhone. Keys from files in the app — only in debug builds.
     private var claudeClient: (any AIEngine)? {
         if let base = AIServerConfig.baseURL { return ServerAIClient(base: base) }
         guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
         return ClaudeClient(apiKey: key, model: claudeModel.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
+    }
+    /// The helper's AI: the server's cheap fast model; with the owner's own key — Claude Haiku.
+    var helperEngine: (any AIEngine)? {
+        if let base = AIServerConfig.baseURL { return ServerAIClient(base: base, tier: "helper") }
+        guard usesClaude, let key = ClaudeClient.currentKey else { return nil }
+        return ClaudeClient(apiKey: key, model: ClaudeModel.haiku.rawValue, workspaceID: ClaudeClient.isOpenRouterKey(key) ? nil : ClaudeClient.currentWorkspaceID)
     }
     /// The AI for the concept and the layout: the same engine as `claudeClient`, with the model picked on the
     /// «Дизайн» step first and the other models behind it. A key of Anthropic itself runs Claude models only.
@@ -1005,7 +883,7 @@ enum WorkOrderError: LocalizedError {
     func testClaude() async -> String {
         guard let claude = claudeClient else { return "ИИ не подключён: впишите OPENROUTER_API_KEY в AIServer.plist и пересоберите приложение." }
         do {
-            let answer = try await claude.complete(system: "Отвечай одним коротким предложением по-русски.", turns: [ClaudeTurn(role: .user, text: "Скажи, что ты готов помогать АртСтрою.")], maxTokens: 60)
+            let answer = try await claude.complete(system: "Отвечай одним коротким предложением по-русски.", turns: [ClaudeTurn(role: .user, text: "Скажи, что ты готов помогать.")], maxTokens: 60)
             return "Работает: \(answer)"
         } catch { return error.localizedDescription }
     }
@@ -1235,7 +1113,7 @@ enum WorkOrderError: LocalizedError {
         return picture
     }
 
-    /// AI interior concept for a plan: the AI (АртСтрой server, or Claude directly in the owner's debug builds) chooses
+    /// AI interior concept for a plan: the AI (app server, or Claude directly in the owner's debug builds) chooses
     /// the items, their real sizes and where they belong (wall, corner, next to what) and writes the finishes;
     /// `LayoutEngine` places everything by the rules. Without a working AI the built‑in designer does the same on the iPhone.
     func generateDesign(for plan: FloorPlan, planImage: UIImage?, style: String, purpose: String, wishes: String) async throws -> DesignProposal {
@@ -1304,181 +1182,6 @@ enum WorkOrderError: LocalizedError {
         let normalized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
         guard let data = normalized.jpegData(compressionQuality: quality), data.count <= limit else { throw failure }
         return data
-    }
-
-    // MARK: Work orders
-
-    private static func persistedWorkOrdersDeviceID() -> String {
-        let key = "workOrdersDeviceID"
-        if let saved = UserDefaults.standard.string(forKey: key), saved.count >= 16 { return saved }
-        let created = UUID().uuidString
-        UserDefaults.standard.set(created, forKey: key)
-        return created
-    }
-
-    private func workOrderURL(_ path: String) throws -> URL {
-        guard let url = serverURL(path) else { throw WorkOrderError.serverAddress }
-        return url
-    }
-
-    private func workOrderFailure(_ data: Data) -> Error {
-        Self.serverMessage(data).map { WorkOrderError.message($0) } ?? WorkOrderError.server
-    }
-
-    func refreshWorkOrders() async {
-        workOrdersLoading = true
-        defer { workOrdersLoading = false }
-        do {
-            var components = URLComponents(url: try workOrderURL("/v1/public/work-orders"), resolvingAgainstBaseURL: false)
-            components?.queryItems = [URLQueryItem(name: "deviceId", value: workOrdersDeviceID)]
-            guard let url = components?.url else { throw WorkOrderError.serverAddress }
-            let (data, response) = try await session.data(from: url)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw workOrderFailure(data) }
-            workOrders = try JSONDecoder().decode(WorkOrderListResponse.self, from: data).orders
-        } catch {
-            // Keep existing cards visible during a temporary network outage.
-        }
-    }
-
-    func publishWorkOrder(_ draft: WorkOrderDraft) async throws -> WorkOrder {
-        let cleanDetails = draft.details.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanCity = draft.city.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard cleanDetails.count >= 8, !cleanCity.isEmpty else { throw WorkOrderError.message("Опишите задачу и укажите город.") }
-        let attachment = try draft.attachment.map { try Self.compactJPEG($0, maxDimension: 1280, quality: 0.72, limit: 3_200_000, failure: WorkOrderError.attachment) } ?? Data()
-        let requestBody = WorkOrderRequest(
-            deviceId: workOrdersDeviceID,
-            category: draft.category.trimmingCharacters(in: .whitespacesAndNewlines),
-            city: cleanCity,
-            details: String(cleanDetails.prefix(1600)),
-            budget: String(draft.budget.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80)),
-            attachment: attachment
-        )
-        let (data, http) = try await postJSON(try workOrderURL("/v1/public/work-orders"), body: try JSONEncoder().encode(requestBody), timeout: 40)
-        guard let http, (200...299).contains(http.statusCode) else { throw workOrderFailure(data) }
-        let order = try JSONDecoder().decode(WorkOrderResponse.self, from: data).order
-        workOrders.removeAll { $0.id == order.id }
-        workOrders.insert(order, at: 0)
-        track("work_order_created")
-        registerMeaningfulAction()
-        Task { await publishToHH(order) } // the order also goes to hh.ru as a vacancy (server decides and limits)
-        return order
-    }
-
-    // MARK: hh.ru
-
-    /// Vacancy links of my orders on hh.ru (order id → vacancy + access token), kept on this iPhone.
-    @Published var hhLinks: [String: HHLink] = (UserDefaults.standard.data(forKey: "hhLinks").flatMap { try? JSONDecoder().decode([String: HHLink].self, from: $0) }) ?? [:] {
-        didSet { if let data = try? JSONEncoder().encode(hhLinks) { UserDefaults.standard.set(data, forKey: "hhLinks") } }
-    }
-    /// Last publication result per order (shown in the order).
-    @Published var hhNotes: [String: String] = [:]
-    @Published var hhPublishing: Set<String> = []
-
-    /// Same for Avito Работа.
-    @Published var avitoLinks: [String: HHLink] = (UserDefaults.standard.data(forKey: "avitoLinks").flatMap { try? JSONDecoder().decode([String: HHLink].self, from: $0) }) ?? [:] {
-        didSet { if let data = try? JSONEncoder().encode(avitoLinks) { UserDefaults.standard.set(data, forKey: "avitoLinks") } }
-    }
-    @Published var boardNotes: [String: String] = [:]
-
-    func boardLink(_ board: JobBoard, _ orderID: String) -> HHLink? { board == .hh ? hhLinks[orderID] : avitoLinks[orderID] }
-    func boardNote(_ board: JobBoard, _ orderID: String) -> String? { board == .hh ? hhNotes[orderID] : boardNotes["avito:" + orderID] }
-    func isPublishing(_ board: JobBoard, _ orderID: String) -> Bool { hhPublishing.contains("\(board.rawValue):\(orderID)") }
-
-    private func boardClient(_ board: JobBoard) -> HHClient? {
-        if let base = AIServerConfig.baseURL { return HHClient(base: base, board: board) }
-        guard let url = serverURL("") else { return nil }
-        return HHClient(base: url, board: board)
-    }
-
-    /// Publishes the order on hh.ru and Avito (each board independently; the server decides and limits).
-    func publishToHH(_ order: WorkOrder) async {
-        async let hh: Void = publish(order, to: .hh)
-        async let av: Void = publish(order, to: .avito)
-        _ = await (hh, av)
-    }
-
-    func publish(_ order: WorkOrder, to board: JobBoard) async {
-        let key = "\(board.rawValue):\(order.id)"
-        guard boardLink(board, order.id) == nil, let client = boardClient(board), !hhPublishing.contains(key) else { return }
-        hhPublishing.insert(key)
-        defer { hhPublishing.remove(key) }
-        do {
-            let result = try await client.publish(order)
-            if board == .hh { hhLinks[order.id] = result.link; hhNotes[order.id] = result.note ?? "Опубликовано на hh.ru" }
-            else { avitoLinks[order.id] = result.link; boardNotes["avito:" + order.id] = result.note ?? "Опубликовано на Avito" }
-            track("\(board.rawValue)_published")
-        } catch {
-            if board == .hh { hhNotes[order.id] = error.localizedDescription } else { boardNotes["avito:" + order.id] = error.localizedDescription }
-        }
-    }
-    /// Owner key (the server admin key) — unlocks the resume search on this iPhone only.
-    @Published var ownerUnlocked = KeychainStore.read("owner-admin-key") != nil
-    func unlockOwner(_ key: String) async throws {
-        let clean = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let client = boardClient(.hh) else { throw HHError.message("Не указан адрес сервера.") }
-        try await client.checkOwner(clean)
-        _ = KeychainStore.save(clean, account: "owner-admin-key")
-        ownerUnlocked = true
-    }
-    func lockOwner() { KeychainStore.delete("owner-admin-key"); ownerUnlocked = false }
-    func searchResumes(text: String, city: String, board: String, page: Int = 0) async throws -> ResumeResult {
-        guard let key = KeychainStore.read("owner-admin-key"), let client = boardClient(.hh) else { throw HHError.message("Войдите как владелец.") }
-        track("resume_search")
-        do { return try await client.resumes(text: text, city: city, board: board, page: page, ownerKey: key) }
-        catch let error as HHError { if error.localizedDescription.contains("Неверный ключ") { lockOwner() }; throw error }
-    }
-
-    /// Vacancies of other employers on hh.ru and Avito (market search).
-    func searchMarket(text: String, city: String, board: String, page: Int = 0) async throws -> MarketResult {
-        guard let client = boardClient(.hh) else { throw HHError.message("Не указан адрес сервера.") }
-        track("market_search")
-        return try await client.market(text: text, city: city, board: board, page: page)
-    }
-
-    func boardResponses(_ board: JobBoard, orderID: String) async throws -> HHResponses {
-        guard let link = boardLink(board, orderID), let client = boardClient(board) else { throw HHError.message("Заявка не опубликована на \(board.title).") }
-        return try await client.responses(orderID: orderID, token: link.token)
-    }
-    func boardChat(_ board: JobBoard, orderID: String, chatID: String) async throws -> HHChat {
-        guard let link = boardLink(board, orderID), let client = boardClient(board) else { throw HHError.message("Заявка не опубликована на \(board.title).") }
-        return try await client.chat(orderID: orderID, token: link.token, chatID: chatID)
-    }
-    func boardSend(_ board: JobBoard, orderID: String, chatID: String, text: String) async throws {
-        guard let link = boardLink(board, orderID), let client = boardClient(board) else { throw HHError.message("Заявка не опубликована на \(board.title).") }
-        try await client.send(orderID: orderID, token: link.token, chatID: chatID, text: text)
-        track("\(board.rawValue)_message_sent")
-    }
-
-    /// Sends the contact request straight to the АртСтрой cabinet (no mail app needed).
-    func submitRequestDraft() async throws -> WorkOrder {
-        if let validation = draft.validation { throw WorkOrderError.message(validation) }
-        let category = draft.services.count == 1 ? draft.services.first! : "Заявка: \(draft.services.count) вида работ"
-        let order = try await publishWorkOrder(WorkOrderDraft(category: String(category.prefix(70)), city: draft.address, details: draft.text, budget: "", attachment: nil))
-        track("request_sent_in_app")
-        return order
-    }
-
-    func loadWorkOrderMessages(orderID: String) async throws -> [WorkOrderMessage] {
-        var components = URLComponents(url: try workOrderURL("/v1/public/work-orders/\(orderID)/messages"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "deviceId", value: workOrdersDeviceID)]
-        guard let url = components?.url else { throw WorkOrderError.serverAddress }
-        let (data, response) = try await session.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw workOrderFailure(data) }
-        return try JSONDecoder().decode(WorkOrderMessagesResponse.self, from: data).messages
-    }
-
-    func sendWorkOrderMessage(orderID: String, text: String) async throws -> WorkOrderMessage {
-        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { throw WorkOrderError.message("Введите сообщение.") }
-        let body = try JSONEncoder().encode(WorkOrderMessageRequest(deviceId: workOrdersDeviceID, text: String(clean.prefix(1200))))
-        let (data, http) = try await postJSON(try workOrderURL("/v1/public/work-orders/\(orderID)/messages"), body: body, timeout: 40)
-        guard let http, (200...299).contains(http.statusCode) else { throw workOrderFailure(data) }
-        let message = try JSONDecoder().decode(WorkOrderMessageResponse.self, from: data).message
-        if let index = workOrders.firstIndex(where: { $0.id == orderID }) {
-            let old = workOrders[index]
-            workOrders[index] = WorkOrder(id: old.id, category: old.category, city: old.city, details: old.details, budget: old.budget, attachmentBase64: old.attachmentBase64, status: old.status, createdAt: old.createdAt, updatedAt: message.createdAt)
-        }
-        return message
     }
 
     // MARK: Analytics (anonymous)

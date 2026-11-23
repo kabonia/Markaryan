@@ -211,8 +211,8 @@ struct FloorPlansView: View {
                     DesignStudioHero()
                     VStack(alignment: .leading, spacing: 12) {
                         Button { store.showRoomScan = true } label: {
-                            DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать комнату",
-                                            subtitle: "Лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
+                            DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать помещение",
+                                            subtitle: "Комната, гараж, магазин или кафе: лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
                         }
                         HStack(spacing: 12) {
                             NavigationLink { PhotoDesignView() } label: {
@@ -254,7 +254,7 @@ struct FloorPlansView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Дизайн")
+        .navigationTitle("Дизайн").helperScreen("Дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
         .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }
@@ -275,7 +275,7 @@ struct DesignStudioHero: View {
             Circle().fill(Theme.orange.opacity(0.22)).frame(width: 200, height: 200).blur(radius: 40).offset(x: 170, y: -120)
             VStack(alignment: .leading, spacing: 8) {
                 Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
-                Text("Ваша комната —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
+                Text("Любое помещение —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
                 Text("Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF.")
                     .font(.caption).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
             }
@@ -298,13 +298,13 @@ struct DesignStartCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(.black)
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 44, height: 44).background(accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 Spacer()
                 Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(accent)
             }
             Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(.white).lineLimit(2)
+            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(Theme.ink).lineLimit(2)
             Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
@@ -334,10 +334,10 @@ struct DesignStepsStrip: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: step.0).font(.body.weight(.semibold)).foregroundStyle(Theme.orange)
                                 .frame(width: 42, height: 42).background(Theme.orange.opacity(0.12), in: Circle())
-                            Text("\(index + 1)").font(.system(size: 9, weight: .heavy)).foregroundStyle(.black)
+                            Text("\(index + 1)").font(.system(size: 9, weight: .heavy)).foregroundStyle(Theme.onAccent)
                                 .frame(width: 15, height: 15).background(Theme.orange, in: Circle()).offset(x: 3, y: -3)
                         }
-                        Text(step.1).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                        Text(step.1).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
                         Text(step.2).font(.system(size: 10)).foregroundStyle(Theme.muted).multilineTextAlignment(.center).lineLimit(2)
                     }
                     .frame(maxWidth: .infinity)
@@ -356,7 +356,7 @@ struct FloorPlanRow: View {
             FloorPlanCanvas(plan: plan, proposal: plan.proposals.last, showDimensions: false, compact: true)
                 .frame(width: 92, height: 72).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 5) {
-                Text(plan.name).font(.headline).foregroundStyle(.white)
+                Text(plan.name).font(.headline).foregroundStyle(Theme.ink)
                 Text("\(CalculationEngine.format((plan.area * 10).rounded() / 10)) м² · \(plan.source == .lidar ? "лидар" : "контур AR")").font(.caption).foregroundStyle(Theme.muted)
                 Text(plan.proposals.isEmpty ? "Дизайн ещё не создан" : "Концепций: \(plan.proposals.count)").font(.caption.weight(.semibold)).foregroundStyle(plan.proposals.isEmpty ? Theme.muted : Theme.orange)
             }
@@ -419,7 +419,6 @@ struct FloorPlanDetailView: View {
     @State private var showEdits = false
     @State private var showModels = false
     @State private var showAssistant = false
-    @State private var showOrder = false
     @State private var savedPictures = false
     @State private var editPlan = false
     @State private var furnitureTarget: FurnitureTarget?
@@ -451,7 +450,7 @@ struct FloorPlanDetailView: View {
             else { ContentUnavailableView("План удалён", systemImage: "trash") }
         }
         .background(Theme.background)
-        .navigationTitle(plan?.name ?? "План")
+        .navigationTitle(plan?.name ?? "План").helperScreen(plan?.name ?? "План")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { moreMenu } }
         .sheet(isPresented: $showDesignSheet) {
@@ -468,9 +467,6 @@ struct FloorPlanDetailView: View {
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView() }.presentationDetents([.large]) }
         .navigationDestination(isPresented: $showAssistant) {
             if let plan, let proposal { AIAssistantView(context: assistantContext(proposal, plan: plan)) }
-        }
-        .navigationDestination(isPresented: $showOrder) {
-            if let plan { CreateWorkOrderView(prefill: workOrder(plan)) }
         }
         .fullScreenCover(isPresented: $show3D) {
             if let plan {
@@ -604,8 +600,8 @@ struct FloorPlanDetailView: View {
                 .lineLimit(2...5).padding(12).background(Theme.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Button { applyEdits(proposal) } label: {
                 Label("Применить правки", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
-                    .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
+                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .buttonStyle(PremiumPressStyle())
             .disabled(isGenerating || edits.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -643,9 +639,12 @@ struct FloorPlanDetailView: View {
                 .font(.subheadline).foregroundStyle(Theme.muted)
         }
         mainButton(flow.main(on: .result), plan: plan)
-        if proposal != nil {
-            Button { showOrder = true } label: { SecondaryActionLabel(title: "Ремонт этой комнаты под ключ", icon: "paperplane.fill") }
-                .buttonStyle(PremiumPressStyle())
+        if let proposal {
+            NavigationLink { MarketEstimateView(plan: plan, proposal: proposal) } label: {
+                AppTabRow(icon: "rublesign.circle.fill", title: "Смета по рыночным ценам", subtitle: "Каждый материал и работа: цена в вашем городе, пример и источники")
+            }
+            .buttonStyle(PremiumCardPressStyle())
+            PartnerOfferSection(category: "finishing", summary: partnerSummary(plan, proposal: proposal))
         }
         VStack(alignment: .leading, spacing: 10) {
             Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
@@ -698,7 +697,7 @@ struct FloorPlanDetailView: View {
     private func saveToPhotos(_ images: [UIImage]) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
-                DispatchQueue.main.async { error = "Разрешите приложению сохранять изображения в Фото (Настройки → АртСтрой)." }
+                DispatchQueue.main.async { error = "Разрешите приложению сохранять изображения в Фото (Настройки → \(Brand.name))." }
                 return
             }
             PHPhotoLibrary.shared().performChanges {
@@ -729,10 +728,10 @@ struct FloorPlanDetailView: View {
         let blocked = (button.action == .buildPresentation && (isRendering || isComparing)) || (button.action == .createDesign && isGenerating)
         return Button { perform(button.action, plan: plan) } label: {
             HStack(spacing: 10) {
-                if busy { ProgressView().tint(.black) } else { Image(systemName: button.icon) }
+                if busy { ProgressView().tint(.white) } else { Image(systemName: button.icon) }
                 Text(busy ? (progressText ?? "Готовим презентацию…") : button.title).font(.headline).lineLimit(2)
             }
-            .frame(maxWidth: .infinity).padding(16).foregroundStyle(.black)
+            .frame(maxWidth: .infinity).padding(16).foregroundStyle(Theme.onAccent)
             .background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(PremiumPressStyle())
@@ -786,7 +785,7 @@ struct FloorPlanDetailView: View {
                 }
                 .disabled(isRendering)
             }
-            if let plan, let proposal, store.ownerUnlocked, store.imageEngines.count > 1 {
+            if let plan, let proposal, store.imageEngines.count > 1 {
                 Button { Task { await compareEngines(proposal, plan: plan) } } label: {
                     Label("Сравнить движки рендера", systemImage: "square.grid.2x2")
                 }
@@ -803,7 +802,7 @@ struct FloorPlanDetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             Text(proposal.title).font(.title3.bold())
-            Text(proposal.summary).font(.subheadline).foregroundStyle(.white.opacity(0.88))
+            Text(proposal.summary).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.88))
             if let model = DesignModel.title(of: proposal.designModel) {
                 Label("Дизайн и расстановка: \(model)", systemImage: "cpu").font(.caption).foregroundStyle(Theme.muted)
             }
@@ -882,7 +881,7 @@ struct FloorPlanDetailView: View {
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button { Haptics.tap(); withAnimation(.snappy) { action() } } label: {
             Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
-                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).foregroundStyle(selected ? .black : .white)
+                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).foregroundStyle(selected ? Theme.onAccent : Theme.ink)
         }
     }
 
@@ -893,14 +892,11 @@ struct FloorPlanDetailView: View {
         return AIAssistantContext(estimateType: "Дизайн: \(proposal.title)", objectName: plan.name, area: plan.area, floors: nil, reservePercent: nil, materialTotal: nil, laborTotal: nil, total: proposal.budgetMax > 0 ? proposal.budgetMax : nil, lines: lines)
     }
 
-    /// The order for the renovation of this room: sizes from the scan, the chosen concept and its budget, the plan picture.
-    private func workOrder(_ plan: FloorPlan) -> WorkOrderDraft {
-        var details = "Нужен ремонт помещения «\(plan.name)» по скану из приложения.\nПлощадь: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², периметр \(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м, потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м, окон: \(plan.windows.count), дверей: \(plan.doors.count)."
-        if let proposal {
-            details += "\n\nВыбранная концепция: \(proposal.title) (\(proposal.style)).\n\(proposal.summary)"
-            if proposal.budgetMax > 0 { details += "\nОриентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))" }
-        }
-        return WorkOrderDraft(category: "Ремонт и отделка", city: store.projectCity, details: details, budget: proposal.map { $0.budgetMax > 0 ? CalculationEngine.money($0.budgetMax) : "" } ?? "", attachment: planImage(plan, proposal: proposal))
+    /// Text the user sends to a partner contractor: room sizes, the chosen concept and its budget.
+    private func partnerSummary(_ plan: FloorPlan, proposal: DesignProposal) -> String {
+        var text = "Здравствуйте! Нужен ремонт помещения «\(plan.name)»: \(CalculationEngine.format((plan.area * 10).rounded() / 10)) м², потолок \(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м. Концепция: \(proposal.title) (\(proposal.style))."
+        if proposal.budgetMax > 0 { text += " Ориентир бюджета: \(CalculationEngine.money(proposal.budgetMin)) – \(CalculationEngine.money(proposal.budgetMax))." }
+        return text + " Подскажите вашу цену?"
     }
 
     @MainActor private func planImage(_ plan: FloorPlan, proposal: DesignProposal?, wallNumbers: Bool = false) -> UIImage? {
@@ -932,7 +928,7 @@ struct FloorPlanDetailView: View {
                 }
                 withAnimation(.snappy) { selectedProposal = result.id }
                 Haptics.success()
-            } catch { self.error = error.localizedDescription; Haptics.warning() }
+            } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error); Haptics.warning() }
             isGenerating = false
             UIApplication.shared.isIdleTimerDisabled = false
         }
@@ -1146,11 +1142,11 @@ struct FloorPlanDetailView: View {
         shareImage(image, name: "План-\(plan.name)")
     }
 
-    private func shareImage(_ image: UIImage, name: String = "Интерьер-АртСтрой") {
+    private func shareImage(_ image: UIImage, name: String = "Интерьер-\(Brand.name)") {
         guard let data = BrandGraphics.watermarked(image).pngData() else { return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name)-\(Int(Date().timeIntervalSince1970)).png")
         do { try data.write(to: url, options: .atomic); shareFile = SharedFile(url: url); store.track("plan_shared") }
-        catch { self.error = error.localizedDescription }
+        catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
 
     private func rename() {
@@ -1174,7 +1170,7 @@ struct PlanStepBar: View {
                 Button { Haptics.tap(); withAnimation(.snappy(duration: 0.32)) { step = item } } label: {
                     VStack(spacing: 5) {
                         ZStack {
-                            Circle().fill(selected ? Color.black.opacity(0.18) : Theme.panelRaised)
+                            Circle().fill(selected ? Color.white.opacity(0.22) : Theme.panelRaised)
                             if done.contains(item) && !selected {
                                 Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.orange)
                             } else {
@@ -1186,7 +1182,7 @@ struct PlanStepBar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
-                    .foregroundStyle(selected ? Color.black : Color.white)
+                    .foregroundStyle(selected ? Theme.onAccent : Theme.ink)
                     .background {
                         if selected {
                             RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.orange)
@@ -1215,9 +1211,9 @@ struct MeasurementGroupCard: View {
             Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
             ForEach(rows) { row in
                 HStack(alignment: .firstTextBaseline) {
-                    Text(row.title).font(.subheadline).foregroundStyle(.white.opacity(0.9))
+                    Text(row.title).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.9))
                     Spacer(minLength: 8)
-                    Text(value(row)).font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
+                    Text(value(row)).font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink)
                 }
                 if row.id != rows.last?.id { Divider().overlay(Color.white.opacity(0.06)) }
             }
@@ -1246,7 +1242,7 @@ struct AIModelsRow: View {
                 Image(systemName: "cpu").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
                 Text(title).font(.subheadline).foregroundStyle(Theme.muted)
                 Spacer(minLength: 8)
-                Text(value).font(.caption.weight(.semibold)).foregroundStyle(.white)
+                Text(value).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
                     .lineLimit(1).minimumScaleFactor(0.75)
                 Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
             }
@@ -1283,7 +1279,7 @@ struct AIModelsView: View {
                 }
                 if (showsDesign && !works.design) || !works.render {
                     Text(store.usesAIServer
-                         ? "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере АртСтроя."
+                         ? "Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере приложения."
                          : "С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter.")
                         .font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
                 }
@@ -1293,7 +1289,7 @@ struct AIModelsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Модели ИИ")
+        .navigationTitle("Модели ИИ").helperScreen("Модели ИИ")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
     }
@@ -1310,7 +1306,7 @@ struct AIModelsView: View {
         Button { Haptics.tap(); pick() } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.white)
+                    Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
                     Text(note).font(.caption).foregroundStyle(Theme.muted).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
@@ -1366,7 +1362,7 @@ struct PlanMeasurementsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Все обмеры")
+        .navigationTitle("Все обмеры").helperScreen("Все обмеры")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -1382,7 +1378,7 @@ struct PlanMeasurementsView: View {
             if row.group != group { group = row.group; lines += ["", group.uppercased()] }
             lines.append("\(row.title): \(text(row))")
         }
-        lines += ["", "Скан и обмеры — приложение АртСтрой. Перед закупкой перепроверьте ключевые размеры рулеткой."]
+        lines += ["", "Скан и обмеры — приложение \(Brand.name). Перед закупкой перепроверьте ключевые размеры рулеткой."]
         return lines.joined(separator: "\n")
     }
 }
@@ -1401,7 +1397,7 @@ struct PlanMaterialsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: item.kind.icon).foregroundStyle(Theme.orange).frame(width: 26)
-                            Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).multilineTextAlignment(.leading)
+                            Text(item.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).multilineTextAlignment(.leading)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
                         }
@@ -1416,7 +1412,7 @@ struct PlanMaterialsView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Материалы и смета")
+        .navigationTitle("Материалы и смета").helperScreen("Материалы и смета")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -1461,7 +1457,7 @@ struct EngineComparisonView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Сравнение движков")
+        .navigationTitle("Сравнение движков").helperScreen("Сравнение движков")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
         .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Сравнение движков") } }
@@ -1545,7 +1541,7 @@ struct DesignRequestSheet: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text(style == nil ? "Стиль — выберите карточку" : "Стиль").font(.headline)
-                        .foregroundStyle(style == nil ? Theme.orange : .white)
+                        .foregroundStyle(style == nil ? Theme.orange : Theme.ink)
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(DesignStyle.all) { item in
                             Button { Haptics.tap(); withAnimation(.snappy) { style = item } } label: {
@@ -1575,7 +1571,7 @@ struct DesignRequestSheet: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Новый дизайн")
+        .navigationTitle("Новый дизайн").helperScreen("Новый дизайн")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
         .sheet(item: $opened) { item in NavigationStack { RenderResultView(image: item.image, title: "Превью · \(style?.title ?? "стиль")") } }
@@ -1591,7 +1587,7 @@ struct DesignRequestSheet: View {
                     ForEach(style.palette, id: \.self) { hex in Circle().fill(Color(hex: hex) ?? .gray).frame(width: 16, height: 16) }
                 }
             }
-            Text(style.summary).font(.subheadline).foregroundStyle(.white.opacity(0.85))
+            Text(style.summary).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.85))
             FlowLayout(spacing: 6) {
                 ForEach(style.materials, id: \.self) { material in
                     Text(material).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6)
@@ -1606,11 +1602,11 @@ struct DesignRequestSheet: View {
             } else if plan != nil && store.photorealAvailable {
                 Button { Task { await makePreview(style) } } label: {
                     HStack(spacing: 8) {
-                        if loadingStyle == style.id { ProgressView().tint(.black) } else { Image(systemName: "eye.fill") }
+                        if loadingStyle == style.id { ProgressView().tint(.white) } else { Image(systemName: "eye.fill") }
                         Text(loadingStyle == style.id ? "ИИ рисует вашу комнату… ~30 с" : "Показать мою комнату в этом стиле").font(.subheadline.weight(.semibold))
                     }
-                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(.black)
-                    .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
+                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
                 .disabled(loadingStyle != nil)
@@ -1664,10 +1660,10 @@ struct StyleCard: View {
                     ProgressView().tint(.white).padding(8).background(.black.opacity(0.5), in: Circle()).padding(6)
                 } else if preview != nil {
                     Text("ИИ").font(.caption2.weight(.heavy)).padding(.horizontal, 7).padding(.vertical, 4)
-                        .background(Theme.orange, in: Capsule()).foregroundStyle(.black).padding(6)
+                        .background(Theme.orange, in: Capsule()).foregroundStyle(Theme.onAccent).padding(6)
                 }
             }
-            Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
+            Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(1)
             Text(style.tagline).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .padding(8)
@@ -1732,7 +1728,7 @@ struct FlowChips: View {
                 Button { Haptics.tap(); selection = item } label: {
                     Text(item).font(.subheadline.weight(.medium)).padding(.horizontal, 14).padding(.vertical, 9)
                         .background(selection == item ? Theme.orange : Theme.panel, in: Capsule())
-                        .foregroundStyle(selection == item ? .black : .white)
+                        .foregroundStyle(selection == item ? Theme.onAccent : Theme.ink)
                 }
                 .buttonStyle(.plain)
             }

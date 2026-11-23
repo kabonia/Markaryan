@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 /// Pictures through the app's OpenRouter key (sk-or-…, OPENROUTER_API_KEY in AIServer.plist).
-/// The same request as the АртСтрой server makes: POST /api/v1/images, the reference picture as `input_references`.
+/// The same request as the app server makes: POST /api/v1/images, the reference picture as `input_references`.
 /// Used when there is no AI server: renders of the exact 3D model, design by photo, pictures by description.
 struct OpenRouterImageClient {
     let apiKey: String

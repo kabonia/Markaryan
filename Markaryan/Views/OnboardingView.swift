@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @FocusState private var focused: Bool
 
     private let slides: [(icon: String, eyebrow: String, title: String, text: String)] = [
-        ("function", "Смета за минуту", "Посчитайте стройку\nдо первого рубля.", "14 калькуляторов материалов и полная смета дома, беседки или металлоконструкций — по актуальному прайсу АртСтроя."),
+        ("function", "Смета за минуту", "Посчитайте стройку\nдо первого рубля.", "14 калькуляторов материалов и полная смета дома, беседки или металлоконструкций — по рыночным ценам вашего города."),
         ("viewfinder", "AR и ИИ", "Измерьте камерой.\nУвидьте результат.", "Замеряйте площадь в AR, размещайте макет плиты или дома на участке и получайте визуализацию будущего объекта.")
     ]
 
@@ -21,8 +21,8 @@ struct OnboardingView: View {
             Circle().fill(Theme.orange.opacity(0.13)).frame(width: 380, height: 380).blur(radius: 50).offset(x: 140, y: -300)
             VStack(spacing: 0) {
                 HStack {
-                    Image("BrandMark").resizable().scaledToFit().frame(width: 34, height: 34)
-                    Text("АРТСТРОЙ").font(.headline).tracking(1.4)
+                    AppMark(size: 34)
+                    Text(Brand.name).font(.headline)
                     Spacer()
                     if page < 2 { Button("Пропустить") { finish() }.font(.subheadline).foregroundStyle(Theme.muted) }
                 }
@@ -49,14 +49,14 @@ struct OnboardingView: View {
                 .padding(.horizontal, 24).padding(.bottom, 20)
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .interactiveDismissDisabled()
     }
 
     private func slide(_ item: (icon: String, eyebrow: String, title: String, text: String)) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             Spacer()
-            Image(systemName: item.icon).font(.system(size: 42, weight: .semibold)).foregroundStyle(.black)
+            Image(systemName: item.icon).font(.system(size: 42, weight: .semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 92, height: 92)
                 .background(Theme.orange, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .shadow(color: Theme.orange.opacity(0.35), radius: 24, y: 10)
@@ -84,7 +84,7 @@ struct OnboardingView: View {
                         Button(preset) { objectName = preset; Haptics.tap() }
                             .font(.caption.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8)
                             .background(objectName == preset ? Theme.orange : Theme.panel, in: Capsule())
-                            .foregroundStyle(objectName == preset ? .black : .white)
+                            .foregroundStyle(objectName == preset ? Theme.onAccent : Theme.ink)
                     }
                 }
             }
