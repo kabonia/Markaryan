@@ -57,7 +57,7 @@ struct CalculatorsView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .background(Theme.background)
-        .navigationTitle("Калькуляторы").helperScreen("Калькуляторы материалов")
+        .navigationTitle("Калькуляторы").helperScreen("Калькуляторы материалов").featureIntro(.calculators)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -130,7 +130,7 @@ struct FullEstimateHubView: View {
                 }.buttonStyle(PremiumCardPressStyle())
             }
             InfoNote(text: "Наша цена формируется из актуального прайса. Она предварительная и уточняется после проекта и выезда на объект.")
-        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").helperScreen("Полные сметы").navigationBarTitleDisplayMode(.inline)
+        }.padding(20) }.background(Theme.background).navigationTitle("Полные сметы").helperScreen("Полные сметы").featureIntro(.fullEstimate).navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -444,7 +444,7 @@ struct CalculatorView: View {
             Text("Значения по умолчанию приведены для примера. Последние введённые размеры запоминаются при сохранении расчёта.").font(.caption).foregroundStyle(Theme.muted)
         }.padding(20) }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background).navigationTitle(kind.title).helperScreen("Калькулятор: \(kind.title)", details: kind.note).navigationBarTitleDisplayMode(.inline)
+            .background(Theme.background).navigationTitle(kind.title).helperScreen("Калькулятор: \(kind.title)", details: kind.note).featureIntro(.calculator).navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focusedField = nil } }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -819,7 +819,7 @@ struct AIVisionStudioView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Визуализация ИИ").helperScreen("Визуализация ИИ")
+        .navigationTitle("Визуализация ИИ").helperScreen("Визуализация ИИ").featureIntro(.facade)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: item) { _, item in Task { await loadPhoto(item) } }
         .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.image]) { importImage($0) }
@@ -1284,7 +1284,7 @@ struct EstimatesTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Сметы").helperScreen("Сметы")
+        .navigationTitle("Сметы").helperScreen("Сметы").featureIntro(.estimates)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

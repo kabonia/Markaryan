@@ -106,7 +106,7 @@ struct HomeView: View {
         }
         .background(HomeBackdrop())
         .toolbar(.hidden, for: .navigationBar)
-        .helperScreen("Главная")
+        .helperScreen("Главная").featureIntro(.home)
         .refreshable { await store.refreshPriceBook(silent: true) }
         .onAppear { if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
     }

@@ -64,7 +64,7 @@ struct PhotoDesignView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото")
+        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото").featureIntro(.photoDesign)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in Task { await load(item) } }
         .sheet(isPresented: $showCamera) { CameraCaptureView(image: $captured).ignoresSafeArea() }

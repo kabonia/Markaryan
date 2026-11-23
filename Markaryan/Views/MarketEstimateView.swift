@@ -112,7 +112,7 @@ struct MarketEstimateView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Смета по рынку").helperScreen("Смета дизайн‑проекта по рынку", details: estimate.map { shareText($0) } ?? "")
+        .navigationTitle("Смета по рынку").helperScreen("Смета дизайн‑проекта по рынку", details: estimate.map { shareText($0) } ?? "").featureIntro(.marketEstimate)
         .navigationBarTitleDisplayMode(.inline)
         .task { if estimate == nil && !loading { await load() } }
     }

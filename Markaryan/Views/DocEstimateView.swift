@@ -57,7 +57,7 @@ struct DocEstimateHubView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Смета по документам").helperScreen("Смета по документам (АР, КР, ТЗ)")
+        .navigationTitle("Смета по документам").helperScreen("Смета по документам (АР, КР, ТЗ)").featureIntro(.docEstimate)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { center.resumeAll() }
     }

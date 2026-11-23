@@ -85,7 +85,7 @@ struct ProjectsTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проект").helperScreen("Проект")
+        .navigationTitle("Проект").helperScreen("Проект").featureIntro(.project)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in

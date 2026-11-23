@@ -254,7 +254,7 @@ struct FloorPlansView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Дизайн").helperScreen("Дизайн")
+        .navigationTitle("Дизайн").helperScreen("Дизайн").featureIntro(.design)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }
         .navigationDestination(item: $store.apartmentToOpen) { id in ApartmentView(apartmentID: id) }

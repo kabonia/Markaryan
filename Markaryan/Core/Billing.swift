@@ -146,7 +146,7 @@ struct BillingView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Тарифы и баланс").helperScreen("Тарифы и баланс")
+        .navigationTitle("Тарифы и баланс").helperScreen("Тарифы и баланс").featureIntro(.billing)
         .navigationBarTitleDisplayMode(.inline)
         .task { await billing.refresh() }
         .refreshable { await billing.refresh() }
