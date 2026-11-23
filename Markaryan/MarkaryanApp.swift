@@ -46,15 +46,22 @@ struct LaunchGateView: View {
                 #endif
             } else {
                 ZStack {
-                    Theme.background.ignoresSafeArea()
-                    Circle().fill(Theme.orange.opacity(0.12)).frame(width: 360, height: 360).blur(radius: 36).offset(x: 110, y: -260)
-                    VStack(spacing: 20) {
-                        AppMark(size: 112).shadow(color: Theme.orange.opacity(0.25), radius: 20, y: 8)
-                        VStack(spacing: 7) {
-                            Text(Brand.name).font(.title2.bold())
-                            Text(Brand.tagline).font(.caption.weight(.medium)).foregroundStyle(Theme.muted)
+                    Theme.heroGradient.ignoresSafeArea()
+                    Circle().fill(Color.white.opacity(0.08)).frame(width: 420, height: 420).blur(radius: 60).offset(x: 120, y: -280)
+                    VStack(spacing: 22) {
+                        Image(systemName: "ruler.fill")
+                            .font(.system(size: 52, weight: .semibold)).rotationEffect(.degrees(-45))
+                            .foregroundStyle(Theme.orange)
+                            .frame(width: 112, height: 112)
+                            .background(.white, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+                            .shadow(color: .black.opacity(0.18), radius: 20, y: 10)
+                        VStack(spacing: 8) {
+                            Text(Brand.name).font(.system(size: 34, weight: .bold)).foregroundStyle(.white)
+                            Text(Brand.tagline).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.8)).multilineTextAlignment(.center)
                         }
-                    }.opacity(revealsLogo ? 1 : 0).scaleEffect(revealsLogo ? 1 : 0.92)
+                    }
+                    .padding(.horizontal, 32)
+                    .opacity(revealsLogo ? 1 : 0).scaleEffect(revealsLogo ? 1 : 0.92)
                 }.transition(.opacity)
             }
         }.task {

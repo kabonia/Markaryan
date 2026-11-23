@@ -28,18 +28,18 @@ enum Brand {
 // MARK: - Theme
 
 enum Theme {
-    // Light, soft palette: cool grey page, white cards with a gentle shadow, graphite text, calm emerald accent.
-    static let background = Color(red: 0.953, green: 0.961, blue: 0.969)     // #F3F5F7
-    static let panel = Color.white
-    static let panelRaised = Color(red: 0.933, green: 0.945, blue: 0.957)    // #EEF1F4
-    static let stroke = Color.black.opacity(0.06)
-    static let ink = Color(red: 0.094, green: 0.129, blue: 0.169)            // #18212B — main text
+    // Soft, calm palette (not stark white): sage-grey page, milky cards, deep green-graphite text, emerald accent.
+    static let background = Color(red: 0.914, green: 0.933, blue: 0.918)     // #E9EEEA
+    static let panel = Color(red: 0.969, green: 0.976, blue: 0.965)          // #F7F9F6
+    static let panelRaised = Color(red: 0.882, green: 0.910, blue: 0.890)    // #E1E8E3
+    static let stroke = Color(red: 0.11, green: 0.16, blue: 0.14).opacity(0.08)
+    static let ink = Color(red: 0.114, green: 0.165, blue: 0.149)            // #1D2A26 — main text
     static let onAccent = Color.white                                         // text on accent fills
     /// Main accent (historic name kept so every screen picks it up).
     static let orange = Color(red: 0.067, green: 0.525, blue: 0.416)         // #11866A emerald
     static let orangeSoft = Color(red: 0.247, green: 0.698, blue: 0.561)     // #3FB28F
-    static let accentTint = Color(red: 0.867, green: 0.945, blue: 0.918)     // #DDF1EA
-    static let muted = Color(red: 0.416, green: 0.455, blue: 0.510)          // #6A7482
+    static let accentTint = Color(red: 0.835, green: 0.918, blue: 0.886)     // #D5EAE2
+    static let muted = Color(red: 0.369, green: 0.420, blue: 0.400)          // #5E6B66
     static let success = Color(red: 0.118, green: 0.620, blue: 0.353)
     static let danger = Color(red: 0.851, green: 0.282, blue: 0.282)
     static let sky = Color(red: 0.243, green: 0.482, blue: 0.980)
