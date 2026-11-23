@@ -112,3 +112,25 @@ test('estimate rows keep sane numbers and real links only', async () => {
   assert.equal(row.sources.length, 1);
   assert.equal(sanitize({ name: 'x', typical: 0 }), null);
 });
+
+test('estimate searches in batches and keeps the lines of a failed batch without a price', async () => {
+  const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
+  const { config } = await import('../src/config.js');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'est-')); const saved = config.dataDir; config.dataDir = dir;
+  const { priceEstimate, setAsk } = await import('../src/estimate.js');
+  const calls = [];
+  setAsk(async (city, batch) => {
+    calls.push(batch.length);
+    if (batch.length > 1 && batch[0].name === 'Позиция 6') throw new Error('prose instead of JSON');
+    if (batch[0].name === 'Позиция 7') throw new Error('nothing found');
+    return batch.map(() => ({ typical: 100, low: 80, high: 150, sources: [] }));
+  });
+  try {
+    const items = Array.from({ length: 12 }, (_, i) => ({ name: `Позиция ${i + 1}`, kind: 'material', unit: 'шт', quantity: 2 }));
+    const result = await priceEstimate({ city: 'Сочи', items });
+    assert.equal(result.items.length, 12);
+    assert.deepEqual(result.items.filter((r) => r.missing).map((r) => r.name), ['Позиция 7']);
+    assert.equal(result.items[5].typical, 100);
+    assert.deepEqual(calls.sort(), [1, 1, 1, 1, 1, 2, 5, 5]);
+  } finally { setAsk(null); config.dataDir = saved; }
+});
