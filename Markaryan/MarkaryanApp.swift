@@ -129,14 +129,14 @@ struct RootView: View {
             NavigationStack { HomeView() }
                 .tabItem { Label("Главная", systemImage: "square.grid.2x2.fill") }
                 .tag(0)
-            NavigationStack { CalculatorsView() }
-                .tabItem { Label("Смета", systemImage: "function") }
+            NavigationStack { EstimatesTabView() }
+                .tabItem { Label("Сметы", systemImage: "doc.text.fill") }
                 .tag(1)
             NavigationStack { FloorPlansView() }
                 .tabItem { Label("Дизайн", systemImage: "cube.transparent.fill") }
                 .tag(2)
-            NavigationStack { ProjectsTabView() }
-                .tabItem { Label("Проект", systemImage: "folder.fill") }
+            NavigationStack { CalculatorsView() }
+                .tabItem { Label("Калькуляторы", systemImage: "function") }
                 .tag(3)
             NavigationStack { ProfileTabView() }
                 .tabItem { Label("Профиль", systemImage: "person.crop.circle") }

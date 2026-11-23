@@ -22,43 +22,47 @@ struct HomeView: View {
                 header
                     .reveal(appeared, delay: 0)
 
-                NavigationLink { DocEstimateHubView() } label: { HomeHeroCard(greeting: greeting) }
-                    .buttonStyle(PremiumCardPressStyle())
-                    .reveal(appeared, delay: 0.05)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(greeting.uppercased()).font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
+                    Text("Что будем делать?").font(.system(.largeTitle, design: .serif, weight: .bold)).tracking(-0.5).foregroundStyle(Theme.ink)
+                }
+                .reveal(appeared, delay: 0.03)
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    NavigationLink { DocEstimateHubView() } label: {
+                        HomeActionTile(icon: "doc.text.magnifyingglass", title: "Рассчитать смету", text: "По чертежам, ТЗ, Excel или списку работ", main: true)
+                    }
+                    Button { store.tab = 2 } label: {
+                        HomeActionTile(icon: "sofa", title: "Дизайн интерьера", text: "По фото или скану комнаты — новый интерьер")
+                    }
+                    Button { store.tab = 3 } label: {
+                        HomeActionTile(icon: "function", title: "Посчитать материалы", text: "Бетон, плитка, кладка, кровля и ещё 10")
+                    }
+                    Button { store.showAR = true } label: {
+                        HomeActionTile(icon: "ruler", title: "Замерить камерой", text: "Длины и площади без рулетки")
+                    }
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                .reveal(appeared, delay: 0.06)
 
                 if let alert = store.priceAlert { PriceAlertBanner(text: alert) { store.priceAlert = nil } }
 
-                VStack(alignment: .leading, spacing: 14) {
-                    HomeSectionHeader(eyebrow: "Инструменты", title: "Что считаем сегодня")
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        Button { store.tab = 2 } label: {
-                            HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан и 3D‑рендер", accent: Theme.orange)
-                        }
-                        NavigationLink { PhotoDesignView() } label: {
-                            HomeToolCard(icon: "camera.aperture", title: "Дизайн по фото", text: "Новый интерьер за минуту", accent: Theme.orange)
-                        }
-                        NavigationLink { FullEstimateHubView() } label: {
-                            HomeToolCard(icon: "house", title: "Смета дома", text: "Типовой расчёт по площади", accent: Theme.orange)
-                        }
-                        Button { store.showAR = true } label: {
-                            HomeToolCard(icon: "ruler", title: "AR‑рулетка", text: "Замеры камерой", accent: Theme.orange)
-                        }
-                        NavigationLink { PhotoCountView() } label: {
-                            HomeToolCard(icon: "square.stack.3d.up", title: "Счёт по фото", text: "Арматура, трубы, доски", accent: Theme.orange)
-                        }
-                        NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
-                            HomeToolCard(icon: "building.2", title: "Фасад и участок", text: "Визуализация экстерьера", accent: Theme.orange)
-                        }
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionHeader(eyebrow: "Ещё", title: "Инструменты")
+                    NavigationLink { PhotoDesignView() } label: { AppTabRow(icon: "camera.aperture", title: "Дизайн по фото", subtitle: "Сфотографируйте комнату — покажем в новом стиле") }
+                    NavigationLink { FullEstimateHubView() } label: { AppTabRow(icon: "house", title: "Типовая смета дома", subtitle: "По площади, без документов") }
+                    NavigationLink { PhotoCountView() } label: { AppTabRow(icon: "square.stack.3d.up", title: "Счёт по фото", subtitle: "Арматура, трубы, доски в пачке") }
+                    NavigationLink { AIVisionStudioView(initialStyle: .object) } label: { AppTabRow(icon: "building.2", title: "Фасад и участок", subtitle: "Визуализация дома, забора, ландшафта") }
+                    Button { HelperCenter.shared.isOpen = true } label: { AppTabRow(icon: "sparkles", title: "Помощник", subtitle: "Нормы, расход, как пользоваться приложением") }
                 }
+                .buttonStyle(PremiumCardPressStyle())
                 .reveal(appeared, delay: 0.1)
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .lastTextBaseline) {
                         HomeSectionHeader(eyebrow: "Быстрый расчёт", title: "Калькуляторы")
                         Spacer()
-                        Button("Все") { store.tab = 1 }.font(.subheadline.weight(.semibold))
+                        Button("Все") { store.tab = 3 }.font(.subheadline.weight(.semibold))
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
@@ -669,4 +673,38 @@ struct ProjectPhotoDiaryView: View {
             save(image); item = nil
         } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
     }
+}
+
+/// One of the four main actions on the home screen: big, clear, with a line of what it does.
+struct HomeActionTile: View {
+    let icon: String
+    let title: String
+    let text: String
+    var main = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Image(systemName: icon).font(.system(size: 22, weight: .medium)).foregroundStyle(main ? Theme.goldLight : Theme.orange)
+                .frame(width: 48, height: 48)
+                .background(main ? Color.white.opacity(0.12) : Theme.accentTint, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            Spacer(minLength: 16)
+            Text(title).font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(main ? .white : Theme.ink).lineLimit(2).multilineTextAlignment(.leading)
+            Text(text).font(.caption).foregroundStyle(main ? .white.opacity(0.8) : Theme.muted).lineLimit(2).multilineTextAlignment(.leading).padding(.top, 4)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 172, maxHeight: 172, alignment: .topLeading)
+        .background {
+            if main {
+                RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.heroGradient)
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
+                    .shadow(color: Theme.orange.opacity(0.25), radius: 14, y: 7)
+            }
+        }
+        .modifier(HomeTileCard(main: main))
+    }
+}
+
+private struct HomeTileCard: ViewModifier {
+    let main: Bool
+    func body(content: Content) -> some View { if main { content } else { content.panelCard(22) } }
 }

@@ -18,39 +18,7 @@ struct CalculatorsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "Расчёты", title: "Сметы и калькуляторы")
-
-                NavigationLink { DocEstimateHubView() } label: {
-                    HStack(spacing: 15) {
-                        Image(systemName: "doc.text.magnifyingglass").font(.title3).foregroundStyle(Theme.orange).frame(width: 50, height: 50).background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Смета по документам").font(.headline).foregroundStyle(.white)
-                            Text("АР, КР, ТЗ, Excel или перечень работ").font(.caption).foregroundStyle(.white.opacity(0.8))
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.8))
-                    }
-                    .padding(18)
-                    .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
-                }
-                .buttonStyle(PremiumCardPressStyle())
-
-                NavigationLink { FullEstimateHubView() } label: {
-                    HStack(spacing: 15) {
-                        Image(systemName: "house").font(.title3).foregroundStyle(Theme.orange).frame(width: 50, height: 50)
-                            .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Типовая смета объекта").font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
-                            Text("Дом, беседка, металлоконструкции").font(.caption).foregroundStyle(Theme.muted)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
-                    }
-                    .padding(18)
-                    .panelCard(22)
-                }
-                .buttonStyle(PremiumCardPressStyle())
+                SectionTitle(eyebrow: "Материалы", title: "Калькуляторы")
 
                 HStack(spacing: 12) {
                     NavigationLink { CalculationHistoryView() } label: {
@@ -89,7 +57,7 @@ struct CalculatorsView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .background(Theme.background)
-        .navigationTitle("Смета").helperScreen("Смета")
+        .navigationTitle("Калькуляторы").helperScreen("Калькуляторы материалов")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -1284,4 +1252,74 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - «Сметы»: every way to get an estimate in one tab
+
+struct EstimatesTabView: View {
+    @EnvironmentObject private var store: AppStore
+    @ObservedObject private var docs = DocEstimateCenter.shared
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                SectionTitle(eyebrow: "Сметы", title: "Сколько это стоит")
+                NavigationLink { DocEstimateHubView() } label: {
+                    EstimateEntry(icon: "doc.text.magnifyingglass", title: "Смета по документам", text: "Загрузите АР, КР, ТЗ, Excel или список работ — объёмы, материалы и цены вашего города", main: true)
+                }
+                NavigationLink { FullEstimateHubView() } label: {
+                    EstimateEntry(icon: "house", title: "Типовая смета объекта", text: "Дом, беседка или металлоконструкция по площади — за минуту, без документов")
+                }
+                NavigationLink { CalculationHistoryView() } label: {
+                    EstimateEntry(icon: "clock.arrow.circlepath", title: "Мои расчёты", text: store.calculations.isEmpty ? "Здесь появятся сохранённые расчёты и сметы" : "Сохранено: \(store.calculations.count)")
+                }
+                if !docs.saved.isEmpty || !docs.running.isEmpty {
+                    NavigationLink { DocEstimateHubView() } label: {
+                        EstimateEntry(icon: "tray.full", title: "Мои сметы по документам", text: docs.running.isEmpty ? "Готово: \(docs.saved.count)" : "Считается: \(docs.running.count) · готово: \(docs.saved.count)")
+                    }
+                }
+                InfoNote(text: "Смета дизайн‑проекта по рынку — в разделе «Дизайн», после выбора стиля комнаты.")
+            }
+            .buttonStyle(PremiumCardPressStyle())
+            .padding(20)
+        }
+        .background(Theme.background)
+        .navigationTitle("Сметы").helperScreen("Сметы")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct EstimateEntry: View {
+    let icon: String
+    let title: String
+    let text: String
+    var main = false
+
+    var body: some View {
+        HStack(spacing: 15) {
+            Image(systemName: icon).font(.title3).foregroundStyle(main ? Theme.orange : Theme.orange)
+                .frame(width: 50, height: 50)
+                .background(main ? Color.white : Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(main ? .white : Theme.ink)
+                Text(text).font(.caption).foregroundStyle(main ? .white.opacity(0.82) : Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(main ? .white.opacity(0.8) : Theme.muted)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            if main {
+                RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.heroGradient)
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
+            }
+        }
+        .modifier(EntryCard(main: main))
+    }
+}
+
+private struct EntryCard: ViewModifier {
+    let main: Bool
+    func body(content: Content) -> some View { if main { content } else { content.panelCard(22) } }
 }
