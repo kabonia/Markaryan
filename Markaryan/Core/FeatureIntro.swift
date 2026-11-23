@@ -155,8 +155,6 @@ struct FeatureIntroSheet: View {
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
             FeatureScene(kind: intro.scene).frame(height: 320)
-            LinearGradient(colors: [.clear, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 56)
-                .frame(maxHeight: .infinity, alignment: .bottom)
             HStack(spacing: 8) {
                 Image(systemName: intro.icon).font(.caption.weight(.bold))
                 Text("ПОДСКАЗКА · \(Brand.name.uppercased())").font(.caption2.weight(.heavy)).tracking(1.4)
@@ -169,6 +167,9 @@ struct FeatureIntroSheet: View {
             .padding(.top, 26).padding(.leading, 20)
         }
         .frame(height: 320)
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 34, bottomTrailingRadius: 34, style: .continuous))
+        .overlay(UnevenRoundedRectangle(bottomLeadingRadius: 34, bottomTrailingRadius: 34, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 1))
+        .shadow(color: Theme.ink.opacity(0.18), radius: 18, y: 10)
     }
 
     private func stepRow(index: Int, text: String, last: Bool) -> some View {
