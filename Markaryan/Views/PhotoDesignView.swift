@@ -132,7 +132,7 @@ struct PhotoDesignView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Что на фото").font(.headline)
-                    .foregroundStyle(room == nil ? Theme.sky : .white)
+                    .foregroundStyle(room == nil ? Theme.sky : Theme.ink)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(PhotoDesignRoom.allCases) { item in
@@ -140,7 +140,7 @@ struct PhotoDesignView: View {
                                 Label(item.title, systemImage: item.icon).font(.subheadline.weight(.medium))
                                     .padding(.horizontal, 12).padding(.vertical, 9)
                                     .background(room == item ? Theme.sky : Theme.panel, in: Capsule())
-                                    .foregroundStyle(room == item ? .black : .white)
+                                    .foregroundStyle(room == item ? Theme.onAccent : Theme.ink)
                             }
                             .buttonStyle(.plain)
                         }
@@ -157,7 +157,7 @@ struct PhotoDesignView: View {
                                 Text(item.subtitle).font(.caption2).foregroundStyle(mode == item ? .black.opacity(0.7) : Theme.muted).fixedSize(horizontal: false, vertical: true)
                             }
                             .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading).padding(12)
-                            .foregroundStyle(mode == item ? .black : .white)
+                            .foregroundStyle(mode == item ? Theme.onAccent : Theme.ink)
                             .background(mode == item ? Theme.sky : Theme.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                         .buttonStyle(.plain)
@@ -166,7 +166,7 @@ struct PhotoDesignView: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 Text(mode == .redesign ? "Стиль" : "Стиль (необязательно)").font(.headline)
-                    .foregroundStyle(mode == .redesign && style == nil ? Theme.sky : .white)
+                    .foregroundStyle(mode == .redesign && style == nil ? Theme.sky : Theme.ink)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         if mode == .refine {

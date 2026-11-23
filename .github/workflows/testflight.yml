@@ -28,7 +28,7 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
-      AI_SERVER_PLIST: ${{ secrets.AI_SERVER_PLIST }}
+      AI_SERVER_PLIST: ${{ secrets.SMETAPRO_SERVER_PLIST || secrets.AI_SERVER_PLIST }}
       BUNDLE_ID: com.sochiart.markaryan
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
@@ -45,6 +45,7 @@ jobs:
             exit 1
           fi
 
+      # Секрет SMETAPRO_SERVER_PLIST (сервер СметаПро), если задан, важнее старого AI_SERVER_PLIST.
       - name: Настоящий AIServer.plist из секрета
         run: |
           file=Markaryan/AIServer.plist

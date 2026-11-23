@@ -118,7 +118,7 @@ struct MarketEstimateView: View {
     }
 
     private func load() async {
-        guard let base = AIServerConfig.baseURL else { error = "Поиск цен работает через сервер приложения — он не подключён в этой сборке."; return }
+        guard let base = AIServerConfig.marketURL else { error = "Поиск цен работает через сервер приложения — он не подключён в этой сборке."; return }
         loading = true; error = nil
         defer { loading = false }
         do {

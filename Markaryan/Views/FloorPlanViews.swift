@@ -728,7 +728,7 @@ struct FloorPlanDetailView: View {
         let blocked = (button.action == .buildPresentation && (isRendering || isComparing)) || (button.action == .createDesign && isGenerating)
         return Button { perform(button.action, plan: plan) } label: {
             HStack(spacing: 10) {
-                if busy { ProgressView().tint(.black) } else { Image(systemName: button.icon) }
+                if busy { ProgressView().tint(.white) } else { Image(systemName: button.icon) }
                 Text(busy ? (progressText ?? "Готовим презентацию…") : button.title).font(.headline).lineLimit(2)
             }
             .frame(maxWidth: .infinity).padding(16).foregroundStyle(Theme.onAccent)
@@ -881,7 +881,7 @@ struct FloorPlanDetailView: View {
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button { Haptics.tap(); withAnimation(.snappy) { action() } } label: {
             Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
-                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).foregroundStyle(selected ? .black : .white)
+                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).foregroundStyle(selected ? Theme.onAccent : Theme.ink)
         }
     }
 
@@ -1170,7 +1170,7 @@ struct PlanStepBar: View {
                 Button { Haptics.tap(); withAnimation(.snappy(duration: 0.32)) { step = item } } label: {
                     VStack(spacing: 5) {
                         ZStack {
-                            Circle().fill(selected ? Color.black.opacity(0.18) : Theme.panelRaised)
+                            Circle().fill(selected ? Color.white.opacity(0.22) : Theme.panelRaised)
                             if done.contains(item) && !selected {
                                 Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.orange)
                             } else {
@@ -1182,7 +1182,7 @@ struct PlanStepBar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
-                    .foregroundStyle(selected ? Color.black : Color.white)
+                    .foregroundStyle(selected ? Theme.onAccent : Theme.ink)
                     .background {
                         if selected {
                             RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.orange)
@@ -1541,7 +1541,7 @@ struct DesignRequestSheet: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text(style == nil ? "Стиль — выберите карточку" : "Стиль").font(.headline)
-                        .foregroundStyle(style == nil ? Theme.orange : .white)
+                        .foregroundStyle(style == nil ? Theme.orange : Theme.ink)
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(DesignStyle.all) { item in
                             Button { Haptics.tap(); withAnimation(.snappy) { style = item } } label: {
@@ -1602,7 +1602,7 @@ struct DesignRequestSheet: View {
             } else if plan != nil && store.photorealAvailable {
                 Button { Task { await makePreview(style) } } label: {
                     HStack(spacing: 8) {
-                        if loadingStyle == style.id { ProgressView().tint(.black) } else { Image(systemName: "eye.fill") }
+                        if loadingStyle == style.id { ProgressView().tint(.white) } else { Image(systemName: "eye.fill") }
                         Text(loadingStyle == style.id ? "ИИ рисует вашу комнату… ~30 с" : "Показать мою комнату в этом стиле").font(.subheadline.weight(.semibold))
                     }
                     .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
@@ -1728,7 +1728,7 @@ struct FlowChips: View {
                 Button { Haptics.tap(); selection = item } label: {
                     Text(item).font(.subheadline.weight(.medium)).padding(.horizontal, 14).padding(.vertical, 9)
                         .background(selection == item ? Theme.orange : Theme.panel, in: Capsule())
-                        .foregroundStyle(selection == item ? .black : .white)
+                        .foregroundStyle(selection == item ? Theme.onAccent : Theme.ink)
                 }
                 .buttonStyle(.plain)
             }

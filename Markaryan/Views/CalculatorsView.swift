@@ -594,7 +594,7 @@ struct AIAssistantView: View {
                             Text(message.text.isEmpty && message.id == streamingID ? "…" : message.text)
                                 .textSelection(.enabled)
                                 .font(.body)
-                                .foregroundStyle(message.role == .client ? .black : .white)
+                                .foregroundStyle(message.role == .client ? Theme.onAccent : Theme.ink)
                             if message.role == .assistant && !message.links.isEmpty {
                                 ForEach(message.links) { link in
                                     if let destination = link.destination {

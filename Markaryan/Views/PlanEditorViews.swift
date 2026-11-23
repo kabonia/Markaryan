@@ -153,7 +153,7 @@ struct FurnitureEditorView: View {
                             Text(item.name).font(.caption.weight(.semibold)).lineLimit(1)
                                 .padding(.horizontal, 12).padding(.vertical, 8)
                                 .background(selected == index ? Theme.orange : (flagged.contains(index) ? Theme.danger.opacity(0.35) : Theme.panel), in: Capsule())
-                                .foregroundStyle(selected == index ? Color.black : Color.white)
+                                .foregroundStyle(selected == index ? Theme.onAccent : Theme.ink)
                         }
                         .buttonStyle(.plain)
                     }
@@ -209,7 +209,7 @@ struct FurnitureEditorView: View {
         Button { Haptics.tap(); action() } label: {
             Image(systemName: icon).font(.body.weight(.semibold)).frame(width: 44, height: 44)
                 .background(Theme.panelRaised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .foregroundStyle(destructive ? Theme.danger : Color.white)
+                .foregroundStyle(destructive ? Theme.danger : Theme.ink)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

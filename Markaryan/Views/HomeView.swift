@@ -552,7 +552,7 @@ struct ProjectBudgetTrackerView: View {
                     HStack {
                         Text(remaining < 0 ? "Перерасход" : "Остаток").fontWeight(.semibold)
                         Spacer()
-                        Text(CalculationEngine.money(abs(remaining))).fontWeight(.bold).monospacedDigit().foregroundStyle(remaining < 0 ? Theme.danger : .white)
+                        Text(CalculationEngine.money(abs(remaining))).fontWeight(.bold).monospacedDigit().foregroundStyle(remaining < 0 ? Theme.danger : Theme.ink)
                     }
                 }.font(.subheadline)
             }

@@ -84,7 +84,7 @@ struct OnboardingView: View {
                         Button(preset) { objectName = preset; Haptics.tap() }
                             .font(.caption.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8)
                             .background(objectName == preset ? Theme.orange : Theme.panel, in: Capsule())
-                            .foregroundStyle(objectName == preset ? .black : .white)
+                            .foregroundStyle(objectName == preset ? Theme.onAccent : Theme.ink)
                     }
                 }
             }
