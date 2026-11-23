@@ -759,7 +759,6 @@ struct Room3DView: View {
                     .padding(.horizontal, 12).padding(.vertical, 7).background(.ultraThinMaterial, in: Capsule())
                 HStack(spacing: 10) {
                     Button { scene = Room3DBuilder.scene(plan: plan, proposal: proposal, mode: mode) } label: { SecondaryActionLabel(title: "Сбросить вид", icon: "arrow.counterclockwise") }
-                    Button { share() } label: { SecondaryActionLabel(title: "Поделиться", icon: "square.and.arrow.up") }
                 }
                 .buttonStyle(PremiumPressStyle())
             }

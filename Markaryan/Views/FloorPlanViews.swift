@@ -631,7 +631,7 @@ struct FloorPlanDetailView: View {
             } else if flow.conceptReady && !isRendering {
                 Text(flow.canRender
                      ? "ИИ превратит точную 3D‑модель комнаты в фотореалистичный рендер в стиле «\(proposal.style)», не сдвигая стены и мебель. Около 1–2 минут."
-                     : "Фотореализм сейчас недоступен — в PDF войдёт точная 3D‑модель комнаты.")
+                     : "Фотореализм сейчас недоступен — PDF соберётся с планами и концепцией, без визуализаций.")
                     .font(.caption).foregroundStyle(Theme.muted)
             }
         } else {
@@ -770,9 +770,6 @@ struct FloorPlanDetailView: View {
         Menu {
             Button { newName = plan?.name ?? ""; showRename = true } label: { Label("Переименовать", systemImage: "pencil") }
             Button { show3D = true } label: { Label("3D‑просмотр комнаты", systemImage: "rotate.3d") }
-            if let plan, let url = store.planModelURL(plan) {
-                Button { modelURL = url } label: { Label("3D‑модель скана (USDZ)", systemImage: "cube") }
-            }
             if let plan {
                 Button { sharePlan(plan) } label: { Label("Поделиться планом", systemImage: "square.and.arrow.up") }
             }
@@ -946,11 +943,9 @@ struct FloorPlanDetailView: View {
         let proposal = original.placed(in: plan)
         let room = RoomKind.detect(plan: plan, proposal: proposal)
 
-        progressText = "Строим точную 3D‑модель по скану…"
+        progressText = "Готовим сцену по скану…"
         await store.refreshAICapabilities()
-        // 3D plan and isometry: ONLY the exact model (no AI) — walls, openings and layout 1:1 with the scan.
-        let top = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .overhead, size: CGSize(width: 1600, height: 1200))
-        let iso = Room3DBuilder.snapshot(plan: plan, proposal: proposal, mode: .top, size: CGSize(width: 1600, height: 1200))
+        // The exact model is only a reference for the AI: the person gets photorealistic pictures, never the model itself.
         // Four views, as a design studio delivers: from the entrance and from the other corners.
         let shots = Array(Room3DBuilder.interiorShots(plan: plan, proposal: proposal).prefix(4))
         // Exact interior renders with auto-exposure; burnt-out or black frames are thrown away.
@@ -985,7 +980,6 @@ struct FloorPlanDetailView: View {
                 let note = photos[index].approximate ? ", пропорции ≈ скану" : ""
                 interiors.append((title: "\(item.title) · фотореализм (\(photos[index].title)\(note))", image: image))
             }
-            interiors.append((title: "\(item.title) · точная 3D‑модель", image: item.image))
         }
         let rejected = exact.indices.filter { photos[$0].image == nil && photos[$0].rejected }.count
         let failures = exact.indices.compactMap { photos[$0].image == nil ? photos[$0].failure : nil }
@@ -994,13 +988,10 @@ struct FloorPlanDetailView: View {
         let measured = DrawingsPDF.planPicture(plan: plan, proposal: nil, furniture: false)
         let layout = proposal.furniture.isEmpty ? nil : DrawingsPDF.planPicture(plan: plan, proposal: proposal, furniture: true)
         let engineering = DrawingsPDF.engineeringPicture(plan: plan, proposal: proposal)
-        let content = DesignPresentationContent(projectName: store.projectDisplayName, plan: plan, proposal: proposal, roomKind: room, measuredPlan: measured, planImage: layout, engineering: engineering, topRender: top, isoRender: iso, interiorPhotos: interiors)
+        let content = DesignPresentationContent(projectName: store.projectDisplayName, plan: plan, proposal: proposal, roomKind: room, measuredPlan: measured, planImage: layout, engineering: engineering, topRender: nil, isoRender: nil, interiorPhotos: interiors)
         do {
             let url = try DesignPresentationPDF.render(content)
-            var gallery: [(title: String, image: UIImage)] = []
-            if let top { gallery.append((title: "3D‑план сверху · точная модель", image: top)) }
-            if let iso { gallery.append((title: "Объёмный вид · точная модель", image: iso)) }
-            gallery += interiors
+            let gallery = interiors
             // Kept with the concept: next time the plan opens with this presentation, without new renders.
             var pdf = url
             if let saved = try? store.savePresentation(pdf: url, pictures: gallery, engine: photos.compactMap { $0.image == nil ? nil : $0.title }.first, proposalID: original.id, planID: plan.id),
@@ -1012,9 +1003,9 @@ struct FloorPlanDetailView: View {
             if proposal.furniture.isEmpty {
                 error = "В этой концепции ИИ не прислал расстановку — в презентации только обмерный план и пустая комната. Нажмите «Ещё вариант дизайна»."
             } else if let failure = failures.first, store.photorealAvailable {
-                error = "ИИ не нарисовал \(failures.count) из \(exact.count) фото: \(failure) Вместо них в презентации точная 3D‑модель."
+                error = "ИИ не нарисовал \(failures.count) из \(exact.count) фото: \(failure) Нажмите «Обновить», чтобы попробовать ещё раз."
             } else if rejected > 0 && store.photorealAvailable {
-                error = "ИИ исказил стены или окна на \(rejected) из \(exact.count) фото — их заменила точная 3D‑модель. Нажмите «Обновить рендер» ещё раз или выберите другую модель рендера на шаге «Дизайн»."
+                error = "ИИ исказил стены или окна на \(rejected) из \(exact.count) фото — эти кадры не вошли в презентацию. Нажмите «Обновить рендер» ещё раз или выберите другую модель рендера на шаге «Дизайн»."
             }
             Haptics.success()
             modelURL = pdf
@@ -1428,10 +1419,8 @@ struct EngineComparisonView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Один и тот же кадр точной 3D‑модели через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от \(Int((GeometryCheck.threshold * 100).rounded())) %.")
+                Text("Один и тот же кадр комнаты через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от \(Int((GeometryCheck.threshold * 100).rounded())) %.")
                     .font(.footnote).foregroundStyle(Theme.muted)
-                Text("ТОЧНАЯ 3D‑МОДЕЛЬ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
-                Image(uiImage: comparison.reference).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 ForEach(comparison.results) { result in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -1444,7 +1433,7 @@ struct EngineComparisonView: View {
                                 .onTapGesture { opened = FloorPlanDetailView.PhotoSheetItem(image: image) }
                         }
                         if let score = result.score {
-                            Label("Совпадение с моделью: \(Int((score * 100).rounded())) %", systemImage: score >= GeometryCheck.threshold ? "checkmark.seal.fill" : "xmark.seal")
+                            Label("Совпадение со сканом: \(Int((score * 100).rounded())) %", systemImage: score >= GeometryCheck.threshold ? "checkmark.seal.fill" : "xmark.seal")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(score >= GeometryCheck.threshold ? Theme.success : Theme.danger)
                         }
