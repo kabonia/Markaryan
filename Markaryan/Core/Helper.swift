@@ -199,10 +199,11 @@ struct HelperButton: View {
         Button { Haptics.tap(); helper.isOpen = true } label: {
             Image(systemName: "sparkles")
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.onAccent)
+                .foregroundStyle(Theme.goldLight)
                 .frame(width: 54, height: 54)
                 .background(Theme.heroGradient, in: Circle())
-                .shadow(color: Theme.orange.opacity(0.35), radius: 12, y: 5)
+                .overlay(Circle().strokeBorder(Theme.goldHairline, lineWidth: 1))
+                .shadow(color: Theme.orange.opacity(0.35), radius: 14, y: 6)
         }
         .accessibilityLabel("ИИ‑помощник")
     }

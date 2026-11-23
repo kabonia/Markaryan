@@ -102,9 +102,11 @@ struct CalculatorRow: View {
     let used: Bool
     var body: some View {
         HStack(spacing: 15) {
-            Image(systemName: kind.icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 42, height: 42).background(Theme.orange.opacity(0.11), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            Image(systemName: kind.icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 44, height: 44)
+                .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.orange.opacity(0.12), lineWidth: 0.6))
             VStack(alignment: .leading, spacing: 4) {
-                Text(kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                Text(kind.title).font(.system(.subheadline, design: .serif, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(kind.summary).font(.caption).foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 0)
@@ -123,9 +125,10 @@ struct CompactEstimateCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange)
+            Image(systemName: icon).font(.title3).foregroundStyle(Theme.gold)
+                .frame(width: 40, height: 40).background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Spacer(minLength: 2)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+            Text(title).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
             Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 111, alignment: .topLeading)
