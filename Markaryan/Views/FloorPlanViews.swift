@@ -272,7 +272,7 @@ struct DesignStudioHero: View {
                 .rotationEffect(.degrees(-5))
                 .offset(x: 150, y: -70)
                 .shadow(color: .black.opacity(0.35), radius: 18, y: 10)
-            Circle().fill(Theme.orange.opacity(0.22)).frame(width: 200, height: 200).blur(radius: 40).offset(x: 170, y: -120)
+            Glow(color: Theme.orange.opacity(0.28), size: 280).offset(x: 170, y: -120)
             VStack(alignment: .leading, spacing: 8) {
                 Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.gold)
                 Text("Любое помещение —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)

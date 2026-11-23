@@ -68,10 +68,12 @@ struct PanelCardModifier: ViewModifier {
     var fill: Color = Theme.panel
     func body(content: Content) -> some View {
         content
-            .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            // The shadow belongs to the card shape only (not to every glyph inside): much cheaper while scrolling.
+            .background {
+                RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill)
+                    .shadow(color: Color(red: 0.25, green: 0.20, blue: 0.10).opacity(fill == Theme.panel ? 0.08 : 0), radius: 14, y: 6)
+            }
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.6))
-            .shadow(color: Color(red: 0.25, green: 0.20, blue: 0.10).opacity(fill == Theme.panel ? 0.07 : 0), radius: 18, y: 7)
-            .shadow(color: Color(red: 0.25, green: 0.20, blue: 0.10).opacity(fill == Theme.panel ? 0.04 : 0), radius: 2, y: 1)
     }
 }
 

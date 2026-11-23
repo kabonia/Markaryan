@@ -19,6 +19,52 @@ import StoreKit
     }
 }
 
+/// The launch screen continued: the same gold logo on the dark backdrop, the name appears and a gold ruler measures the load.
+struct SplashView: View {
+    let revealed: Bool
+    @State private var measured = false
+    var body: some View {
+        ZStack {
+            Color("LaunchBackground").ignoresSafeArea()
+            Lux.backdrop.ignoresSafeArea().opacity(revealed ? 1 : 0)
+            RadialGradient(colors: [Lux.goldMid.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 260)
+                .ignoresSafeArea().opacity(revealed ? 1 : 0)
+            Image("LaunchLogo").resizable().frame(width: 240, height: 240)
+                .scaleEffect(revealed ? 1.04 : 1)
+            VStack(spacing: 10) {
+                Text(Brand.name).font(.system(size: 34, weight: .bold, design: .serif)).foregroundStyle(Lux.goldGradient)
+                Text("Сметы · замеры · дизайн").font(.footnote.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.goldLight.opacity(0.8))
+                SplashRuler(progress: measured ? 1 : 0).frame(width: 200, height: 18).padding(.top, 14)
+            }
+            .offset(y: 190)
+            .opacity(revealed ? 1 : 0).offset(y: revealed ? 0 : 10)
+        }
+        .onAppear { withAnimation(.easeInOut(duration: 1.1).delay(0.1)) { measured = true } }
+    }
+}
+
+/// A thin gold ruler that fills like a progress bar.
+struct SplashRuler: View, Animatable {
+    var progress: Double
+    var animatableData: Double { get { progress } set { progress = newValue } }
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(.white.opacity(0.10)).frame(height: 3).frame(maxHeight: .infinity, alignment: .bottom)
+                Capsule().fill(Lux.goldGradient).frame(width: w * progress, height: 3).frame(maxHeight: .infinity, alignment: .bottom)
+                    .shadow(color: Lux.goldBright.opacity(0.7), radius: 4)
+                ForEach(0...20, id: \.self) { i in
+                    let x = w * Double(i) / 20
+                    Rectangle().fill(Double(i) / 20 <= progress ? Lux.goldBright : .white.opacity(0.25))
+                        .frame(width: 1, height: i % 5 == 0 ? 12 : 6)
+                        .position(x: x, y: geo.size.height - 3 - (i % 5 == 0 ? 6 : 3))
+                }
+            }
+        }
+    }
+}
+
 /// Short branded splash. The price book is refreshed in the background, so a slow network never blocks the launch.
 struct LaunchGateView: View {
     @EnvironmentObject private var store: AppStore
@@ -45,30 +91,14 @@ struct LaunchGateView: View {
                 mainApp
                 #endif
             } else {
-                ZStack {
-                    Theme.heroGradient.ignoresSafeArea()
-                    Circle().fill(Color.white.opacity(0.08)).frame(width: 420, height: 420).blur(radius: 60).offset(x: 120, y: -280)
-                    VStack(spacing: 22) {
-                        Image(systemName: "ruler.fill")
-                            .font(.system(size: 52, weight: .semibold)).rotationEffect(.degrees(-45))
-                            .foregroundStyle(Theme.orange)
-                            .frame(width: 112, height: 112)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-                            .shadow(color: .black.opacity(0.18), radius: 20, y: 10)
-                        VStack(spacing: 8) {
-                            Text(Brand.name).font(.system(size: 34, weight: .bold)).foregroundStyle(.white)
-                            Text(Brand.tagline).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.8)).multilineTextAlignment(.center)
-                        }
-                    }
-                    .padding(.horizontal, 32)
-                    .opacity(revealsLogo ? 1 : 0).scaleEffect(revealsLogo ? 1 : 0.92)
-                }.transition(.opacity)
+                SplashView(revealed: revealsLogo)
+                    .transition(.opacity)
             }
         }.task {
             Task { await store.refreshPriceBook(silent: true) }
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { revealsLogo = true }
-            try? await Task.sleep(for: .milliseconds(900))
-            withAnimation(.easeInOut(duration: 0.38)) { opensApp = true }
+            try? await Task.sleep(for: .milliseconds(1250))
+            withAnimation(.easeInOut(duration: 0.45)) { opensApp = true }
             store.track("app_open")
         }
     }
