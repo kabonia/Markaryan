@@ -82,8 +82,9 @@ struct PrimaryButton: View {
         Button { Haptics.tap(); action() } label: {
             HStack { Text(title).fontWeight(.semibold); Spacer(); Image(systemName: icon) }
                 .padding(18).foregroundStyle(Theme.onAccent)
-                .background(Theme.orange, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: Theme.orange.opacity(0.22), radius: 12, y: 5)
+                .background(Theme.accentGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
+                .shadow(color: Theme.orange.opacity(0.28), radius: 14, y: 6)
         }
         .buttonStyle(PremiumPressStyle())
     }
@@ -95,6 +96,7 @@ struct SecondaryActionLabel: View {
     var body: some View {
         Label(title, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
             .frame(maxWidth: .infinity).padding(15).background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.orange.opacity(0.14), lineWidth: 0.6))
     }
 }
 struct PremiumPressStyle: ButtonStyle {
@@ -111,7 +113,7 @@ struct PremiumCardPressStyle: ButtonStyle {
 struct SectionTitle: View {
     let eyebrow: String
     let title: String
-    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.uppercased()).font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(Theme.orange); Text(title).font(.title2.bold()).tracking(-0.5).foregroundStyle(Theme.ink) }.accessibilityElement(children: .combine) }
+    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.uppercased()).font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold); Text(title).font(.system(.title2, design: .serif, weight: .bold)).tracking(-0.3).foregroundStyle(Theme.ink) }.accessibilityElement(children: .combine) }
 }
 struct InfoNote: View {
     let text: String

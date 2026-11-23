@@ -28,28 +28,39 @@ enum Brand {
 // MARK: - Theme
 
 enum Theme {
-    // Soft, calm palette (not stark white): sage-grey page, milky cards, deep green-graphite text, emerald accent.
-    static let background = Color(red: 0.914, green: 0.933, blue: 0.918)     // #E9EEEA
-    static let panel = Color(red: 0.969, green: 0.976, blue: 0.965)          // #F7F9F6
-    static let panelRaised = Color(red: 0.882, green: 0.910, blue: 0.890)    // #E1E8E3
-    static let stroke = Color(red: 0.11, green: 0.16, blue: 0.14).opacity(0.08)
-    static let ink = Color(red: 0.114, green: 0.165, blue: 0.149)            // #1D2A26 — main text
+    // «Премиум‑изумруд»: warm ivory page, milky cards, deep emerald‑graphite text, emerald accent, gold details.
+    static let background = Color(red: 0.953, green: 0.941, blue: 0.910)     // #F3F0E8 warm ivory
+    static let panel = Color(red: 0.992, green: 0.988, blue: 0.973)          // #FDFCF8 milky card
+    static let panelRaised = Color(red: 0.918, green: 0.898, blue: 0.851)    // #EAE5D9 sand
+    static let stroke = Color(red: 0.24, green: 0.20, blue: 0.12).opacity(0.10)
+    static let ink = Color(red: 0.086, green: 0.141, blue: 0.122)            // #16241F — main text
     static let onAccent = Color.white                                         // text on accent fills
     /// Main accent (historic name kept so every screen picks it up).
-    static let orange = Color(red: 0.067, green: 0.525, blue: 0.416)         // #11866A emerald
-    static let orangeSoft = Color(red: 0.247, green: 0.698, blue: 0.561)     // #3FB28F
-    static let accentTint = Color(red: 0.835, green: 0.918, blue: 0.886)     // #D5EAE2
-    static let muted = Color(red: 0.369, green: 0.420, blue: 0.400)          // #5E6B66
-    static let success = Color(red: 0.118, green: 0.620, blue: 0.353)
-    static let danger = Color(red: 0.851, green: 0.282, blue: 0.282)
-    static let sky = Color(red: 0.243, green: 0.482, blue: 0.980)
+    static let orange = Color(red: 0.059, green: 0.420, blue: 0.333)         // #0F6B55 deep emerald
+    static let orangeSoft = Color(red: 0.180, green: 0.612, blue: 0.486)     // #2E9C7C
+    static let accentTint = Color(red: 0.867, green: 0.929, blue: 0.898)     // #DDEDE5
+    static let muted = Color(red: 0.400, green: 0.392, blue: 0.361)          // #66645C warm grey
+    /// Gold details: eyebrows, badges, hairlines on hero cards.
+    static let gold = Color(red: 0.580, green: 0.435, blue: 0.157)           // #946F28 (readable on ivory)
+    static let goldLight = Color(red: 0.902, green: 0.784, blue: 0.533)      // #E6C888 (on emerald)
+    static let goldTint = Color(red: 0.965, green: 0.925, blue: 0.835)       // #F6ECD5
+    static let success = Color(red: 0.118, green: 0.560, blue: 0.330)
+    static let danger = Color(red: 0.780, green: 0.239, blue: 0.220)
+    static let sky = Color(red: 0.204, green: 0.420, blue: 0.788)
     static let sage = Color(red: 0.494, green: 0.639, blue: 0.353)
 
     /// Hero cards: deep emerald gradient with white text.
     static let heroGradient = LinearGradient(
-        colors: [Color(red: 0.055, green: 0.420, blue: 0.341), Color(red: 0.039, green: 0.290, blue: 0.247)],
+        colors: [Color(red: 0.067, green: 0.400, blue: 0.318), Color(red: 0.039, green: 0.259, blue: 0.212), Color(red: 0.027, green: 0.192, blue: 0.161)],
         startPoint: .topLeading, endPoint: .bottomTrailing
     )
+    /// Primary buttons: a lighter emerald on top.
+    static let accentGradient = LinearGradient(
+        colors: [Color(red: 0.094, green: 0.486, blue: 0.388), Color(red: 0.051, green: 0.369, blue: 0.294)],
+        startPoint: .top, endPoint: .bottom
+    )
+    /// Hairline of gold on hero cards.
+    static let goldHairline = LinearGradient(colors: [goldLight.opacity(0.75), goldLight.opacity(0.10), goldLight.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing)
 }
 
 struct PanelCardModifier: ViewModifier {
@@ -58,8 +69,9 @@ struct PanelCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.5))
-            .shadow(color: Theme.ink.opacity(fill == Theme.panel ? 0.07 : 0), radius: 14, y: 5)
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.6))
+            .shadow(color: Color(red: 0.25, green: 0.20, blue: 0.10).opacity(fill == Theme.panel ? 0.07 : 0), radius: 18, y: 7)
+            .shadow(color: Color(red: 0.25, green: 0.20, blue: 0.10).opacity(fill == Theme.panel ? 0.04 : 0), radius: 2, y: 1)
     }
 }
 

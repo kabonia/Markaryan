@@ -241,7 +241,7 @@ struct FloorPlansView: View {
                         }
                     }
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("НОВОЕ ПОМЕЩЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                        Text("НОВОЕ ПОМЕЩЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                         HStack(spacing: 10) {
                             Button { store.showRoomScan = true } label: { SecondaryActionLabel(title: "Скан", icon: "cube.transparent") }
                             NavigationLink { PhotoDesignView() } label: { SecondaryActionLabel(title: "По фото", icon: "camera.aperture") }
@@ -274,7 +274,7 @@ struct DesignStudioHero: View {
                 .shadow(color: .black.opacity(0.35), radius: 18, y: 10)
             Circle().fill(Theme.orange.opacity(0.22)).frame(width: 200, height: 200).blur(radius: 40).offset(x: 170, y: -120)
             VStack(alignment: .leading, spacing: 8) {
-                Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
+                Text("ПЛАНИРОВКА И ДИЗАЙН").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Theme.gold)
                 Text("Любое помещение —\nв новом стиле").font(.title2.bold()).foregroundStyle(.white)
                 Text("Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF.")
                     .font(.caption).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
@@ -621,7 +621,7 @@ struct FloorPlanDetailView: View {
     @ViewBuilder private func resultStep(_ plan: FloorPlan, flow: PlanFlow) -> some View {
         if let proposal {
             VStack(alignment: .leading, spacing: 4) {
-                Text("РЕЗУЛЬТАТ · \(proposal.style.uppercased())").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("РЕЗУЛЬТАТ · \(proposal.style.uppercased())").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 Text(proposal.title).font(.title3.bold())
             }
             if flow.presentationOutdated {
@@ -653,7 +653,7 @@ struct FloorPlanDetailView: View {
             PartnerOfferSection(category: "finishing", summary: partnerSummary(plan, proposal: proposal))
         }
         VStack(alignment: .leading, spacing: 10) {
-            Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            Text("РАБОЧИЕ ЧЕРТЕЖИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             Text("Обмерный план, расстановка, электрика, плитка и развёртки — листы А3 в масштабе.")
                 .font(.caption).foregroundStyle(Theme.muted)
             Button { openDrawings(plan) } label: { SecondaryActionLabel(title: "Открыть чертежи", icon: "doc.text.magnifyingglass") }.buttonStyle(PremiumPressStyle())
@@ -803,7 +803,7 @@ struct FloorPlanDetailView: View {
 
     private func proposalCard(_ proposal: DesignProposal, plan: FloorPlan) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            Text(proposal.roomPurpose.uppercased() + (proposal.style.isEmpty ? "" : " · " + proposal.style.uppercased())).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             Text(proposal.title).font(.title3.bold())
             Text(proposal.summary).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.88))
             if let model = DesignModel.title(of: proposal.designModel) {
@@ -827,7 +827,7 @@ struct FloorPlanDetailView: View {
             }
             if !(proposal.floor.isEmpty && proposal.walls.isEmpty && proposal.ceiling.isEmpty) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("ОТДЕЛКА").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                    Text("ОТДЕЛКА").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                     FinishRow(title: "Пол", icon: "square.grid.3x3.fill", finish: proposal.floor)
                     FinishRow(title: "Стены", icon: "rectangle.portrait.fill", finish: proposal.walls)
                     FinishRow(title: "Потолок", icon: "light.recessed", finish: proposal.ceiling)
@@ -1206,7 +1206,7 @@ struct MeasurementGroupCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             ForEach(rows) { row in
                 HStack(alignment: .firstTextBaseline) {
                     Text(row.title).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.9))
@@ -1294,7 +1294,7 @@ struct AIModelsView: View {
 
     private func section<Rows: View>(_ title: String, works: Bool, @ViewBuilder rows: () -> Rows) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             VStack(spacing: 0) { rows() }.panelCard(18)
         }
         .opacity(works ? 1 : 0.6)
@@ -1340,7 +1340,7 @@ struct PlanMeasurementsView: View {
                 }
                 if !walls.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("ПО СТЕНАМ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                        Text("ПО СТЕНАМ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                         FloorPlanCanvas(plan: plan, wallNumbers: true)
                             .aspectRatio(max(0.7, min(1.6, plan.width / max(0.5, plan.depth))), contentMode: .fit)
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

@@ -35,6 +35,7 @@ struct CalculatorsView: View {
                     }
                     .padding(18)
                     .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
@@ -77,7 +78,7 @@ struct CalculatorsView: View {
                 ForEach(CalculationCategory.allCases) { category in
                     let kinds = filtered.filter { $0.category == category }
                     if !kinds.isEmpty {
-                        Text(category.title.uppercased()).font(.caption.weight(.bold)).tracking(1.25).foregroundStyle(Theme.orange).padding(.top, 4)
+                        Text(category.title.uppercased()).font(.caption.weight(.bold)).tracking(1.25).foregroundStyle(Theme.gold).padding(.top, 4)
                         ForEach(kinds) { kind in
                             NavigationLink { CalculatorView(kind: kind) } label: { CalculatorRow(kind: kind, used: store.lastInputs[kind.rawValue] != nil) }
                                 .buttonStyle(PremiumCardPressStyle())
@@ -297,7 +298,7 @@ struct HouseEstimateView: View {
     private var totalCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(isMarketPriced ? "РЫНОЧНАЯ ЦЕНА · \(priceCity.uppercased())" : "ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
-            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold)).foregroundStyle(.white).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
+            Text(CalculationEngine.money(total)).font(.system(size: 38, weight: .bold, design: .serif)).foregroundStyle(.white).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).contentTransition(.numericText()).animation(.snappy, value: total)
             if perSquareMeter > 0 { Text("≈ \(CalculationEngine.money(perSquareMeter)) за м²").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85)) }
             if isMarketPriced, totalHigh > totalLow { Text("Рынок: \(CalculationEngine.money(totalLow)) – \(CalculationEngine.money(totalHigh))").font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(.white) }
             HStack { Text("Материалы: \(CalculationEngine.money(materialTotal))"); Spacer(); Text("Работа: \(CalculationEngine.money(laborTotal))") }.font(.caption).foregroundStyle(.white.opacity(0.8))
@@ -989,7 +990,7 @@ struct AIVisionStudioView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("ВАШ КОНЦЕПТ").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.orange)
+                    Text("ВАШ КОНЦЕПТ").font(.caption.weight(.semibold)).tracking(1.5).foregroundStyle(Theme.gold)
                     Text(style.title).font(.headline).foregroundStyle(Theme.ink)
                 }
                 Spacer()

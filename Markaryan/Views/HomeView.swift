@@ -44,13 +44,13 @@ struct HomeView: View {
                             HomeToolCard(icon: "viewfinder", title: "AR‑рулетка", text: "Длины, площадь и периметр камерой телефона — без рулетки.", accent: Theme.success)
                         }
                         NavigationLink { PhotoCountView() } label: {
-                            HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.orangeSoft)
+                            HomeToolCard(icon: "camera.viewfinder", title: "Сколько в пачке", text: "ИИ считает торцы арматуры, труб, досок и бруса на фото.", accent: Theme.gold)
                         }
                         Button { HelperCenter.shared.isOpen = true } label: {
-                            HomeToolCard(icon: "sparkles", title: "ИИ‑помощник", text: "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.", accent: Theme.orangeSoft)
+                            HomeToolCard(icon: "sparkles", title: "ИИ‑помощник", text: "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.", accent: Theme.gold)
                         }
                         NavigationLink { FullEstimateHubView() } label: {
-                            HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Color(red: 0.62, green: 0.70, blue: 0.95))
+                            HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Theme.orange)
                         }
                     }
                     .buttonStyle(PremiumCardPressStyle())
@@ -150,7 +150,7 @@ struct HomeSectionHeader: View {
     let title: String
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(eyebrow.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.orange)
+            Text(eyebrow.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.gold)
             Text(title).font(.title3.bold()).tracking(-0.4)
         }
     }
@@ -164,7 +164,8 @@ struct HomeHeroCard: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Theme.heroGradient
-            Circle().fill(Color.white.opacity(glow ? 0.16 : 0.10)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
+            Circle().fill(Color.white.opacity(glow ? 0.14 : 0.08)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
+            Circle().fill(Theme.goldLight.opacity(glow ? 0.22 : 0.12)).frame(width: 200, height: 200).blur(radius: 60).offset(x: -60, y: 120)
             HStack(spacing: -40) {
                 StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
                     .frame(width: 120, height: 88).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -177,8 +178,8 @@ struct HomeHeroCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .padding(.top, 18).padding(.trailing, -18)
             VStack(alignment: .leading, spacing: 10) {
-                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
-                Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .default, weight: .bold)).tracking(-0.8).foregroundStyle(.white)
+                Text(greeting.uppercased()).font(.caption.weight(.bold)).tracking(1.8).foregroundStyle(Theme.goldLight)
+                Text("Ремонт и стройка,\nкоторые видно заранее").font(.system(.title, design: .serif, weight: .bold)).tracking(-0.4).foregroundStyle(.white)
                 Text("Сфотографируйте комнату — ИИ покажет её в новом стиле.")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.75)).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
@@ -195,7 +196,8 @@ struct HomeHeroCard: View {
         }
         .frame(maxWidth: .infinity, minHeight: 330, alignment: .bottomLeading)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.07)))
+        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 1))
+        .shadow(color: Theme.orange.opacity(0.25), radius: 24, y: 12)
         .onAppear { withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) { glow = true } }
     }
 }
@@ -211,17 +213,18 @@ struct HomeToolCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
-                    .frame(width: 44, height: 44)
-                    .background(LinearGradient(colors: [accent, accent.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: accent.opacity(0.35), radius: 8, y: 4)
+                Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(accent)
+                    .frame(width: 46, height: 46)
+                    .background(accent.opacity(0.11), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(accent.opacity(0.18), lineWidth: 0.6))
                 Spacer(minLength: 0)
                 if let badge {
-                    Text(badge).font(.system(size: 9, weight: .heavy)).tracking(0.6).padding(.horizontal, 7).padding(.vertical, 4)
-                        .background(accent.opacity(0.18), in: Capsule()).foregroundStyle(accent)
+                    Text(badge).font(.system(size: 9, weight: .heavy)).tracking(0.8).padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(Theme.goldTint, in: Capsule()).foregroundStyle(Theme.gold)
+                        .overlay(Capsule().strokeBorder(Theme.gold.opacity(0.25), lineWidth: 0.5))
                 }
             }
-            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
+            Text(title).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
             Text(text).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }

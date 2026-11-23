@@ -38,6 +38,10 @@ enum ScreenshotRoute {
             PhotoCountView()
         } else if route == "photodesign" {
             PhotoDesignView()
+        } else if route == "docs" {
+            DocEstimateHubView()
+        } else if route == "docsnew" {
+            DocEstimateNewView()
         } else {
             Text("Неизвестный маршрут: \(route)")
         }

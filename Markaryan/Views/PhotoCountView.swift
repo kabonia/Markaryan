@@ -271,7 +271,7 @@ struct PhotoCountView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if !session.detectedName.isEmpty { Text(session.detectedName.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.sky) }
                     HStack(alignment: .firstTextBaseline) {
-                        Text("\(count)").font(.system(size: 44, weight: .bold)).monospacedDigit().contentTransition(.numericText()).foregroundStyle(Theme.orange)
+                        Text("\(count)").font(.system(size: 44, weight: .bold, design: .serif)).monospacedDigit().contentTransition(.numericText()).foregroundStyle(Theme.orange)
                         Text("шт.").font(.title3.weight(.semibold))
                     }
                 }
@@ -344,7 +344,7 @@ struct PhotoCountView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ИТОГО · \(countTitle.uppercased())").font(.caption.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
+            Text("ИТОГО · \(countTitle.uppercased())").font(.caption.weight(.bold)).tracking(1.4).foregroundStyle(Theme.gold)
             row("Количество", "\(count) шт.")
             if material != .other { row("Общая длина", "\(CalculationEngine.format((totalLength * 10).rounded() / 10)) м") }
             switch material {
@@ -465,7 +465,7 @@ struct LiveCountCameraView: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(session.detectedName.isEmpty ? "ИТОГО" : session.detectedName.uppercased()).font(.caption2.weight(.bold)).tracking(1)
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("\(session.total)").font(.system(size: 34, weight: .bold)).monospacedDigit().contentTransition(.numericText())
+                            Text("\(session.total)").font(.system(size: 34, weight: .bold, design: .serif)).monospacedDigit().contentTransition(.numericText())
                             Text("шт.").font(.subheadline.weight(.semibold))
                         }
                         if session.countingCount > 0 { HStack(spacing: 5) { ProgressView().controlSize(.mini).tint(.white); Text("считаем \(session.countingCount)").font(.caption2) } }

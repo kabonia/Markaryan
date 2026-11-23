@@ -27,15 +27,16 @@ struct DocEstimateHubView: View {
                     }
                     .padding(18)
                     .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
                 if !center.running.isEmpty {
-                    Text("СЧИТАЕТСЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                    Text("СЧИТАЕТСЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                     ForEach(center.running) { job in DocEstimateProgressCard(job: job) }
                 }
                 if !center.saved.isEmpty {
-                    Text("МОИ СМЕТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                    Text("МОИ СМЕТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                     ForEach(center.saved) { item in
                         NavigationLink { DocEstimateResultLoader(id: item.id) } label: {
                             HStack(spacing: 12) {
@@ -129,7 +130,7 @@ struct DocEstimateNewView: View {
                 }
                 .padding(14).panelCard(16)
 
-                Text("ДОКУМЕНТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("ДОКУМЕНТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 ForEach($docs) { $doc in
                     HStack(spacing: 12) {
                         Group {
@@ -159,7 +160,7 @@ struct DocEstimateNewView: View {
                 .buttonStyle(PremiumPressStyle())
                 if pages > 0 { Text("Листов: \(pages) из \(DocAttachment.maxPages). Укажите тип каждого документа — АР, КР, ТЗ или смета: агенты читают их по‑разному.").font(.caption).foregroundStyle(Theme.muted) }
 
-                Text("ПЕРЕЧЕНЬ РАБОТ ИЛИ ТЗ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("ПЕРЕЧЕНЬ РАБОТ ИЛИ ТЗ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 TextEditor(text: $text)
                     .frame(minHeight: 140).scrollContentBackground(.hidden).foregroundStyle(Theme.ink)
                     .padding(10).panelCard(16)
@@ -170,7 +171,7 @@ struct DocEstimateNewView: View {
                         }
                     }
 
-                Text("НАЧИСЛЕНИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("НАЧИСЛЕНИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 VStack(spacing: 12) {
                     Toggle("НДС 22 %", isOn: $vat).foregroundStyle(Theme.ink)
                     Stepper("Доставка материалов: \(Int(delivery)) %", value: $delivery, in: 0...15).foregroundStyle(Theme.ink)
@@ -307,7 +308,7 @@ struct DocEstimateResultView: View {
     private var hero: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ИТОГО ПО СМЕТЕ · \(result.city.uppercased())").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
-            Text(CalculationEngine.money(t.total)).font(.system(size: 36, weight: .bold)).monospacedDigit().foregroundStyle(.white).minimumScaleFactor(0.6).lineLimit(1)
+            Text(CalculationEngine.money(t.total)).font(.system(size: 36, weight: .bold, design: .serif)).monospacedDigit().foregroundStyle(.white).minimumScaleFactor(0.6).lineLimit(1)
             Text("Рынок: \(CalculationEngine.money(result.totals.low.total)) – \(CalculationEngine.money(result.totals.high.total))").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85))
             if let area = result.object?.area, area > 0 { Text("≈ \(CalculationEngine.money(t.total / area)) за м² · \(CalculationEngine.format(area)) м²").font(.caption).foregroundStyle(.white.opacity(0.8)) }
             Divider().overlay(.white.opacity(0.25)).padding(.vertical, 4)
@@ -319,6 +320,7 @@ struct DocEstimateResultView: View {
         }
         .padding(20).frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
     }
 
     private func line(_ title: String, _ value: Double) -> some View {

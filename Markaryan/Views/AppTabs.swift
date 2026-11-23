@@ -375,7 +375,7 @@ struct ProfileTabView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                Text("ПРИЛОЖЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange).padding(.top, 6)
+                Text("ПРИЛОЖЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold).padding(.top, 6)
                 ShareLink(item: Brand.inviteText) {
                     AppTabRow(icon: "gift.fill", title: "Поделиться приложением", subtitle: "Отправьте калькуляторы и смету тем, кто строится")
                 }

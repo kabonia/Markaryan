@@ -105,7 +105,7 @@ struct MaterialReferencesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("СВОИ МАТЕРИАЛЫ И ТОВАРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("СВОИ МАТЕРИАЛЫ И ТОВАРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 Spacer()
                 if !items.isEmpty { Text("\(items.count) из \(Self.limit)").font(.caption).foregroundStyle(Theme.muted) }
             }

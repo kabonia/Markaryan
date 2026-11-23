@@ -144,7 +144,7 @@ struct PartnerOfferSection: View {
             } else if !partners.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("ПОДРЯДЧИКИ · \((store.userRegion?.city ?? "").uppercased())")
-                        .font(.caption.weight(.bold)).tracking(1.3).foregroundStyle(Theme.orange)
+                        .font(.caption.weight(.bold)).tracking(1.3).foregroundStyle(Theme.gold)
                     Text("Сравните рыночную оценку с ценой подрядчика: отправьте ему расчёт.")
                         .font(.caption).foregroundStyle(Theme.muted)
                     ForEach(partners) { partner in PartnerCard(partner: partner, summary: summary) }
