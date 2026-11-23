@@ -67,7 +67,21 @@ struct HelperMessage: Identifiable {
         Для несущих конструкций напоминай, что решение принимает проектировщик.
         Город пользователя: \(store?.projectCity ?? Brand.city).
         Сейчас открыт экран: «\(screen)». \(screenDetails.isEmpty ? "" : "Данные экрана: \(screenDetails.prefix(1500))")
+        Состояние: \(globalState())
         """
+    }
+
+    /// Глобальное состояние для контекста ответа: кредиты, план, сметы в работе.
+    private func globalState() -> String {
+        var parts: [String] = []
+        if let me = BillingCenter.shared.me {
+            parts.append("кредитов на балансе: \(me.credits)")
+            if let plan = me.plan { parts.append("план «\(plan.id)» до \(plan.until)") }
+        }
+        for job in DocEstimateCenter.shared.running where job.error == nil {
+            parts.append("смета «\(job.title)» в работе: \(job.stageTitle), \(Int(job.progress * 100))%")
+        }
+        return parts.isEmpty ? "активных задач нет" : parts.joined(separator: "; ")
     }
 
     func ask(_ text: String, image: UIImage? = nil) async {

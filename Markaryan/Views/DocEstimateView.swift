@@ -59,7 +59,7 @@ struct DocEstimateHubView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Смета по документам").helperScreen("Смета по документам (АР, КР, ТЗ)").featureIntro(.docEstimate)
+        .navigationTitle("Смета по документам").helperScreen("Смета по документам (АР, КР, ТЗ)", details: DocEstimateCenter.shared.running.map { "«\($0.title)»: \($0.stageTitle), \(Int($0.progress * 100))%" }.joined(separator: "; ")).featureIntro(.docEstimate)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { center.resumeAll() }
     }
