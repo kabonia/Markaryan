@@ -11,14 +11,16 @@ struct DocEstimateHubView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                SectionTitle(eyebrow: "Профессиональный расчёт", title: "Смета по документам")
+                SectionTitle(eyebrow: "Сметный отдел ИИ", title: "Смета по документам")
+                Text("АР, КР, ТЗ, готовая смета в Excel или просто перечень работ — объёмы снимут два независимых ИИ‑агента, нормы расхода посчитает нормировщик, цены — по рынку вашего города, а аудитор проверит пропуски и ошибки.")
+                    .font(.subheadline).foregroundStyle(Theme.muted)
                 NavigationLink { DocEstimateNewView() } label: {
                     HStack(spacing: 14) {
                         Image(systemName: "doc.text.magnifyingglass").font(.title2).foregroundStyle(Theme.onAccent)
                             .frame(width: 52, height: 52).background(.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Новая смета").font(.headline).foregroundStyle(.white)
-                            Text("PDF, Excel, фото листов или текст").font(.caption).foregroundStyle(.white.opacity(0.8))
+                            Text("Загрузите PDF, Excel, фото листов или текст").font(.caption).foregroundStyle(.white.opacity(0.8))
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.8))
@@ -52,7 +54,7 @@ struct DocEstimateHubView: View {
                         .contextMenu { Button(role: .destructive) { center.delete(item.id) } label: { Label("Удалить", systemImage: "trash") } }
                     }
                 }
-                if center.running.isEmpty && center.saved.isEmpty { DocEstimateSteps() }
+                InfoNote(text: "Точность зависит от документов: чем полнее АР и КР (планы с размерами, разрезы, спецификации, ведомости отделки и проёмов), тем точнее объёмы. Каждая цифра в смете — с формулой или ссылкой на лист.")
             }
             .padding(20)
         }
@@ -161,7 +163,7 @@ struct DocEstimateNewView: View {
                 Text("ПЕРЕЧЕНЬ РАБОТ ИЛИ ТЗ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 TextEditor(text: $text)
                     .frame(minHeight: 140).scrollContentBackground(.hidden).foregroundStyle(Theme.ink)
-                    .padding(10).fieldSurface(14)
+                    .padding(10).panelCard(16)
                     .overlay(alignment: .topLeading) {
                         if text.isEmpty {
                             Text("Например: дом 10×12 из газобетона D500 300 мм, лента 400×1200 B25, перекрытие монолит 200 мм, кровля металлочерепица… Или просто список наименований с объёмами.")
@@ -200,7 +202,7 @@ struct DocEstimateNewView: View {
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label).font(.subheadline).foregroundStyle(Theme.muted)
-            content().padding(14).fieldSurface(14)
+            content().padding(14).panelCard(16)
         }
     }
 
@@ -473,30 +475,5 @@ struct DocSourcesRow: View {
                 }
             }
         }
-    }
-}
-
-/// «Как это работает» — four quiet steps instead of a paragraph.
-struct DocEstimateSteps: View {
-    private let steps: [(String, String)] = [
-        ("Объёмы", "Снимаем с листов АР и КР — с формулой и ссылкой на лист."),
-        ("Материалы", "Нормы расхода и отходы по каждой работе."),
-        ("Цены", "Рынок вашего города, у каждой цены — источник."),
-        ("Проверка", "Пропущенные работы, единицы и цены."),
-    ]
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("КАК СЧИТАЕМ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
-            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                HStack(alignment: .top, spacing: 14) {
-                    Text(String(format: "%02d", index + 1)).font(.system(.footnote, design: .serif, weight: .bold)).foregroundStyle(Theme.gold).frame(width: 24, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(step.0).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
-                        Text(step.1).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-        }
-        .padding(18).frame(maxWidth: .infinity, alignment: .leading).panelCard(20)
     }
 }
