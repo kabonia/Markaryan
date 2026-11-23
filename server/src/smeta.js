@@ -14,6 +14,7 @@ import { config } from './config.js';
 import { ApiError, mapLimit } from './util.js';
 import * as ai from './ai.js';
 import { priceEstimate } from './estimate.js';
+import { xlsxToText } from './xlsx.js';
 
 const AI_TIMEOUT = 420_000;
 const MAX_PAGES = 40;
@@ -354,7 +355,8 @@ export function cleanInput(body) {
   const docs = (Array.isArray(body?.docs) ? body.docs : []).slice(0, 12).map((d) => ({
     name: str(d?.name, 120) || 'Документ',
     kind: DOC_KINDS[d?.kind] ? d.kind : 'other',
-    text: String(d?.text ?? '').slice(0, 120_000),
+    // Excel (.xlsx) comes as the file itself: every sheet becomes text with tab-separated cells.
+    text: typeof d?.xlsx === 'string' && d.xlsx.length > 100 ? xlsxToText(d.xlsx) : String(d?.text ?? '').slice(0, 120_000),
     pages: (Array.isArray(d?.pages) ? d.pages : []).filter((p) => typeof p?.image === 'string' && p.image.length > 100).filter(() => (pages += 1) <= MAX_PAGES)
       .map((p) => ({ image: p.image, text: String(p?.text ?? '').slice(0, 12_000) })),
   })).filter((d) => d.pages.length || d.text.trim());

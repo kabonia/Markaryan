@@ -12,7 +12,7 @@ struct DocEstimateHubView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 SectionTitle(eyebrow: "Сметный отдел ИИ", title: "Смета по документам")
-                Text("АР, КР, ТЗ, готовая смета или просто перечень работ — объёмы снимут два независимых ИИ‑агента, нормы расхода посчитает нормировщик, цены — по рынку вашего города, а аудитор проверит пропуски и ошибки.")
+                Text("АР, КР, ТЗ, готовая смета в Excel или просто перечень работ — объёмы снимут два независимых ИИ‑агента, нормы расхода посчитает нормировщик, цены — по рынку вашего города, а аудитор проверит пропуски и ошибки.")
                     .font(.subheadline).foregroundStyle(Theme.muted)
                 NavigationLink { DocEstimateNewView() } label: {
                     HStack(spacing: 14) {
@@ -20,7 +20,7 @@ struct DocEstimateHubView: View {
                             .frame(width: 52, height: 52).background(.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Новая смета").font(.headline).foregroundStyle(.white)
-                            Text("Загрузите PDF, фото листов или текст").font(.caption).foregroundStyle(.white.opacity(0.8))
+                            Text("Загрузите PDF, Excel, фото листов или текст").font(.caption).foregroundStyle(.white.opacity(0.8))
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.8))
@@ -153,7 +153,7 @@ struct DocEstimateNewView: View {
                     .padding(12).panelCard(16)
                 }
                 HStack(spacing: 10) {
-                    Button { importing = true } label: { SecondaryActionLabel(title: "PDF / файл", icon: "doc.badge.plus") }
+                    Button { importing = true } label: { SecondaryActionLabel(title: "PDF / Excel", icon: "doc.badge.plus") }
                     PhotosPicker(selection: $photos, maxSelectionCount: 20, matching: .images) { SecondaryActionLabel(title: "Фото листов", icon: "photo.on.rectangle") }
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -192,7 +192,7 @@ struct DocEstimateNewView: View {
         .background(Theme.background)
         .navigationTitle("Новая смета").helperScreen("Новая смета по документам", details: "Документов: \(docs.count), листов: \(pages)")
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.pdf, .image, .plainText, .commaSeparatedText, .rtf], allowsMultipleSelection: true) { result in
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.pdf, .image, .plainText, .commaSeparatedText, .rtf, .spreadsheet, UTType("org.openxmlformats.spreadsheetml.sheet") ?? .spreadsheet, UTType("com.microsoft.excel.xls") ?? .spreadsheet], allowsMultipleSelection: true) { result in
             if case .success(let urls) = result { Task { await add(urls) } }
         }
         .onChange(of: photos) { _, items in Task { await addPhotos(items) } }
@@ -212,7 +212,14 @@ struct DocEstimateNewView: View {
             defer { if access { url.stopAccessingSecurityScopedResource() } }
             let type = UTType(filenameExtension: url.pathExtension.lowercased())
             let name = url.deletingPathExtension().lastPathComponent
-            if type?.conforms(to: .pdf) == true {
+            let ext = url.pathExtension.lowercased()
+            if ext == "xlsx" || ext == "xlsm" {
+                if let data = try? Data(contentsOf: url), data.count < 25_000_000 {
+                    docs.append(DocAttachment(name: name, kind: DocKind.guess(name) == .other ? .smeta : DocKind.guess(name), xlsx: data))
+                } else { error = "Не удалось открыть «\(name)» (файл больше 25 МБ?)." }
+            } else if ext == "xls" {
+                error = "«\(name)» — старый формат .xls. Сохраните его в Excel как .xlsx и загрузите снова."
+            } else if type?.conforms(to: .pdf) == true {
                 if let doc = DocAttachment.fromPDF(url, pageBudget: DocAttachment.maxPages - pages) { docs.append(doc) }
                 else { error = "Не удалось открыть «\(name)» или лимит \(DocAttachment.maxPages) листов исчерпан." }
             } else if type?.conforms(to: .image) == true, let data = try? Data(contentsOf: url), let image = UIImage(data: data), pages < DocAttachment.maxPages {

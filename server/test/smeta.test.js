@@ -69,3 +69,9 @@ test('whole job: two readers, merge, norms, prices, audit additions, sections an
   assert.ok(r.totals.typical.total > r.totals.typical.subtotal - 1);
   smeta.setAgents();
 });
+
+test('xlsx: sheets become tab-separated text (shared, inline and rich strings, numbers, gaps)', async () => {
+  const { xlsxToText } = await import('../src/xlsx.js');
+  const text = xlsxToText(fs.readFileSync(new URL('./fixture.xlsx.b64', import.meta.url), 'utf8'));
+  assert.equal(text, '## Смета\nНаименование\t\tКол-во\nБетон B25 & доставка\tм³\t12.5');
+});

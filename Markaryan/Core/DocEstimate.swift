@@ -150,8 +150,10 @@ struct DocAttachment: Identifiable {
     var kind: DocKind
     var pages: [DocPage] = []
     var text: String = ""
+    /// Excel workbook (.xlsx) as is: the server reads every sheet.
+    var xlsx: Data? = nil
     var preview: UIImage? = nil
-    var summary: String { pages.isEmpty ? "текст · \(text.count) зн." : "\(pages.count) \(pages.count == 1 ? "лист" : (2...4).contains(pages.count % 10) && !(12...14).contains(pages.count % 100) ? "листа" : "листов")" }
+    var summary: String { xlsx != nil ? "таблица Excel · \(ByteCountFormatter.string(fromByteCount: Int64(xlsx?.count ?? 0), countStyle: .file))" : pages.isEmpty ? "текст · \(text.count) зн." : "\(pages.count) \(pages.count == 1 ? "лист" : (2...4).contains(pages.count % 10) && !(12...14).contains(pages.count % 100) ? "листа" : "листов")" }
 
     static let maxPages = 40
 
@@ -181,8 +183,10 @@ struct DocAttachment: Identifiable {
     }
 
     var payload: [String: Any] {
-        ["name": name, "kind": kind.rawValue, "text": text,
-         "pages": pages.map { ["image": $0.image.base64EncodedString(), "text": $0.text] }]
+        var item: [String: Any] = ["name": name, "kind": kind.rawValue, "text": text,
+                                   "pages": pages.map { ["image": $0.image.base64EncodedString(), "text": $0.text] }]
+        if let xlsx { item["xlsx"] = xlsx.base64EncodedString() }
+        return item
     }
 }
 
