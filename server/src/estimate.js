@@ -10,8 +10,8 @@ import { normalizePlace } from './market.js';
 const CACHE_DAYS = 7;
 const BATCH = 5;
 /** Replaced in tests. */
-let ask = (city, items) => askModel(city, items);
-export function setAsk(fn) { ask = fn || ((city, items) => askModel(city, items)); }
+let ask = (city, items, opts) => askModel(city, items, opts);
+export function setAsk(fn) { ask = fn || ((city, items, opts) => askModel(city, items, opts)); }
 const cacheFile = () => path.join(config.dataDir, 'estimate-cache.json');
 const readCache = () => { try { return JSON.parse(fs.readFileSync(cacheFile(), 'utf8')); } catch { return {}; } };
 const writeCache = (cache) => { fs.mkdirSync(config.dataDir, { recursive: true }); fs.writeFileSync(cacheFile(), JSON.stringify(cache)); };
@@ -33,21 +33,23 @@ export function sanitize(row) {
     example: clean(row.example, 140), kind: row.kind === 'work' ? 'work' : 'material', sources };
 }
 
-async function askModel(city, items) {
+async function askModel(city, items, opts = {}) {
   const { apiKey, base, helperModels } = config.openrouter;
   if (!apiKey) throw new ApiError(503, 'ИИ не настроен на сервере.');
-  const model = `${helperModels[0] || 'anthropic/claude-haiku-5.5'}:online`;
-  const list = items.map((it, i) => `${i + 1}. [${it.kind === 'work' ? 'работа' : 'материал'}] ${it.name}${it.amount ? ` — ${it.amount}` : ''}${it.unit ? ` (ед.: ${it.unit})` : ''}${it.quantity ? `, количество ${it.quantity}` : ''}`).join('\n');
+  // «quality» (estimates from documents): a strong model and more sources per line.
+  const model = `${opts.model || helperModels[0] || 'anthropic/claude-haiku-5.5'}:online`;
+  const list = items.map((it, i) => `${i + 1}. [${it.kind === 'work' ? 'работа' : 'материал'}] ${it.name}${it.amount ? ` — ${it.amount}` : ''}${it.unit ? ` (ед.: ${it.unit})` : ''}${it.quantity ? `, количество ${it.quantity}` : ''}${it.hint ? ` — ВНИМАНИЕ: ${it.hint}` : ''}`).join('\n');
   const system = `Ты сметчик. Найди в интернете актуальные цены в рублях в городе ${city} (или ближайшем крупном городе региона).
 Для каждой позиции: цена за единицу — low (дёшево), typical (обычная рыночная), high (дорого); единица измерения; количество (возьми из запроса или вычисли из описания);
 пример конкретного товара или исполнителя (для материалов — марка/модель); 1–3 источника с прямыми ссылками на страницы с ценой (магазины, маркетплейсы, прайсы мастеров).
 Не выдумывай ссылки и цены; отбрасывай акции «−70%», «от 1 ₽» и прошлые годы.
+Цена строго за указанную единицу (если продавец даёт за другую — пересчитай: за упаковку → за м², за мешок → за кг и т.д.). Для работ — только стоимость труда без материалов, если не сказано иначе.${opts.strict ? '\nМинимум 2 независимых источника на позицию; typical — медиана реальных предложений города, а не минимальная цена.' : ''}
 Ответ — только JSON: {"items":[{"name","kind":"material|work","unit","quantity","low","typical","high","example","sources":[{"title","url","price"}]}]} в том же порядке.`;
   const response = await request(`${base}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: list }],
-      max_tokens: 6000, plugins: [{ id: 'web', max_results: 5 }] }),
+      max_tokens: opts.maxTokens || 6000, plugins: [{ id: 'web', max_results: opts.maxResults || 5 }] }),
   }, 240_000);
   const body = await readJSON(response);
   if (!response.ok) throw new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.');
@@ -56,38 +58,42 @@ async function askModel(city, items) {
   return Array.isArray(parsed?.items) ? parsed.items : [];
 }
 
-export async function priceEstimate(body) {
+export async function priceEstimate(body, opts = {}) {
   const city = clean(body?.city, 60) || 'Москва';
   const items = (Array.isArray(body?.items) ? body.items : []).slice(0, body?.maxItems || 40).map((it) => ({
-    name: clean(it?.name, 120), amount: clean(it?.amount, 60), unit: clean(it?.unit, 20), quantity: num(it?.quantity), kind: it?.kind === 'work' ? 'work' : 'material',
+    name: clean(it?.name, 200), amount: clean(it?.amount, 60), unit: clean(it?.unit, 20), quantity: num(it?.quantity), kind: it?.kind === 'work' ? 'work' : 'material',
+    hint: clean(it?.hint, 300),
   })).filter((it) => it.name);
+  // The quality search keeps its own cache: quick estimates must not reuse it and vice versa; a hint means «search again».
+  const keyOf = (it) => `${opts.cacheTag || ''}${key(city, it)}`;
+  const fresh = (entry) => entry && Date.now() - entry.at < CACHE_DAYS * 86_400_000;
   if (!items.length) throw new ApiError(400, 'Нет позиций для сметы.');
 
   const cache = readCache();
-  const fresh = (entry) => entry && Date.now() - entry.at < CACHE_DAYS * 86_400_000;
-  const missing = items.filter((it) => !fresh(cache[key(city, it)]));
+  const missing = items.filter((it) => it.hint || !fresh(cache[keyOf(it)]));
   if (missing.length) {
     // Small batches in parallel: a long list makes the web-search model answer with prose instead of JSON.
     // A batch that fails twice only leaves its lines without a price; the rest of the estimate still comes back.
     const batches = [];
-    for (let i = 0; i < missing.length; i += BATCH) batches.push(missing.slice(i, i + BATCH));
+    const size = opts.batch || BATCH;
+    for (let i = 0; i < missing.length; i += size) batches.push(missing.slice(i, i + size));
     const errors = [];
-    const tryAsk = async (batch) => { try { return await ask(city, batch); } catch (error) { errors.push(error); return []; } };
+    const tryAsk = async (batch) => { try { return await ask(city, batch, opts); } catch (error) { errors.push(error); return []; } };
     let priced = 0;
     const left = [];
     const keep = (batch, found) => batch.forEach((it, i) => {
       const row = found[i] && sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i].quantity });
-      if (row) { cache[key(city, it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
+      if (row) { cache[keyOf(it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
     });
     (await mapLimit(batches, 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
     // Second pass: every line still without a price on its own — a single item is found far more reliably.
     const retry = left.splice(0, left.length);
     (await mapLimit(retry, 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
     if (priced) writeCache(cache);
-    else if (!items.some((it) => fresh(cache[key(city, it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
+    else if (!items.some((it) => fresh(cache[keyOf(it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
   }
   const rows = items.map((it) => {
-    const cached = cache[key(city, it)]?.row;
+    const cached = cache[keyOf(it)]?.row;
     if (!cached) return { name: it.name, kind: it.kind, unit: it.unit, quantity: it.quantity, missing: true };
     return { ...cached, quantity: it.quantity || cached.quantity };
   });

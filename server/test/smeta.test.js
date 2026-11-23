@@ -49,6 +49,7 @@ test('whole job: two readers, merge, norms, prices, audit additions, sections an
         const ids = [...messages[0].text.matchAll(/"id":"([^"]+)"/g)].map((m) => m[1]);
         return { works: ids.map((id) => ({ id, laborName: 'Кладка газобетона', materials: [{ name: 'Блок газобетон D500 600×300×250', unit: 'м³', norm: 0.3, waste: 5 }], machines: [] })) };
       }
+      if (name === 'price_audit') return { flags: [] };
       if (name === 'audit') return { verdict: 'Не хватает перемычек', issues: [{ severity: 'warning', text: 'Нет перемычек' }], additions: [{ section: 'Стены', name: 'Монтаж перемычек', unit: 'шт', quantity: 6, basis: 'проёмы АР‑5' }] };
       throw new Error(name);
     },
@@ -74,4 +75,31 @@ test('xlsx: sheets become tab-separated text (shared, inline and rich strings, n
   const { xlsxToText } = await import('../src/xlsx.js');
   const text = xlsxToText(fs.readFileSync(new URL('./fixture.xlsx.b64', import.meta.url), 'utf8'));
   assert.equal(text, '## Смета\nНаименование\t\tКол-во\nБетон B25 & доставка\tм³\t12.5');
+});
+
+test('price auditor: a doubtful price is searched again; if the market still disagrees, the expert price is used and marked', async () => {
+  const smeta = await import('../src/smeta.js');
+  const searches = [];
+  smeta.setAgents({
+    json: async () => ({ flags: [
+      { ref: 'w:1', problem: 'цена за весь объём, а не за м³', low: 4000, typical: 5000, high: 6500 },
+      { ref: 'm:0', problem: 'нет цены', low: 6000, typical: 7000, high: 8000 },
+    ] }),
+    prices: async ({ items }, opts) => { searches.push({ items, opts }); return { items: [{ typical: 5200, low: 4800, high: 6000, sources: [{ title: 'x', url: 'https://x.ru' }] }, { missing: true }] }; },
+  });
+  const p = (typical, missing = false) => ({ low: typical, typical, high: typical, example: '', sources: [], missing });
+  const priced = {
+    works: [{ id: '1', name: 'Бетонирование', laborName: 'Бетонирование', unit: 'м³', quantity: 10, price: p(52000) }],
+    materials: [{ key: 'b', name: 'Бетон B25', unit: 'м³', quantity: 10, price: p(0, true) }],
+    machines: [],
+  };
+  const r = await smeta.verifyPrices(priced, { city: 'Сочи' });
+  assert.equal(r.flagged, 2);
+  assert.equal(searches[0].opts.cacheTag, 'q:');
+  assert.equal(searches[0].items[0].hint, 'цена за весь объём, а не за м³');
+  assert.equal(priced.works[0].price.typical, 5200);
+  assert.equal(priced.works[0].price.rechecked, true);
+  assert.equal(priced.materials[0].price.typical, 7000);
+  assert.equal(priced.materials[0].price.estimated, true);
+  smeta.setAgents();
 });

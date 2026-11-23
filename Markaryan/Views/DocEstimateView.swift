@@ -67,7 +67,7 @@ struct DocEstimateHubView: View {
 struct DocEstimateProgressCard: View {
     @ObservedObject private var center = DocEstimateCenter.shared
     let job: DocEstimateCenter.Running
-    private let stages: [(String, String)] = [("read", "Чтение документов двумя агентами"), ("merge", "Сводная ведомость объёмов"), ("norms", "Нормы расхода и техника"), ("prices", "Рыночные цены"), ("audit", "Проверка аудитором"), ("additions", "Добавленные проверкой работы")]
+    private let stages: [(String, String)] = [("read", "Чтение документов двумя агентами"), ("merge", "Сводная ведомость объёмов"), ("norms", "Нормы расхода и техника"), ("prices", "Рыночные цены"), ("audit", "Проверка аудитором"), ("additions", "Добавленные проверкой работы"), ("verify", "Ценовой аудитор: каждая цена")]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -334,6 +334,7 @@ struct DocEstimateResultView: View {
                     .font(.caption).foregroundStyle(issue.severity == "critical" ? Theme.danger : Theme.ink)
             }
             if audit.added > 0 { Text("Добавлено проверкой работ: \(audit.added) — отмечены в смете.").font(.caption.weight(.semibold)).foregroundStyle(Theme.muted) }
+            if let checked = audit.pricesChecked, checked > 0 { Text("Ценовой аудитор проверил \(checked) цен, исправлено: \(audit.pricesFixed ?? 0).").font(.caption.weight(.semibold)).foregroundStyle(Theme.muted) }
             if let unpriced = result.unpriced, unpriced > 0 { Text("Без рыночной цены: \(unpriced) позиций — уточните у поставщиков.").font(.caption.weight(.semibold)).foregroundStyle(Theme.danger) }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(20)
@@ -373,7 +374,7 @@ struct DocEstimateResultView: View {
                         Spacer(minLength: 8)
                         Text(CalculationEngine.money(item.quantity * (item.price?.typical ?? 0))).font(.subheadline.bold()).monospacedDigit().foregroundStyle(Theme.ink)
                     }
-                    Text("\(CalculationEngine.format(item.quantity)) \(item.unit) × \(item.price?.hasPrice == true ? CalculationEngine.money(item.price?.typical ?? 0) : "нет цены")").font(.caption).foregroundStyle(Theme.muted)
+                    Text("\(CalculationEngine.format(item.quantity)) \(item.unit) × \(item.price?.hasPrice == true ? CalculationEngine.money(item.price?.typical ?? 0) : "нет цены")\(item.price?.estimated == true ? " · экспертная цена" : "")").font(.caption).foregroundStyle(Theme.muted)
                     DocSourcesRow(price: item.price)
                 }
                 .padding(14).panelCard(18)
@@ -422,7 +423,9 @@ struct DocWorkRow: View {
                             .font(.caption).foregroundStyle(Theme.muted)
                         HStack(spacing: 6) {
                             if work.added == true { tag("добавлено проверкой", Theme.danger) }
-                            if work.confidence == "low" { tag("оценка", Theme.muted) }
+                            if work.confidence == "low" { tag("объём — оценка", Theme.muted) }
+                            if work.price?.estimated == true { tag("экспертная цена", Theme.orange) }
+                            if work.price?.rechecked == true { tag("цена перепроверена", Theme.success) }
                         }
                     }
                     Spacer(minLength: 6)
@@ -432,6 +435,7 @@ struct DocWorkRow: View {
             .buttonStyle(.plain)
             if open {
                 if let basis = work.basis, !basis.isEmpty { Label(basis, systemImage: "ruler").font(.caption).foregroundStyle(Theme.ink) }
+                if let note = work.price?.note, !note.isEmpty { Label(note, systemImage: "checkmark.shield").font(.caption).foregroundStyle(Theme.muted) }
                 DocSourcesRow(price: work.price)
                 ForEach(work.materials + work.machines) { m in
                     HStack(alignment: .top) {
