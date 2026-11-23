@@ -239,3 +239,25 @@ struct BillingView: View {
         .padding(18).panelCard(20)
     }
 }
+
+/// Balance in the top right corner: credits and a gold «+» to top up; opens «Тарифы и баланс».
+struct BalanceChip: View {
+    @ObservedObject private var billing = BillingCenter.shared
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "diamond.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.gold)
+            Text(billing.me.map { "\($0.credits)" } ?? "—").font(.system(.subheadline, design: .rounded, weight: .bold)).monospacedDigit().foregroundStyle(Theme.ink)
+                .contentTransition(.numericText()).animation(.snappy, value: billing.me?.credits)
+            Image(systemName: "plus").font(.system(size: 11, weight: .heavy)).foregroundStyle(Theme.ink)
+                .frame(width: 24, height: 24).background(Theme.goldLight, in: Circle())
+        }
+        .padding(.leading, 12).padding(.trailing, 4).padding(.vertical, 4)
+        .background(Theme.panel, in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.gold.opacity(0.25), lineWidth: 0.8))
+        .shadow(color: Theme.ink.opacity(0.08), radius: 8, y: 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Баланс: \(billing.me?.credits ?? 0) кредитов. Пополнить")
+        .task { if billing.me == nil { await billing.refresh() } }
+    }
+}
