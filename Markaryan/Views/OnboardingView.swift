@@ -76,14 +76,14 @@ struct OnboardingView: View {
                 Text("Что строим?").font(.system(.largeTitle, weight: .bold)).tracking(-1)
                 Text("Название и район подставятся в сметы, PDF и чертежи. Данные хранятся на вашем iPhone.").foregroundStyle(Theme.muted)
                 VStack(spacing: 12) {
-                    TextField("Например, дом в Хосте", text: $objectName).focused($focused).padding(16).panelCard(15)
-                    TextField("Район: Адлер, Хоста, Дагомыс…", text: $district).focused($focused).padding(16).panelCard(15)
+                    TextField("Например, дом в Хосте", text: $objectName).focused($focused).padding(16).fieldSurface(15)
+                    TextField("Район: Адлер, Хоста, Дагомыс…", text: $district).focused($focused).padding(16).fieldSurface(15)
                 }
                 HStack(spacing: 8) {
                     ForEach(["Дом", "Баня", "Беседка", "Ремонт"], id: \.self) { preset in
                         Button(preset) { objectName = preset; Haptics.tap() }
                             .font(.caption.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8)
-                            .background(objectName == preset ? Theme.orange : Theme.panel, in: Capsule())
+                            .background(objectName == preset ? Theme.orange : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
                             .foregroundStyle(objectName == preset ? Theme.onAccent : Theme.ink)
                     }
                 }

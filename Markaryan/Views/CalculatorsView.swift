@@ -18,17 +18,14 @@ struct CalculatorsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SectionTitle(eyebrow: "Расчёты и сметы", title: "Сначала цифры.\nПотом стройка.")
-                Text("Полная смета объекта или \(CalculationKind.allCases.count) калькуляторов материалов — результат в PDF и с рыночными ценами вашего города.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
+                SectionTitle(eyebrow: "Расчёты", title: "Сметы и калькуляторы")
 
                 NavigationLink { DocEstimateHubView() } label: {
                     HStack(spacing: 15) {
                         Image(systemName: "doc.text.magnifyingglass").font(.title3).foregroundStyle(Theme.orange).frame(width: 50, height: 50).background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Смета по документам").font(.headline).foregroundStyle(.white)
-                            Text("АР, КР, ТЗ, готовая смета или перечень работ — точный расчёт ИИ‑сметчиками").font(.caption).foregroundStyle(.white.opacity(0.8))
+                            Text("АР, КР, ТЗ, Excel или перечень работ").font(.caption).foregroundStyle(.white.opacity(0.8))
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.8))
@@ -41,17 +38,17 @@ struct CalculatorsView: View {
 
                 NavigationLink { FullEstimateHubView() } label: {
                     HStack(spacing: 15) {
-                        Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Полная смета объекта").font(.headline).foregroundStyle(.white)
-                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(.white.opacity(0.78))
+                        Image(systemName: "house").font(.title3).foregroundStyle(Theme.orange).frame(width: 50, height: 50)
+                            .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Типовая смета объекта").font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+                            Text("Дом, беседка, металлоконструкции").font(.caption).foregroundStyle(Theme.muted)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.orange)
+                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
                     }
                     .padding(18)
-                    .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.orange.opacity(0.22), lineWidth: 1))
+                    .panelCard(22)
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
@@ -73,7 +70,7 @@ struct CalculatorsView: View {
                     if !search.isEmpty { Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.muted) }.accessibilityLabel("Очистить поиск") }
                 }
                 .padding(14)
-                .panelCard(15)
+                .fieldSurface(15)
 
                 ForEach(CalculationCategory.allCases) { category in
                     let kinds = filtered.filter { $0.category == category }
@@ -370,7 +367,7 @@ struct HouseEstimateView: View {
         catch { store.priceSyncMessage = "Не удалось подготовить PDF: \(error.localizedDescription)" }
     }
     private func estimateField(_ title: String, text: Binding<String>, id: String, type: UIKeyboardType = .decimalPad) -> some View {
-        VStack(alignment: .leading, spacing: 7) { Text(title).font(.caption).foregroundStyle(Theme.muted); TextField("0", text: text).keyboardType(type).focused($focused, equals: id).font(.headline.monospacedDigit()).padding(12).panelCard(12) }.frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 7) { Text(title).font(.caption).foregroundStyle(Theme.muted); TextField("0", text: text).keyboardType(type).focused($focused, equals: id).font(.headline.monospacedDigit()).padding(12).fieldSurface(12, focused: focused == id) }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -434,7 +431,7 @@ struct CalculatorView: View {
             if let measurementNote { InfoNote(text: measurementNote) }
             VStack(alignment: .leading, spacing: 10) {
                 Text("Объект").font(.subheadline).foregroundStyle(Theme.muted)
-                TextField(store.projectDisplayName, text: $object).textInputAutocapitalization(.sentences).padding(16).panelCard(14).onChange(of: object) { _, _ in saved = false }
+                TextField(store.projectDisplayName, text: $object).textInputAutocapitalization(.sentences).padding(16).fieldSurface(14).onChange(of: object) { _, _ in saved = false }
             }
             ForEach(kind.fields) { field in
                 VStack(alignment: .leading, spacing: 9) {
@@ -442,8 +439,8 @@ struct CalculatorView: View {
                     HStack {
                         TextField(field.id == "price" ? "Не учитывать" : "0", text: Binding(get: { values[field.id] ?? "" }, set: { update(field.id, $0) }))
                             .keyboardType(.decimalPad).focused($focusedField, equals: field.id).font(.title3.monospacedDigit()).accessibilityLabel("\(field.title), \(field.unit)")
-                        Text(field.unit).font(.subheadline).foregroundStyle(Theme.orange)
-                    }.padding(16).panelCard(14)
+                        Text(field.unit).font(.subheadline.weight(.medium)).foregroundStyle(Theme.muted)
+                    }.padding(16).fieldSurface(14, focused: focusedField == field.id)
                 }
             }
             if let error { Label(error, systemImage: "exclamationmark.circle").font(.subheadline).foregroundStyle(Theme.danger).accessibilityLabel("Ошибка: \(error)") }
@@ -679,7 +676,7 @@ struct AIAssistantView: View {
                     .disabled(isLoading)
                     .accessibilityLabel("Прикрепить фото к вопросу")
                 }
-                TextField(attachedPhoto == nil ? "Напишите вопрос" : "Что спросить про фото?", text: $prompt, axis: .vertical).lineLimit(1...4).focused($inputFocused).padding(12).panelCard(15).disabled(isLoading)
+                TextField(attachedPhoto == nil ? "Напишите вопрос" : "Что спросить про фото?", text: $prompt, axis: .vertical).lineLimit(1...4).focused($inputFocused).padding(12).fieldSurface(15).disabled(isLoading)
                 Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(Theme.onAccent).background(Theme.orange, in: Circle()) }
                     .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     .accessibilityLabel("Отправить вопрос")

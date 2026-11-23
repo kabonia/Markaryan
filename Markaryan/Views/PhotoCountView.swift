@@ -218,7 +218,7 @@ struct PhotoCountView: View {
                 if !session.autoDetect {
                     Picker("Материал", selection: $session.material) { ForEach(CountMaterial.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
                     if session.material == .other {
-                        TextField("Что считать: гайки М12, кирпич, мешки цемента…", text: $session.customObject).padding(14).panelCard(14)
+                        TextField("Что считать: гайки М12, кирпич, мешки цемента…", text: $session.customObject).padding(14).fieldSurface(14)
                     }
                 }
 
@@ -366,7 +366,7 @@ struct PhotoCountView: View {
     private func field(_ title: String, _ text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
-            TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit()).padding(12).panelCard(12)
+            TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit()).padding(12).fieldSurface(12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

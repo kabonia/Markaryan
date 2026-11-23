@@ -75,7 +75,23 @@ struct PanelCardModifier: ViewModifier {
     }
 }
 
+/// Input surface: a quiet field with a hairline, emerald when focused (no card shadow on inputs).
+struct FieldSurfaceModifier: ViewModifier {
+    let radius: CGFloat
+    var focused = false
+    func body(content: Content) -> some View {
+        content
+            .tint(Theme.orange)
+            .background(Theme.panel, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(focused ? Theme.orange : Color(red: 0.24, green: 0.20, blue: 0.12).opacity(0.16), lineWidth: focused ? 1.5 : 1))
+            .animation(.easeOut(duration: 0.15), value: focused)
+    }
+}
+
 extension View {
+    func fieldSurface(_ radius: CGFloat = 14, focused: Bool = false) -> some View { modifier(FieldSurfaceModifier(radius: radius, focused: focused)) }
+
     /// Standard card surface: white, soft corners, hairline and a gentle shadow.
     func panelCard(_ radius: CGFloat = 20, fill: Color = Theme.panel) -> some View {
         modifier(PanelCardModifier(radius: radius, fill: fill))

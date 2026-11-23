@@ -231,7 +231,7 @@ struct MaterialReferenceCard: View {
                     let on = option == selected
                     Button { Haptics.tap(); pick(option) } label: {
                         Text(option.ru).font(.caption.weight(.semibold)).padding(.horizontal, 11).padding(.vertical, 7)
-                            .background(on ? Theme.orange : Theme.panel, in: Capsule())
+                            .background(on ? Theme.orange : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
                             .foregroundStyle(on ? Theme.onAccent : Theme.ink)
                             .overlay(Capsule().strokeBorder(Theme.stroke))
                     }

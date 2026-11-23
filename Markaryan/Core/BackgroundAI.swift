@@ -107,6 +107,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         BackgroundAI.shared.reconnect()
         UIWindow.appearance().overrideUserInterfaceStyle = .light
+        AppAppearance.apply()
         // The design is light: keep every window, sheet and alert light even when the iPhone is in dark mode.
         NotificationCenter.default.addObserver(forName: UIWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
             (note.object as? UIWindow)?.overrideUserInterfaceStyle = .light
@@ -122,5 +123,43 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound])
+    }
+}
+
+/// One look for the system parts: navigation bars with serif titles on the ivory page, lists on the same page,
+/// emerald segmented controls — so system screens do not look different from the app's own.
+enum AppAppearance {
+    static func apply() {
+        let ink = UIColor(Theme.ink), page = UIColor(Theme.background), accent = UIColor(Theme.orange)
+        func serif(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
+            let base = UIFont.systemFont(ofSize: size, weight: weight)
+            return base.fontDescriptor.withDesign(.serif).map { UIFont(descriptor: $0, size: size) } ?? base
+        }
+        let bar = UINavigationBarAppearance()
+        bar.configureWithDefaultBackground()
+        bar.backgroundColor = page.withAlphaComponent(0.94)
+        bar.shadowColor = UIColor(red: 0.24, green: 0.20, blue: 0.12, alpha: 0.10)
+        bar.titleTextAttributes = [.font: serif(17, .semibold), .foregroundColor: ink]
+        bar.largeTitleTextAttributes = [.font: serif(32, .bold), .foregroundColor: ink]
+        let edge = bar.copy()
+        edge.configureWithTransparentBackground()
+        edge.titleTextAttributes = bar.titleTextAttributes
+        edge.largeTitleTextAttributes = bar.largeTitleTextAttributes
+        UINavigationBar.appearance().standardAppearance = bar
+        UINavigationBar.appearance().compactAppearance = bar
+        UINavigationBar.appearance().scrollEdgeAppearance = edge
+        UINavigationBar.appearance().tintColor = accent
+
+        UICollectionView.appearance().backgroundColor = page
+        UITableView.appearance().backgroundColor = page
+
+        let segments = UISegmentedControl.appearance()
+        segments.selectedSegmentTintColor = accent
+        segments.backgroundColor = UIColor(Theme.panelRaised)
+        segments.setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 13, weight: .semibold)], for: .selected)
+        segments.setTitleTextAttributes([.foregroundColor: ink, .font: UIFont.systemFont(ofSize: 13, weight: .medium)], for: .normal)
+        UISwitch.appearance().onTintColor = accent
+        UIPageControl.appearance().currentPageIndicatorTintColor = accent
+        UIPageControl.appearance().pageIndicatorTintColor = UIColor(Theme.panelRaised)
     }
 }

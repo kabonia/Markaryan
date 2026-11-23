@@ -884,7 +884,7 @@ struct FloorPlanDetailView: View {
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button { Haptics.tap(); withAnimation(.snappy) { action() } } label: {
             Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
-                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).foregroundStyle(selected ? Theme.onAccent : Theme.ink)
+                .background(selected ? Theme.orange : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1)).foregroundStyle(selected ? Theme.onAccent : Theme.ink)
         }
     }
 
@@ -1723,7 +1723,7 @@ struct FlowChips: View {
             ForEach(items, id: \.self) { item in
                 Button { Haptics.tap(); selection = item } label: {
                     Text(item).font(.subheadline.weight(.medium)).padding(.horizontal, 14).padding(.vertical, 9)
-                        .background(selection == item ? Theme.orange : Theme.panel, in: Capsule())
+                        .background(selection == item ? Theme.orange : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
                         .foregroundStyle(selection == item ? Theme.onAccent : Theme.ink)
                 }
                 .buttonStyle(.plain)
