@@ -31,7 +31,7 @@ struct RegionPickerView: View {
                     if store.locationDenied {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Доступ к геопозиции выключен. Выберите город из списка или разрешите доступ в Настройках.")
-                                .font(.footnote).foregroundStyle(.secondary)
+                                .font(.footnote).foregroundStyle(Theme.muted)
                             Button("Открыть Настройки") {
                                 if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                             }.font(.footnote.weight(.semibold))
@@ -51,8 +51,8 @@ struct RegionPickerView: View {
                         Button { choose(region) } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(region.city).foregroundStyle(.primary)
-                                    if region.region != region.city { Text(region.region).font(.caption).foregroundStyle(.secondary) }
+                                    Text(region.city).foregroundStyle(Theme.ink)
+                                    if region.region != region.city { Text(region.region).font(.caption).foregroundStyle(Theme.muted) }
                                 }
                                 Spacer()
                                 if store.userRegion?.city == region.city { Image(systemName: "checkmark").foregroundStyle(Theme.orange) }

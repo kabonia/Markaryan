@@ -235,7 +235,7 @@ struct HomeWideToolCard: View {
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
-                .frame(width: 48, height: 48).background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                .frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
                 Text(text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
@@ -415,7 +415,7 @@ struct ChecklistView: View {
                         Button { Haptics.tap(); store.toggleChecklist(item.0) } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: checked ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(checked ? Theme.orange : Theme.muted)
-                                Text(item.1).foregroundStyle(checked ? Theme.muted : .primary).strikethrough(checked, color: Theme.muted)
+                                Text(item.1).foregroundStyle(checked ? Theme.muted : Theme.ink).strikethrough(checked, color: Theme.muted)
                                 Spacer()
                             }
                         }
@@ -532,7 +532,7 @@ struct ProjectPlanView: View {
         List {
             Section { Text("Отмечайте закрытые этапы. Карточка «Мой проект» покажет общий прогресс и поможет не потерять следующий шаг.").font(.footnote).foregroundStyle(Theme.muted) }
             Section("Дорожная карта") { ForEach($store.milestones) { $milestone in
-                Button { Haptics.tap(); withAnimation(.snappy) { milestone.completed.toggle() } } label: { HStack(spacing: 14) { Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(milestone.completed ? Theme.orange : Theme.muted); VStack(alignment: .leading, spacing: 4) { Text(milestone.title).foregroundStyle(.primary); Text(milestone.subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer() } }.buttonStyle(.plain)
+                Button { Haptics.tap(); withAnimation(.snappy) { milestone.completed.toggle() } } label: { HStack(spacing: 14) { Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(milestone.completed ? Theme.orange : Theme.muted); VStack(alignment: .leading, spacing: 4) { Text(milestone.title).foregroundStyle(Theme.ink); Text(milestone.subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer() } }.buttonStyle(.plain)
             } }
         }.scrollContentBackground(.hidden).background(Theme.background).navigationTitle("План стройки").helperScreen("План стройки")
     }

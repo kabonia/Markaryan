@@ -51,7 +51,7 @@ struct FurnitureEditorView: View {
                         HStack {
                             Text(entry.name)
                             Spacer()
-                            Text(size(entry.width, entry.depth)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                            Text(size(entry.width, entry.depth)).font(.caption).foregroundStyle(Theme.muted).monospacedDigit()
                         }
                     }
                 }

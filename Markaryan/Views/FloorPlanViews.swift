@@ -601,7 +601,7 @@ struct FloorPlanDetailView: View {
             Button { applyEdits(proposal) } label: {
                 Label("Применить правки", systemImage: "wand.and.rays").font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
-                    .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .buttonStyle(PremiumPressStyle())
             .disabled(isGenerating || edits.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -1606,7 +1606,7 @@ struct DesignRequestSheet: View {
                         Text(loadingStyle == style.id ? "ИИ рисует вашу комнату… ~30 с" : "Показать мою комнату в этом стиле").font(.subheadline.weight(.semibold))
                     }
                     .frame(maxWidth: .infinity).padding(13).foregroundStyle(Theme.onAccent)
-                    .background(Theme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(PremiumPressStyle())
                 .disabled(loadingStyle != nil)
@@ -1663,7 +1663,7 @@ struct StyleCard: View {
                         .background(Theme.orange, in: Capsule()).foregroundStyle(Theme.onAccent).padding(6)
                 }
             }
-            Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(1)
+            Text(style.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(1)
             Text(style.tagline).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .padding(8)

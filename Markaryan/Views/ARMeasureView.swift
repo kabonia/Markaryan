@@ -444,7 +444,7 @@ struct ARMeasureView: View {
             if model.mode == .distance && model.points.count == 2 {
                 Button("Использовать длину в калькуляторе") { showLengthTransfer = true }.font(.subheadline.weight(.semibold))
             }
-            Text("Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций.").font(.caption2).foregroundStyle(.secondary)
+            Text("Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций.").font(.caption2).foregroundStyle(Theme.muted)
         }.padding(20).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26)).padding(12)
     }
     func dimension(_ label: String, _ binding: Binding<String>) -> some View {

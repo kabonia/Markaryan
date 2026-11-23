@@ -265,7 +265,7 @@ private struct ProjectTaskRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text(task.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                Text(task.title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
                 Button {
                     withAnimation(.snappy) { task.status = task.status.next }
@@ -450,8 +450,8 @@ struct ObjectVisualizerHero: View {
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.75))
                 HStack(spacing: 7) {
-                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(Theme.onAccent)
-                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent)
+                    Text("Создать по фото или идее").font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
+                    Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(Theme.ink)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)

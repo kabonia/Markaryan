@@ -118,7 +118,7 @@ struct PhotoDesignView: View {
                 .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 PhotosPicker(selection: $pickerItem, matching: .images) {
                     Label("Из галереи", systemImage: "photo.on.rectangle").font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(15).foregroundStyle(Theme.ink)
                         .panelCard(15, fill: Theme.panelRaised)
                 }
                 .buttonStyle(.plain)

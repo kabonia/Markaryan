@@ -95,6 +95,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         BackgroundAI.shared.reconnect()
+        UIWindow.appearance().overrideUserInterfaceStyle = .light
         // The design is light: keep every window, sheet and alert light even when the iPhone is in dark mode.
         NotificationCenter.default.addObserver(forName: UIWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
             (note.object as? UIWindow)?.overrideUserInterfaceStyle = .light

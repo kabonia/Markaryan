@@ -7,7 +7,7 @@ import StoreKit
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
-            LaunchGateView().environmentObject(store).tint(Theme.orange).preferredColorScheme(.light)
+            LaunchGateView().environmentObject(store).tint(Theme.orange).foregroundStyle(Theme.ink).preferredColorScheme(.light).environment(\.colorScheme, .light)
                 .alert("Сохранение", isPresented: Binding(get: { store.storageError != nil }, set: { if !$0 { store.storageError = nil } })) {
                     Button("Понятно") { store.storageError = nil }
                 } message: { Text(store.storageError ?? "") }

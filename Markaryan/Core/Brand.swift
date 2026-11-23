@@ -59,7 +59,7 @@ struct PanelCardModifier: ViewModifier {
         content
             .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.stroke, lineWidth: 0.5))
-            .shadow(color: Color.black.opacity(fill == Theme.panel ? 0.05 : 0), radius: 10, y: 3)
+            .shadow(color: Theme.ink.opacity(fill == Theme.panel ? 0.07 : 0), radius: 14, y: 5)
     }
 }
 

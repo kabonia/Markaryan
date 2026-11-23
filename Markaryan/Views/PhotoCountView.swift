@@ -318,7 +318,7 @@ struct PhotoCountView: View {
             case .done: Text("Касание пустого места — добавить метку, касание метки — убрать.").font(.caption).foregroundStyle(Theme.muted)
             case .counting: EmptyView()
             }
-            if !part.note.isEmpty { Label(part.note, systemImage: "sparkles").font(.caption).foregroundStyle(.white.opacity(0.8)) }
+            if !part.note.isEmpty { Label(part.note, systemImage: "sparkles").font(.caption).foregroundStyle(Theme.muted) }
         }
         .padding(14).panelCard(20)
     }
