@@ -1054,11 +1054,11 @@ enum VisualizationError: LocalizedError {
     /// Photoreal version of an image (the exact 3D render or a photo of the site).
     /// `engine`: nil — the render model picked on the «Дизайн» step first, the next engine when it fails;
     /// an engine id — only that engine (owner comparison).
-    func photorealRender(_ image: UIImage, prompt: String, engine: String? = nil) async throws -> RenderedImage {
+    func photorealRender(_ image: UIImage, prompt: String, engine: String? = nil, references: [MaterialReference] = []) async throws -> RenderedImage {
         if let base = AIServerConfig.baseURL, !aiCapabilities.imageEngines.isEmpty || !aiCapabilities.imageEdit.isEmpty || !aiCapabilities.renderModels.isEmpty {
             // A server before 1.3 knows only "flux" and "gpt".
             let chosen = engine ?? (aiCapabilities.imageEngines.isEmpty && aiCapabilities.renderModels.isEmpty ? aiCapabilities.imageEdit.first ?? "auto" : "auto")
-            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen, prefer: engine == nil ? renderModel.engineID : nil)
+            let result = try await ServerAIClient(base: base).editImage(image, prompt: prompt, engine: chosen, prefer: engine == nil ? renderModel.engineID : nil, references: references)
             track("photoreal_server")
             registerMeaningfulAction()
             return result

@@ -13,6 +13,7 @@ import * as market from './market.js';
 import * as reports from './reports.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
+import * as materials from './materials.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -133,6 +134,12 @@ async function handle(req, res) {
     } catch (error) { refund(kind, installId, ip); throw error; }
   }
 
+  if (url.pathname === '/v1/ai/material-identify') {
+    if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
+    consume('vision', installId, ip);
+    try { return send(res, 200, await materials.identify(body)); } catch (error) { refund('vision', installId, ip); throw error; }
+  }
+
   if (url.pathname === '/v1/ai/image-edit') {
     // "auto" (or nothing) — the engines in order with fallback, `prefer` (the model picked on the «Дизайн» step) first;
     // an engine id — only that one (comparing engines).
@@ -142,7 +149,8 @@ async function handle(req, res) {
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
     consume('imageEdit', installId, ip);
     try {
-      const params = { image: body.image, prompt: String(body.prompt || ''), size: body.size, aspectRatio: aspectRatio(body.aspectRatio) };
+      const references = (Array.isArray(body.references) ? body.references : []).filter((r) => typeof r === 'string' && r.length > 1000).slice(0, 4);
+      const params = { image: body.image, prompt: String(body.prompt || ''), size: body.size, aspectRatio: aspectRatio(body.aspectRatio), references };
       const { image, engine } = await renderWithFallback(engines, params);
       return send(res, 200, { image, engine: engine.id, title: engine.title });
     } catch (error) { refund('imageEdit', installId, ip); throw error; }

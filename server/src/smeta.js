@@ -18,7 +18,9 @@ import { xlsxToText } from './xlsx.js';
 
 const AI_TIMEOUT = 420_000;
 const MAX_PAGES = 40;
-const PAGES_PER_READER = 3;
+const PAGES_PER_READER = 2;
+/** Price search for estimates from documents: a strong model, more sources, its own cache. */
+const QUALITY = { model: 'anthropic/claude-sonnet-5.5', maxResults: 8, strict: true, cacheTag: 'q:', batch: 4, maxTokens: 8000 };
 const KEEP_DAYS = 14;
 
 // ---------- deterministic helpers (tested) ----------
@@ -260,6 +262,14 @@ async function norms(works, input) {
     schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000,
   })).catch(() => ({ works: [] })));
   const byId = new Map(answers.flatMap((a) => a.works || []).map((w) => [String(w.id), w]));
+  // A work the group answer skipped gets its norms on its own: no work may go without materials by accident.
+  const skipped = works.filter((w) => !byId.has(w.id));
+  const single = await mapLimit(skipped, 6, (w) => retry(() => askJSON({
+    system: NORMS_SYSTEM,
+    messages: [{ role: 'user', text: `Город: ${input.city}. Работа раздела «${w.section}»:\n${json([{ id: w.id, name: w.name, unit: w.unit, quantity: w.quantity, basis: w.basis }])}` }],
+    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000,
+  })).catch(() => ({ works: [] })));
+  single.flatMap((a) => a.works || []).forEach((w) => byId.set(String(w.id), w));
   return works.map((w) => {
     const n = byId.get(w.id) || {};
     return {
@@ -284,7 +294,7 @@ async function price(works, input, onProgress) {
   for (let i = 0; i < items.length; i += 20) parts.push(items.slice(i, i + 20));
   let done = 0;
   const priced = (await mapLimit(parts, 3, async (part) => {
-    try { return (await askPrices({ city: input.city, items: part, maxItems: 20 })).items; }
+    try { return (await askPrices({ city: input.city, items: part, maxItems: 20 }, QUALITY)).items; }
     catch { return part.map(() => ({ missing: true })); }
     finally { done += 1; onProgress(done / parts.length); }
   })).flat();
@@ -295,6 +305,54 @@ async function price(works, input, onProgress) {
     materials: materials.map((m) => ({ ...m, price: pick(prices.get(`material:${m.key}`)) })),
     machines: machines.map((m) => ({ ...m, price: pick(prices.get(`machine:${m.key}`)) })),
   };
+}
+
+const PRICE_AUDIT_SYSTEM = `Ты — эксперт по ценам строительного рынка РФ (материалы, работы, аренда техники) на текущий год.
+Проверь КАЖДУЮ строку: цена за единицу должна соответствовать именно этой единице (м³, м², т, шт, мешок, маш.‑ч…), рынку указанного города,
+для работ — только труд без материалов; без ошибок порядка (за упаковку вместо м², за кг вместо т, за весь объём вместо единицы).
+Верни ТОЛЬКО проблемные строки и строки без цены (missing): ref как в запросе, problem — что не так по‑русски (коротко, конкретно),
+low/typical/high — твоя экспертная рыночная цена за единицу в рублях для этого города. Корректные строки не возвращай.`;
+
+const PRICE_AUDIT_SCHEMA = {
+  type: 'object',
+  properties: {
+    flags: { type: 'array', items: { type: 'object', properties: { ref: { type: 'string' }, problem: { type: 'string' }, low: { type: 'number' }, typical: { type: 'number' }, high: { type: 'number' } } } },
+  },
+};
+
+/** Every price line checked by an expert agent; doubtful lines searched again with the reason, still doubtful — expert price. */
+export async function verifyPrices(priced, input, onProgress = () => {}) {
+  const lines = [
+    ...priced.works.map((w) => ({ ref: `w:${w.id}`, kind: 'work', name: `${w.laborName || w.name} — только работа`, unit: w.unit, quantity: w.quantity, target: w })),
+    ...priced.materials.map((m, i) => ({ ref: `m:${i}`, kind: 'material', name: m.name, unit: m.unit, quantity: m.quantity, target: m })),
+    ...priced.machines.map((m, i) => ({ ref: `t:${i}`, kind: 'work', name: `Аренда: ${m.name} (с оператором)`, unit: m.unit, quantity: m.quantity, target: m })),
+  ];
+  const byRef = new Map(lines.map((l) => [l.ref, l]));
+  const groups = [];
+  for (let i = 0; i < lines.length; i += 50) groups.push(lines.slice(i, i + 50));
+  const flags = (await mapLimit(groups, 4, (group) => retry(() => askJSON({
+    system: PRICE_AUDIT_SYSTEM,
+    messages: [{ role: 'user', text: `Город: ${input.city}.\n${json(group.map((l) => ({ ref: l.ref, name: l.name, unit: l.unit, quantity: l.quantity, low: l.target.price.low, typical: l.target.price.typical, high: l.target.price.high, missing: l.target.price.missing, example: l.target.price.example, sources: l.target.price.sources.length })))}` }],
+    schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000,
+  })).then((a) => a.flags || []).catch(() => []))).flat().filter((f) => byRef.has(f.ref));
+  onProgress(0.5);
+  if (!flags.length) return { checked: lines.length, flagged: 0 };
+  // Search again with the reason as a hint.
+  const again = await askPrices({ city: input.city, maxItems: flags.length, items: flags.map((f) => { const l = byRef.get(f.ref); return { name: l.name, kind: l.kind, unit: l.unit, quantity: l.quantity, hint: f.problem }; }) }, QUALITY).catch(() => ({ items: [] }));
+  flags.forEach((f, i) => {
+    const line = byRef.get(f.ref);
+    const expert = { low: num(f.low) || num(f.typical), typical: num(f.typical), high: num(f.high) || num(f.typical) };
+    const found = again.items?.[i];
+    const foundTypical = num(found?.typical);
+    // The new market price is taken when it agrees with the expert (within ×2); otherwise the expert price, marked.
+    if (foundTypical && (!expert.typical || (foundTypical >= expert.typical / 2 && foundTypical <= expert.typical * 2))) {
+      line.target.price = { low: num(found.low) || foundTypical, typical: foundTypical, high: num(found.high) || foundTypical, example: str(found.example, 160), sources: (found.sources || []).slice(0, 3), missing: false, rechecked: true, note: str(f.problem, 200) };
+    } else if (expert.typical) {
+      line.target.price = { ...line.target.price, ...expert, missing: false, estimated: true, note: `Экспертная цена: ${str(f.problem, 200)}` };
+    }
+  });
+  onProgress(1);
+  return { checked: lines.length, flagged: flags.length };
 }
 
 async function audit(input, vor, priced) {
@@ -392,13 +450,15 @@ export async function run(job, input) {
       works = [...works, ...(await norms(additions, input))];
       priced = await price(works, input, () => {});
     }
+    stage('verify', 'Ценовой аудитор проверяет каждую цену', 0);
+    const priceCheck = await verifyPrices(priced, input, (p) => update(job, { progress: p }));
     const sections = assemble(priced);
     const result = {
       title: input.title || vor.object?.name || 'Смета', city: input.city, createdAt: new Date().toISOString(),
       object: vor.object, sections, materials: priced.materials, machines: priced.machines,
       totals: totals(sections, input.options), options: input.options,
       assumptions: vor.assumptions, discrepancies: vor.discrepancies,
-      audit: { verdict: str(check.verdict, 1200), issues: (check.issues || []).map((x) => ({ severity: x.severity, text: str(x.text, 600) })), added: additions.length },
+      audit: { verdict: str(check.verdict, 1200), issues: (check.issues || []).map((x) => ({ severity: x.severity, text: str(x.text, 600) })), added: additions.length, pricesChecked: priceCheck.checked, pricesFixed: priceCheck.flagged },
       sources: input.docs.map((d) => ({ name: d.name, kind: d.kind, pages: d.pages.length })),
       unpriced: priced.works.filter((w) => w.price.missing).length + priced.materials.filter((m) => m.price.missing).length,
     };

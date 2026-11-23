@@ -12,6 +12,11 @@ struct DocPrice: Codable, Hashable {
     var example: String? = nil
     var sources: [MarketEstimateSource]? = nil
     var missing: Bool? = nil
+    /// No reliable market offer: the price auditor's expert price.
+    var estimated: Bool? = nil
+    /// Searched again after the price auditor found a problem.
+    var rechecked: Bool? = nil
+    var note: String? = nil
     var hasPrice: Bool { missing != true && typical > 0 }
 }
 
@@ -79,7 +84,7 @@ struct DocIssue: Codable, Hashable { var severity: String; var text: String }
 struct DocEstimateResult: Codable, Hashable {
     struct Totals: Codable, Hashable { var typical: DocTotals; var low: DocTotals; var high: DocTotals }
     struct Options: Codable, Hashable { var vat: Bool = false; var vatPct: Double = 22; var deliveryPct: Double = 4; var contingencyPct: Double = 5 }
-    struct Audit: Codable, Hashable { var verdict: String = ""; var issues: [DocIssue] = []; var added: Int = 0 }
+    struct Audit: Codable, Hashable { var verdict: String = ""; var issues: [DocIssue] = []; var added: Int = 0; var pricesChecked: Int? = nil; var pricesFixed: Int? = nil }
     struct ObjectInfo: Codable, Hashable { var name: String? = nil; var type: String? = nil; var area: Double? = nil; var floors: Double? = nil; var summary: String? = nil }
     struct Source: Codable, Hashable { var name: String; var kind: String; var pages: Int }
 
@@ -439,7 +444,7 @@ enum DocEstimateExport {
                     ensure(30)
                     row(["\(index + 1)", section.title.uppercased(), "", "", "", money(section.total), ""], size: 8, weight: .bold, color: accent)
                     for w in section.items {
-                        row([w.id, (w.added == true ? "[доб. проверкой] " : "") + w.name, w.unit, CalculationEngine.format(w.quantity), money(w.price?.typical ?? 0), money(w.laborSum ?? 0), w.basis ?? ""], weight: .semibold)
+                        row([w.id, (w.added == true ? "[доб. проверкой] " : "") + w.name, w.unit, CalculationEngine.format(w.quantity), money(w.price?.typical ?? 0), money(w.laborSum ?? 0), (w.basis ?? "") + (w.price?.estimated == true ? " · экспертная цена" : "")], weight: .semibold)
                         for m in w.materials { row(["", "   " + m.name, m.unit, CalculationEngine.format(m.quantity), money(m.price?.typical ?? 0), money(m.sum ?? 0), "норма \(CalculationEngine.format(m.norm ?? 0)), отх. \(CalculationEngine.format(m.waste ?? 0))%"], size: 7, color: muted) }
                         for m in w.machines { row(["", "   ⚙ " + m.name, m.unit, CalculationEngine.format(m.quantity), money(m.price?.typical ?? 0), money(m.sum ?? 0), ""], size: 7, color: muted) }
                     }
