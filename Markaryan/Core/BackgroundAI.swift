@@ -55,13 +55,24 @@ final class BackgroundAI: NSObject, URLSessionDataDelegate {
         let http = task.response as? HTTPURLResponse
         let ok = error == nil && http.map { (200...299).contains($0.statusCode) } == true
         let title = job?.title ?? "Задача ИИ"
+        // Long polls of a running job («смета по документам»): only the real end is worth a notification.
+        let body = job.map { String(decoding: $0.data.prefix(400), as: UTF8.self) } ?? ""
+        let isPoll = task.originalRequest?.url?.path.hasSuffix("/wait") == true
+        let stillRunning = body.contains("\"status\":\"running\"")
+        let failedJob = body.contains("\"status\":\"failed\"")
+        if isPoll && (stillRunning || !ok) { return finish(job, task: task, error: error, http: http) }
+        let success = ok && !failedJob
         Task { @MainActor in
             // Only when the person is not looking at the app: in the foreground the screen shows the result itself.
             if UIApplication.shared.applicationState != .active {
-                Self.notify(title: ok ? "\(title): готово" : "\(title): не получилось",
-                            body: ok ? "Откройте приложение, чтобы посмотреть результат." : "Откройте приложение — помощник подскажет, что делать.")
+                Self.notify(title: success ? "\(title): готово" : "\(title): не получилось",
+                            body: success ? "Откройте приложение, чтобы посмотреть результат." : "Откройте приложение — помощник подскажет, что делать.")
             }
         }
+        finish(job, task: task, error: error, http: http)
+    }
+
+    private func finish(_ job: Job?, task: URLSessionTask, error: Error?, http: HTTPURLResponse?) {
         guard let continuation = job?.continuation else { return }
         if let error { continuation.resume(throwing: error) }
         else if let http { continuation.resume(returning: (job?.data ?? Data(), http)) }

@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
-import { ApiError, request, readJSON, parseLooseJSON } from './util.js';
+import { ApiError, request, readJSON, parseLooseJSON, mapLimit } from './util.js';
 import { normalizePlace } from './market.js';
 
 const CACHE_DAYS = 7;
@@ -58,7 +58,7 @@ async function askModel(city, items) {
 
 export async function priceEstimate(body) {
   const city = clean(body?.city, 60) || 'Москва';
-  const items = (Array.isArray(body?.items) ? body.items : []).slice(0, 40).map((it) => ({
+  const items = (Array.isArray(body?.items) ? body.items : []).slice(0, body?.maxItems || 40).map((it) => ({
     name: clean(it?.name, 120), amount: clean(it?.amount, 60), unit: clean(it?.unit, 20), quantity: num(it?.quantity), kind: it?.kind === 'work' ? 'work' : 'material',
   })).filter((it) => it.name);
   if (!items.length) throw new ApiError(400, 'Нет позиций для сметы.');
@@ -79,10 +79,10 @@ export async function priceEstimate(body) {
       const row = found[i] && sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i].quantity });
       if (row) { cache[key(city, it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
     });
-    (await Promise.all(batches.map(tryAsk))).forEach((found, b) => keep(batches[b], found));
+    (await mapLimit(batches, 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
     // Second pass: every line still without a price on its own — a single item is found far more reliably.
     const retry = left.splice(0, left.length);
-    (await Promise.all(retry.map((it) => tryAsk([it])))).forEach((found, i) => keep([retry[i]], found));
+    (await mapLimit(retry, 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
     if (priced) writeCache(cache);
     else if (!items.some((it) => fresh(cache[key(city, it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
   }

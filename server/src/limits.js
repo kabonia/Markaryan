@@ -23,7 +23,7 @@ setInterval(() => {
   fs.writeFile(file, JSON.stringify(state), () => {});
 }, 15_000).unref();
 
-const LABELS = { search: 'поисков вакансий', chat: 'вопросов ИИ', json: 'проектов дизайна', vision: 'анализов фото', imageEdit: 'фотореалистичных визуализаций', image: 'картинок' };
+const LABELS = { search: 'поисков вакансий', chat: 'вопросов ИИ', json: 'проектов дизайна', vision: 'анализов фото', imageEdit: 'фотореалистичных визуализаций', image: 'картинок', smeta: 'смет по документам' };
 
 /** Throws 429 with a clear Russian message when a quota is used up; otherwise counts the request. */
 export function consume(kind, installId, ip) {

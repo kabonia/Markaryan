@@ -85,6 +85,7 @@ export const config = {
     vision: int('LIMIT_VISION', 40),
     imageEdit: int('LIMIT_IMAGE_EDIT', 24),
     image: int('LIMIT_IMAGE', 15),
+    smeta: int('LIMIT_SMETA', 12),
     ipMultiplier: int('LIMIT_IP_MULTIPLIER', 4),
     /** Requests per minute per installation, all kinds together. */
     perMinute: int('LIMIT_PER_MINUTE', 20),

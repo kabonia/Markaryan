@@ -2,7 +2,7 @@ name: iOS — тесты и сборка
 
 on:
   push:
-    branches: [main]
+    branches: [main, ux-overhaul]
   pull_request:
 
 jobs:

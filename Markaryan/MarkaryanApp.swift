@@ -14,7 +14,7 @@ import StoreKit
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { store.flush() }
-            if phase == .active { Task { await store.refreshPriceBook(silent: true) } }
+            if phase == .active { Task { await store.refreshPriceBook(silent: true) }; DocEstimateCenter.shared.resumeAll() }
         }
     }
 }

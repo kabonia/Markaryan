@@ -82,3 +82,12 @@ export function parseLooseJSON(text) {
 }
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Promise.all with at most `limit` tasks running at once (the order of results matches the input). */
+export async function mapLimit(list, limit, fn) {
+  const results = new Array(list.length);
+  let next = 0;
+  const worker = async () => { while (next < list.length) { const i = next++; results[i] = await fn(list[i], i); } };
+  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
+  return results;
+}

@@ -31,6 +31,9 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     HomeSectionHeader(eyebrow: "Популярное", title: "Инструменты")
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                        NavigationLink { DocEstimateHubView() } label: {
+                            HomeToolCard(icon: "doc.text.magnifyingglass", title: "Смета по документам", text: "АР, КР, ТЗ или перечень работ — точная смета ИИ‑сметчиками с ценами рынка.", accent: Theme.orange, badge: "НОВОЕ")
+                        }
                         Button { store.tab = 2 } label: {
                             HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан лидаром, обмеры, стиль и фотореалистичный рендер по точной геометрии.", accent: Theme.orange, badge: "ХИТ")
                         }
