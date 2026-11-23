@@ -11,6 +11,10 @@ name: TestFlight — сборка и загрузка
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "upload — сразу в App Store Connect; ipa — только файл .ipa (загрузите сами через Transporter)"
+        default: upload
 
 concurrency:
   group: testflight
@@ -179,13 +183,14 @@ jobs:
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
           <key>method</key><string>app-store-connect</string>
-          <key>destination</key><string>upload</string>
+          <key>destination</key><string>DESTINATION</string>
           <key>teamID</key><string>QFKA6588C4</string>
           <key>signingStyle</key><string>automatic</string>
           <key>uploadSymbols</key><true/>
           <key>manageAppVersionAndBuildNumber</key><false/>
           </dict></plist>
           PLIST
+          sed -i '' "s/DESTINATION/$([ "${{ github.event.inputs.mode }}" = ipa ] && echo export || echo upload)/" "$RUNNER_TEMP/ExportOptions.plist"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Markaryan.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
@@ -195,7 +200,15 @@ jobs:
             -authenticationKeyID "$ASC_KID" \
             -authenticationKeyIssuerID "$ASC_ISS" | tail -40
           version=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/Markaryan.xcarchive/Info.plist")
-          echo "АртСтрой $version ($BUILD_NUMBER) загружен в App Store Connect. В TestFlight появится после обработки Apple, обычно за 5–30 минут." >> "$GITHUB_STEP_SUMMARY"
+          echo "СметаПро $version ($BUILD_NUMBER) загружен в App Store Connect. В TestFlight появится после обработки Apple, обычно за 5–30 минут." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Файл .ipa
+        if: github.event.inputs.mode == 'ipa'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmetaPro-ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 1
 
       - name: Убрать ключи с машины
         if: always()
