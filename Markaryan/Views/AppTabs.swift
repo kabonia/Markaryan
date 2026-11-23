@@ -440,7 +440,7 @@ struct ObjectVisualizerHero: View {
                 .rotationEffect(.degrees(-6))
                 .offset(x: 156, y: -67)
                 .opacity(0.96)
-            Circle().fill(Theme.orange.opacity(0.24)).frame(width: 190, height: 190).blur(radius: 9).offset(x: 142, y: -112)
+            Glow(color: Theme.orange.opacity(0.30), size: 230).offset(x: 142, y: -112)
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 7) {

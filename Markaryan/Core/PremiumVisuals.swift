@@ -16,6 +16,16 @@ enum Lux {
     static let backdrop = RadialGradient(colors: [Color(red: 0.106, green: 0.227, blue: 0.192), Color(red: 0.055, green: 0.129, blue: 0.110), night], center: UnitPoint(x: 0.4, y: 0.25), startRadius: 10, endRadius: 520)
 }
 
+/// Soft light spot drawn as a gradient — looks like a blur but costs nothing to animate.
+struct Glow: View {
+    let color: Color
+    var size: CGFloat = 240
+    var body: some View {
+        Circle().fill(RadialGradient(colors: [color, color.opacity(0)], center: .center, startRadius: 0, endRadius: size / 2))
+            .frame(width: size, height: size).allowsHitTesting(false)
+    }
+}
+
 // MARK: - Credit coin: a gold coin with an emerald gem and a light sweep
 
 struct GemShape: Shape {
@@ -62,6 +72,7 @@ struct CreditCoin: View {
     var size: CGFloat = 24
     var shine = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sweep = false
 
     var body: some View {
         ZStack {
@@ -77,16 +88,15 @@ struct CreditCoin: View {
             .frame(width: size * 0.48, height: size * 0.40)
             .offset(y: size * 0.02)
             if shine && size >= 18 && !reduceMotion {
-                TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-                    let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4.0)
-                    let phase = min(t / 1.1, 1.2)
-                    LinearGradient(colors: [.clear, .white.opacity(0.75), .clear], startPoint: .leading, endPoint: .trailing)
-                        .frame(width: size * 0.32, height: size * 1.6)
-                        .rotationEffect(.degrees(25))
-                        .offset(x: -size + size * 2 * phase)
-                }
-                .mask(Circle())
-                .allowsHitTesting(false)
+                LinearGradient(colors: [.clear, .white.opacity(0.75), .clear], startPoint: .leading, endPoint: .trailing)
+                    .frame(width: size * 0.32, height: size * 1.6)
+                    .rotationEffect(.degrees(25))
+                    .offset(x: sweep ? size * 1.2 : -size * 1.2)
+                    .mask(Circle())
+                    .allowsHitTesting(false)
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 1.2).delay(0.6).repeatForever(autoreverses: false)) { sweep = true }
+                    }
             }
         }
         .frame(width: size, height: size)
@@ -119,10 +129,11 @@ extension FeatureIntro {
 /// Dark premium stage with drifting light and gold dust; `kind` decides what lives on it.
 struct FeatureScene: View {
     let kind: FeatureSceneKind
+    var paused = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { context in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion || paused)) { context in
             let t = reduceMotion ? 2.6 : context.date.timeIntervalSinceReferenceDate
             ZStack {
                 SceneBackdrop(t: t)
@@ -159,9 +170,9 @@ private struct SceneBackdrop: View {
                 ctx.stroke(grid, with: .color(Theme.goldLight.opacity(0.06)), lineWidth: 0.6)
             }
             .mask(RadialGradient(colors: [.white, .clear], center: .center, startRadius: 20, endRadius: 260))
-            Circle().fill(Lux.goldMid.opacity(0.20)).frame(width: 260).blur(radius: 70)
+            Glow(color: Lux.goldMid.opacity(0.30), size: 380)
                 .offset(x: -110 + 40 * sin(t * 0.35), y: -70 + 20 * cos(t * 0.3))
-            Circle().fill(Lux.emeraldBright.opacity(0.22)).frame(width: 240).blur(radius: 70)
+            Glow(color: Lux.emeraldBright.opacity(0.32), size: 360)
                 .offset(x: 130 + 30 * cos(t * 0.3), y: 80 + 20 * sin(t * 0.4))
             // gold dust
             Canvas { ctx, size in

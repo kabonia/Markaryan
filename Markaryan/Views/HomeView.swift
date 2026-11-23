@@ -4,6 +4,8 @@ import PhotosUI
 struct HomeView: View {
     @EnvironmentObject private var store: AppStore
     @State private var appeared = false
+    @State private var visible = true
+    @State private var liveOpen: LiveExample?
 
     private var greeting: String {
         switch Calendar.current.component(.hour, from: .now) {
@@ -25,6 +27,19 @@ struct HomeView: View {
                 NavigationLink { PhotoDesignView() } label: { HomeHeroCard(greeting: greeting) }
                     .buttonStyle(PremiumCardPressStyle())
                     .reveal(appeared, delay: 0.05)
+
+                VStack(alignment: .leading, spacing: 14) {
+                    HomeSectionHeader(eyebrow: "Смотрите вживую", title: "Что можно сделать")
+                    LiveExamplesCard(paused: !visible) { example in
+                        switch example {
+                        case .design: store.tab = 2
+                        case .ar: store.showAR = true
+                        case .calculator: store.tab = 1
+                        default: liveOpen = example
+                        }
+                    }
+                }
+                .reveal(appeared, delay: 0.08)
 
                 if let alert = store.priceAlert { PriceAlertBanner(text: alert) { store.priceAlert = nil } }
 
@@ -111,7 +126,15 @@ struct HomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .helperScreen("Главная").featureIntro(.home)
         .refreshable { await store.refreshPriceBook(silent: true) }
-        .onAppear { if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
+        .navigationDestination(item: $liveOpen) { example in
+            switch example {
+            case .documents: DocEstimateHubView()
+            case .count: PhotoCountView()
+            default: PhotoDesignView()
+            }
+        }
+        .onAppear { visible = true; if !appeared { withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { appeared = true } } }
+        .onDisappear { visible = false }
     }
 
     private var header: some View {
@@ -141,7 +164,11 @@ struct HomeBackdrop: View {
     var body: some View {
         ZStack {
             Theme.background
-            Circle().fill(Theme.orange.opacity(0.08)).frame(width: 420, height: 420).blur(radius: 90).offset(x: 140, y: -330)
+            // colours of the logo: emerald and gold light washing over the ivory
+            LinearGradient(colors: [Theme.orange.opacity(0.16), Theme.goldTint.opacity(0.5), Theme.background.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.45))
+            Glow(color: Theme.orange.opacity(0.22), size: 560).offset(x: 160, y: -340)
+            Glow(color: Lux.goldMid.opacity(0.20), size: 460).offset(x: -170, y: -120)
+            Glow(color: Theme.orangeSoft.opacity(0.10), size: 520).offset(x: 150, y: 380)
         }
         .ignoresSafeArea()
     }
@@ -166,8 +193,8 @@ struct HomeHeroCard: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Theme.heroGradient
-            Circle().fill(Color.white.opacity(glow ? 0.14 : 0.08)).frame(width: 240, height: 240).blur(radius: 50).offset(x: 190, y: -150)
-            Circle().fill(Theme.goldLight.opacity(glow ? 0.22 : 0.12)).frame(width: 200, height: 200).blur(radius: 60).offset(x: -60, y: 120)
+            Glow(color: .white.opacity(0.16), size: 340).opacity(glow ? 1 : 0.55).offset(x: 190, y: -150)
+            Glow(color: Theme.goldLight.opacity(0.28), size: 320).opacity(glow ? 1 : 0.5).offset(x: -60, y: 120)
             HStack(spacing: -40) {
                 StyleRoomIllustration(palette: ["#F4F2EE", "#D8C3A5", "#7B8C83", "#C9714A"])
                     .frame(width: 120, height: 88).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -677,5 +704,121 @@ struct ProjectPhotoDiaryView: View {
             guard let data = try await selected.loadTransferable(type: Data.self), let image = UIImage(data: data) else { throw ProjectPhotoError.encoding }
             save(image); item = nil
         } catch { self.error = error.localizedDescription; HelperCenter.shared.failed(error) }
+    }
+}
+
+// MARK: - Live examples: animated scenes that play by themselves, like a short video of every function
+
+enum LiveExample: String, CaseIterable, Identifiable, Hashable {
+    case documents, design, ar, count, calculator
+    var id: String { rawValue }
+    var scene: FeatureSceneKind {
+        switch self {
+        case .documents: .documents
+        case .design: .design
+        case .ar: .ar
+        case .count: .count
+        case .calculator: .calculator
+        }
+    }
+    var title: String {
+        switch self {
+        case .documents: "Смета по документам"
+        case .design: "Дизайн комнаты"
+        case .ar: "AR‑рулетка"
+        case .count: "Сколько в пачке"
+        case .calculator: "Калькуляторы"
+        }
+    }
+    var text: String {
+        switch self {
+        case .documents: "Загрузите АР, КР или Excel — ИИ прочитает листы и посчитает смету с ценами."
+        case .design: "Было и стало: та же комната в новом стиле, с вашими материалами."
+        case .ar: "Обведите комнату камерой — получите длины и площадь."
+        case .count: "Сфотографируйте торцы — ИИ посчитает арматуру и трубы."
+        case .calculator: "Бетон, плитка, кладка — объём и стоимость за секунды."
+        }
+    }
+}
+
+struct LiveExamplesCard: View {
+    var paused = false
+    let open: (LiveExample) -> Void
+    @State private var index = 0
+    @State private var userTouched = Date.distantPast
+    private let items = LiveExample.allCases
+
+    var body: some View {
+        let item = items[index]
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                FeatureScene(kind: item.scene, paused: paused)
+                    .id(item)
+                    .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 1.03)), removal: .opacity))
+                HStack(spacing: 6) {
+                    Circle().fill(Color.red).frame(width: 6, height: 6)
+                    Text("LIVE").font(.system(size: 10, weight: .heavy)).tracking(1.2)
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(.black.opacity(0.35), in: Capsule())
+                .padding(14)
+            }
+            .frame(height: 236)
+            .clipped()
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title).font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+                        Text(item.text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .id(item).transition(.opacity)
+                    Spacer(minLength: 8)
+                    Button { Haptics.tap(); open(item) } label: {
+                        HStack(spacing: 5) { Text("Попробовать"); Image(systemName: "arrow.right") }
+                            .font(.caption.weight(.bold)).foregroundStyle(Theme.onAccent)
+                            .padding(.horizontal, 12).padding(.vertical, 9)
+                            .background(Theme.accentGradient, in: Capsule())
+                    }
+                    .buttonStyle(PremiumPressStyle())
+                }
+                HStack(spacing: 6) {
+                    ForEach(items.indices, id: \.self) { i in
+                        Capsule().fill(i == index ? AnyShapeStyle(Lux.goldGradient) : AnyShapeStyle(Theme.muted.opacity(0.25)))
+                            .frame(width: i == index ? 22 : 6, height: 6)
+                            .onTapGesture { select(i) }
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .background(Theme.panel)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
+        .background {
+            RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Theme.panel)
+                .shadow(color: Theme.ink.opacity(0.12), radius: 16, y: 8)
+        }
+        .contentShape(Rectangle())
+        .gesture(DragGesture(minimumDistance: 20).onEnded { value in
+            if value.translation.width < -40 { select((index + 1) % items.count) }
+            if value.translation.width > 40 { select((index - 1 + items.count) % items.count) }
+        })
+        .task(id: paused) {
+            guard !paused else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5.5))
+                if Task.isCancelled { return }
+                if Date().timeIntervalSince(userTouched) < 8 { continue }
+                withAnimation(.easeInOut(duration: 0.6)) { index = (index + 1) % items.count }
+            }
+        }
+    }
+
+    private func select(_ i: Int) {
+        userTouched = Date()
+        Haptics.tap()
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { index = i }
     }
 }
