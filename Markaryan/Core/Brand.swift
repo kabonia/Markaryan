@@ -79,7 +79,14 @@ struct PanelCardModifier: ViewModifier {
 struct FieldSurfaceModifier: ViewModifier {
     let radius: CGFloat
     var focused = false
-    func body(content: Content) -> some View { content.tint(Theme.orange).panelCard(radius) }
+    func body(content: Content) -> some View {
+        content
+            .tint(Theme.orange)
+            .background(Theme.panel, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(focused ? Theme.orange : Color(red: 0.24, green: 0.20, blue: 0.12).opacity(0.16), lineWidth: focused ? 1.5 : 1))
+            .animation(.easeOut(duration: 0.15), value: focused)
+    }
 }
 
 extension View {

@@ -366,6 +366,10 @@ struct ProfileTabView: View {
                 }
                 .padding(.bottom, 4)
 
+                NavigationLink { ProjectsTabView() } label: {
+                    AppTabRow(icon: "folder.fill", title: "Мой объект", subtitle: "\(store.projectDisplayName): этапы, бюджет, задачи и фото")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 NavigationLink { BillingView() } label: {
                     AppTabRow(icon: "creditcard.fill", title: "Тарифы и баланс", subtitle: "Кредиты, подписка и цены функций")
                 }
