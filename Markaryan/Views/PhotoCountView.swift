@@ -197,7 +197,7 @@ struct PhotoCountView: View {
                         Image(systemName: "camera.viewfinder").font(.title2.weight(.semibold)).foregroundStyle(Theme.onAccent)
                             .frame(width: 52, height: 52).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Считать камерой").font(.headline).foregroundStyle(.white)
+                            Text("Считать камерой").font(.headline).foregroundStyle(Theme.ink)
                             Text("Снимайте часть за частью — счёт идёт сразу").font(.caption).foregroundStyle(Theme.muted)
                         }
                         Spacer(minLength: 0)

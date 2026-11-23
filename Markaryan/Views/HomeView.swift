@@ -300,7 +300,7 @@ struct HomeProjectCard: View {
             HStack {
                 Text("ТЕКУЩИЙ ОБЪЕКТ").font(.caption2.weight(.bold)).tracking(1.25).foregroundStyle(.white.opacity(0.62))
                 Spacer()
-                Text("\(Int(progress * 100))%").font(.headline.bold()).monospacedDigit().foregroundStyle(Theme.orange)
+                Text("\(Int(progress * 100))%").font(.headline.bold()).monospacedDigit().foregroundStyle(.white)
             }
             Text(name).font(.title3.bold()).foregroundStyle(.white)
             ProgressView(value: progress).tint(Theme.orange)
