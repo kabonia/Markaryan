@@ -112,7 +112,7 @@ struct MarketEstimateView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Смета по рынку").helperScreen("Смета дизайн‑проекта по рынку", details: estimate.map { shareText($0) } ?? "")
+        .navigationTitle("Смета по рынку").helperScreen("Смета дизайн‑проекта по рынку", details: estimate.map { shareText($0) } ?? "").featureIntro(.marketEstimate)
         .navigationBarTitleDisplayMode(.inline)
         .task { if estimate == nil && !loading { await load() } }
     }
@@ -132,7 +132,7 @@ struct MarketEstimateView: View {
     private func totalCard(_ estimate: MarketEstimate) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("РЫНОК · \(estimate.city.uppercased())").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(.white.opacity(0.8))
-            Text(CalculationEngine.money(total)).font(.system(size: 36, weight: .bold)).monospacedDigit().foregroundStyle(.white).minimumScaleFactor(0.6).lineLimit(1)
+            Text(CalculationEngine.money(total)).font(.system(size: 36, weight: .bold, design: .serif)).monospacedDigit().foregroundStyle(.white).minimumScaleFactor(0.6).lineLimit(1)
             if high > low { Text("Вилка: \(CalculationEngine.money(low)) – \(CalculationEngine.money(high))").font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(0.85)) }
             let materials = rows.filter { $0.kind == "material" }.reduce(0) { $0 + $1.total }
             HStack { Text("Материалы: \(CalculationEngine.money(materials))"); Spacer(); Text("Работы: \(CalculationEngine.money(total - materials))") }
@@ -141,12 +141,13 @@ struct MarketEstimateView: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
     }
 
     private func section(_ title: String, _ items: [MarketEstimateRow]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if !items.isEmpty {
-                Text(title).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text(title).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 ForEach(items) { row in MarketEstimateRowCard(row: row) }
             }
         }

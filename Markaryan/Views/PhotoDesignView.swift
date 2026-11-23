@@ -64,7 +64,7 @@ struct PhotoDesignView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото")
+        .navigationTitle("Дизайн по фото").helperScreen("Дизайн по фото").featureIntro(.photoDesign)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pickerItem) { _, item in Task { await load(item) } }
         .sheet(isPresented: $showCamera) { CameraCaptureView(image: $captured).ignoresSafeArea() }
@@ -142,7 +142,7 @@ struct PhotoDesignView: View {
                             Button { Haptics.tap(); withAnimation(.snappy) { room = item } } label: {
                                 Label(item.title, systemImage: item.icon).font(.subheadline.weight(.medium))
                                     .padding(.horizontal, 12).padding(.vertical, 9)
-                                    .background(room == item ? Theme.sky : Theme.panel, in: Capsule())
+                                    .background(room == item ? Theme.sky : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
                                     .foregroundStyle(room == item ? Theme.onAccent : Theme.ink)
                             }
                             .buttonStyle(.plain)

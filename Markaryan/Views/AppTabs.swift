@@ -85,7 +85,7 @@ struct ProjectsTabView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проект").helperScreen("Проект")
+        .navigationTitle("Проект").helperScreen("Проект").featureIntro(.project)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showNewProject) {
             NewProjectSheet { name, address in
@@ -366,6 +366,14 @@ struct ProfileTabView: View {
                 }
                 .padding(.bottom, 4)
 
+                NavigationLink { ProjectsTabView() } label: {
+                    AppTabRow(icon: "folder.fill", title: "Мой объект", subtitle: "\(store.projectDisplayName): этапы, бюджет, задачи и фото")
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { BillingView() } label: {
+                    AppTabRow(icon: "creditcard.fill", title: "Тарифы и баланс", subtitle: "Кредиты, подписка и цены функций")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 Button { HelperCenter.shared.startTour() } label: {
                     AppTabRow(icon: "map.fill", title: "Экскурсия по приложению", subtitle: "Что где находится и для чего — за минуту")
                 }
@@ -375,7 +383,7 @@ struct ProfileTabView: View {
                 }
                 .buttonStyle(PremiumCardPressStyle())
 
-                Text("ПРИЛОЖЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange).padding(.top, 6)
+                Text("ПРИЛОЖЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold).padding(.top, 6)
                 ShareLink(item: Brand.inviteText) {
                     AppTabRow(icon: "gift.fill", title: "Поделиться приложением", subtitle: "Отправьте калькуляторы и смету тем, кто строится")
                 }

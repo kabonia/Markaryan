@@ -1046,7 +1046,7 @@ enum VisualizationError: LocalizedError {
     /// Image models understand English best: the AI translates the brief when it is available.
     func englishPrompt(_ text: String) async -> String {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty, clean.range(of: "[А-Яа-яЁё]", options: .regularExpression) != nil, let claude = claudeClient else { return clean }
+        guard !clean.isEmpty, clean.range(of: "[А-Яа-яЁё]", options: .regularExpression) != nil, let claude = helperEngine else { return clean }
         let translated = try? await claude.complete(system: "Translate the user's text into a concise English prompt for a photorealistic image model. Output only the prompt, no quotes.", turns: [ClaudeTurn(role: .user, text: clean)], maxTokens: 300)
         return translated?.trimmingCharacters(in: .whitespacesAndNewlines) ?? clean
     }

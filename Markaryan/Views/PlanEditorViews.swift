@@ -357,7 +357,7 @@ struct PlanEditorView: View {
                     Label(notice, systemImage: "checkmark.circle").font(.footnote).foregroundStyle(Theme.success)
                 }
 
-                Text("СТЕНЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("СТЕНЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 ForEach(walls, id: \.number) { wall in
                     row(title: "Стена \(wall.number)", value: "\(PlanEditor.meters(wall.length)) м", icon: "ruler") {
                         wallNumber = wall.number
@@ -372,7 +372,7 @@ struct PlanEditorView: View {
                 Button { straighten() } label: { SecondaryActionLabel(title: "Выпрямить углы", icon: "square.dashed") }
                     .buttonStyle(PremiumPressStyle())
 
-                Text("ДВЕРИ И ОКНА").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange).padding(.top, 6)
+                Text("ДВЕРИ И ОКНА").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold).padding(.top, 6)
                 let rows = openingRows(plan)
                 if rows.isEmpty {
                     Text("На плане нет дверей и окон. Добавьте их, чтобы мебель не закрывала проходы и окна.").font(.caption).foregroundStyle(Theme.muted)

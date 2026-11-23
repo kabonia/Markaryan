@@ -218,7 +218,7 @@ struct PhotoCountView: View {
                 if !session.autoDetect {
                     Picker("Материал", selection: $session.material) { ForEach(CountMaterial.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
                     if session.material == .other {
-                        TextField("Что считать: гайки М12, кирпич, мешки цемента…", text: $session.customObject).padding(14).panelCard(14)
+                        TextField("Что считать: гайки М12, кирпич, мешки цемента…", text: $session.customObject).padding(14).fieldSurface(14)
                     }
                 }
 
@@ -243,7 +243,7 @@ struct PhotoCountView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Счёт по фото").helperScreen("Счёт по фото")
+        .navigationTitle("Счёт по фото").helperScreen("Счёт по фото").featureIntro(.photoCount)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !session.parts.isEmpty {
@@ -271,7 +271,7 @@ struct PhotoCountView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if !session.detectedName.isEmpty { Text(session.detectedName.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.sky) }
                     HStack(alignment: .firstTextBaseline) {
-                        Text("\(count)").font(.system(size: 44, weight: .bold)).monospacedDigit().contentTransition(.numericText()).foregroundStyle(Theme.orange)
+                        Text("\(count)").font(.system(size: 44, weight: .bold, design: .serif)).monospacedDigit().contentTransition(.numericText()).foregroundStyle(Theme.orange)
                         Text("шт.").font(.title3.weight(.semibold))
                     }
                 }
@@ -344,7 +344,7 @@ struct PhotoCountView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ИТОГО · \(countTitle.uppercased())").font(.caption.weight(.bold)).tracking(1.4).foregroundStyle(Theme.orange)
+            Text("ИТОГО · \(countTitle.uppercased())").font(.caption.weight(.bold)).tracking(1.4).foregroundStyle(Theme.gold)
             row("Количество", "\(count) шт.")
             if material != .other { row("Общая длина", "\(CalculationEngine.format((totalLength * 10).rounded() / 10)) м") }
             switch material {
@@ -366,7 +366,7 @@ struct PhotoCountView: View {
     private func field(_ title: String, _ text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
-            TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit()).padding(12).panelCard(12)
+            TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit()).padding(12).fieldSurface(12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -465,7 +465,7 @@ struct LiveCountCameraView: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(session.detectedName.isEmpty ? "ИТОГО" : session.detectedName.uppercased()).font(.caption2.weight(.bold)).tracking(1)
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("\(session.total)").font(.system(size: 34, weight: .bold)).monospacedDigit().contentTransition(.numericText())
+                            Text("\(session.total)").font(.system(size: 34, weight: .bold, design: .serif)).monospacedDigit().contentTransition(.numericText())
                             Text("шт.").font(.subheadline.weight(.semibold))
                         }
                         if session.countingCount > 0 { HStack(spacing: 5) { ProgressView().controlSize(.mini).tint(.white); Text("считаем \(session.countingCount)").font(.caption2) } }

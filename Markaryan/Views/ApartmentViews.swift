@@ -159,7 +159,7 @@ struct ApartmentView: View {
                 }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
 
-                Text("ЭКСПЛИКАЦИЯ ПОМЕЩЕНИЙ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange)
+                Text("ЭКСПЛИКАЦИЯ ПОМЕЩЕНИЙ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 ForEach(layout.rooms) { room in
                     Button { Haptics.tap(); openRoom = room.id } label: {
                         HStack(spacing: 12) {
@@ -181,7 +181,7 @@ struct ApartmentView: View {
                     .buttonStyle(PremiumCardPressStyle())
                 }
 
-                Text("ЧЕРТЕЖИ КВАРТИРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.orange).padding(.top, 6)
+                Text("ЧЕРТЕЖИ КВАРТИРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold).padding(.top, 6)
                 Text("Общий план с перегородками, номерами и площадями комнат и экспликацией — лист А3 со штампом. Листы каждой комнаты — в её разделе.")
                     .font(.caption).foregroundStyle(Theme.muted)
                 HStack(spacing: 10) {

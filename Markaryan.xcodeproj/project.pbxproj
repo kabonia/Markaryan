@@ -27,6 +27,8 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C17AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */; };
+		C1B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */; };
 		C15375970A98C72E64026C26 /* Markaryan/Core/MaterialReference.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25375970A98C72E64026C26 /* Markaryan/Core/MaterialReference.swift */; };
 		C1A221CF4D60B53BB6F097B5 /* Markaryan/Views/DocEstimateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A221CF4D60B53BB6F097B5 /* Markaryan/Views/DocEstimateView.swift */; };
 		C1F4EF9F5F9CF7818289B0E1 /* Markaryan/Core/DocEstimate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2F4EF9F5F9CF7818289B0E1 /* Markaryan/Core/DocEstimate.swift */; };
@@ -89,6 +91,8 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FeatureIntro.swift; sourceTree = "<group>"; };
+		C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Billing.swift; sourceTree = "<group>"; };
 		C25375970A98C72E64026C26 /* Markaryan/Core/MaterialReference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/MaterialReference.swift; sourceTree = "<group>"; };
 		C2A221CF4D60B53BB6F097B5 /* Markaryan/Views/DocEstimateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/DocEstimateView.swift; sourceTree = "<group>"; };
 		C2F4EF9F5F9CF7818289B0E1 /* Markaryan/Core/DocEstimate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/DocEstimate.swift; sourceTree = "<group>"; };
@@ -155,6 +159,8 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */,
+				C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */,
 				C25375970A98C72E64026C26 /* Markaryan/Core/MaterialReference.swift */,
 				C2A221CF4D60B53BB6F097B5 /* Markaryan/Views/DocEstimateView.swift */,
 				C2F4EF9F5F9CF7818289B0E1 /* Markaryan/Core/DocEstimate.swift */,
@@ -321,6 +327,8 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C17AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift in Sources */,
+				C1B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift in Sources */,
 				C15375970A98C72E64026C26 /* Markaryan/Core/MaterialReference.swift in Sources */,
 				C1A221CF4D60B53BB6F097B5 /* Markaryan/Views/DocEstimateView.swift in Sources */,
 				C1F4EF9F5F9CF7818289B0E1 /* Markaryan/Core/DocEstimate.swift in Sources */,
