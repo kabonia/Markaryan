@@ -95,12 +95,10 @@ extension View {
 struct AppMark: View {
     var size: CGFloat = 40
     var body: some View {
-        Image(systemName: "ruler.fill")
-            .font(.system(size: size * 0.46, weight: .semibold))
-            .rotationEffect(.degrees(-45))
-            .foregroundStyle(.white)
+        Image("BrandMark").resizable().scaledToFill()
             .frame(width: size, height: size)
-            .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous).strokeBorder(Theme.goldLight.opacity(0.35), lineWidth: 0.6))
             .accessibilityHidden(true)
     }
 }

@@ -165,8 +165,11 @@ struct BillingView: View {
                 Text("Без подписки · \(billing.me?.helperFreePerDay ?? 20) вопросов помощнику в день бесплатно").font(.caption).foregroundStyle(.white.opacity(0.8))
             }
         }
-        .padding(22).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(22).padding(.trailing, 74).frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .trailing) {
+            CreditCoin(size: 72).rotationEffect(.degrees(-8)).padding(.trailing, 22)
+        }
+        .background(Lux.backdrop, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
     }
 
@@ -231,7 +234,7 @@ struct BillingView: View {
             Text("СКОЛЬКО СТОИТ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
             ForEach(priceNames, id: \.0) { key, title in
                 if let credits = billing.me?.prices[key] {
-                    HStack { Text(title).font(.subheadline).foregroundStyle(Theme.ink); Spacer(); Text("\(credits) кр.").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink) }
+                    HStack { Text(title).font(.subheadline).foregroundStyle(Theme.ink); Spacer(); HStack(spacing: 5) { Text("\(credits)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink); CreditCoin(size: 15, shine: false) } }
                 }
             }
             Text("Калькуляторы, AR‑рулетка, типовые сметы и проекты — бесплатно. Если ИИ не справился, кредиты возвращаются.").font(.caption).foregroundStyle(Theme.muted)
@@ -246,15 +249,16 @@ struct BalanceChip: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "diamond.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.gold)
+            CreditCoin(size: 22)
             Text(billing.me.map { "\($0.credits)" } ?? "—").font(.system(.subheadline, design: .rounded, weight: .bold)).monospacedDigit().foregroundStyle(Theme.ink)
                 .contentTransition(.numericText()).animation(.snappy, value: billing.me?.credits)
-            Image(systemName: "plus").font(.system(size: 11, weight: .heavy)).foregroundStyle(Theme.ink)
-                .frame(width: 24, height: 24).background(Theme.goldLight, in: Circle())
+            Image(systemName: "plus").font(.system(size: 11, weight: .heavy)).foregroundStyle(Theme.goldLight)
+                .frame(width: 26, height: 26).background(Theme.heroGradient, in: Circle())
+                .overlay(Circle().strokeBorder(Lux.goldGradient, lineWidth: 0.8))
         }
-        .padding(.leading, 12).padding(.trailing, 4).padding(.vertical, 4)
+        .padding(.leading, 5).padding(.trailing, 4).padding(.vertical, 4)
         .background(Theme.panel, in: Capsule())
-        .overlay(Capsule().strokeBorder(Theme.gold.opacity(0.25), lineWidth: 0.8))
+        .overlay(Capsule().strokeBorder(Lux.goldGradient, lineWidth: 0.8))
         .shadow(color: Theme.ink.opacity(0.08), radius: 8, y: 3)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Баланс: \(billing.me?.credits ?? 0) кредитов. Пополнить")

@@ -100,39 +100,109 @@ enum FeatureIntro: String, CaseIterable, Identifiable {
 struct FeatureIntroSheet: View {
     let intro: FeatureIntro
     @Environment(\.dismiss) private var dismiss
+    @State private var appeared = false
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Image(systemName: intro.icon).font(.system(size: 26, weight: .medium)).foregroundStyle(Theme.goldLight)
-                    .frame(width: 60, height: 60).background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                Text(intro.title).font(.system(.title2, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
-                Text(intro.summary).font(.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("КАК ПОЛЬЗОВАТЬСЯ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
-                    ForEach(Array(intro.steps.enumerated()), id: \.offset) { index, step in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("\(index + 1)").font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.onAccent)
-                                .frame(width: 26, height: 26).background(Theme.orange, in: Circle())
-                            Text(step).font(.subheadline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 0) {
+                hero
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(intro.title).font(.system(size: 30, weight: .bold, design: .serif)).tracking(-0.5).foregroundStyle(Theme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(intro.summary).font(.body).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 12)
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 8) {
+                            Rectangle().fill(Theme.goldHairline).frame(width: 18, height: 1)
+                            Text("КАК ПОЛЬЗОВАТЬСЯ").font(.caption.weight(.semibold)).tracking(1.8).foregroundStyle(Theme.gold)
+                        }
+                        .padding(.bottom, 14)
+                        ForEach(Array(intro.steps.enumerated()), id: \.offset) { index, step in
+                            stepRow(index: index, text: step, last: index == intro.steps.count - 1)
+                                .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 16)
+                                .animation(.spring(response: 0.55, dampingFraction: 0.85).delay(0.15 + Double(index) * 0.07), value: appeared)
                         }
                     }
+
+                    if let tip = intro.tip {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "lightbulb.max.fill").font(.headline).foregroundStyle(Theme.gold)
+                            Text(tip).font(.footnote).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.gold.opacity(0.25), lineWidth: 0.8))
+                        .opacity(appeared ? 1 : 0)
+                        .animation(.easeOut(duration: 0.5).delay(0.5), value: appeared)
+                    }
                 }
-                .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
-                if let tip = intro.tip {
-                    Label(tip, systemImage: "lightbulb").font(.footnote).foregroundStyle(Theme.muted)
-                }
-                PrimaryButton(title: "Понятно", icon: "checkmark") { dismiss() }
-                Button { intro.hideForever(); dismiss() } label: {
-                    Text("Больше не показывать").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 8)
-                }
-                .foregroundStyle(Theme.muted)
+                .padding(.horizontal, 24).padding(.top, 22).padding(.bottom, 24)
             }
-            .padding(24)
         }
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .top)
+        .safeAreaInset(edge: .bottom) { actions }
         .background(Theme.background)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .presentationCornerRadius(32)
+        .onAppear { withAnimation(.spring(response: 0.6, dampingFraction: 0.85).delay(0.08)) { appeared = true } }
+    }
+
+    private var hero: some View {
+        ZStack(alignment: .bottomLeading) {
+            FeatureScene(kind: intro.scene).frame(height: 320)
+            LinearGradient(colors: [.clear, Theme.background], startPoint: .top, endPoint: .bottom).frame(height: 56)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+            HStack(spacing: 8) {
+                Image(systemName: intro.icon).font(.caption.weight(.bold))
+                Text("ПОДСКАЗКА · \(Brand.name.uppercased())").font(.caption2.weight(.heavy)).tracking(1.4)
+            }
+            .foregroundStyle(Theme.goldLight)
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(.black.opacity(0.28), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.goldLight.opacity(0.35), lineWidth: 0.6))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.top, 26).padding(.leading, 20)
+        }
+        .frame(height: 320)
+    }
+
+    private func stepRow(index: Int, text: String, last: Bool) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(spacing: 0) {
+                Text("\(index + 1)").font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.goldLight)
+                    .frame(width: 32, height: 32)
+                    .background(Theme.heroGradient, in: Circle())
+                    .overlay(Circle().strokeBorder(Lux.goldGradient, lineWidth: 1))
+                    .shadow(color: Theme.orange.opacity(0.25), radius: 6, y: 3)
+                if !last {
+                    Rectangle().fill(LinearGradient(colors: [Theme.gold.opacity(0.45), Theme.gold.opacity(0.08)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 1.2).frame(maxHeight: .infinity)
+                }
+            }
+            Text(text).font(.subheadline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6).padding(.bottom, last ? 0 : 18)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var actions: some View {
+        VStack(spacing: 4) {
+            PrimaryButton(title: "Понятно, начнём", icon: "arrow.right") { dismiss() }
+            Button { intro.hideForever(); dismiss() } label: {
+                Text("Больше не показывать").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 10)
+            }
+            .foregroundStyle(Theme.muted)
+        }
+        .padding(.horizontal, 24).padding(.top, 14)
+        .background(
+            LinearGradient(colors: [Theme.background.opacity(0), Theme.background, Theme.background], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        )
     }
 }
 
