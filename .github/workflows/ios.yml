@@ -32,7 +32,13 @@ jobs:
           set -o pipefail
           xcodebuild -project Markaryan.xcodeproj -scheme Markaryan \
             -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build | tail -40
+            CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || {
+              # Ошибки компилятора — аннотациями: их видно на странице запуска без скачивания журнала.
+              grep -E ": error:" build.log | sort -u | head -30 | sed 's/^/::error::/'
+              tail -40 build.log
+              exit 1
+            }
+          tail -20 build.log
 
   server:
     runs-on: ubuntu-latest

@@ -156,9 +156,6 @@ struct HouseScanManifest: Codable {
     override init() {
         folder = HouseScanStore.root.appendingPathComponent(id.uuidString, isDirectory: true)
         super.init()
-        for sub in ["frames", "depth", "conf", "mesh"] {
-            try? FileManager.default.createDirectory(at: folder.appendingPathComponent(sub), withIntermediateDirectories: true)
-        }
     }
 
     // MARK: Сессия
@@ -180,7 +177,13 @@ struct HouseScanManifest: Codable {
         return config
     }
 
-    func start() { recording = true }
+    func start() {
+        // Папки — только когда обход начался: открыть экран и закрыть его ничего не оставляет на диске.
+        for sub in ["frames", "depth", "conf", "mesh"] {
+            try? FileManager.default.createDirectory(at: folder.appendingPathComponent(sub), withIntermediateDirectories: true)
+        }
+        recording = true
+    }
     func pause() { recording = false }
 
     // MARK: ARSessionDelegate
@@ -239,10 +242,8 @@ struct HouseScanManifest: Codable {
         let center: SIMD3<Float>? = centerCount >= 5 ? centerSum / centerCount : nil
         let sector = center.map { Self.sector(of: position, around: $0) }
         let lookingUp = forward.y > sin(18 * Float.pi / 180)
-        let hitHigh: Bool = {
-            guard let distance, let groundY else { return false }
-            return (position + forward * distance).y - groundY > 3.0
-        }()
+        var hitHigh = false
+        if let distance, let ground = groundY { hitHigh = (position + forward * distance).y - ground > 3.0 }
         let tier = (lookingUp || hitHigh) ? "roof" : "wall"
 
         if coverage.current != sector { coverage.current = sector }

@@ -42,7 +42,11 @@ struct HouseScanView: View {
         .preferredColorScheme(phase == .scanning ? .dark : .light)
         .onAppear { pending = HouseScanStore.pending() }
         .onChange(of: phase) { _, value in UIApplication.shared.isIdleTimerDisabled = value == .scanning || value == .uploading }
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+            // Скан, который не дошёл до сохранения (закрыли до отправки), не оставляет файлов.
+            if HouseScanStore.state(of: recorder.folder) == nil { recorder.discard() }
+        }
         .confirmationDialog("Прервать скан? Снятые кадры удалятся.", isPresented: $confirmCancel, titleVisibility: .visible) {
             Button("Прервать", role: .destructive) { recorder.discard(); dismiss() }
             Button("Продолжить снимать", role: .cancel) {}
@@ -296,7 +300,8 @@ struct CoverageRing: View {
     let coverage: HouseCoverage
 
     var body: some View {
-        Canvas { context, size in
+        Canvas { canvas, size in
+            let context = canvas
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let radius = min(size.width, size.height) / 2
             let n = HouseCoverage.sectors
