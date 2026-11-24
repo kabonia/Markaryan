@@ -204,7 +204,7 @@ const AUDIT_SCHEMA = {
 };
 
 /** Agents call the AI through this (replaced in tests). */
-let askJSON = (params) => ai.json({ ...params, timeoutMs: AI_TIMEOUT });
+let askJSON = (params) => ai.smetaJson({ ...params, timeoutMs: AI_TIMEOUT });
 let askPrices = priceEstimate;
 export function setAgents({ json, prices } = {}) {
   askJSON = json || ((params) => ai.json({ ...params, timeoutMs: AI_TIMEOUT }));
@@ -247,7 +247,7 @@ async function read(input, onProgress) {
   // Two readers by default (SMETA_READERS=1 — only the first: half the price of this stage, no cross-check).
   const tasks = list.flatMap((chunk) => [{ chunk, model: modelA, agent: 'A' }, ...(READERS > 1 ? [{ chunk, model: modelB, agent: 'B' }] : [])]);
   let done = 0;
-  const results = await mapLimit(tasks, 6, async (task) => {
+  const results = await mapLimit(tasks, 2, async (task) => {
     try {
       return { agent: task.agent, doc: task.chunk.doc.name, ...(await retry(() => askJSON({ system: READER_SYSTEM, messages: readerMessages(task.chunk, input), schema: READ_SCHEMA, name: 'vor', maxTokens: 16_000, model: task.model, anyModel: true, effort: READER_EFFORT }))) };
     } catch (error) { if (isOutOfFunds(error)) throw error; return { agent: task.agent, doc: task.chunk.doc.name, items: [], facts: [], failed: true }; }
@@ -273,7 +273,7 @@ async function norms(works, input) {
   const bySection = new Map();
   for (const w of works) bySection.set(w.section, [...(bySection.get(w.section) || []), w]);
   const groups = [...bySection.values()].flatMap((list) => { const out = []; for (let i = 0; i < list.length; i += 12) out.push(list.slice(i, i + 12)); return out; });
-  const answers = await mapLimit(groups, 6, (group) => retry(() => askJSON({
+  const answers = await mapLimit(groups, 2, (group) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работы раздела «${group[0].section}»:\n${json(group.map(({ id, name, unit, quantity, basis }) => ({ id, name, unit, quantity, basis })))}` }],
     schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
@@ -281,7 +281,7 @@ async function norms(works, input) {
   const byId = new Map(answers.flatMap((a) => a.works || []).map((w) => [String(w.id), w]));
   // A work the group answer skipped gets its norms on its own: no work may go without materials by accident.
   const skipped = works.filter((w) => !byId.has(w.id));
-  const single = await mapLimit(skipped, 6, (w) => retry(() => askJSON({
+  const single = await mapLimit(skipped, 2, (w) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работа раздела «${w.section}»:\n${json([{ id: w.id, name: w.name, unit: w.unit, quantity: w.quantity, basis: w.basis }])}` }],
     schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
@@ -310,7 +310,7 @@ async function price(works, input, onProgress) {
   const parts = [];
   for (let i = 0; i < items.length; i += 20) parts.push(items.slice(i, i + 20));
   let done = 0;
-  const priced = (await mapLimit(parts, 3, async (part) => {
+  const priced = (await mapLimit(parts, 2, async (part) => {
     try { return (await askPrices({ city: input.city, items: part, maxItems: 20 }, QUALITY)).items; }
     catch (error) { if (isOutOfFunds(error)) throw error; return part.map(() => ({ missing: true })); }
     finally { done += 1; onProgress(done / parts.length); }
@@ -353,7 +353,7 @@ export async function verifyPrices(priced, input, onProgress = () => {}) {
   const byRef = new Map(lines.map((l) => [l.ref, l]));
   const groups = [];
   for (let i = 0; i < lines.length; i += 50) groups.push(lines.slice(i, i + 50));
-  const flags = (await mapLimit(groups, 4, (group) => retry(() => askJSON({
+  const flags = (await mapLimit(groups, 2, (group) => retry(() => askJSON({
     system: PRICE_AUDIT_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}.\n${json(group.map((l) => ({ ref: l.ref, name: l.name, unit: l.unit, quantity: l.quantity, low: l.target.price.low, typical: l.target.price.typical, high: l.target.price.high, missing: l.target.price.missing, example: l.target.price.example, sources: l.target.price.sources.length })))}` }],
     schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,

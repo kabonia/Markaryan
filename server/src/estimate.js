@@ -3,7 +3,8 @@
 // for 7 days per city and item, so repeated estimates cost almost nothing.
 import fs from 'node:fs';
 import path from 'node:path';
-import { config } from './config.js';
+import { config, hasHermesJson } from './config.js';
+import * as hermes from './providers/hermes.js';
 import { ApiError, request, readJSON, parseLooseJSON, mapLimit, addCost, outOfFunds, isOutOfFunds } from './util.js';
 import { normalizePlace } from './market.js';
 
@@ -35,16 +36,33 @@ export function sanitize(row) {
 
 async function askModel(city, items, opts = {}) {
   const { apiKey, base, helperModels } = config.openrouter;
-  if (!apiKey) throw new ApiError(503, 'ИИ не настроен на сервере.');
   // «quality» (estimates from documents): a strong model and more sources per line.
   const model = `${opts.model || helperModels[0] || 'anthropic/claude-haiku-5.5'}:online`;
   const list = items.map((it, i) => `${i + 1}. [${it.kind === 'work' ? 'работа' : 'материал'}] ${it.name}${it.amount ? ` — ${it.amount}` : ''}${it.unit ? ` (ед.: ${it.unit})` : ''}${it.quantity ? `, количество ${it.quantity}` : ''}${it.hint ? ` — ВНИМАНИЕ: ${it.hint}` : ''}`).join('\n');
-  const system = `Ты сметчик. Найди в интернете актуальные цены в рублях в городе ${city} (или ближайшем крупном городе региона).
+  const unitRule = 'Цена строго за указанную единицу (если продавец даёт за другую — пересчитай: за упаковку → за м², за мешок → за кг и т.д.). Для работ — только стоимость труда без материалов, если не сказано иначе.';
+  const webSystem = `Ты сметчик. Найди в интернете актуальные цены в рублях в городе ${city} (или ближайшем крупном городе региона).
 Для каждой позиции: цена за единицу — low (дёшево), typical (обычная рыночная), high (дорого); единица измерения; количество (возьми из запроса или вычисли из описания);
 пример конкретного товара или исполнителя (для материалов — марка/модель); 1–3 источника с прямыми ссылками на страницы с ценой (магазины, маркетплейсы, прайсы мастеров).
 Не выдумывай ссылки и цены; отбрасывай акции «−70%», «от 1 ₽» и прошлые годы.
-Цена строго за указанную единицу (если продавец даёт за другую — пересчитай: за упаковку → за м², за мешок → за кг и т.д.). Для работ — только стоимость труда без материалов, если не сказано иначе.${opts.strict ? '\nМинимум 2 независимых источника на позицию; typical — медиана реальных предложений города, а не минимальная цена.' : ''}
+${unitRule}${opts.strict ? '\nМинимум 2 независимых источников на позицию; typical — медиана реальных предложений города, а не минимальная цена.' : ''}
 Ответ — только JSON: {"items":[{"name","kind":"material|work","unit","quantity","low","typical","high","example","sources":[{"title","url","price"}]}]} в том же порядке.`;
+  // Hermes: цены из знания рынка (батч ~1 мин, без лимита 300 с на веб-агента); веб с ссылками — путь OpenRouter.
+  const knowledgeSystem = `Ты сметчик. Оцени актуальные рыночные цены в рублях в городе ${city} (или ближайшем крупном городе региона) на текущий год по своему знанию рынка — без веб-поиска.
+Для каждой позиции: цена за единицу — low (дёшево), typical (обычная рыночная), high (дорого); единица измерения; количество (возьми из запроса или вычисли из описания);
+пример конкретного товара или исполнителя (марка/тип). Ссылки не нужны — поле sources оставь пустым.
+${unitRule}${opts.strict ? '\ntypical — реалистичная рыночная медиана города, а не минимальная цена.' : ''}
+Ответ — только JSON: {"items":[{"name","kind":"material|work","unit","quantity","low","typical","high","example","sources":[]}]} в том же порядке.`;
+  const system = hasHermesJson() ? knowledgeSystem : webSystem;
+  // Hermes (профиль smeta-json): цены из знания рынка; при сбое — OpenRouter (веб, если живой).
+  if (hasHermesJson()) {
+    try {
+      const result = await hermes.json({ system, messages: [{ role: 'user', text: list }], maxTokens: 8_000, timeoutMs: 420_000 });
+      const items = Array.isArray(result) ? result : result?.items;
+      if (Array.isArray(items) && items.length) return items.filter((it) => it && it.name);
+      console.warn(`[estimate] hermes prices: пустой или неверный ответ: ${JSON.stringify(result).slice(0, 200)}`);
+    } catch (error) { console.warn(`[estimate] hermes prices failed: ${error.message}`); }
+  }
+  if (!apiKey) throw new ApiError(503, 'ИИ не настроен на сервере.');
   const response = await request(`${base}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -78,7 +96,9 @@ export async function priceEstimate(body, opts = {}) {
     // Small batches in parallel: a long list makes the web-search model answer with prose instead of JSON.
     // A batch that fails twice only leaves its lines without a price; the rest of the estimate still comes back.
     const batches = [];
-    const size = opts.batch || BATCH;
+    // Hermes-агент ищет по каждой позиции: мелкие батчи стабильнее и быстрее (250–430 с батч по 5).
+    let size = opts.batch || BATCH;
+    if (hasHermesJson()) size = Math.min(size, 4); // Hermes без веба: батч до 4 позиций ≈ 1 мин
     for (let i = 0; i < missing.length; i += size) batches.push(missing.slice(i, i + size));
     const errors = [];
     // No money: the remaining batches are not even sent (each would fail the same way).
@@ -92,10 +112,10 @@ export async function priceEstimate(body, opts = {}) {
       const row = found[i] && sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i].quantity });
       if (row) { cache[keyOf(it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
     });
-    (await mapLimit(batches, 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
+    (await mapLimit(batches, hasHermesJson() ? 1 : 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
     // Second pass: every line still without a price on its own — a single item is found far more reliably.
     const retry = left.splice(0, left.length);
-    (await mapLimit(retry, 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
+    (await mapLimit(retry, hasHermesJson() ? 1 : 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
     if (priced) writeCache(cache);
     // What was found stays in the cache (a rerun does not pay for it again); the estimate itself stops, no empty lines.
     const broke = errors.find(isOutOfFunds);

@@ -44,6 +44,18 @@ export const config = {
     resolution: (env.IMAGE_RESOLUTION || '2K').toUpperCase(),
   },
 
+  /** Hermes agent: встроенный помощник СметаПро (профиль artstroy, OpenAI-API на этом же хосте). */
+  hermes: {
+    apiKey: env.HERMES_API_KEY || '',
+    base: (env.HERMES_AI_BASE || 'http://127.0.0.1:8642/p/artstroy/v1').trim().replace(/\/$/, ''),
+  },
+
+  /** Hermes JSON-профиль (smeta-json) для сметы по документам и цен: строгий JSON, веб-поиск. */
+  hermesJson: {
+    base: (env.HERMES_JSON_BASE || '').trim().replace(/\/$/, ''),
+    apiKey: env.HERMES_JSON_API_KEY || '',
+  },
+
   gigachat: {
     authKey: env.GIGACHAT_AUTH_KEY || '',
     scope: env.GIGACHAT_SCOPE || 'GIGACHAT_API_PERS',
@@ -96,3 +108,5 @@ export const config = {
 export const hasOpenRouter = () => Boolean(config.openrouter.apiKey && config.openrouter.models.length);
 export const hasGigaChat = () => Boolean(config.gigachat.authKey);
 export const hasYandex = () => Boolean(config.yandex.apiKey && config.yandex.folderId);
+export const hasHermes = () => Boolean(config.hermes.apiKey);
+export const hasHermesJson = () => Boolean(config.hermesJson.base && config.hermesJson.apiKey);
