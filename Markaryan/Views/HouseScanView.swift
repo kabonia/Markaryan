@@ -23,30 +23,51 @@ struct HouseScanView: View {
     private var enoughCoverage: Bool { recorder.coverage.total >= 0.6 }
 
     var body: some View {
+        content
+            .preferredColorScheme(colorScheme)
+            .onAppear { pending = HouseScanStore.pending() }
+            .onChange(of: phase) { _, value in phaseChanged(value) }
+            .onDisappear { closed() }
+            .confirmationDialog("Прервать скан? Снятые кадры удалятся.", isPresented: $confirmCancel, titleVisibility: .visible) {
+                Button("Прервать", role: .destructive) { abandon() }
+                Button("Продолжить снимать", role: .cancel) {}
+            }
+    }
+
+    private var showsCamera: Bool { phase == .scanning || phase == .control }
+    private var colorScheme: ColorScheme { phase == .scanning ? .dark : .light }
+
+    private var content: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
-            if phase == .scanning || phase == .control {
+            if showsCamera {
                 HouseARContainer(recorder: recorder).ignoresSafeArea()
             }
             VStack(spacing: 0) {
                 header
-                switch phase {
-                case .intro: intro
-                case .scanning: scanningOverlay
-                case .control: controlStep
-                case .uploading: uploading
-                case .sent: sent
-                }
+                phaseView
             }
         }
-        .preferredColorScheme(phase == .scanning ? .dark : .light)
-        .onAppear { pending = HouseScanStore.pending() }
-        .onChange(of: phase) { _, value in UIApplication.shared.isIdleTimerDisabled = value == .scanning || value == .uploading }
-        .onDisappear { closed() }
-        .confirmationDialog("Прервать скан? Снятые кадры удалятся.", isPresented: $confirmCancel, titleVisibility: .visible) {
-            Button("Прервать", role: .destructive) { recorder.discard(); dismiss() }
-            Button("Продолжить снимать", role: .cancel) {}
+    }
+
+    @ViewBuilder private var phaseView: some View {
+        switch phase {
+        case .intro: intro
+        case .scanning: scanningOverlay
+        case .control: controlStep
+        case .uploading: uploading
+        case .sent: sent
         }
+    }
+
+    private func phaseChanged(_ value: Phase) {
+        let busy: Bool = value == .scanning || value == .uploading
+        UIApplication.shared.isIdleTimerDisabled = busy
+    }
+
+    private func abandon() {
+        recorder.discard()
+        dismiss()
     }
 
     private func closed() {
@@ -189,7 +210,7 @@ struct HouseScanView: View {
                 Button { finishScan() } label: {
                     Label("Готово", systemImage: "checkmark").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.onAccent)
                         .frame(maxWidth: .infinity).padding(.vertical, 14)
-                        .background(enoughCoverage ? Theme.orange : Theme.orange.opacity(0.45), in: Capsule())
+                        .background(doneFill, in: Capsule())
                 }
                 .disabled(recorder.frameCount < 10)
             }
@@ -198,6 +219,14 @@ struct HouseScanView: View {
                 Text("Снято меньше 60 % — макет будет неполным").font(.caption).foregroundStyle(.white.opacity(0.85)).padding(.bottom, 12)
             }
         }
+    }
+
+    private var doneFill: Color { enoughCoverage ? Theme.orange : Theme.orange.opacity(0.45) }
+
+    private var controlHint: String {
+        HouseScanRecorder.hasLiDAR
+            ? "Длина любой стены дома по низу, в метрах. Это проверит масштаб макета."
+            : "Длина любой стены дома по низу, в метрах. Это проверит масштаб макета и подгонит его."
     }
 
     private func finishScan() {
@@ -215,7 +244,7 @@ struct HouseScanView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text(HouseScanRecorder.hasLiDAR ? "Контрольный размер (по желанию)" : "Измерьте рулеткой одну стену")
                     .font(.headline)
-                Text("Длина любой стены дома по низу, в метрах. Это проверит масштаб макета\(HouseScanRecorder.hasLiDAR ? "" : " и подгонит его").")
+                Text(controlHint)
                     .font(.footnote).foregroundStyle(Theme.muted)
                 TextField("Например, 9,42", text: $controlText)
                     .keyboardType(.decimalPad).padding(14).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14))
