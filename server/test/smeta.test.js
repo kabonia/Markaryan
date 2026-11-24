@@ -35,7 +35,7 @@ test('totals: delivery on materials, contingency on direct costs, VAT 22 % on to
   assert.equal(Math.round(t.typical.total), 483_120);
 });
 
-test('whole job: one reader, merge, norms, prices, audit additions, sections and totals', async () => {
+test('whole job: two readers, merge, norms, prices, audit additions, sections and totals', async () => {
   const { config } = await import('../src/config.js');
   config.dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smeta-'));
   const smeta = await import('../src/smeta.js');
@@ -59,7 +59,7 @@ test('whole job: one reader, merge, norms, prices, audit additions, sections and
   const job = { id: 'test', status: 'running' };
   await smeta.run(job, input);
   assert.equal(job.status, 'done', job.error);
-  assert.equal(calls.filter((c) => c === 'vor').length, 1); // one reader by default (SMETA_READERS=2 — two)
+  assert.equal(calls.filter((c) => c === 'vor').length, 2); // two independent readers (SMETA_READERS=1 — one)
   assert.equal(job.cost.calls, 0); // mocks report no price
   const r = job.result;
   const walls = r.sections.find((s) => s.title === 'Стены');

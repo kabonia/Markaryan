@@ -20,13 +20,18 @@ import * as billing from './billing.js';
 const AI_TIMEOUT = 420_000;
 const MAX_PAGES = 100;
 const PAGES_PER_READER = 2;
-// Who does what — the price of an estimate is decided here (env overrides, no app update needed):
-//   reader / lead estimator — the strongest model (the first of OPENROUTER_MODELS), the volumes depend on it;
+// Who does what — the price and accuracy of an estimate are decided here (env overrides, no app update needed):
+//   readers — two independent models of different makers read every sheet (one's mistake is caught by the other);
+//     together they cost about one Opus;
+//   lead estimator — the strongest model, recalculates every disagreement from the dimensions (one call per estimate);
 //   norms, auditors — a mid model; price search — a cheap model with web search (the web results are the costly part).
 const env = process.env;
-const READERS = Math.min(Math.max(Number.parseInt(env.SMETA_READERS || '1', 10) || 1, 1), 2);
+const list = (v, d) => (v || d).split(',').map((x) => x.trim()).filter(Boolean);
+const READER_MODELS = list(env.SMETA_READER_MODELS, 'google/gemini-4-carbon,openai/gpt-6.2-sol');
+const READERS = Math.min(Math.max(Number.parseInt(env.SMETA_READERS || '2', 10) || 2, 1), 2);
+const READER_EFFORT = env.SMETA_READER_EFFORT || 'high'; // arithmetic off the drawings: the readers think thoroughly
 const EFFORT = env.SMETA_EFFORT || 'medium';
-const READER_MODEL = env.SMETA_READER_MODEL || undefined;
+const MERGE_MODEL = env.SMETA_MERGE_MODEL || 'anthropic/claude-opus-5.5';
 const CHECK_MODEL = env.SMETA_CHECK_MODEL || 'anthropic/claude-sonnet-5.5';
 /** Price search for estimates from documents: several sources per line, its own cache (prices found once are reused for 7 days). */
 const QUALITY = { model: env.SMETA_PRICE_MODEL || 'deepseek/deepseek-v4.1-flash-1017', maxResults: 5, strict: true, cacheTag: 'q:', batch: 8, maxTokens: 8000 };
@@ -238,13 +243,13 @@ const json = (value) => JSON.stringify(value);
 
 async function read(input, onProgress) {
   const list = chunks(input);
-  const [modelA, modelB] = [READER_MODEL || config.openrouter.models[0], config.openrouter.models[1] || config.openrouter.models[0]];
-  // One reader by default (SMETA_READERS=2 brings back the second, independent one: twice the price of this stage).
+  const [modelA, modelB] = [READER_MODELS[0], READER_MODELS[1] || READER_MODELS[0]];
+  // Two readers by default (SMETA_READERS=1 — only the first: half the price of this stage, no cross-check).
   const tasks = list.flatMap((chunk) => [{ chunk, model: modelA, agent: 'A' }, ...(READERS > 1 ? [{ chunk, model: modelB, agent: 'B' }] : [])]);
   let done = 0;
   const results = await mapLimit(tasks, 6, async (task) => {
     try {
-      return { agent: task.agent, doc: task.chunk.doc.name, ...(await retry(() => askJSON({ system: READER_SYSTEM, messages: readerMessages(task.chunk, input), schema: READ_SCHEMA, name: 'vor', maxTokens: 16_000, model: task.model, effort: EFFORT }))) };
+      return { agent: task.agent, doc: task.chunk.doc.name, ...(await retry(() => askJSON({ system: READER_SYSTEM, messages: readerMessages(task.chunk, input), schema: READ_SCHEMA, name: 'vor', maxTokens: 16_000, model: task.model, anyModel: true, effort: READER_EFFORT }))) };
     } catch (error) { if (isOutOfFunds(error)) throw error; return { agent: task.agent, doc: task.chunk.doc.name, items: [], facts: [], failed: true }; }
     finally { done += 1; onProgress(done / tasks.length); }
   });
@@ -255,7 +260,7 @@ async function read(input, onProgress) {
 async function merge(input, readings) {
   const pack = (agent) => readings.filter((r) => r.agent === agent).map((r) => ({ doc: r.doc, object: r.object, facts: r.facts, items: r.items }));
   const text = `Объект: ${input.title || '—'}, город ${input.city}.${input.text ? `\nПожелания заказчика: ${input.text.slice(0, 4000)}` : ''}\n\nАГЕНТ A:\n${json(pack('A'))}\n\nАГЕНТ B:\n${READERS > 1 ? json(pack('B')) : 'второго чтения нет — сверь объёмы агента A с размерами и фактами сам, явные ошибки исправь и опиши в discrepancies'}`;
-  const merged = await retry(() => askJSON({ system: MERGE_SYSTEM, messages: [{ role: 'user', text: text.slice(0, 180_000) }], schema: MERGE_SCHEMA, name: 'vor_final', maxTokens: 32_000, model: READER_MODEL, effort: EFFORT }));
+  const merged = await retry(() => askJSON({ system: MERGE_SYSTEM, messages: [{ role: 'user', text: text.slice(0, 180_000) }], schema: MERGE_SCHEMA, name: 'vor_final', maxTokens: 32_000, model: MERGE_MODEL, anyModel: true, effort: EFFORT }));
   const works = (merged.works || []).map((w, i) => ({
     id: str(w.id, 12) || String(i + 1), section: str(w.section, 60) || 'Прочее', name: str(w.name, 220), unit: str(w.unit, 20),
     quantity: round(num(w.quantity), w.unit), basis: str(w.basis, 400), confidence: ['high', 'medium', 'low'].includes(w.confidence) ? w.confidence : 'medium',
@@ -271,7 +276,7 @@ async function norms(works, input) {
   const answers = await mapLimit(groups, 6, (group) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работы раздела «${group[0].section}»:\n${json(group.map(({ id, name, unit, quantity, basis }) => ({ id, name, unit, quantity, basis })))}` }],
-    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT,
+    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
   })).catch(unlessBroke({ works: [] })));
   const byId = new Map(answers.flatMap((a) => a.works || []).map((w) => [String(w.id), w]));
   // A work the group answer skipped gets its norms on its own: no work may go without materials by accident.
@@ -279,7 +284,7 @@ async function norms(works, input) {
   const single = await mapLimit(skipped, 6, (w) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работа раздела «${w.section}»:\n${json([{ id: w.id, name: w.name, unit: w.unit, quantity: w.quantity, basis: w.basis }])}` }],
-    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000, model: CHECK_MODEL, effort: EFFORT,
+    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
   })).catch(unlessBroke({ works: [] })));
   single.flatMap((a) => a.works || []).forEach((w) => byId.set(String(w.id), w));
   return works.map((w) => {
@@ -351,7 +356,7 @@ export async function verifyPrices(priced, input, onProgress = () => {}) {
   const flags = (await mapLimit(groups, 4, (group) => retry(() => askJSON({
     system: PRICE_AUDIT_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}.\n${json(group.map((l) => ({ ref: l.ref, name: l.name, unit: l.unit, quantity: l.quantity, low: l.target.price.low, typical: l.target.price.typical, high: l.target.price.high, missing: l.target.price.missing, example: l.target.price.example, sources: l.target.price.sources.length })))}` }],
-    schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT,
+    schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
   })).then((a) => a.flags || []).catch(unlessBroke([])))).flat().filter((f) => byRef.has(f.ref));
   // Prices without a link are searched again too (the auditor's own price stays if nothing better turns up).
   const flaggedRefs = new Set(flags.map((f) => f.ref));
@@ -388,7 +393,7 @@ async function audit(input, vor, priced) {
     materials: priced.materials.map((m) => ({ name: m.name, unit: m.unit, quantity: m.quantity, price: m.price.typical })),
   };
   try {
-    return await retry(() => askJSON({ system: AUDIT_SYSTEM, messages: [{ role: 'user', text: `Город ${input.city}.\n${json(brief).slice(0, 180_000)}` }], schema: AUDIT_SCHEMA, name: 'audit', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT }));
+    return await retry(() => askJSON({ system: AUDIT_SYSTEM, messages: [{ role: 'user', text: `Город ${input.city}.\n${json(brief).slice(0, 180_000)}` }], schema: AUDIT_SCHEMA, name: 'audit', maxTokens: 16_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT }));
   } catch (error) { if (isOutOfFunds(error)) throw error; return { verdict: 'Автоматическая проверка не выполнилась — смету стоит просмотреть вручную.', issues: [], additions: [] }; }
 }
 

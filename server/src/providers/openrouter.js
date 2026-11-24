@@ -56,10 +56,11 @@ export function designChoices() {
  * Models in the order to try: the one the app picked (one of the configured models, or of the design choices on
  * OpenRouter) first, then the configured chain. OpenRouter takes up to three fallbacks; anything else is ignored.
  */
-export function modelOrder(requested) {
+export function modelOrder(requested, anyModel = false) {
   const configured = config.openrouter.models;
-  const allowed = typeof requested === 'string'
-    && (configured.includes(requested) || (isOpenRouter() && config.openrouter.designChoices.includes(requested)));
+  // anyModel: the server itself picked the model (an estimate stage), not the app — any OpenRouter model is fine.
+  const allowed = typeof requested === 'string' && requested.includes('/')
+    && (configured.includes(requested) || (isOpenRouter() && (anyModel || config.openrouter.designChoices.includes(requested))));
   return (allowed ? [requested, ...configured.filter((model) => model !== requested)] : configured).slice(0, 4);
 }
 
@@ -67,9 +68,9 @@ export function modelOrder(requested) {
  * Common request body. All four flagship models think before answering (reasoning cannot be switched off),
  * so the reply gets its own budget on top of the reasoning; the reasoning text itself is not sent back.
  */
-function body({ system, messages, maxTokens, effort, requireParameters = false, model, tier }) {
+function body({ system, messages, maxTokens, effort, requireParameters = false, model, tier, anyModel = false }) {
   const helper = tier === 'helper' && config.openrouter.helperModels.length > 0;
-  const [primary, ...fallbacks] = helper ? config.openrouter.helperModels : modelOrder(model);
+  const [primary, ...fallbacks] = helper ? config.openrouter.helperModels : modelOrder(model, anyModel);
   const result = {
     model: primary,
     messages: toMessages(system, messages),
@@ -135,16 +136,16 @@ export async function chat({ system, messages, maxTokens = 2000, onDelta, tier }
  * Structured answer: the JSON schema is enforced by the model; if a route rejects the schema, plain JSON is repaired.
  * `model` — the model the app picked (see modelOrder); `meta.model` receives the model that really answered.
  */
-export async function json({ system, messages, schema, name = 'result', maxTokens = 8000, model, meta, timeoutMs, effort = 'high' }) {
+export async function json({ system, messages, schema, name = 'result', maxTokens = 8000, model, meta, timeoutMs, effort = 'high', anyModel = false }) {
   const strictSystem = `${system}\n\nОтветь ТОЛЬКО одним JSON‑объектом по схеме, без текста вокруг.`;
   const strict = {
-    ...body({ system: strictSystem, messages, maxTokens, effort, requireParameters: true, model }),
+    ...body({ system: strictSystem, messages, maxTokens, effort, requireParameters: true, model, anyModel }),
     response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: strictSchema(schema) } },
   };
   let response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(strict) }, timeoutMs);
   if (response.status === 400) {
     await readJSON(response);
-    const loose = { ...body({ system: strictSystem, messages, maxTokens, effort, model }), response_format: { type: 'json_object' } };
+    const loose = { ...body({ system: strictSystem, messages, maxTokens, effort, model, anyModel }), response_format: { type: 'json_object' } };
     response = await request(url(), { method: 'POST', headers: headers(), body: JSON.stringify(loose) }, timeoutMs);
   }
   const result = await readJSON(response);
