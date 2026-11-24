@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
-import { ApiError, request, readJSON, parseLooseJSON, mapLimit } from './util.js';
+import { ApiError, request, readJSON, parseLooseJSON, mapLimit, addCost, outOfFunds, isOutOfFunds } from './util.js';
 import { normalizePlace } from './market.js';
 
 const CACHE_DAYS = 7;
@@ -49,9 +49,12 @@ async function askModel(city, items, opts = {}) {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: list }],
-      max_tokens: opts.maxTokens || 6000, plugins: [{ id: 'web', max_results: opts.maxResults || 5 }] }),
+      max_tokens: opts.maxTokens || 6000, plugins: [{ id: 'web', max_results: opts.maxResults || 5 }], usage: { include: true } }),
   }, 240_000);
   const body = await readJSON(response);
+  addCost(body?.usage);
+  if (response.status === 402) throw outOfFunds('OpenRouter: на счёте закончились кредиты. Пополните баланс.');
+  if (response.status === 403 && /limit/i.test(body?.error?.message || '')) throw outOfFunds('OpenRouter: ключ сервера исчерпал свой лимит расходов.');
   if (!response.ok) throw new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.');
   const text = body?.choices?.[0]?.message?.content ?? '';
   const parsed = parseLooseJSON(text);
@@ -78,7 +81,11 @@ export async function priceEstimate(body, opts = {}) {
     const size = opts.batch || BATCH;
     for (let i = 0; i < missing.length; i += size) batches.push(missing.slice(i, i + size));
     const errors = [];
-    const tryAsk = async (batch) => { try { return await ask(city, batch, opts); } catch (error) { errors.push(error); return []; } };
+    // No money: the remaining batches are not even sent (each would fail the same way).
+    const tryAsk = async (batch) => {
+      if (errors.some(isOutOfFunds)) return [];
+      try { return await ask(city, batch, opts); } catch (error) { errors.push(error); return []; }
+    };
     let priced = 0;
     const left = [];
     const keep = (batch, found) => batch.forEach((it, i) => {
@@ -90,7 +97,10 @@ export async function priceEstimate(body, opts = {}) {
     const retry = left.splice(0, left.length);
     (await mapLimit(retry, 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
     if (priced) writeCache(cache);
-    else if (!items.some((it) => fresh(cache[keyOf(it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
+    // What was found stays in the cache (a rerun does not pay for it again); the estimate itself stops, no empty lines.
+    const broke = errors.find(isOutOfFunds);
+    if (broke) throw broke;
+    if (priced) { /* saved above */ } else if (!items.some((it) => fresh(cache[keyOf(it)]))) throw errors.find((e) => e instanceof ApiError) || new ApiError(502, 'Поиск цен не ответил. Попробуйте позже.', { retryable: true });
   }
   const rows = items.map((it) => {
     const cached = cache[keyOf(it)]?.row;

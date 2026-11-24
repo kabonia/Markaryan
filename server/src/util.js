@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 export class ApiError extends Error {
   /** @param {number} status HTTP status for the app  @param {string} message Russian text shown to the user */
   constructor(status, message, { retryable = false } = {}) {
@@ -90,4 +92,27 @@ export async function mapLimit(list, limit, fn) {
   const worker = async () => { while (next < list.length) { const i = next++; results[i] = await fn(list[i], i); } };
   await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
   return results;
+}
+
+// ---------- AI spending ----------
+// A long job (an estimate) runs inside withCost(meter, fn): every AI answer adds its price (OpenRouter usage.cost, $)
+// to the meter, by the job's current stage. Outside a meter nothing is counted.
+const costScope = new AsyncLocalStorage();
+export const newMeter = () => ({ total: 0, calls: 0, stage: 'start', stages: {} });
+export const withCost = (meter, fn) => costScope.run(meter, fn);
+export function addCost(usage) {
+  const meter = costScope.getStore();
+  const cost = Number(usage?.cost);
+  if (!meter || !Number.isFinite(cost)) return;
+  meter.total += cost;
+  meter.calls += 1;
+  meter.stages[meter.stage] = (meter.stages[meter.stage] || 0) + cost;
+}
+
+/** The AI account has no money (or the server key hit its limit): retrying or switching models will not help. */
+export const isOutOfFunds = (error) => Boolean(error?.outOfFunds);
+export function outOfFunds(message = 'На сервере закончился баланс ИИ.') {
+  const error = new ApiError(503, message);
+  error.outOfFunds = true;
+  return error;
 }

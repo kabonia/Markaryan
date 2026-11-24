@@ -11,7 +11,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
-import { ApiError, mapLimit } from './util.js';
+import { ApiError, mapLimit, newMeter, withCost, isOutOfFunds } from './util.js';
 import * as ai from './ai.js';
 import { priceEstimate } from './estimate.js';
 import { xlsxToText } from './xlsx.js';
@@ -20,8 +20,18 @@ import * as billing from './billing.js';
 const AI_TIMEOUT = 420_000;
 const MAX_PAGES = 100;
 const PAGES_PER_READER = 2;
-/** Price search for estimates from documents: a strong model, more sources, its own cache. */
-const QUALITY = { model: 'anthropic/claude-sonnet-5.5', maxResults: 8, strict: true, cacheTag: 'q:', batch: 4, maxTokens: 8000 };
+// Who does what — the price of an estimate is decided here (env overrides, no app update needed):
+//   reader / lead estimator — the strongest model (the first of OPENROUTER_MODELS), the volumes depend on it;
+//   norms, auditors — a mid model; price search — a cheap model with web search (the web results are the costly part).
+const env = process.env;
+const READERS = Math.min(Math.max(Number.parseInt(env.SMETA_READERS || '1', 10) || 1, 1), 2);
+const EFFORT = env.SMETA_EFFORT || 'medium';
+const READER_MODEL = env.SMETA_READER_MODEL || undefined;
+const CHECK_MODEL = env.SMETA_CHECK_MODEL || 'anthropic/claude-sonnet-5.5';
+/** Price search for estimates from documents: several sources per line, its own cache (prices found once are reused for 7 days). */
+const QUALITY = { model: env.SMETA_PRICE_MODEL || 'deepseek/deepseek-v4.1-flash-1017', maxResults: 5, strict: true, cacheTag: 'q:', batch: 8, maxTokens: 8000 };
+/** An empty AI balance stops the estimate instead of leaving empty lines; everything else keeps the old «best effort». */
+const unlessBroke = (fallback) => (error) => { if (isOutOfFunds(error)) throw error; return typeof fallback === 'function' ? fallback(error) : fallback; };
 const KEEP_DAYS = 14;
 
 // ---------- deterministic helpers (tested) ----------
@@ -198,7 +208,7 @@ export function setAgents({ json, prices } = {}) {
 
 const retry = async (fn, times = 2) => {
   let last;
-  for (let i = 0; i < times; i += 1) { try { return await fn(); } catch (error) { last = error; } }
+  for (let i = 0; i < times; i += 1) { try { return await fn(); } catch (error) { last = error; if (isOutOfFunds(error)) break; } }
   throw last;
 };
 
@@ -228,13 +238,14 @@ const json = (value) => JSON.stringify(value);
 
 async function read(input, onProgress) {
   const list = chunks(input);
-  const [modelA, modelB] = [config.openrouter.models[0], config.openrouter.models[1] || config.openrouter.models[0]];
-  const tasks = list.flatMap((chunk) => [{ chunk, model: modelA, agent: 'A' }, { chunk, model: modelB, agent: 'B' }]);
+  const [modelA, modelB] = [READER_MODEL || config.openrouter.models[0], config.openrouter.models[1] || config.openrouter.models[0]];
+  // One reader by default (SMETA_READERS=2 brings back the second, independent one: twice the price of this stage).
+  const tasks = list.flatMap((chunk) => [{ chunk, model: modelA, agent: 'A' }, ...(READERS > 1 ? [{ chunk, model: modelB, agent: 'B' }] : [])]);
   let done = 0;
   const results = await mapLimit(tasks, 6, async (task) => {
     try {
-      return { agent: task.agent, doc: task.chunk.doc.name, ...(await retry(() => askJSON({ system: READER_SYSTEM, messages: readerMessages(task.chunk, input), schema: READ_SCHEMA, name: 'vor', maxTokens: 16_000, model: task.model }))) };
-    } catch { return { agent: task.agent, doc: task.chunk.doc.name, items: [], facts: [], failed: true }; }
+      return { agent: task.agent, doc: task.chunk.doc.name, ...(await retry(() => askJSON({ system: READER_SYSTEM, messages: readerMessages(task.chunk, input), schema: READ_SCHEMA, name: 'vor', maxTokens: 16_000, model: task.model, effort: EFFORT }))) };
+    } catch (error) { if (isOutOfFunds(error)) throw error; return { agent: task.agent, doc: task.chunk.doc.name, items: [], facts: [], failed: true }; }
     finally { done += 1; onProgress(done / tasks.length); }
   });
   if (results.every((r) => r.failed || !(r.items || []).length)) throw new ApiError(502, 'Не удалось прочитать документы. Проверьте, что листы читаемы, и попробуйте ещё раз.', { retryable: true });
@@ -243,8 +254,8 @@ async function read(input, onProgress) {
 
 async function merge(input, readings) {
   const pack = (agent) => readings.filter((r) => r.agent === agent).map((r) => ({ doc: r.doc, object: r.object, facts: r.facts, items: r.items }));
-  const text = `Объект: ${input.title || '—'}, город ${input.city}.${input.text ? `\nПожелания заказчика: ${input.text.slice(0, 4000)}` : ''}\n\nАГЕНТ A:\n${json(pack('A'))}\n\nАГЕНТ B:\n${json(pack('B'))}`;
-  const merged = await retry(() => askJSON({ system: MERGE_SYSTEM, messages: [{ role: 'user', text: text.slice(0, 180_000) }], schema: MERGE_SCHEMA, name: 'vor_final', maxTokens: 32_000 }));
+  const text = `Объект: ${input.title || '—'}, город ${input.city}.${input.text ? `\nПожелания заказчика: ${input.text.slice(0, 4000)}` : ''}\n\nАГЕНТ A:\n${json(pack('A'))}\n\nАГЕНТ B:\n${READERS > 1 ? json(pack('B')) : 'второго чтения нет — сверь объёмы агента A с размерами и фактами сам, явные ошибки исправь и опиши в discrepancies'}`;
+  const merged = await retry(() => askJSON({ system: MERGE_SYSTEM, messages: [{ role: 'user', text: text.slice(0, 180_000) }], schema: MERGE_SCHEMA, name: 'vor_final', maxTokens: 32_000, model: READER_MODEL, effort: EFFORT }));
   const works = (merged.works || []).map((w, i) => ({
     id: str(w.id, 12) || String(i + 1), section: str(w.section, 60) || 'Прочее', name: str(w.name, 220), unit: str(w.unit, 20),
     quantity: round(num(w.quantity), w.unit), basis: str(w.basis, 400), confidence: ['high', 'medium', 'low'].includes(w.confidence) ? w.confidence : 'medium',
@@ -260,16 +271,16 @@ async function norms(works, input) {
   const answers = await mapLimit(groups, 6, (group) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работы раздела «${group[0].section}»:\n${json(group.map(({ id, name, unit, quantity, basis }) => ({ id, name, unit, quantity, basis })))}` }],
-    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000,
-  })).catch(() => ({ works: [] })));
+    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT,
+  })).catch(unlessBroke({ works: [] })));
   const byId = new Map(answers.flatMap((a) => a.works || []).map((w) => [String(w.id), w]));
   // A work the group answer skipped gets its norms on its own: no work may go without materials by accident.
   const skipped = works.filter((w) => !byId.has(w.id));
   const single = await mapLimit(skipped, 6, (w) => retry(() => askJSON({
     system: NORMS_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}. Работа раздела «${w.section}»:\n${json([{ id: w.id, name: w.name, unit: w.unit, quantity: w.quantity, basis: w.basis }])}` }],
-    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000,
-  })).catch(() => ({ works: [] })));
+    schema: NORMS_SCHEMA, name: 'norms', maxTokens: 8_000, model: CHECK_MODEL, effort: EFFORT,
+  })).catch(unlessBroke({ works: [] })));
   single.flatMap((a) => a.works || []).forEach((w) => byId.set(String(w.id), w));
   return works.map((w) => {
     const n = byId.get(w.id) || {};
@@ -296,11 +307,17 @@ async function price(works, input, onProgress) {
   let done = 0;
   const priced = (await mapLimit(parts, 3, async (part) => {
     try { return (await askPrices({ city: input.city, items: part, maxItems: 20 }, QUALITY)).items; }
-    catch { return part.map(() => ({ missing: true })); }
+    catch (error) { if (isOutOfFunds(error)) throw error; return part.map(() => ({ missing: true })); }
     finally { done += 1; onProgress(done / parts.length); }
   })).flat();
   const prices = new Map(items.map((it, i) => [it.ref.type === 'work' ? `w:${it.ref.id}` : `${it.ref.type}:${it.ref.key}`, priced[i] || { missing: true }]));
-  const pick = (p) => ({ low: num(p?.low) || num(p?.typical), typical: num(p?.typical), high: num(p?.high) || num(p?.typical), example: str(p?.example, 160), sources: Array.isArray(p?.sources) ? p.sources.slice(0, 3) : [], missing: !num(p?.typical) });
+  // A price without a single link to an offer is the model's own estimate: marked, and searched again by the price auditor.
+  const pick = (p) => {
+    const sources = Array.isArray(p?.sources) ? p.sources.slice(0, 3) : [];
+    const typical = num(p?.typical);
+    return { low: num(p?.low) || typical, typical, high: num(p?.high) || typical, example: str(p?.example, 160), sources, missing: !typical,
+      ...(typical && !sources.length ? { estimated: true, note: 'Оценка: ссылка на предложение не найдена' } : {}) };
+  };
   return {
     works: works.map((w) => ({ ...w, price: pick(prices.get(`w:${w.id}`)) })),
     materials: materials.map((m) => ({ ...m, price: pick(prices.get(`material:${m.key}`)) })),
@@ -334,12 +351,20 @@ export async function verifyPrices(priced, input, onProgress = () => {}) {
   const flags = (await mapLimit(groups, 4, (group) => retry(() => askJSON({
     system: PRICE_AUDIT_SYSTEM,
     messages: [{ role: 'user', text: `Город: ${input.city}.\n${json(group.map((l) => ({ ref: l.ref, name: l.name, unit: l.unit, quantity: l.quantity, low: l.target.price.low, typical: l.target.price.typical, high: l.target.price.high, missing: l.target.price.missing, example: l.target.price.example, sources: l.target.price.sources.length })))}` }],
-    schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000,
-  })).then((a) => a.flags || []).catch(() => []))).flat().filter((f) => byRef.has(f.ref));
+    schema: PRICE_AUDIT_SCHEMA, name: 'price_audit', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT,
+  })).then((a) => a.flags || []).catch(unlessBroke([])))).flat().filter((f) => byRef.has(f.ref));
+  // Prices without a link are searched again too (the auditor's own price stays if nothing better turns up).
+  const flaggedRefs = new Set(flags.map((f) => f.ref));
+  for (const l of lines) {
+    const p = l.target.price;
+    if (!flaggedRefs.has(l.ref) && !p.missing && p.typical && !p.sources.length) {
+      flags.push({ ref: l.ref, problem: `нет ссылки на предложение — найди магазин или прайс в г. ${input.city} со ссылкой на страницу с ценой`, low: p.low, typical: p.typical, high: p.high });
+    }
+  }
   onProgress(0.5);
   if (!flags.length) return { checked: lines.length, flagged: 0 };
   // Search again with the reason as a hint.
-  const again = await askPrices({ city: input.city, maxItems: flags.length, items: flags.map((f) => { const l = byRef.get(f.ref); return { name: l.name, kind: l.kind, unit: l.unit, quantity: l.quantity, hint: f.problem }; }) }, QUALITY).catch(() => ({ items: [] }));
+  const again = await askPrices({ city: input.city, maxItems: flags.length, items: flags.map((f) => { const l = byRef.get(f.ref); return { name: l.name, kind: l.kind, unit: l.unit, quantity: l.quantity, hint: f.problem }; }) }, QUALITY).catch(unlessBroke({ items: [] }));
   flags.forEach((f, i) => {
     const line = byRef.get(f.ref);
     const expert = { low: num(f.low) || num(f.typical), typical: num(f.typical), high: num(f.high) || num(f.typical) };
@@ -347,7 +372,7 @@ export async function verifyPrices(priced, input, onProgress = () => {}) {
     const foundTypical = num(found?.typical);
     // The new market price is taken when it agrees with the expert (within ×2); otherwise the expert price, marked.
     if (foundTypical && (!expert.typical || (foundTypical >= expert.typical / 2 && foundTypical <= expert.typical * 2))) {
-      line.target.price = { low: num(found.low) || foundTypical, typical: foundTypical, high: num(found.high) || foundTypical, example: str(found.example, 160), sources: (found.sources || []).slice(0, 3), missing: false, rechecked: true, note: str(f.problem, 200) };
+      line.target.price = { low: num(found.low) || foundTypical, typical: foundTypical, high: num(found.high) || foundTypical, example: str(found.example, 160), sources: (found.sources || []).slice(0, 3), missing: false, rechecked: true, estimated: !(found.sources || []).length, note: str(f.problem, 200) };
     } else if (expert.typical) {
       line.target.price = { ...line.target.price, ...expert, missing: false, estimated: true, note: `Экспертная цена: ${str(f.problem, 200)}` };
     }
@@ -363,8 +388,8 @@ async function audit(input, vor, priced) {
     materials: priced.materials.map((m) => ({ name: m.name, unit: m.unit, quantity: m.quantity, price: m.price.typical })),
   };
   try {
-    return await retry(() => askJSON({ system: AUDIT_SYSTEM, messages: [{ role: 'user', text: `Город ${input.city}.\n${json(brief).slice(0, 180_000)}` }], schema: AUDIT_SCHEMA, name: 'audit', maxTokens: 16_000 }));
-  } catch { return { verdict: 'Автоматическая проверка не выполнилась — смету стоит просмотреть вручную.', issues: [], additions: [] }; }
+    return await retry(() => askJSON({ system: AUDIT_SYSTEM, messages: [{ role: 'user', text: `Город ${input.city}.\n${json(brief).slice(0, 180_000)}` }], schema: AUDIT_SCHEMA, name: 'audit', maxTokens: 16_000, model: CHECK_MODEL, effort: EFFORT }));
+  } catch (error) { if (isOutOfFunds(error)) throw error; return { verdict: 'Автоматическая проверка не выполнилась — смету стоит просмотреть вручную.', issues: [], additions: [] }; }
 }
 
 /** Sections with sums: works, the materials of those works (share of every purchase line), machines. */
@@ -429,15 +454,52 @@ export function cleanInput(body) {
   };
 }
 
-export async function run(job, input) {
-  const stage = (name, title, progress = 0) => update(job, { stage: name, stageTitle: title, progress });
+// Volumes and norms of a job that stopped (no AI balance, a failure later on) are kept: the same documents sent again
+// continue from the prices, without paying for reading the sheets a second time.
+const stageDir = () => path.join(config.dataDir, 'smeta-stages');
+const inputKey = (input) => crypto.createHash('sha256').update(JSON.stringify({ city: input.city, text: input.text, docs: input.docs })).digest('hex').slice(0, 32);
+function loadStages(key) {
   try {
-    stage('read', 'Два агента читают документы и снимают объёмы');
-    const readings = await read(input, (p) => update(job, { progress: p }));
-    stage('merge', 'Главный сметчик сводит ведомость объёмов', 0.5);
-    const vor = await merge(input, readings);
-    stage('norms', 'Нормы расхода материалов и техника по каждой работе', 0.5);
-    let works = await norms(vor.works, input);
+    const saved = JSON.parse(fs.readFileSync(path.join(stageDir(), `${key}.json`), 'utf8'));
+    return Date.now() - Date.parse(saved.at) < 7 * 86_400_000 ? saved : null;
+  } catch { return null; }
+}
+const saveStages = (key, data) => { fs.mkdirSync(stageDir(), { recursive: true }); fs.writeFileSync(path.join(stageDir(), `${key}.json`), JSON.stringify({ ...data, at: new Date().toISOString() })); };
+const dropStages = (key) => fs.rmSync(path.join(stageDir(), `${key}.json`), { force: true });
+
+const usd = (x) => Math.round(x * 10_000) / 10_000;
+
+/** Runs a job; every AI answer inside is counted (job.cost, $ by stage — for the owner, not shown in the app). */
+export async function run(job, input) {
+  const meter = newMeter();
+  try {
+    await withCost(meter, () => runJob(job, input, meter));
+  } finally {
+    job.cost = { usd: usd(meter.total), calls: meter.calls, stages: Object.fromEntries(Object.entries(meter.stages).map(([k, v]) => [k, usd(v)])) };
+    save(job);
+    console.log(`[smeta] ${job.id} «${job.title || ''}» ${job.status}: $${job.cost.usd} за ${meter.calls} запросов ${JSON.stringify(job.cost.stages)}`);
+  }
+}
+
+async function runJob(job, input, meter) {
+  const stage = (name, title, progress = 0) => { meter.stage = name; update(job, { stage: name, stageTitle: title, progress }); };
+  const key = inputKey(input);
+  try {
+    const saved = loadStages(key);
+    let vor;
+    let works;
+    if (saved) {
+      stage('resume', 'Продолжаем: объёмы и нормы уже посчитаны в прошлый раз', 0.5);
+      ({ vor, works } = saved);
+    } else {
+      stage('read', READERS > 1 ? 'Два агента читают документы и снимают объёмы' : 'Сметчик читает документы и снимает объёмы');
+      const readings = await read(input, (p) => update(job, { progress: p }));
+      stage('merge', 'Главный сметчик сводит ведомость объёмов', 0.5);
+      vor = await merge(input, readings);
+      stage('norms', 'Нормы расхода материалов и техника по каждой работе', 0.5);
+      works = await norms(vor.works, input);
+      saveStages(key, { vor, works });
+    }
     stage('prices', `Рыночные цены в г. ${input.city}: работы, материалы, техника`);
     let priced = await price(works, input, (p) => update(job, { progress: p }));
     stage('audit', 'Аудитор проверяет смету', 0.5);
@@ -463,13 +525,18 @@ export async function run(job, input) {
       sources: input.docs.map((d) => ({ name: d.name, kind: d.kind, pages: d.pages.length })),
       unpriced: priced.works.filter((w) => w.price.missing).length + priced.materials.filter((m) => m.price.missing).length,
     };
+    dropStages(key);
     update(job, { status: 'done', stage: 'done', stageTitle: 'Готово', progress: 1, result });
   } catch (error) {
     const failedAt = job.stage;
-    update(job, { status: 'failed', error: error instanceof ApiError ? error.message : 'Не удалось посчитать смету. Попробуйте ещё раз.' });
+    const broke = isOutOfFunds(error);
+    if (broke) console.warn(`[smeta] ${job.id}: остановлена на этапе ${failedAt} — ${error.message}`);
+    update(job, { status: 'failed', error: broke
+      ? 'ИИ на сервере временно без баланса, поэтому смета остановлена, а не выдана с пустыми строками. Всё уже посчитанное сохранено: запустите эту смету ещё раз с теми же файлами чуть позже — расчёт продолжится с того же места.'
+      : error instanceof ApiError ? error.message : 'Не удалось посчитать смету. Попробуйте ещё раз.' });
     // The credits come back when the estimate could not be made.
-    // Before the expensive stages — everything back; after them — half (the AI work was already paid for).
-    if (job.credits) billing.refund(job.installId, 'smeta', ['queued', 'read', 'merge'].includes(failedAt) ? job.credits : Math.floor(job.credits / 2));
+    // Before the expensive stages — everything back; after them — half (the AI work was already paid for); our empty balance — everything.
+    if (job.credits) billing.refund(job.installId, 'smeta', broke || ['queued', 'read', 'merge'].includes(failedAt) ? job.credits : Math.floor(job.credits / 2));
     if (!(error instanceof ApiError)) console.error('[smeta]', error);
   }
 }
@@ -511,5 +578,11 @@ setInterval(() => {
       if (Date.now() - fs.statSync(full).mtimeMs > KEEP_DAYS * 86_400_000) fs.unlinkSync(full);
     }
   } catch { /* no jobs yet */ }
+  try {
+    for (const file of fs.readdirSync(stageDir())) {
+      const full = path.join(stageDir(), file);
+      if (Date.now() - fs.statSync(full).mtimeMs > 7 * 86_400_000) fs.rmSync(full, { force: true });
+    }
+  } catch { /* nothing kept */ }
   for (const [id, job] of jobs) if (job.status !== 'running' && Date.now() - Date.parse(job.updatedAt || job.createdAt) > 3_600_000) jobs.delete(id);
 }, 3_600_000).unref();

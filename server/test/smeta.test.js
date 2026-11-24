@@ -35,7 +35,7 @@ test('totals: delivery on materials, contingency on direct costs, VAT 22 % on to
   assert.equal(Math.round(t.typical.total), 483_120);
 });
 
-test('whole job: two readers, merge, norms, prices, audit additions, sections and totals', async () => {
+test('whole job: one reader, merge, norms, prices, audit additions, sections and totals', async () => {
   const { config } = await import('../src/config.js');
   config.dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smeta-'));
   const smeta = await import('../src/smeta.js');
@@ -59,7 +59,8 @@ test('whole job: two readers, merge, norms, prices, audit additions, sections an
   const job = { id: 'test', status: 'running' };
   await smeta.run(job, input);
   assert.equal(job.status, 'done', job.error);
-  assert.equal(calls.filter((c) => c === 'vor').length, 2); // agents A and B
+  assert.equal(calls.filter((c) => c === 'vor').length, 1); // one reader by default (SMETA_READERS=2 — two)
+  assert.equal(job.cost.calls, 0); // mocks report no price
   const r = job.result;
   const walls = r.sections.find((s) => s.title === 'Стены');
   assert.equal(walls.items.length, 2);
@@ -100,6 +101,64 @@ test('price auditor: a doubtful price is searched again; if the market still dis
   assert.equal(priced.works[0].price.typical, 5200);
   assert.equal(priced.works[0].price.rechecked, true);
   assert.equal(priced.materials[0].price.typical, 7000);
+  assert.equal(priced.materials[0].price.estimated, true);
+  smeta.setAgents();
+});
+
+test('empty AI balance: the job stops instead of empty lines, and the same documents continue from the prices', async () => {
+  const { config } = await import('../src/config.js');
+  config.dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smeta-'));
+  const smeta = await import('../src/smeta.js');
+  const { outOfFunds } = await import('../src/util.js');
+  const calls = [];
+  let broke = true;
+  smeta.setAgents({
+    json: async ({ name, messages }) => {
+      calls.push(name);
+      if (name === 'vor') return { object: 'Дом', facts: [], items: [{ section: 'Стены', name: 'Кладка', unit: 'м²', quantity: 100 }] };
+      if (name === 'vor_final') return { object: { name: 'Дом' }, works: [{ id: '1', section: 'Стены', name: 'Кладка', unit: 'м²', quantity: 100, basis: 'АР', confidence: 'high' }], assumptions: [], discrepancies: [] };
+      if (name === 'norms') return { works: [{ id: '1', laborName: 'Кладка', materials: [{ name: 'Блок', unit: 'м³', norm: 0.3, waste: 0 }], machines: [] }] };
+      if (name === 'price_audit') return { flags: [] };
+      if (name === 'audit') return { verdict: 'ок', issues: [], additions: [] };
+      throw new Error(name);
+    },
+    prices: async ({ items }) => {
+      if (broke) throw outOfFunds();
+      return { items: items.map(() => ({ typical: 100, low: 90, high: 120, sources: [{ title: 'x', url: 'https://x.ru' }] })) };
+    },
+  });
+  const body = { title: 'Дом', city: 'Сочи', docs: [{ name: 'АР.pdf', kind: 'ar', pages: [{ image: 'y'.repeat(200), text: 'план' }] }] };
+  const first = { id: 'broke', status: 'running' };
+  await smeta.run(first, smeta.cleanInput(body));
+  assert.equal(first.status, 'failed');
+  assert.match(first.error, /без баланса/);
+  assert.equal(first.result, undefined);
+  broke = false;
+  calls.length = 0;
+  const second = { id: 'again', status: 'running' };
+  await smeta.run(second, smeta.cleanInput(body));
+  assert.equal(second.status, 'done', second.error);
+  assert.deepEqual(calls.filter((c) => ['vor', 'vor_final', 'norms'].includes(c)), []); // read once, not paid again
+  assert.equal(second.result.unpriced, 0);
+  smeta.setAgents();
+});
+
+test('price auditor: a price without a link is searched again and stays marked as an estimate if nothing better is found', async () => {
+  const smeta = await import('../src/smeta.js');
+  const searches = [];
+  smeta.setAgents({
+    json: async () => ({ flags: [] }),
+    prices: async ({ items }) => { searches.push(items); return { items: items.map(() => ({ missing: true })) }; },
+  });
+  const priced = {
+    works: [],
+    materials: [{ key: 'p', name: 'Плёнка', unit: 'м²', quantity: 10, price: { low: 30, typical: 40, high: 50, example: '', sources: [], missing: false } }],
+    machines: [],
+  };
+  const r = await smeta.verifyPrices(priced, { city: 'Сочи' });
+  assert.equal(r.flagged, 1);
+  assert.match(searches[0][0].hint, /ссылк/);
+  assert.equal(priced.materials[0].price.typical, 40);
   assert.equal(priced.materials[0].price.estimated, true);
   smeta.setAgents();
 });
