@@ -42,15 +42,18 @@ struct HouseScanView: View {
         .preferredColorScheme(phase == .scanning ? .dark : .light)
         .onAppear { pending = HouseScanStore.pending() }
         .onChange(of: phase) { _, value in UIApplication.shared.isIdleTimerDisabled = value == .scanning || value == .uploading }
-        .onDisappear {
-            UIApplication.shared.isIdleTimerDisabled = false
-            // Скан, который не дошёл до сохранения (закрыли до отправки), не оставляет файлов.
-            if HouseScanStore.state(of: recorder.folder) == nil { recorder.discard() }
-        }
+        .onDisappear { closed() }
         .confirmationDialog("Прервать скан? Снятые кадры удалятся.", isPresented: $confirmCancel, titleVisibility: .visible) {
             Button("Прервать", role: .destructive) { recorder.discard(); dismiss() }
             Button("Продолжить снимать", role: .cancel) {}
         }
+    }
+
+    private func closed() {
+        UIApplication.shared.isIdleTimerDisabled = false
+        // Скан, который не дошёл до сохранения (закрыли до отправки), не оставляет файлов.
+        let saved: Bool = HouseScanStore.state(of: recorder.folder) != nil
+        if !saved { recorder.discard() }
     }
 
     private var header: some View {
