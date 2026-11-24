@@ -78,8 +78,12 @@ struct HelperMessage: Identifiable {
             parts.append("кредитов на балансе: \(me.credits)")
             if let plan = me.plan { parts.append("план «\(plan.id)» до \(plan.until)") }
         }
-        for job in DocEstimateCenter.shared.running where job.error == nil {
-            parts.append("смета «\(job.title)» в работе: \(job.stageTitle), \(Int(job.progress * 100))%")
+        for job in DocEstimateCenter.shared.running {
+            if let error = job.error {
+                parts.append("смета «\(job.title)» — ошибка: \(error)")
+            } else {
+                parts.append("смета «\(job.title)» в работе: \(job.stageTitle), \(Int(job.progress * 100))%")
+            }
         }
         return parts.isEmpty ? "активных задач нет" : parts.joined(separator: "; ")
     }

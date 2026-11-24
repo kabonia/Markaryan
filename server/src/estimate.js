@@ -21,6 +21,39 @@ const key = (city, item) => `${normalizePlace(city)}|${String(item.name).toLower
 const clean = (v, n) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
 const num = (v) => { const x = Number(String(v ?? '').replace(/\s/g, '').replace(',', '.')); return Number.isFinite(x) && x > 0 && x < 1e8 ? x : 0; };
 
+// OpenRouter liveness check (10-minute cache): while the account accepts requests — web prices with links; otherwise — Hermes.
+let orLiveCache = { at: 0, live: false, inFlight: null };
+export function orAliveReset() { orLiveCache = { at: 0, live: false, inFlight: null }; }
+async function orAlive() {
+  if (Date.now() - orLiveCache.at < 10 * 60_000) return orLiveCache.live;
+  if (!orLiveCache.inFlight) {
+    orLiveCache.inFlight = (async () => {
+      let live = false;
+      try {
+        const auth = { Authorization: `Bearer ${config.openrouter.apiKey}` };
+        const res = await fetch(`${config.openrouter.base}/auth/balance`, { headers: auth, signal: AbortSignal.timeout(15_000) });
+        if (res.ok) {
+          const data = await res.json();
+          const bal = Number(data?.data?.total_balance ?? 0);
+          live = Number.isFinite(bal) && bal > 0;
+        } else {
+          // The proxy may not expose the balance endpoint: a cheap 1-token request decides.
+          const probe = await fetch(`${config.openrouter.base}/chat/completions`, {
+            method: 'POST',
+            headers: { ...auth, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: config.openrouter.helperModels[0], messages: [{ role: 'user', content: '.' }], max_tokens: 1 }),
+            signal: AbortSignal.timeout(30_000),
+          });
+          live = probe.ok;
+        }
+      } catch { live = false; }
+      orLiveCache = { at: Date.now(), live, inFlight: null };
+      return live;
+    })();
+  }
+  return orLiveCache.inFlight;
+}
+
 /** Keeps only sane numbers and real links. */
 export function sanitize(row) {
   let low = num(row.low), typical = num(row.typical), high = num(row.high);
@@ -52,9 +85,11 @@ ${unitRule}${opts.strict ? '\nМинимум 2 независимых источ
 пример конкретного товара или исполнителя (марка/тип). Ссылки не нужны — поле sources оставь пустым.
 ${unitRule}${opts.strict ? '\ntypical — реалистичная рыночная медиана города, а не минимальная цена.' : ''}
 Ответ — только JSON: {"items":[{"name","kind":"material|work","unit","quantity","low","typical","high","example","sources":[]}]} в том же порядке.`;
-  const system = hasHermesJson() ? knowledgeSystem : webSystem;
+  // Money on OpenRouter — web prices with links; otherwise — market knowledge via Hermes.
+  const useHermes = opts.hermes === true || (hasHermesJson() && !(await orAlive()));
+  const system = useHermes ? knowledgeSystem : webSystem;
   // Hermes (профиль smeta-json): цены из знания рынка; при сбое — OpenRouter (веб, если живой).
-  if (hasHermesJson()) {
+  if (useHermes) {
     try {
       const result = await hermes.json({ system, messages: [{ role: 'user', text: list }], maxTokens: 8_000, timeoutMs: 420_000 });
       const items = Array.isArray(result) ? result : result?.items;
@@ -97,14 +132,20 @@ export async function priceEstimate(body, opts = {}) {
     // A batch that fails twice only leaves its lines without a price; the rest of the estimate still comes back.
     const batches = [];
     // Hermes-агент ищет по каждой позиции: мелкие батчи стабильнее и быстрее (250–430 с батч по 5).
+    let useHermes = hasHermesJson() && !(await orAlive());
     let size = opts.batch || BATCH;
-    if (hasHermesJson()) size = Math.min(size, 4); // Hermes без веба: батч до 4 позиций ≈ 1 мин
+    if (useHermes) size = Math.min(size, 4); // Hermes без веба: батч до 4 позиций ≈ 1 мин
     for (let i = 0; i < missing.length; i += size) batches.push(missing.slice(i, i + size));
     const errors = [];
     // No money: the remaining batches are not even sent (each would fail the same way).
     const tryAsk = async (batch) => {
-      if (errors.some(isOutOfFunds)) return [];
-      try { return await ask(city, batch, opts); } catch (error) { errors.push(error); return []; }
+      if (errors.some(isOutOfFunds) && !useHermes) return [];
+      try { return await ask(city, batch, useHermes ? { ...opts, hermes: true } : opts); } catch (error) {
+        // Funds ran out mid-run: drop the «OpenRouter is alive» cache, the rest goes via Hermes.
+        if (isOutOfFunds(error) && hasHermesJson()) { orAliveReset(); useHermes = true; }
+        errors.push(error);
+        return [];
+      }
     };
     let priced = 0;
     const left = [];
@@ -112,10 +153,10 @@ export async function priceEstimate(body, opts = {}) {
       const row = found[i] && sanitize({ ...found[i], name: it.name, kind: it.kind, quantity: it.quantity || found[i].quantity });
       if (row) { cache[keyOf(it)] = { at: Date.now(), row }; priced += 1; } else left.push(it);
     });
-    (await mapLimit(batches, hasHermesJson() ? 1 : 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
+    (await mapLimit(batches, useHermes ? 1 : 6, tryAsk)).forEach((found, b) => keep(batches[b], found));
     // Second pass: every line still without a price on its own — a single item is found far more reliably.
     const retry = left.splice(0, left.length);
-    (await mapLimit(retry, hasHermesJson() ? 1 : 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
+    (await mapLimit(retry, useHermes ? 1 : 8, (it) => tryAsk([it]))).forEach((found, i) => keep([retry[i]], found));
     if (priced) writeCache(cache);
     // What was found stays in the cache (a rerun does not pay for it again); the estimate itself stops, no empty lines.
     const broke = errors.find(isOutOfFunds);

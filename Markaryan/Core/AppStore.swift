@@ -791,7 +791,7 @@ enum VisualizationError: LocalizedError {
     /// - Parameter history: previous turns. They are added to the question so the assistant keeps the thread;
     ///   if the server rejects the longer prompt, the question is retried on its own.
     func askAssistant(question: String, context: AIAssistantContext, history: [(question: String, answer: String)] = []) async throws -> AIAssistantReply {
-        if let claude = claudeClient {
+        if let claude = usesAIServer ? helperEngine : claudeClient {
             let answer = try await claude.complete(system: ClaudePrompts.assistantSystem(context: context), turns: Self.turns(history: history, question: question, image: nil))
             track("assistant_answer_claude")
             return AIAssistantReply(answer: answer, links: nil)
@@ -898,7 +898,7 @@ enum VisualizationError: LocalizedError {
     }
     /// Streaming answer from Claude, or nil when the server engine is used.
     func streamAssistant(question: String, context: AIAssistantContext, history: [(question: String, answer: String)], image: UIImage?) -> AsyncThrowingStream<String, Error>? {
-        guard let claude = claudeClient else { return nil }
+        guard let claude = usesAIServer ? helperEngine : claudeClient else { return nil }
         track("assistant_stream")
         return claude.stream(system: ClaudePrompts.assistantSystem(context: context), turns: Self.turns(history: history, question: question, image: image), maxTokens: 2500)
     }
