@@ -332,6 +332,8 @@ enum VisualizationError: LocalizedError {
     /// An apartment to show after a multi-room scan.
     @Published var apartmentToOpen: UUID?
     @Published var showRoomScan = false
+    /// «Дом снаружи» → «Скан дома».
+    @Published var showHouseScan = false
     // AI engine: Claude directly (key in Keychain) or the app's server.
     @Published var aiPreference: AIPreference = .auto { didSet { UserDefaults.standard.set(aiPreference.rawValue, forKey: "aiPreference") } }
     @Published var claudeModel: ClaudeModel = .sonnet { didSet { UserDefaults.standard.set(claudeModel.rawValue, forKey: "claudeModel") } }

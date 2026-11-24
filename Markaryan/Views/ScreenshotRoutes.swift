@@ -44,6 +44,8 @@ enum ScreenshotRoute {
             DocEstimateNewView()
         } else if route == "splash" {
             SplashView(revealed: true)
+        } else if route == "housescan" {
+            HouseScanView()
         } else if route == "billing" {
             BillingView()
         } else if route.hasPrefix("intro:"), let intro = FeatureIntro(rawValue: String(route.dropFirst(6))) {

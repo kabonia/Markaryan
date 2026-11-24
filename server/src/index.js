@@ -18,6 +18,8 @@ import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
 import { xlsxToText } from './xlsx.js';
 import * as materials from './materials.js';
+import * as roof from './roof.js';
+import * as houseScans from './house-scans.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -122,6 +124,16 @@ async function handle(req, res) {
     if (smetaPath[1] && smetaPath[2]) return send(res, 200, await smeta.wait(smetaPath[1], installId));
     return send(res, 404, { error: 'Не найдено' });
   }
+  // «Дом снаружи»: пакет скана частями (PUT …/parts/N — сырые байты), затем …/complete; GET — статус обработки.
+  const scanPath = url.pathname.match(/^\/v1\/ai\/house\/scans(?:\/([0-9a-f-]{36}))?(?:\/(parts\/(\d+)|complete))?$/);
+  if (scanPath) {
+    const [, id, action, part] = scanPath;
+    if (req.method === 'POST' && !id) return send(res, 200, houseScans.create(await readBody(req, 256 * 1024), installId));
+    if (req.method === 'PUT' && id && part !== undefined) return send(res, 200, await houseScans.putPart(req, id, Number(part), installId));
+    if (req.method === 'POST' && id && action === 'complete') return send(res, 200, await houseScans.complete(id, installId));
+    if (req.method === 'GET' && id && !action) return send(res, 200, houseScans.status(id, installId));
+    return send(res, 404, { error: 'Не найдено' });
+  }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
   const body = await readBody(req);
 
@@ -174,6 +186,12 @@ async function handle(req, res) {
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
     const paid = consume('vision', installId, ip, undefined, 'material');
     try { return send(res, 200, await materials.identify(body)); } catch (error) { refund('vision', installId, ip, paid); throw error; }
+  }
+
+  // «Дом снаружи», этап 0: крыша по 3–5 фото (тип, детали, уклон, конёк, метки достоверности).
+  if (url.pathname === '/v1/ai/house/roof') {
+    const paid = consume('vision', installId, ip, undefined, 'houseRoof');
+    try { return send(res, 200, await roof.analyze(body)); } catch (error) { refund('vision', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image-edit') {
