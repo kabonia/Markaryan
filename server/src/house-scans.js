@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
 import { ApiError } from './util.js';
+import * as worker from './house-worker.js';
 
 export const PART_BYTES = 8 * 1024 * 1024;
 const MAX_SCAN_BYTES = Number(process.env.HOUSE_SCAN_MAX_MB || 600) * 1024 * 1024;
@@ -35,10 +36,42 @@ function usedBytes() {
   return total;
 }
 
+const tryLoad = (id) => { try { return JSON.parse(fs.readFileSync(metaPath(id), 'utf8')); } catch { return null; } };
+worker.init({ load: tryLoad, save, dir });
+
+const DAY = 86_400_000;
+/** Уборка: пакет скана (сотни МБ) — через 7 дней после готового макета; неудачные и брошенные — через 14 дней. */
+export function cleanup(now = Date.now()) {
+  let ids = [];
+  try { ids = fs.readdirSync(root()).filter((id) => ID.test(id)); } catch { return; }
+  for (const id of ids) {
+    const meta = tryLoad(id);
+    if (!meta) continue;
+    const age = now - Date.parse(meta.readyAt || meta.uploadedAt || meta.createdAt);
+    if (meta.status === 'ready' && age > 7 * DAY) fs.rmSync(path.join(dir(id), 'scan.zip'), { force: true });
+    if ((meta.status === 'failed' || meta.status === 'uploading') && age > 14 * DAY) fs.rmSync(dir(id), { recursive: true, force: true });
+  }
+}
+
+/** После перезапуска сервера — вернуть в очередь то, что ждало или обрабатывалось. */
+export function resume() {
+  if (!worker.enabled()) return;
+  let ids = [];
+  try { ids = fs.readdirSync(root()).filter((id) => ID.test(id)); } catch { return; }
+  for (const id of ids) {
+    const meta = tryLoad(id);
+    if (meta && (meta.status === 'queued' || meta.status === 'processing')) {
+      if (meta.status === 'processing') { meta.status = 'queued'; save(meta); }
+      worker.enqueue(id);
+    }
+  }
+}
+
 const view = (meta) => ({
   id: meta.id, status: meta.status, bytes: meta.bytes, parts: meta.parts, partBytes: PART_BYTES,
   received: meta.received, progress: meta.progress ?? null, message: meta.message ?? null, result: meta.result ?? null,
-  createdAt: meta.createdAt,
+  createdAt: meta.createdAt, queuePosition: meta.status === 'queued' ? worker.position(meta.id) : null,
+  hasModel: meta.status === 'ready' && fs.existsSync(path.join(dir(meta.id), 'result', 'house.obj')),
 });
 
 /** Новый скан: { bytes, sha256, manifest: {frames, device, lidar, …} } → id и размер части. */
@@ -108,11 +141,30 @@ export async function complete(id, installId) {
     throw new ApiError(400, meta.message);
   }
   meta.status = 'queued';
-  meta.message = 'Скан получен. Обработка на GPU подключается — макет появится, когда она заработает.';
+  meta.message = worker.enabled() ? 'Скан в очереди на обработку — обычно 5–15 минут.' : 'Скан получен. Обработка подключается — макет появится, когда она заработает.';
   meta.uploadedAt = new Date().toISOString();
   save(meta);
   console.log(`[house] скан ${id}: ${(meta.bytes / 1024 / 1024).toFixed(1)} МБ, кадров ${meta.summary.frames}, LiDAR ${meta.summary.lidar}`);
+  if (worker.enabled()) worker.enqueue(id);
   return view(meta);
 }
 
 export const status = (id, installId) => view(load(id, installId));
+
+/** Сканы этой установки приложения (новые сверху), без тяжёлых полей. */
+export function list(installId) {
+  let ids = [];
+  try { ids = fs.readdirSync(root()).filter((id) => ID.test(id)); } catch { return { scans: [] }; }
+  const scans = ids.map(tryLoad).filter((m) => m && m.installId === installId)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+    .slice(0, 50).map(view);
+  return { scans };
+}
+
+/** Путь к 3D-модели готового скана (OBJ) — для выдачи приложению. */
+export function modelPath(id, installId) {
+  const meta = load(id, installId);
+  const file = path.join(dir(id), 'result', 'house.obj');
+  if (meta.status !== 'ready' || !fs.existsSync(file)) throw new ApiError(404, 'Модель ещё не готова.');
+  return file;
+}

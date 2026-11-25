@@ -106,7 +106,7 @@ def make_scan(tmp_path):
         "format": "smetapro-house-scan", "version": 1, "kind": "house", "createdAt": "2026-11-25T00:00:00Z",
         "device": "synthetic", "lidar": True, "ios": "26", "image": {"width": IMG_W, "height": IMG_H},
         "depth": {"width": DEP_W, "height": DEP_H, "format": "f16", "units": "m"},
-        "world": {"alignment": "gravityAndHeading", "up": [0, 1, 0], "units": "m"},
+        "world": {"alignment": "gravityAndHeading", "up": [0, 1, 0], "units": "m", "location": {"lat": 55.75, "lon": 37.6, "accuracy": 5}},
         "coverage": {"sectors": 36, "walls": 1.0, "roof": 1.0},
         "control": [{"kind": "wall_length", "meters": 10.0, "note": "рулетка"}], "frames": frames,
     }
@@ -139,6 +139,12 @@ def test_house_dimensions(tmp_path):
     assert abs(pitch - PITCH) < 1.5
     assert abs(house["control"]["deltaCm"]) < 3
     assert (tmp_path / "out" / "house.glb").stat().st_size > 1000
+    assert (tmp_path / "out" / "house.obj").stat().st_size > 1000
+    # Углы дома на карте: стороны 8 и 10 м должны сохраниться после перевода в широту/долготу.
+    ll = house["geo"]["footprintLatLon"]
+    m_lat, m_lon = 111_363.0, 111_412.84 * math.cos(math.radians(55.75)) - 93.5 * math.cos(3 * math.radians(55.75))
+    sides = sorted(math.hypot((ll[i][0] - ll[i - 1][0]) * m_lat, (ll[i][1] - ll[i - 1][1]) * m_lon) for i in range(4))
+    assert abs(sides[0] - WIDTH) < 0.1 and abs(sides[-1] - LENGTH) < 0.1, sides
 
 
 def test_ridge_by_triangulation():

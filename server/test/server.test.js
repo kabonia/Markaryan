@@ -21,7 +21,7 @@ test('server: health, auth headers, no providers configured', async (t) => {
 
 test('server: скан дома частями с докачкой', async (t) => {
   const port = PORT + 3;
-  const child = spawn(process.execPath, ['src/index.js'], { env: { ...process.env, PORT: String(port), DATA_DIR: './data-test', OPENROUTER_API_KEY: '' }, stdio: 'pipe' });
+  const child = spawn(process.execPath, ['src/index.js'], { env: { ...process.env, PORT: String(port), DATA_DIR: './data-test', OPENROUTER_API_KEY: '', HOUSE_WORKER: 'off' }, stdio: 'pipe' });
   t.after(() => child.kill());
   await new Promise((resolve) => child.stdout.once('data', resolve));
   t.after(async () => (await import('node:fs')).rmSync('./data-test/house-scans', { recursive: true, force: true }));
