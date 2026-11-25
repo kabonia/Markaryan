@@ -128,3 +128,54 @@ struct HouseScanDistanceChip: View {
         }
     }
 }
+
+
+/// Мини‑карта квартиры при скане комнат: контуры снятых комнат с номерами и где вы сейчас (вид сверху).
+struct RoomScanMiniMap: View {
+    struct Room: Identifiable {
+        let id: UUID
+        let number: Int
+        let outline: [SIMD2<Float>]
+    }
+    let rooms: [Room]
+    let here: (position: SIMD2<Float>, heading: Float)?
+
+    var body: some View {
+        Canvas { context, size in
+            let all = rooms.flatMap(\.outline) + (here.map { [$0.position] } ?? [])
+            guard let first = all.first else { return }
+            var minP = first, maxP = first
+            for p in all { minP = simd_min(minP, p); maxP = simd_max(maxP, p) }
+            let span = max(maxP.x - minP.x, maxP.y - minP.y, 3)
+            let scale = Float(min(size.width, size.height) - 18) / span
+            let mid = (minP + maxP) / 2
+            func point(_ p: SIMD2<Float>) -> CGPoint {
+                CGPoint(x: size.width / 2 + CGFloat((p.x - mid.x) * scale), y: size.height / 2 + CGFloat((p.y - mid.y) * scale))
+            }
+            for room in rooms where room.outline.count >= 3 {
+                var path = Path()
+                path.move(to: point(room.outline[0]))
+                for p in room.outline.dropFirst() { path.addLine(to: point(p)) }
+                path.closeSubpath()
+                context.fill(path, with: .color(Theme.orangeSoft.opacity(0.35)))
+                context.stroke(path, with: .color(Lux.goldBright), lineWidth: 1.5)
+                let c = room.outline.reduce(SIMD2<Float>(0, 0), +) / Float(room.outline.count)
+                context.draw(Text("\(room.number)").font(.caption2.weight(.bold)).foregroundColor(.white), at: point(c))
+            }
+            if let here {
+                let c = point(here.position)
+                let a = CGFloat(here.heading)
+                var arrow = Path()
+                arrow.move(to: CGPoint(x: c.x + 9 * sin(a), y: c.y - 9 * cos(a)))
+                arrow.addLine(to: CGPoint(x: c.x + 5 * sin(a + 2.5), y: c.y - 5 * cos(a + 2.5)))
+                arrow.addLine(to: CGPoint(x: c.x + 5 * sin(a - 2.5), y: c.y - 5 * cos(a - 2.5)))
+                arrow.closeSubpath()
+                context.fill(arrow, with: .color(.white))
+                context.stroke(arrow, with: .color(Theme.orange), lineWidth: 1)
+            }
+        }
+        .background(.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.15), lineWidth: 1))
+        .accessibilityLabel("Карта комнат")
+    }
+}

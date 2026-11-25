@@ -1,6 +1,7 @@
 import SwiftUI
 #if canImport(RoomPlan)
 import RoomPlan
+import ARKit
 #endif
 
 /// What the scan should do next; a new `token` makes the capture view act once.
@@ -31,6 +32,8 @@ struct RoomScanView: View {
     /// The room being processed is followed by another one.
     @State private var continuing = false
     @StateObject private var voice = HouseScanVoice()
+    /// Где человек сейчас (координаты скана x/z) и куда смотрит — для мини‑карты квартиры.
+    @State private var here: (position: SIMD2<Float>, heading: Float)?
 
     enum Phase { case intro, scanning, processing, between }
 
@@ -47,7 +50,7 @@ struct RoomScanView: View {
             Theme.background.ignoresSafeArea()
             #if canImport(RoomPlan)
             if phase != .intro && isSupported {
-                RoomCaptureRepresentable(command: command, voice: voice) { room, captureError in
+                RoomCaptureRepresentable(command: command, voice: voice, onPosition: { here = $0 }) { room, captureError in
                     handle(room: room, error: captureError)
                 }
                 .ignoresSafeArea()
@@ -84,6 +87,14 @@ struct RoomScanView: View {
                         }
                     }
                     .padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous)).padding(.horizontal, 12)
+                    // Мини‑карта квартиры: снятые комнаты и где вы — справа, под кнопками, ничего не закрывает.
+                    if !savedRooms.isEmpty || here != nil {
+                        HStack {
+                            Spacer()
+                            RoomScanMiniMap(rooms: savedRooms, here: here).frame(width: 112, height: 112)
+                        }
+                        .padding(.horizontal, 14).padding(.top, 4)
+                    }
                 }
                 Spacer()
                 switch phase {
@@ -95,11 +106,17 @@ struct RoomScanView: View {
                         .padding(18).background(.ultraThinMaterial, in: Capsule()).padding(.bottom, 30)
                 case .between:
                     VStack(spacing: 12) {
+                        RoomScanMiniMap(rooms: savedRooms, here: nil).frame(height: 150)
+                        roomTypePicker
+                        savedList
                         Text("Комната \(saved.count) сохранена. Перейдите в следующую комнату, не закрывая скан, — комнаты встанут на свои места на общем плане.")
                             .font(.footnote).multilineTextAlignment(.center)
                         PrimaryButton(title: "Сканировать комнату \(saved.count + 1)", icon: "viewfinder") { nextRoom() }
-                        Button { finish() } label: { SecondaryActionLabel(title: "Закончить и открыть квартиру", icon: "checkmark") }
-                            .buttonStyle(PremiumPressStyle())
+                        HStack(spacing: 10) {
+                            Button { rescanLast() } label: { SecondaryActionLabel(title: "Переснять", icon: "arrow.counterclockwise") }
+                            Button { finish() } label: { SecondaryActionLabel(title: "Закончить", icon: "checkmark") }
+                        }
+                        .buttonStyle(PremiumPressStyle())
                     }
                     .padding(18).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous)).padding(12)
                 }
@@ -123,6 +140,22 @@ struct RoomScanView: View {
                     Label("Квартира целиком: после комнаты нажмите «Следующая комната» и идите дальше", systemImage: "square.split.2x2")
                 }
                 .font(.subheadline)
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Кухня‑гостиная — снимайте как одну комнату: так план и материалы будут цельными.", systemImage: "rectangle.split.2x1")
+                        Label("Арка или проём без двери — закончите комнату у проёма и нажмите «Следующая комната».", systemImage: "door.left.hand.open")
+                        Label("Коридор и холл — отдельной комнатой: в расчёте материалов у них свой набор работ.", systemImage: "arrow.left.and.right")
+                        Label("Г‑образная комната и ниши — обойдите все углы, лидар сам соберёт сложный контур.", systemImage: "square.on.square.dashed")
+                        Label("Мебель вплотную к стене — по возможности отодвиньте: иначе стена за ней будет короче.", systemImage: "sofa")
+                    }
+                    .font(.footnote).foregroundStyle(Theme.muted).padding(.top, 6)
+                } label: {
+                    Label("Сложные случаи", systemImage: "questionmark.circle").font(.subheadline.weight(.semibold))
+                }
+                .tint(Theme.orange)
+                ForEach(HouseScanPrecheck.issues(), id: \.self) { issue in
+                    Label(issue.tr, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.gold)
+                }
                 if isSupported {
                     PrimaryButton(title: "Начать сканирование", icon: "viewfinder") {
                         error = nil
@@ -140,6 +173,72 @@ struct RoomScanView: View {
             }
             .padding(24)
         }
+    }
+
+    /// Снятые в этом скане комнаты — контуры в общих координатах скана и номер.
+    private var savedRooms: [RoomScanMiniMap.Room] {
+        saved.enumerated().compactMap { index, id in
+            guard let plan = store.floorPlans.first(where: { $0.id == id }) else { return nil }
+            let placement = plan.placement ?? .identity
+            let points = plan.outline.map { placement.apply($0) }.map { SIMD2(Float($0.x), Float($0.y)) }
+            return RoomScanMiniMap.Room(id: id, number: index + 1, outline: points)
+        }
+    }
+
+    private static let roomTypes: [(String, String)] = [("Комната", "square"), ("Кухня", "fork.knife"), ("Санузел", "drop"), ("Спальня", "bed.double"),
+                                                         ("Гостиная", "sofa"), ("Детская", "teddybear"), ("Коридор", "arrow.left.and.right"), ("Кабинет", "desktopcomputer")]
+
+    /// Тип последней комнаты одним касанием: от него зависят дизайн и набор работ в расчёте материалов.
+    private var roomTypePicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Что это за комната?").font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(Self.roomTypes.indices, id: \.self) { index in
+                        let type = Self.roomTypes[index]
+                        let current = lastPlan?.name.hasPrefix(type.0.tr) == true
+                        Button { rename(lastTo: type.0) } label: {
+                            Label(type.0.tr, systemImage: type.1).font(.caption.weight(.semibold))
+                                .padding(.horizontal, 10).padding(.vertical, 7)
+                                .foregroundStyle(current ? Theme.onAccent : Theme.ink)
+                                .background(current ? Theme.orange : Theme.panel, in: Capsule())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var lastPlan: FloorPlan? { saved.last.flatMap { id in store.floorPlans.first { $0.id == id } } }
+
+    private var savedList: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(saved.enumerated()), id: \.element) { index, id in
+                if let plan = store.floorPlans.first(where: { $0.id == id }) {
+                    HStack {
+                        Text("\(index + 1). \(plan.name)").font(.caption.weight(.semibold))
+                        Spacer()
+                        Text(Units.area(plan.area)).font(.caption.monospacedDigit()).foregroundStyle(Theme.muted)
+                    }
+                }
+            }
+        }
+    }
+
+    private func rename(lastTo type: String) {
+        guard var plan = lastPlan else { return }
+        let sameType = store.floorPlans.filter { $0.apartmentID == plan.apartmentID && $0.id != plan.id && $0.name.hasPrefix(type) }.count
+        plan.name = sameType > 0 ? "\(type.tr) \(sameType + 1)" : type.tr
+        store.savePlan(plan)
+        Haptics.tap()
+    }
+
+    /// «Переснять»: последняя комната удаляется и снимается заново в тех же координатах скана.
+    private func rescanLast() {
+        guard let plan = lastPlan else { return }
+        store.deletePlan(plan)
+        saved.removeLast()
+        nextRoom()
     }
 
     private var title: String {
@@ -226,6 +325,7 @@ struct RoomScanView: View {
 struct RoomCaptureRepresentable: UIViewRepresentable {
     let command: ScanCommand
     let voice: HouseScanVoice
+    var onPosition: ((position: SIMD2<Float>, heading: Float)) -> Void = { _ in }
     let onResult: (CapturedRoom?, Error?) -> Void
 
     func makeCoordinator() -> RoomScanCoordinator { RoomScanCoordinator() }
@@ -237,6 +337,15 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
         voice.prepare()
         view.delegate = context.coordinator
         view.captureSession.delegate = context.coordinator
+        // Положение для мини‑карты — 4 раза в секунду из AR‑сессии RoomPlan (те же координаты, что у комнат).
+        let session = view.captureSession.arSession
+        let report = onPosition
+        context.coordinator.positionTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
+            guard let transform = session.currentFrame?.camera.transform else { return }
+            let p = transform.columns.3
+            let forward = -transform.columns.2
+            report((SIMD2(p.x, p.z), atan2(forward.x, -forward.z)))
+        }
         view.captureSession.run(configuration: RoomCaptureSession.Configuration())
         context.coordinator.token = command.token
         context.coordinator.stopped = false
@@ -261,6 +370,7 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
 
     static func dismantleUIView(_ view: RoomCaptureView, coordinator: RoomScanCoordinator) {
         if !coordinator.stopped { view.captureSession.stop() }
+        coordinator.positionTimer?.invalidate()
         Task { @MainActor in coordinator.voice?.stop() }
     }
 }
@@ -269,6 +379,7 @@ final class RoomScanCoordinator: NSObject, RoomCaptureViewDelegate, RoomCaptureS
     var onResult: ((CapturedRoom?, Error?) -> Void)?
     /// Голос: подсказки RoomPlan проговариваются — смотрите на комнату, а не в экран.
     var voice: HouseScanVoice?
+    var positionTimer: Timer?
 
     func captureSession(_ session: RoomCaptureSession, didProvide instruction: RoomCaptureSession.Instruction) {
         let phrase: String?
