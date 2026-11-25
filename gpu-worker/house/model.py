@@ -104,6 +104,32 @@ def _gable_profile(points2d: np.ndarray, eave: float, bin_size: float = 0.1):
     }
 
 
+def _opposite_slopes(roofs: list[Plane]):
+    """Два крупнейших ската, смотрящих в противоположные стороны (по горизонтали)."""
+    usable = [r for r in roofs if 0.26 < abs(r.normal[1]) < 0.99 and r.size >= 200]  # 8°…75°
+    best, best_size = None, 0
+    for i, a in enumerate(usable):
+        ha = np.array([a.normal[0], a.normal[2]])
+        for b in usable[i + 1:]:
+            hb = np.array([b.normal[0], b.normal[2]])
+            if ha @ hb / (np.linalg.norm(ha) * np.linalg.norm(hb)) < -0.8 and a.size + b.size > best_size:
+                best, best_size = (a, b), a.size + b.size
+    return best
+
+
+def _plane_intersection_near(a: Plane, b: Plane, near: np.ndarray):
+    """Точка линии пересечения плоскостей, ближайшая к `near` (по горизонтали)."""
+    direction = np.cross(a.normal, b.normal)
+    if np.linalg.norm(direction) < 1e-6:
+        return None
+    A = np.array([a.normal, b.normal, direction])
+    rhs = np.array([-a.d, -b.d, direction @ near])
+    try:
+        return np.linalg.solve(A, rhs)
+    except np.linalg.LinAlgError:
+        return None
+
+
 def _value(value, source, sigma=None, note=None):
     out = {"value": None if value is None else round(float(value), 3), "source": source}
     if sigma is not None:
@@ -196,6 +222,26 @@ def build_house(planes: list[Plane]) -> dict:
     if roofs:
         slopes = [math.degrees(math.acos(min(1.0, abs(r.normal[1])))) for r in roofs]
         roof["planesSeen"] = [{"pitchDeg": round(s, 2), "points": r.size} for s, r in zip(slopes, roofs)]
+        # Самое точное: скаты, снятые LiDAR у карниза (тысячи точек → уклон до десятых градуса),
+        # конёк — линия пересечения двух противоположных скатов.
+        center = np.array([np.mean([c for c in (ext_a[1][0], ext_a[2][0])]), 0.0, np.mean([c for c in (ext_b[1][0], ext_b[2][0])])])
+        center = u * center[0] + v * center[2]
+        pair = _opposite_slopes(roofs)
+        if pair is not None:
+            r1, r2 = pair
+            ridge_point = _plane_intersection_near(r1, r2, center)
+            s1, s2 = (math.degrees(math.acos(min(1.0, abs(r.normal[1])))) for r in pair)
+            if ridge_point is not None:
+                ridge_h = float(ridge_point[1] - ground_y)
+                profile_ridge = roof.get("ridgeHeight", {}).get("value")
+                roof.update({
+                    "type": "gable",
+                    "ridgeHeight": _value(ridge_h, "measured", sigma=0.03, note="пересечение скатов, снятых LiDAR"),
+                    "pitchDeg": _value((s1 + s2) / 2, "measured", sigma=0.3),
+                    "pitchLeftDeg": round(s1, 2), "pitchRightDeg": round(s2, 2), "symmetric": abs(s1 - s2) < 3,
+                })
+                if profile_ridge is not None:
+                    roof["ridgeByGableEdge"] = round(profile_ridge, 3)  # сверка: кромка фронтона
 
     # Углы футпринта в мире (по пересечениям крайних стен).
     a_lo, a_hi = ext_a[1][0], ext_a[2][0]

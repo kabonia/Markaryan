@@ -128,9 +128,9 @@ def test_house_dimensions(tmp_path):
     eave = house["eaveHeight"]["value"]
     ridge = roof["ridgeHeight"]["value"]
     pitch = roof["pitchDeg"]["value"]
-    notice("Синтетический дом (правда: 8,00 × 10,00, карниз 3,00, конёк 6,00, 36,87°)",
+    notice("Синтетический дом — правда 8.00 × 10.00 м; карниз 3.00; конёк 6.00; 36.87°",
            f"ширина {width:.3f} м, длина {length:.3f} м, карниз {eave:.3f} м, конёк {ridge:.3f} м ({roof['ridgeHeight']['source']}), "
-           f"уклон {pitch:.2f}°, рулетка Δ {house['control']['deltaCm']} см, {house['quality']['seconds']} с")
+           f"уклон {pitch:.2f}°, по кромке фронтона {roof.get('ridgeByGableEdge')} м, рулетка Δ {house['control']['deltaCm']} см, {house['quality']['seconds']} с")
     assert abs(width - WIDTH) < 0.03
     assert abs(length - LENGTH) < 0.03
     assert abs(eave - EAVE) < 0.04
