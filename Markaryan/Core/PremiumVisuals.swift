@@ -108,7 +108,7 @@ struct CreditCoin: View {
 // MARK: - Animated illustrations of every function (used by the explanations and onboarding)
 
 enum FeatureSceneKind {
-    case home, documents, calculator, design, ar, count, project, billing
+    case home, documents, calculator, design, ar, count, project, billing, house
 }
 
 extension FeatureIntro {
@@ -122,6 +122,7 @@ extension FeatureIntro {
         case .photoCount: .count
         case .project: .project
         case .billing: .billing
+        case .houseScan: .house
         }
     }
 }
@@ -147,6 +148,7 @@ struct FeatureScene: View {
                     case .count: CountScene(t: t)
                     case .project: ProjectScene(t: t)
                     case .billing: BillingScene(t: t)
+                    case .house: HouseScanScene(t: t)
                     }
                 }
                 .frame(maxWidth: 360)
@@ -525,5 +527,85 @@ private struct BillingScene: View {
                     .offset(x: [-80, 86, 60][i], y: [-62, -48, 70][i])
             }
         }
+    }
+}
+
+// 3D‑обмер дома: телефон обходит дом, кольцо покрытия заполняется, затем — размеры, крыша и «Макет готов».
+struct HouseScanScene: View {
+    let t: Double
+
+    var body: some View {
+        let cycle = 9.0
+        let phase = t.truncatingRemainder(dividingBy: cycle) / cycle      // 0…1
+        let walk = clamp01(phase / 0.55)                                    // обход — первые 55 %
+        let angle = -Double.pi / 2 + walk * 2 * .pi
+        Canvas { ctx, size in
+            let c = CGPoint(x: size.width / 2, y: size.height / 2 + 6)
+            let ring = min(size.width, size.height) * 0.43
+            // Кольцо покрытия: 36 секторов, загораются по ходу обхода.
+            let lit = Int(walk * 36)
+            for i in 0..<36 {
+                let a0 = -Double.pi / 2 + Double(i) / 36 * 2 * .pi + 0.03
+                let a1 = a0 + 2 * .pi / 36 - 0.06
+                var arc = Path()
+                arc.addArc(center: c, radius: ring, startAngle: .radians(a0), endAngle: .radians(a1), clockwise: false)
+                ctx.stroke(arc, with: .color(i < lit ? Lux.emeraldBright : .white.opacity(0.12)), lineWidth: 7)
+                var inner = Path()
+                inner.addArc(center: c, radius: ring - 10, startAngle: .radians(a0), endAngle: .radians(a1), clockwise: false)
+                ctx.stroke(inner, with: .color(i < lit - 4 ? Lux.goldBright : .white.opacity(0.08)), lineWidth: 4)
+            }
+            // Дом сверху: контур и конёк; заливка проявляется к концу обхода.
+            let w = size.width * 0.34, h = size.width * 0.24
+            let rect = CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
+            ctx.fill(Path(roundedRect: rect, cornerRadius: 3), with: .color(Theme.orange.opacity(0.18 + 0.4 * ease((phase - 0.45) * 5))))
+            ctx.stroke(Path(roundedRect: rect, cornerRadius: 3), with: .color(.white.opacity(0.85)), lineWidth: 2)
+            var ridge = Path()
+            ridge.move(to: CGPoint(x: rect.minX + 6, y: c.y)); ridge.addLine(to: CGPoint(x: rect.maxX - 6, y: c.y))
+            ctx.stroke(ridge, with: .color(Lux.goldBright.opacity(0.9)), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            // Телефон на круге и луч «камеры» на дом.
+            if phase < 0.6 {
+                let r = ring * 0.78
+                let p = CGPoint(x: c.x + r * cos(angle), y: c.y + r * sin(angle))
+                var beam = Path()
+                beam.move(to: p)
+                beam.addLine(to: CGPoint(x: c.x + (p.x - c.x) * 0.25 - (p.y - c.y) * 0.18, y: c.y + (p.y - c.y) * 0.25 + (p.x - c.x) * 0.18))
+                beam.addLine(to: CGPoint(x: c.x + (p.x - c.x) * 0.25 + (p.y - c.y) * 0.18, y: c.y + (p.y - c.y) * 0.25 - (p.x - c.x) * 0.18))
+                beam.closeSubpath()
+                ctx.fill(beam, with: .color(Lux.goldBright.opacity(0.22)))
+                ctx.fill(Path(roundedRect: CGRect(x: p.x - 6, y: p.y - 10, width: 12, height: 20), cornerRadius: 3), with: .color(.white))
+                ctx.fill(Path(ellipseIn: CGRect(x: p.x - 2, y: p.y - 7, width: 4, height: 4)), with: .color(Theme.ink))
+            }
+        }
+        .overlay {
+            GeometryReader { geo in
+                let size = geo.size
+                let c = CGPoint(x: size.width / 2, y: size.height / 2 + 6)
+                let w = size.width * 0.34, h = size.width * 0.24
+                ZStack {
+                    label("10,00 м").position(x: c.x, y: c.y - h / 2 - 14).opacity(ease((phase - 0.58) * 8))
+                    label("8,00 м").rotationEffect(.degrees(-90)).position(x: c.x + w / 2 + 16, y: c.y).opacity(ease((phase - 0.63) * 8))
+                    HStack(spacing: 6) {
+                        Image(systemName: "triangle").font(.caption2.weight(.bold))
+                        Text("конёк 6,00 м · 36,9°").font(.system(.caption2, design: .rounded, weight: .bold))
+                    }
+                    .foregroundStyle(Theme.ink).padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Lux.goldGradient, in: Capsule())
+                    .position(x: c.x, y: c.y + h / 2 + 18).opacity(ease((phase - 0.7) * 8))
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.seal.fill")
+                        Text("Макет готов").font(.caption.weight(.bold))
+                    }
+                    .foregroundStyle(.white).padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Theme.orange, in: Capsule())
+                    .position(x: c.x, y: 22).opacity(ease((phase - 0.8) * 8))
+                }
+            }
+        }
+        .frame(width: 300, height: 240)
+    }
+
+    private func label(_ text: String) -> some View {
+        Text(text).font(.system(.caption, design: .rounded, weight: .bold)).foregroundStyle(Theme.ink)
+            .padding(.horizontal, 8).padding(.vertical, 3).background(Lux.goldBright, in: Capsule())
     }
 }

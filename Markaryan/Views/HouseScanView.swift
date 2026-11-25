@@ -18,6 +18,7 @@ struct HouseScanView: View {
     @State private var confirmCancel = false
     @State private var showParcel = false
     @State private var showScans = false
+    @State private var showIntro = false
 
     enum Phase { case intro, scanning, control, uploading, sent }
 
@@ -52,6 +53,17 @@ struct HouseScanView: View {
         }
         // На уровне всего экрана: «Мои сканы» открываются и со вступления, и после отправки.
         .sheet(isPresented: $showScans) { HouseScansView() }
+        .sheet(isPresented: $showIntro) { FeatureIntroSheet(intro: .houseScan) }
+        .task { await autoIntro() }
+    }
+
+    /// Инструкция с анимацией при первом входе — пока не нажата «Больше не показывать» (как у остальных функций).
+    private func autoIntro() async {
+        let intro = FeatureIntro.houseScan
+        guard !intro.hidden, !FeatureIntro.seenThisLaunch.contains(intro.rawValue) else { return }
+        FeatureIntro.seenThisLaunch.insert(intro.rawValue)
+        try? await Task.sleep(for: .milliseconds(450))
+        showIntro = true
     }
 
     @ViewBuilder private var phaseView: some View {
@@ -86,6 +98,10 @@ struct HouseScanView: View {
             Text(title).font(.headline).tracking(2)
             Spacer()
             if phase == .scanning { TorchButton() }
+            if phase == .intro {
+                Button { showIntro = true } label: { Image(systemName: "questionmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
+                    .accessibilityLabel("Как пользоваться")
+            }
             Button {
                 if phase == .scanning && recorder.frameCount > 0 { confirmCancel = true } else { dismiss() }
             } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
@@ -96,7 +112,7 @@ struct HouseScanView: View {
 
     private var title: String {
         switch phase {
-        case .intro: return "ДОМ СНАРУЖИ"
+        case .intro: return "3D‑ОБМЕР ДОМА"
         case .scanning: return "ОБХОД ДОМА"
         case .control: return "КОНТРОЛЬНЫЙ РАЗМЕР"
         case .uploading: return "ОТПРАВКА"
@@ -112,7 +128,7 @@ struct HouseScanView: View {
                 Image(systemName: "house.lodge").font(.system(size: 50, weight: .semibold)).foregroundStyle(Theme.onAccent)
                     .frame(width: 96, height: 96).background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.goldLight.opacity(0.5), lineWidth: 1))
-                Text("Скан дома").font(.system(.largeTitle, design: .serif, weight: .bold)).tracking(-0.5)
+                Text("3D‑обмер дома").font(.system(.largeTitle, design: .serif, weight: .bold)).tracking(-0.5)
                 Text("Обойдите дом с iPhone — получите точный 3D‑макет дома с размерами стен, окон и крыши. Потом в нём можно менять крышу, фасад и окна и сразу видеть смету.")
                     .foregroundStyle(Theme.muted)
                 accuracyNote
@@ -124,7 +140,7 @@ struct HouseScanView: View {
                 }
                 .font(.subheadline)
                 parcelCard
-                Button { showScans = true } label: { SecondaryActionLabel(title: "Мои сканы дома", icon: "square.stack.3d.up") }
+                Button { showScans = true } label: { SecondaryActionLabel(title: "Мои обмеры", icon: "square.stack.3d.up") }
                     .buttonStyle(PremiumPressStyle())
                 if HouseScanRecorder.isSupported {
                     PrimaryButton(title: "Начать обход", icon: "viewfinder") {
@@ -135,7 +151,7 @@ struct HouseScanView: View {
                         store.track("house_scan_start")
                     }
                 } else {
-                    InfoNote(text: "На этом устройстве нет AR‑камеры. Скан дома работает на iPhone XS и новее.")
+                    InfoNote(text: "На этом устройстве нет AR‑камеры. 3D‑обмер работает на iPhone XS и новее.")
                 }
                 if !pending.isEmpty { pendingList }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }

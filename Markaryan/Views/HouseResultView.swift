@@ -18,7 +18,7 @@ struct HouseScansView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if !loaded { ProgressView().frame(maxWidth: .infinity).padding(.top, 40) }
                     if loaded && scans.isEmpty {
-                        InfoNote(text: "Отправленных сканов пока нет. Обойдите дом в разделе «Скан дома» — макет появится здесь через несколько минут.")
+                        InfoNote(text: "Обмеров пока нет. Обойдите дом в разделе «3D‑обмер дома» — макет появится здесь через пару минут.")
                     }
                     ForEach(scans) { scan in
                         if scan.status == "ready", scan.result != nil {
@@ -33,7 +33,7 @@ struct HouseScansView: View {
                 .padding(20)
             }
             .background(Theme.background)
-            .navigationTitle("Мои сканы дома")
+            .navigationTitle("Мои обмеры")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
             .refreshable { await refresh() }
@@ -55,7 +55,7 @@ struct HouseScansView: View {
             let fresh = try await uploader.list()
             for scan in fresh where waiting.contains(scan.id) && scan.status == "ready" {
                 Haptics.success()
-                BackgroundAI.notify(title: "Макет дома готов", body: "Откройте «Мои сканы дома», чтобы посмотреть размеры и 3D‑модель.")
+                BackgroundAI.notify(title: "Макет дома готов", body: "Откройте «Мои обмеры», чтобы посмотреть размеры и 3D‑модель.")
             }
             waiting = Set(fresh.filter { $0.status == "queued" || $0.status == "processing" }.map(\.id))
             scans = fresh
@@ -77,7 +77,7 @@ struct HouseScanRow: View {
 
     private var statusText: String {
         switch scan.status {
-        case "uploading": return "Загрузка не закончена — откройте «Скан дома» и нажмите «Отправить»"
+        case "uploading": return "Загрузка не закончена — откройте «3D‑обмер дома» и нажмите «Отправить»"
         case "queued": return scan.queuePosition.map { $0 > 1 ? "В очереди: \($0)-й" : "Скоро начнём" } ?? "В очереди"
         case "processing": return scan.message ?? "Обрабатываем…"
         case "ready":
