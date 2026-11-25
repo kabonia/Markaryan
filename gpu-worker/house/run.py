@@ -47,7 +47,7 @@ def process(scan: Path, out: Path) -> dict:
     mesh, cloud, used = fuse(bundle)
     stage("Находим стены, землю и скаты", 0.5)
     planes = extract_planes(cloud)
-    house = build_house(planes)
+    house = build_house(planes, cloud)
     # Крыша по фото (тип, покрытие, детали; конёк — лучами до фронтонов LiDAR). Нужен ключ OpenRouter, ≈ $0.03.
     if os.environ.get("OPENROUTER_API_KEY") and house.get("gableWalls") and os.environ.get("HOUSE_NO_AI") != "1" \
             and bundle.manifest.get("device") != "synthetic":

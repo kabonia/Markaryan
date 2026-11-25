@@ -146,7 +146,26 @@ def _value(value, source, sigma=None, note=None):
     return out
 
 
-def build_house(planes: list[Plane]) -> dict:
+def _overhang(cloud_pts: np.ndarray, wall: Plane, center: np.ndarray, from_height: float) -> float | None:
+    """Свес над стеной: насколько точки крыши/карнизной подшивы выше `from_height` выходят наружу за плоскость стены."""
+    n = wall.normal.copy()
+    n[1] = 0
+    n /= np.linalg.norm(n)
+    w0 = wall.points.mean(axis=0)
+    if (w0 - center) @ n < 0:
+        n = -n                                  # нормаль — наружу от дома
+    along = np.array([-n[2], 0.0, n[0]])
+    span = wall.points @ along
+    lo, hi = np.percentile(span, 2), np.percentile(span, 98)
+    s = cloud_pts @ along
+    d = (cloud_pts - w0) @ n
+    sel = (cloud_pts[:, 1] > from_height) & (s > lo + 0.3) & (s < hi - 0.3) & (d > 0.03) & (d < 1.6)
+    if sel.sum() < 30:
+        return None
+    return float(np.percentile(d[sel], 99))
+
+
+def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = None) -> dict:
     grounds = [p for p in planes if p.kind == "ground"]
     walls = [p for p in planes if p.kind == "wall"]
     roofs = [p for p in planes if p.kind == "roof"]
@@ -263,6 +282,41 @@ def build_house(planes: list[Plane]) -> dict:
                 if profile_ridge is not None:
                     roof["ridgeByGableEdge"] = round(profile_ridge, 3)  # сверка: кромка фронтона
 
+    # Карниз точнее — как линия пересечения ската со стеной: верх стены под свесом лидару часто не виден.
+    if roofs and eave_group:
+        mid0 = u * ((ext_a[1][0] + ext_a[2][0]) / 2) + v * ((ext_b[1][0] + ext_b[2][0]) / 2)
+        lines = []
+        for w in eave_group:
+            out = w.points.mean(axis=0) - mid0
+            out[1] = 0
+            # Скат над этой стеной: его горизонтальная нормаль смотрит наружу, туда же, куда стена.
+            same = [r for r in roofs if 0.26 < abs(r.normal[1]) < 0.99 and np.array([r.normal[0], 0, r.normal[2]]) @ out > 0]
+            if not same:
+                continue
+            r = max(same, key=lambda p_: p_.size)
+            point = _plane_intersection_near(w, r, w.points.mean(axis=0))
+            if point is not None:
+                lines.append(float(point[1] - ground_y))
+        if lines and abs(np.median(lines) - eave) < 0.6:
+            eave = float(np.median(lines))
+            house_eave = _value(eave, "measured", sigma=0.02, note="пересечение ската и стены")
+        else:
+            house_eave = None
+    else:
+        house_eave = None
+
+    # Свесы — по точкам выше карниза за плоскостью стены (лидар видит подшиву и скаты снизу).
+    if cloud is not None:
+        pts = np.asarray(cloud.points)
+        mid = u * ((ext_a[1][0] + ext_a[2][0]) / 2) + v * ((ext_b[1][0] + ext_b[2][0]) / 2)
+        mid[1] = ground_y
+        def over(group):
+            values = [o for o in (_overhang(pts, w, mid, ground_y + eave - 0.35) for w in group) if o is not None]
+            return _value(float(np.median(values)), "measured", sigma=0.03) if values else _value(None, "assumption", note="свес не снят")
+        roof["overhangEave"] = over(eave_group)
+        if gable_axis:
+            roof["overhangGable"] = over(groups[gable_axis])
+
     # Углы футпринта в мире (по пересечениям крайних стен).
     a_lo, a_hi = ext_a[1][0], ext_a[2][0]
     b_lo, b_hi = ext_b[1][0], ext_b[2][0]
@@ -275,7 +329,7 @@ def build_house(planes: list[Plane]) -> dict:
             "axisDeg": round(math.degrees(theta), 2),
         },
         "groundY": round(ground_y, 3),
-        "eaveHeight": _value(eave, "measured", sigma=eave_sigma + 0.01),
+        "eaveHeight": house_eave or _value(eave, "measured", sigma=eave_sigma + 0.01),
         "roof": roof,
         "planes": {"walls": len(walls), "roof": len(roofs), "ground": len(grounds)},
         # Фронтонные стены (для конька по фото): нормаль, d, центр, полуширина.

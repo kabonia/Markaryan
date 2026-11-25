@@ -21,8 +21,12 @@ IMG_W, IMG_H, F = 1920, 1440, 1500.0
 DEP_W, DEP_H = 256, 192
 
 
-def house_mesh() -> o3d.geometry.TriangleMesh:
+def house_mesh(overhang=(0.0, 0.0)) -> o3d.geometry.TriangleMesh:
+    """overhang = (свес по карнизу, свес по фронтону), м: скаты продолжаются за стены."""
     x, z = LENGTH / 2, WIDTH / 2
+    oe, og = overhang
+    k = (RIDGE - EAVE) / z
+    ye = EAVE - oe * k
     v = [
         # стены: углы у земли и у карниза
         (-x, 0, -z), (x, 0, -z), (x, 0, z), (-x, 0, z),
@@ -31,10 +35,13 @@ def house_mesh() -> o3d.geometry.TriangleMesh:
         (-x, RIDGE, 0), (x, RIDGE, 0),
         # земля
         (-40, 0, -40), (40, 0, -40), (40, 0, 40), (-40, 0, 40),
+        # скаты со свесами: 14–17 — край карниза, 18–19 — конёк с фронтонным свесом
+        (-x - og, ye, -z - oe), (x + og, ye, -z - oe), (x + og, ye, z + oe), (-x - og, ye, z + oe),
+        (-x - og, RIDGE, 0), (x + og, RIDGE, 0),
     ]
     t = [
         (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7),  # стены
-        (4, 5, 9), (4, 9, 8), (6, 7, 8), (6, 8, 9),                                              # скаты
+        (14, 15, 19), (14, 19, 18), (16, 17, 18), (16, 18, 19),                                  # скаты
         (4, 8, 7), (5, 6, 9),                                                                     # фронтоны
         (10, 12, 11), (10, 13, 12),                                                               # земля
     ]
@@ -83,11 +90,11 @@ def render_depth(scene, pose, rng):
     return depth, conf
 
 
-def make_scan(tmp_path, skip=None):
+def make_scan(tmp_path, skip=None, overhang=(0.0, 0.0)):
     """skip(position) → True — кадр не снимаем (например, сторона дома недоступна)."""
     rng = np.random.default_rng(7)
     scene = o3d.t.geometry.RaycastingScene()
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(house_mesh()))
+    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(house_mesh(overhang)))
     frames, files = [], {}
     jpeg = bundle_io.tiny_jpeg()
     i = 0
@@ -185,3 +192,18 @@ def test_blocked_side(tmp_path):
     assert abs(length["value"] - LENGTH) < 0.05
     assert abs(fp["gableWidth"]["value"] - WIDTH) < 0.03
     assert abs(house["roof"]["ridgeHeight"]["value"] - RIDGE) < 0.10
+
+
+def test_overhangs(tmp_path):
+    """Свесы: 0,50 м по карнизу и 0,30 м по фронтону — лидар видит их снизу."""
+    scan = make_scan(tmp_path, overhang=(0.5, 0.3))
+    house = process(scan, tmp_path / "out")
+    roof = house["roof"]
+    eave_o, gable_o = roof["overhangEave"]["value"], roof["overhangGable"]["value"]
+    notice("Свесы — правда 0.50 / 0.30 м", f"по карнизу {eave_o} м; по фронтону {gable_o} м; карниз {house['eaveHeight']['value']} м; "
+           f"конёк {roof['ridgeHeight']['value']} м; уклон {roof['pitchDeg']['value']}°; ширина {house['footprint']['gableWidth']['value']} м")
+    assert abs(eave_o - 0.5) < 0.06
+    assert abs(gable_o - 0.3) < 0.06
+    assert abs(house["eaveHeight"]["value"] - EAVE) < 0.05
+    assert abs(roof["ridgeHeight"]["value"] - RIDGE) < 0.10
+    assert abs(house["footprint"]["gableWidth"]["value"] - WIDTH) < 0.03
