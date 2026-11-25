@@ -20,14 +20,19 @@ import numpy as np
 from .bundle import Bundle, Frame
 
 MODEL = os.environ.get("HOUSE_ROOF_MODEL", "google/gemini-4-hydrogen")
+WALL_FRAMES = 8  # кадров стен для окон и дверей (в «вертикальном» кадре дом целиком не помещается)
 
-SYSTEM = """Ты — инженер-кровельщик. На фото один частный дом, снятый с земли (несколько ракурсов).
+SYSTEM = """Ты — инженер-кровельщик и обмерщик фасадов. На фото один частный дом, снятый с земли (несколько ракурсов).
 Определи тип крыши (gable|hip|half_hip|mansard|gambrel|shed|flat|pyramid|cross_gable|complex), покрытие, цвет и детали
-(трубы, слуховые и мансардные окна, водостоки, снегозадержатели, ендовы; seen=false — если не видно, а предполагаешь).
-На КАЖДОМ фото отметь концы конька (верхние вершины фронтонов), которые видны: координаты [x, y] в долях 0..1000
-(x слева направо, y сверху вниз). Не выдумывай: не видно — пустой список.
-Ответ — только JSON: {"roofType":"","roofTypeRu":"","covering":"","color":"","details":[{"kind":"","ru":"","count":1,"seen":true}],
-"photos":[{"ridgeEnds":[[x,y]]}],"hidden":[""]}"""
+(трубы, слуховые и мансардные окна, водостоки, снегозадержатели, ендовы; seen=false — если не видно, а предполагаешь),
+материал и цвет стен (facade).
+На КАЖДОМ фото (координаты [x, y] в долях 0..1000: x слева направо, y сверху вниз):
+- ridgeEnds — концы конька (верхние вершины фронтонов), которые видны;
+- openings — окна и двери, видимые целиком: kind (window | door | garage_door | balcony_door), corners — 4 угла проёма
+  (по краю рамы/коробки, без наличников и откосов) в порядке: левый верх, правый верх, правый низ, левый низ.
+Не выдумывай: не видно или закрыто — не отмечай.
+Ответ — только JSON: {"roofType":"","roofTypeRu":"","covering":"","color":"","facade":"","details":[{"kind":"","ru":"","count":1,"seen":true}],
+"photos":[{"ridgeEnds":[[x,y]],"openings":[{"kind":"window","corners":[[x,y],[x,y],[x,y],[x,y]]}]}],"hidden":[""]}"""
 
 
 # ---------- ориентация кадра ----------
@@ -59,8 +64,12 @@ def from_upright(u: float, v: float, w: int, h: int, turns: int) -> tuple[float,
 
 # ---------- выбор кадров ----------
 
-def pick_frames(bundle: Bundle, center: np.ndarray, count: int = 6) -> list[Frame]:
-    pool = bundle.stills or [f for f in bundle.frames if f.tier == "roof"] or bundle.frames
+def pick_frames(bundle: Bundle, center: np.ndarray, count: int = 6, tier: str = "roof") -> list[Frame]:
+    """Самые резкие кадры, по одному на сектор вокруг дома. tier="roof" — снимки 12 Мп/верхний ярус, "wall" — стены."""
+    if tier == "roof":
+        pool = bundle.stills or [f for f in bundle.frames if f.tier == "roof"] or bundle.frames
+    else:
+        pool = [f for f in bundle.frames if f.tier == "wall"] or bundle.frames
     sectors: dict[int, Frame] = {}
     for f in pool:
         pos = f.pose[:3, 3]
@@ -153,9 +162,90 @@ def ridge_from_marks(marks: list[tuple[Frame, float, float]], gables: list[tuple
     return out
 
 
-def analyze(bundle: Bundle, center: np.ndarray, gables: list[tuple[np.ndarray, float]], ground_y: float, ask=ask_openrouter) -> dict:
-    """Полный проход: кадры → ИИ → лучи → конёк. `ask` подменяется в тестах."""
+def _wall_hit(frame: Frame, u: float, v: float, walls: list[tuple]):
+    """Ближайшая стена (в пределах её ширины), в которую попадает луч пикселя: (индекс, точка)."""
+    origin, direction = ray(frame, u, v)
+    best = None
+    for wi, wall in enumerate(walls):
+        normal, d = wall[0], wall[1]
+        p = hit_plane(origin, direction, normal, d)
+        if p is None:
+            continue
+        if len(wall) >= 4:
+            offset = p - np.asarray(wall[2])
+            offset[1] = 0
+            if np.linalg.norm(offset) > float(wall[3]) + 0.3:
+                continue
+        dist = np.linalg.norm(p - origin)
+        if best is None or dist < best[0]:
+            best = (dist, wi, p)
+    return None if best is None else (best[1], best[2])
+
+
+def openings_from_marks(marks: list[tuple[Frame, str, list]], walls: list[tuple], ground_y: float) -> list[dict]:
+    """Отметки проёмов (кадр, вид, 4 угла в пикселях сенсорного кадра) → размеры в метрах на плоскости стены.
+    Одно окно с нескольких фото сводится в одно (медиана); выбросы по размеру отбрасываются."""
+    found = []
+    for frame, kind, corners in marks:
+        cu = sum(c[0] for c in corners) / 4
+        cv = sum(c[1] for c in corners) / 4
+        hit = _wall_hit(frame, cu, cv, walls)
+        if hit is None:
+            continue
+        wi, _ = hit
+        normal, d = walls[wi][0], walls[wi][1]
+        pts = []
+        for u, v in corners:
+            origin, direction = ray(frame, u, v)
+            p = hit_plane(origin, direction, normal, d)
+            if p is None:
+                break
+            pts.append(p)
+        if len(pts) != 4:
+            continue
+        pts = np.array(pts)
+        along = np.array([-normal[2], 0.0, normal[0]])
+        along /= np.linalg.norm(along)
+        s = pts @ along
+        y = pts[:, 1] - ground_y
+        width = (abs(s[1] - s[0]) + abs(s[2] - s[3])) / 2
+        height = (abs(y[3] - y[0]) + abs(y[2] - y[1])) / 2
+        if not (0.25 < width < 6 and 0.25 < height < 4):
+            continue
+        found.append({"wall": wi, "kind": kind, "s": float(s.mean()), "y": float(y.mean()), "width": width, "height": height,
+                      "sill": float(min(y[2], y[3])), "center": pts.mean(axis=0)})
+    # Сведение: тот же вид, та же стена, центры ближе 35 см.
+    groups: list[list[dict]] = []
+    for item in found:
+        for g in groups:
+            if g[0]["wall"] == item["wall"] and g[0]["kind"] == item["kind"] and abs(g[0]["s"] - item["s"]) < 0.35 and abs(g[0]["y"] - item["y"]) < 0.35:
+                g.append(item)
+                break
+        else:
+            groups.append([item])
+    out = []
+    for g in groups:
+        w = np.array([x["width"] for x in g])
+        h = np.array([x["height"] for x in g])
+        keep = [x for x in g if abs(x["width"] - np.median(w)) < 0.15 and abs(x["height"] - np.median(h)) < 0.15] or g
+        width = float(np.median([x["width"] for x in keep]))
+        height = float(np.median([x["height"] for x in keep]))
+        out.append({
+            "wall": g[0]["wall"], "kind": g[0]["kind"], "width": round(width, 3), "height": round(height, 3),
+            "sill": round(float(np.median([x["sill"] for x in keep])), 3), "area": round(width * height, 3),
+            "frames": len(keep), "source": "photo" if len(keep) >= 2 else "assumption",
+            "center": [round(float(c), 3) for c in np.median([x["center"] for x in keep], axis=0)],
+        })
+    return sorted(out, key=lambda o: (o["wall"], o["center"][0], o["center"][2]))
+
+
+def analyze(bundle: Bundle, center: np.ndarray, gables: list[tuple[np.ndarray, float]], ground_y: float, ask=ask_openrouter,
+            walls: list[tuple] | None = None) -> dict:
+    """Полный проход: кадры → ИИ → лучи → конёк, окна и двери. `ask` подменяется в тестах."""
     frames = pick_frames(bundle, center)
+    if walls:
+        # Для окон и дверей — ещё кадры стен (по одному на сектор), без повторов.
+        frames += [f for f in pick_frames(bundle, center, count=WALL_FRAMES, tier="wall") if all(f is not g for g in frames)]
     images, meta = [], []
     for f in frames:
         turns = upright_turns(f)
@@ -164,15 +254,22 @@ def analyze(bundle: Bundle, center: np.ndarray, gables: list[tuple[np.ndarray, f
         meta.append((f, turns, scale))
     ai, cost = ask(images)
     w0, h0 = bundle.manifest["image"]["width"], bundle.manifest["image"]["height"]
-    marks = []
+    marks, opening_marks = [], []
     for (f, turns, scale), photo in zip(meta, ai.get("photos", [])):
         w, h = f.width or w0, f.height or h0
         uw, uh = (w, h) if turns % 2 == 0 else (h, w)
         for x, y in photo.get("ridgeEnds", []) or []:
             u, v = from_upright(x / 1000 * uw, y / 1000 * uh, w, h, turns)
             marks.append((f, u, v))
+        for opening in photo.get("openings", []) or []:
+            corners = opening.get("corners") or []
+            if len(corners) == 4 and all(isinstance(c, (list, tuple)) and len(c) == 2 for c in corners):
+                opening_marks.append((f, str(opening.get("kind") or "window"),
+                                      [from_upright(x / 1000 * uw, y / 1000 * uh, w, h, turns) for x, y in corners]))
     return {
         "roofType": ai.get("roofType"), "roofTypeRu": ai.get("roofTypeRu"), "covering": ai.get("covering"), "color": ai.get("color"),
         "details": ai.get("details", []), "hidden": ai.get("hidden", []),
+        "facade": ai.get("facade"),
         "ridgeEnds": ridge_from_marks(marks, gables, ground_y), "frames": len(frames), "model": MODEL, "cost": round(cost, 4),
+        "openings": openings_from_marks(opening_marks, walls, ground_y) if walls else [],
     }

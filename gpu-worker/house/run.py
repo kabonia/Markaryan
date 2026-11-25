@@ -56,7 +56,14 @@ def process(scan: Path, out: Path) -> dict:
             corners = np.array(house["footprint"]["corners"])
             center = np.array([corners[:, 0].mean(), 0.0, corners[:, 1].mean()])
             gables = [(np.array(g["normal"]), g["d"], np.array(g["center"]), g["halfWidth"]) for g in house["gableWalls"]]
-            photo = roof_ai.analyze(bundle, center, gables, house["groundY"])
+            walls = [(np.array(w["normal"]), w["d"], np.array(w["center"]), w["halfWidth"]) for w in house.get("walls", [])]
+            photo = roof_ai.analyze(bundle, center, gables, house["groundY"], walls=walls)
+            house["openings"] = photo.pop("openings", [])
+            house["openingsSummary"] = {
+                "windows": sum(1 for o in house["openings"] if o["kind"] in ("window", "balcony_door")),
+                "doors": sum(1 for o in house["openings"] if o["kind"] in ("door", "garage_door")),
+                "area": round(sum(o["area"] for o in house["openings"]), 2),
+            }
             house["roof"]["byPhoto"] = photo
             ends = [e["height"] for e in photo["ridgeEnds"] if e["frames"] >= 2]
             ridge = house["roof"].get("ridgeHeight", {})

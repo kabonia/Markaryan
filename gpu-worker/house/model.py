@@ -332,6 +332,12 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
         "eaveHeight": house_eave or _value(eave, "measured", sigma=eave_sigma + 0.01),
         "roof": roof,
         "planes": {"walls": len(walls), "roof": len(roofs), "ground": len(grounds)},
+        # Все стены (для окон и дверей по фото): нормаль, d, центр, полуширина вдоль стены.
+        "walls": [
+            {"normal": [round(float(x), 5) for x in w.normal], "d": round(float(w.d), 4),
+             "center": [round(float(x), 3) for x in w.points.mean(axis=0)],
+             "halfWidth": round(float(np.ptp(w.points @ np.array([-w.normal[2], 0.0, w.normal[0]])) / 2), 3)}
+            for w in walls],
         # Фронтонные стены (для конька по фото): нормаль, d, центр, полуширина.
         "gableWalls": [] if not gable_axis else [
             {"normal": [round(float(x), 5) for x in w.normal], "d": round(float(w.d), 4),
