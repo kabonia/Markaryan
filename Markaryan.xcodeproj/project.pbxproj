@@ -27,6 +27,7 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C1451936ED4DC91965CA5F8D /* Markaryan/Views/MetalEstimateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2451936ED4DC91965CA5F8D /* Markaryan/Views/MetalEstimateViews.swift */; };
 		C127E3C00F3FDBE97611C2C4 /* Markaryan/Core/KeyboardHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C227E3C00F3FDBE97611C2C4 /* Markaryan/Core/KeyboardHelper.swift */; };
 		C15DE591310A8F7CEEEE57EC /* Markaryan/Views/HouseEstimateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25DE591310A8F7CEEEE57EC /* Markaryan/Views/HouseEstimateViews.swift */; };
 		C1F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */; };
@@ -97,6 +98,7 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C2451936ED4DC91965CA5F8D /* Markaryan/Views/MetalEstimateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/MetalEstimateViews.swift; sourceTree = "<group>"; };
 		C227E3C00F3FDBE97611C2C4 /* Markaryan/Core/KeyboardHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/KeyboardHelper.swift; sourceTree = "<group>"; };
 		C25DE591310A8F7CEEEE57EC /* Markaryan/Views/HouseEstimateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseEstimateViews.swift; sourceTree = "<group>"; };
 		C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ScreenshotSamples.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C2451936ED4DC91965CA5F8D /* Markaryan/Views/MetalEstimateViews.swift */,
 				C227E3C00F3FDBE97611C2C4 /* Markaryan/Core/KeyboardHelper.swift */,
 				C25DE591310A8F7CEEEE57EC /* Markaryan/Views/HouseEstimateViews.swift */,
 				C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */,
@@ -345,6 +348,7 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C1451936ED4DC91965CA5F8D /* Markaryan/Views/MetalEstimateViews.swift in Sources */,
 				C127E3C00F3FDBE97611C2C4 /* Markaryan/Core/KeyboardHelper.swift in Sources */,
 				C15DE591310A8F7CEEEE57EC /* Markaryan/Views/HouseEstimateViews.swift in Sources */,
 				C1F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift in Sources */,

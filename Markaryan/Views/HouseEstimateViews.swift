@@ -79,14 +79,19 @@ enum HouseOptions {
 
 enum HouseEstimateAPI {
     static func estimate(_ params: HouseParams, city: String, region: UserRegion?) async throws -> DocEstimateResult {
+        try await post("v1/house/estimate", body: params.payload(city: city, region: region))
+    }
+
+    /// The parameter estimates (house, metal structures): computed on the server from the geometry and the weekly prices.
+    static func post(_ path: String, body: [String: Any]) async throws -> DocEstimateResult {
         guard let base = AIServerConfig.marketURL else { throw DocEstimateError.noServer }
-        var request = URLRequest(url: base.appendingPathComponent("v1/house/estimate"))
+        var request = URLRequest(url: base.appendingPathComponent(path))
         request.httpMethod = "POST"
         request.timeoutInterval = 30
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: params.payload(city: city, region: region))
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200...299).contains(code) else {
@@ -117,46 +122,46 @@ struct HouseEstimateParamsView: View {
                 Text("Объёмы считаются по размерам дома: периметр, стены за вычетом окон, кровля по скатам, фундамент. Цены — реальные предложения вашего города, обновляются раз в неделю.")
                     .font(.subheadline).foregroundStyle(Theme.muted)
 
-                card("Размеры") {
+                ParamCard("Размеры") {
                     HStack(spacing: 12) {
                         numberField("Длина, м", text: $lengthText, id: "length")
                         numberField("Ширина, м", text: $widthText, id: "width")
                     }
                     Stepper("Этажей: \(p.floors)", value: $p.floors, in: 1...3)
-                    chips([("2.5", "2,5 м"), ("2.7", "2,7 м"), ("2.8", "2,8 м"), ("3.0", "3,0 м"), ("3.2", "3,2 м")],
+                    OptionChips([("2.5", "2,5 м"), ("2.7", "2,7 м"), ("2.8", "2,8 м"), ("3.0", "3,0 м"), ("3.2", "3,2 м")],
                           selection: Binding(get: { String(format: "%.1f", p.floorHeight) }, set: { p.floorHeight = Double($0) ?? 2.8 }), title: "Высота этажа")
                     Text("Площадь дома \(CalculationEngine.format(p.area)) м² · пятно застройки \(CalculationEngine.format(p.length * p.width)) м²")
                         .font(.caption).foregroundStyle(Theme.muted)
                 }
-                card("Фундамент") {
-                    chips(HouseOptions.foundation, selection: $p.foundation)
+                ParamCard("Фундамент") {
+                    OptionChips(HouseOptions.foundation, selection: $p.foundation)
                     if p.foundation == "piles" && p.heavyWalls {
                         Label("Сваи не держат тяжёлые стены — выберите ленту или плиту, или каркас/брус.", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(Theme.danger)
                     }
                 }
-                card("Стены") { chips(HouseOptions.walls, selection: $p.walls) }
-                if p.floors > 1 { card("Межэтажные перекрытия") { chips(HouseOptions.slabs, selection: $p.slabs) } }
-                card("Кровля") {
-                    chips(HouseOptions.roof, selection: $p.roof)
+                ParamCard("Стены") { OptionChips(HouseOptions.walls, selection: $p.walls) }
+                if p.floors > 1 { ParamCard("Межэтажные перекрытия") { OptionChips(HouseOptions.slabs, selection: $p.slabs) } }
+                ParamCard("Кровля") {
+                    OptionChips(HouseOptions.roof, selection: $p.roof)
                     if p.roof != "flat" {
-                        chips(HouseOptions.roofCover, selection: $p.roofCover)
+                        OptionChips(HouseOptions.roofCover, selection: $p.roofCover)
                         Stepper("Уклон: \(Int(p.pitch))°", value: $p.pitch, in: 15...45, step: 5)
                     }
                 }
-                card("Фасад") { chips(HouseOptions.facade, selection: $p.facade) }
-                card("Отделка") {
-                    chips(HouseOptions.finish, selection: $p.finish)
+                ParamCard("Фасад") { OptionChips(HouseOptions.facade, selection: $p.facade) }
+                ParamCard("Отделка") {
+                    OptionChips(HouseOptions.finish, selection: $p.finish)
                     Text(HouseOptions.finishNote[p.finish] ?? "").font(.caption).foregroundStyle(Theme.muted)
                 }
-                card("Инженерия") {
+                ParamCard("Инженерия") {
                     Toggle("Электрика", isOn: $p.electric)
                     Toggle("Водопровод", isOn: $p.water)
-                    chips(HouseOptions.sewer, selection: $p.sewer, title: "Канализация")
-                    chips(HouseOptions.heating, selection: $p.heating, title: "Отопление")
+                    OptionChips(HouseOptions.sewer, selection: $p.sewer, title: "Канализация")
+                    OptionChips(HouseOptions.heating, selection: $p.heating, title: "Отопление")
                     Toggle("Скважина на воду", isOn: $p.well)
                     Stepper(p.bathrooms == 0 ? "Санузлов: по площади" : "Санузлов: \(p.bathrooms)", value: $p.bathrooms, in: 0...6)
                 }
-                card("Начисления") {
+                ParamCard("Начисления") {
                     Toggle("НДС 22 %", isOn: $p.vat)
                     Stepper("Непредвиденные: \(Int(p.contingency)) %", value: $p.contingency, in: 0...20)
                 }
@@ -224,41 +229,8 @@ struct HouseEstimateParamsView: View {
         }
     }
 
-    // MARK: Pieces
-
-    private func card<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
-            content()
-        }
-        .font(.subheadline).foregroundStyle(Theme.ink)
-        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
-    }
-
-    private func chips(_ options: [(String, String)], selection: Binding<String>, title: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let title { Text(title).font(.caption).foregroundStyle(Theme.muted) }
-            ChipFlow(spacing: 8) {
-                    ForEach(options, id: \.0) { option in
-                        let on = selection.wrappedValue == option.0
-                        Button { withAnimation(.snappy) { selection.wrappedValue = option.0 }; Haptics.tap() } label: {
-                            Text(option.1).font(.subheadline.weight(on ? .semibold : .regular))
-                                .padding(.horizontal, 14).padding(.vertical, 9)
-                                .foregroundStyle(on ? Theme.onAccent : Theme.ink)
-                                .background(on ? AnyShapeStyle(Theme.orange) : AnyShapeStyle(Theme.panelRaised.opacity(0.6)), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                    }
-            }
-        }
-    }
-
     private func numberField(_ title: String, text: Binding<String>, id: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(Theme.muted)
-            TextField("0", text: text).keyboardType(.decimalPad).focused($focused, equals: id)
-                .font(.title3.weight(.semibold)).padding(12).background(Theme.panelRaised.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
-        }
+        NumberInputField(title: title, text: text, id: id, focused: $focused)
     }
 }
 
@@ -287,6 +259,63 @@ struct ChipFlow: Layout {
             view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
             x += size.width + spacing
             row = max(row, size.height)
+        }
+    }
+}
+
+// MARK: - Shared pieces of the parameter screens
+
+struct ParamCard<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+    init(_ title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            content
+        }
+        .font(.subheadline).foregroundStyle(Theme.ink)
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
+    }
+}
+
+struct OptionChips: View {
+    let options: [(String, String)]
+    @Binding var selection: String
+    var title: String?
+    init(_ options: [(String, String)], selection: Binding<String>, title: String? = nil) { self.options = options; _selection = selection; self.title = title }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let title { Text(title).font(.caption).foregroundStyle(Theme.muted) }
+            ChipFlow(spacing: 8) {
+                ForEach(options, id: \.0) { option in
+                    let on = selection == option.0
+                    Button { withAnimation(.snappy) { selection = option.0 }; Haptics.tap() } label: {
+                        Text(option.1).font(.subheadline.weight(on ? .semibold : .regular))
+                            .padding(.horizontal, 14).padding(.vertical, 9)
+                            .foregroundStyle(on ? Theme.onAccent : Theme.ink)
+                            .background(on ? AnyShapeStyle(Theme.orange) : AnyShapeStyle(Theme.panelRaised.opacity(0.6)), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+}
+
+struct NumberInputField: View {
+    let title: String
+    @Binding var text: String
+    let id: String
+    var focused: FocusState<String?>.Binding
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.caption).foregroundStyle(Theme.muted)
+            TextField("0", text: $text).keyboardType(.decimalPad).focused(focused, equals: id)
+                .font(.title3.weight(.semibold)).padding(12).background(Theme.panelRaised.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 }

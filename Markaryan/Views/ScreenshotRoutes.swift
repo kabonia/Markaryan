@@ -30,6 +30,8 @@ enum ScreenshotRoute {
             CalculatorView(kind: kind)
         } else if route == "estimate" {
             HouseEstimateParamsView()
+        } else if route == "metal" {
+            MetalEstimateParamsView()
         } else if route == "assistant" {
             AIAssistantView(context: .general)
         } else if route == "about" {

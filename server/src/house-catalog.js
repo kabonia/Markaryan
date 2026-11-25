@@ -47,6 +47,19 @@ export const CATALOG = [
   { code: 'septic', kind: 'material', name: 'Септик (станция очистки) на 4–6 человек', unit: 'шт', base: 145000 },
   { code: 'pump', kind: 'material', name: 'Скважинный насос с автоматикой и кессоном', unit: 'компл.', base: 65000 },
 
+  // metal structures
+  { code: 'pipe_light', kind: 'material', name: 'Труба профильная 40×20 – 100×100 мм, сталь (прокат)', unit: 'т', base: 92000, t: 1 },
+  { code: 'pipe_heavy', kind: 'material', name: 'Труба профильная 120×120 – 160×160 мм, стенка 4–5 мм', unit: 'т', base: 97000, t: 1 },
+  { code: 'polycarb', kind: 'material', name: 'Поликарбонат сотовый 8 мм с профилями и термошайбами', unit: 'м²', base: 780, t: 0.0015 },
+  { code: 'profwall', kind: 'material', name: 'Профнастил стеновой С10 0,45 мм с покрытием', unit: 'м²', base: 490, t: 0.005 },
+  { code: 'sandwich', kind: 'material', name: 'Сэндвич‑панель 100 мм (минвата), стеновая/кровельная', unit: 'м²', base: 2700, t: 0.02 },
+  { code: 'metal_paint', kind: 'material', name: 'Грунт‑эмаль по металлу 3 в 1 (материал на м² поверхности)', unit: 'м²', base: 130 },
+  { code: 'picket', kind: 'material', name: 'Евроштакетник металлический (материал на м² забора)', unit: 'м²', base: 1150, t: 0.006 },
+  { code: 'mesh3d', kind: 'material', name: 'Панель 3D‑сетки для забора с креплениями (на м²)', unit: 'м²', base: 650, t: 0.004 },
+  { code: 'gate_swing', kind: 'material', name: 'Ворота распашные металлические 4 м с фурнитурой', unit: 'шт', base: 46000, t: 0.15 },
+  { code: 'wicket', kind: 'material', name: 'Калитка металлическая с замком', unit: 'шт', base: 14500, t: 0.05 },
+  { code: 'sect_gate', kind: 'material', name: 'Ворота секционные промышленные 4×4 м с автоматикой', unit: 'шт', base: 280000, t: 0.4 },
+
   // ---- works (labour only) ----
   { code: 'w_layout', kind: 'work', name: 'Геодезическая разбивка осей дома', unit: 'компл.', base: 22000 },
   { code: 'w_site', kind: 'work', name: 'Бытовка и временное электроснабжение на период стройки', unit: 'компл.', base: 65000 },
@@ -89,6 +102,17 @@ export const CATALOG = [
   { code: 'w_heating', kind: 'work', name: 'Монтаж радиатора отопления с разводкой', unit: 'шт', base: 5500 },
   { code: 'w_boiler', kind: 'work', name: 'Монтаж и обвязка котла', unit: 'шт', base: 32000 },
   { code: 'w_septic', kind: 'work', name: 'Установка септика под ключ (работа, земляные работы)', unit: 'шт', base: 48000 },
+  { code: 'w_fab', kind: 'work', name: 'Изготовление металлоконструкций: резка, сварка, сборка (работа)', unit: 'т', base: 60000 },
+  { code: 'w_erect', kind: 'work', name: 'Монтаж металлоконструкций (работа)', unit: 'т', base: 30000 },
+  { code: 'w_metal_paint', kind: 'work', name: 'Грунтовка и окраска металлоконструкций (работа)', unit: 'м²', base: 380 },
+  { code: 'w_pillar', kind: 'work', name: 'Бурение и бетонирование опоры под столб', unit: 'шт', base: 2600 },
+  { code: 'w_footing', kind: 'work', name: 'Отдельный фундамент под колонну: котлован, армирование, бетон', unit: 'м³', base: 9500 },
+  { code: 'w_polycarb', kind: 'work', name: 'Монтаж кровли из поликарбоната', unit: 'м²', base: 480 },
+  { code: 'w_cladding', kind: 'work', name: 'Монтаж стенового и кровельного профлиста / сэндвич‑панелей', unit: 'м²', base: 750 },
+  { code: 'w_fence', kind: 'work', name: 'Монтаж забора на готовые столбы: лаги и заполнение (работа)', unit: 'м.п.', base: 950 },
+  { code: 'w_gate', kind: 'work', name: 'Установка распашных ворот', unit: 'шт', base: 9500 },
+  { code: 'w_wicket', kind: 'work', name: 'Установка калитки', unit: 'шт', base: 4200 },
+  { code: 'w_sect_gate', kind: 'work', name: 'Монтаж секционных ворот с автоматикой', unit: 'шт', base: 38000 },
   { code: 'w_well', kind: 'work', name: 'Бурение скважины на воду с обсадной трубой', unit: 'м', base: 3600 },
 
   // ---- machines and delivery (hire as it is really sold: shift / trip) ----

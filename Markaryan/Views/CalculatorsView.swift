@@ -44,7 +44,7 @@ struct CalculatorsView: View {
                         Image(systemName: "house.and.flag.fill").font(.title3).foregroundStyle(Theme.onAccent).frame(width: 50, height: 50).background(Theme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) {
                             Text("Полная смета объекта").font(.headline).foregroundStyle(.white)
-                            Text("Дом, беседка, металлоконструкции — построчно с работами и доставкой").font(.caption).foregroundStyle(.white.opacity(0.78))
+                            Text("Дом, навес, ангар, забор — по размерам, с работами, техникой и доставкой").font(.caption).foregroundStyle(.white.opacity(0.78))
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.orange)
@@ -138,14 +138,14 @@ struct CompactEstimateCard: View {
 }
 
 enum FullEstimateKind: String, CaseIterable, Identifiable {
-    case house, gazebo, metal
+    case house, metal
     var id: String { rawValue }
-    var title: String { switch self { case .house: return "Дом"; case .gazebo: return "Беседка"; case .metal: return "Металлоконструкции" } }
+    var title: String { switch self { case .house: return "Дом"; case .metal: return "Металлоконструкции" } }
     var screenTitle: String { "Смета: \(title.lowercased())" }
-    var subtitle: String { switch self { case .house: return "Фундамент, коробка, кровля, инженерия и отделка"; case .gazebo: return "Основание, каркас, крыша, настил и монтаж"; case .metal: return "Прокат, сварка, защита, крепёж и монтаж" } }
-    var icon: String { switch self { case .house: return "house.and.flag.fill"; case .gazebo: return "tree.fill"; case .metal: return "wrench.and.screwdriver.fill" } }
-    var startArea: String { switch self { case .house: return "150"; case .gazebo: return "24"; case .metal: return "30" } }
-    var areaTitle: String { switch self { case .house: return "Площадь дома, м²"; case .gazebo: return "Площадь, м²"; case .metal: return "Площадь конструкции, м²" } }
+    var subtitle: String { switch self { case .house: return "Фундамент, коробка, кровля, инженерия и отделка"; case .metal: return "Навесы, ангары и склады, заборы — по весу металла" } }
+    var icon: String { switch self { case .house: return "house.and.flag.fill"; case .metal: return "wrench.and.screwdriver.fill" } }
+    var startArea: String { switch self { case .house: return "150"; case .metal: return "30" } }
+    var areaTitle: String { switch self { case .house: return "Площадь дома, м²"; case .metal: return "Площадь конструкции, м²" } }
     /// Sections that depend on the building footprint, not on the total floor area.
     var footprintSections: Set<String> { self == .house ? ["Фундамент", "Кровля"] : [] }
 }
@@ -156,7 +156,7 @@ struct FullEstimateHubView: View {
             SectionTitle(eyebrow: "Прозрачная стоимость", title: "Смета для вашего объекта")
             Text("Выберите тип объекта. Внутри — все материалы, работы, техника и доставка по строкам.").font(.subheadline).foregroundStyle(Theme.muted)
             ForEach(FullEstimateKind.allCases) { kind in
-                NavigationLink { if kind == .house { HouseEstimateParamsView() } else { HouseEstimateView(kind: kind) } } label: {
+                NavigationLink { if kind == .house { HouseEstimateParamsView() } else { MetalEstimateParamsView() } } label: {
                     HStack(spacing: 15) {
                         Image(systemName: kind.icon).font(.title2).foregroundStyle(Theme.onAccent).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(Theme.ink); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }

@@ -14,6 +14,7 @@ import * as hh from './hh.js';
 import * as avito from './avito.js';
 import * as market from './market.js';
 import * as house from './house.js';
+import * as metal from './metal.js';
 import * as reports from './reports.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
@@ -78,6 +79,12 @@ async function handle(req, res) {
     const lat = Number.parseFloat(body?.lat), lon = Number.parseFloat(body?.lon);
     house.noteDemand(body?.city, lat, lon);
     return send(res, 200, house.estimate(body, { lat, lon }));
+  }
+  if (req.method === 'POST' && url.pathname === '/v1/metal/estimate') {
+    const body = await readBody(req);
+    const lat = Number.parseFloat(body?.lat), lon = Number.parseFloat(body?.lon);
+    house.noteDemand(body?.city, lat, lon);
+    return send(res, 200, metal.estimate(body, { lat, lon }));
   }
   if (url.pathname.startsWith('/v1/partners') || url.pathname.startsWith('/v1/admin/partners')) return handlePartners(req, res, url);
   if (req.method === 'POST' && url.pathname === '/v1/report') return send(res, 200, await reports.report(await readBody(req), clientIP(req)));

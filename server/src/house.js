@@ -318,7 +318,25 @@ export function estimate(body, { lat, lon } = {}) {
   const p = cleanParams(body);
   if (p.foundation === 'piles' && WALL[p.walls].heavy) throw new ApiError(400, 'Винтовые сваи не подходят под тяжёлые стены (газобетон, кирпич, керамоблок). Выберите ленту или плиту — или каркас/брус.');
   const { geometry: g, works, logistics } = lines(p);
-  const prices = resolvePrices(p.city, lat, lon);
+  const title = p.title || `Дом ${r2(g.L)}×${r2(g.W)} м, ${p.floors} эт., ${r2(g.area)} м²`;
+  const result = build({
+    works, logistics, order: SECTION_ORDER, city: p.city, lat, lon, options: p.options, title,
+    object: { name: title, type: 'Жилой дом', area: r2(g.area), floors: p.floors, summary: `${title}: стены — ${WALL[p.walls].title}, фундамент — ${LABEL.foundation[p.foundation]}, кровля — ${LABEL.roof[p.roof]} (${LABEL.roofCover[p.roofCover]}), фасад — ${LABEL.facade[p.facade]}, отделка — ${LABEL.finish[p.finish]}.` },
+    assumptions: [
+      `Геометрия: периметр ${r2(g.P)} м, пятно ${r2(g.S0)} м², высота этажа ${g.H} м, остекление ${r2(g.windows)} м², перегородки ≈${r2(g.partitionLen)} м.п. на этаж. Объёмы посчитаны по размерам, а не «на квадратный метр».`,
+      'Не входит: проект и согласования, подключение к сетям (газ, электричество, вода), благоустройство участка, мебель и техника.',
+      ...(p.walls === 'timber' && p.facade === 'plaster' ? ['Брус по фасаду не штукатурится — фасад оставлен без отделки.'] : []),
+    ],
+  });
+  return { ...result, params: p };
+}
+
+/**
+ * Prices the lines with the city's weekly book and assembles the answer in the shape of «Смета по документам»:
+ * sections of works with their materials, «Техника и доставка», the purchase list and the totals.
+ */
+export function build({ works, logistics, order, city, lat, lon, options, title, object, assumptions = [] }) {
+  const prices = resolvePrices(city, lat, lon);
   const zero = () => ({ low: 0, typical: 0, high: 0 });
   const add = (t, pr, q) => { t.low += pr.low * q; t.typical += pr.typical * q; t.high += pr.high * q; };
   const purchase = new Map();
@@ -343,10 +361,10 @@ export function estimate(body, { lat, lon } = {}) {
       return { name: mi.name, unit: mi.unit, quantity: m.quantity, price: mp, sum: r2(mp.typical * m.quantity) };
     });
     const laborSum = r2(price.typical * w.quantity);
-    s.items.push({ id: `${SECTION_ORDER.indexOf(w.section) + 1}.${n}`, section: w.section, name: item.name.replace(/ \(работа[^)]*\)| \(на [^)]*\)/g, ''), unit: item.unit, quantity: w.quantity, basis: w.basis, confidence: 'medium', price, materials, machines: [], laborSum, sum: r2(laborSum + materials.reduce((t, m) => t + m.sum, 0)) });
+    s.items.push({ id: `${order.indexOf(w.section) + 1}.${n}`, section: w.section, name: item.name.replace(/ \(работа[^)]*\)| \(на [^)]*\)/g, ''), unit: item.unit, quantity: w.quantity, basis: w.basis, confidence: 'medium', price, materials, machines: [], laborSum, sum: r2(laborSum + materials.reduce((t, m) => t + m.sum, 0)) });
     sections.set(w.section, s);
   }
-  const ordered = SECTION_ORDER.filter((t) => sections.has(t)).map((t) => sections.get(t));
+  const ordered = order.filter((t) => sections.has(t)).map((t) => sections.get(t));
   const machinesRange = zero(), deliveryRange = zero();
   if (logistics.length) {
     const s = { title: 'Техника и доставка', works: zero(), materials: zero(), machines: zero(), items: [] };
@@ -363,26 +381,18 @@ export function estimate(body, { lat, lon } = {}) {
 
   const where = prices.coverage === 'city' ? `г. ${prices.city}` : prices.coverage === 'nearby' ? `ближайший город с ценами — ${prices.city} (${prices.distanceKm} км)` : 'медиана по городам России';
   const date = prices.updatedAt ? String(prices.updatedAt).slice(0, 10).split('-').reverse().join('.') : null;
-  const title = p.title || `Дом ${r2(g.L)}×${r2(g.W)} м, ${p.floors} эт., ${r2(g.area)} м²`;
   return {
-    title, city: p.city, createdAt: new Date().toISOString(),
-    object: { name: title, type: 'Жилой дом', area: r2(g.area), floors: p.floors, summary: `${title}: стены — ${WALL[p.walls].title}, фундамент — ${LABEL.foundation[p.foundation]}, кровля — ${LABEL.roof[p.roof]} (${LABEL.roofCover[p.roofCover]}), фасад — ${LABEL.facade[p.facade]}, отделка — ${LABEL.finish[p.finish]}.` },
+    title, city, createdAt: new Date().toISOString(), object,
     sections: ordered,
     materials: [...purchase.values()],
     machines: ordered.find((s) => s.title === 'Техника и доставка')?.items.map((i) => ({ key: i.id, name: i.name, unit: i.unit, quantity: i.quantity, price: i.price })) || [],
-    totals: totals(ordered, p.options, { machines: machinesRange, delivery: deliveryRange }),
-    options: p.options,
-    assumptions: [
-      `Цены: ${where}${date ? `, обновлены ${date}` : ''}. Реальные предложения со ссылками — ${realCount} из ${totalCount} позиций; остальные — ориентир (помечены *).`,
-      `Геометрия: периметр ${r2(g.P)} м, пятно ${r2(g.S0)} м², высота этажа ${g.H} м, остекление ${r2(g.windows)} м², перегородки ≈${r2(g.partitionLen)} м.п. на этаж. Объёмы посчитаны по размерам, а не «на квадратный метр».`,
-      'Не входит: проект и согласования, подключение к сетям (газ, электричество, вода), благоустройство участка, мебель и техника.',
-      ...(p.walls === 'timber' && p.facade === 'plaster' ? ['Брус по фасаду не штукатурится — фасад оставлен без отделки.'] : []),
-    ],
+    totals: totals(ordered, options, { machines: machinesRange, delivery: deliveryRange }),
+    options,
+    assumptions: [`Цены: ${where}${date ? `, обновлены ${date}` : ''}. Реальные предложения со ссылками — ${realCount} из ${totalCount} позиций; остальные — ориентир (помечены *).`, ...assumptions],
     discrepancies: [],
     audit: { verdict: '', issues: [], added: 0 },
     sources: [],
     unpriced: 0,
-    params: p,
     prices: { city: prices.city, coverage: prices.coverage, updatedAt: prices.updatedAt, real: realCount, total: totalCount },
   };
 }
