@@ -366,7 +366,7 @@ final class NSPDClient: NSObject, URLSessionDelegate {
         var errorDescription: String? {
             switch self {
             case .notFound: return "Участок не найден в НСПД. Проверьте кадастровый номер."
-            case .unreachable(let reason): return "Кадастровая карта не ответила (\(reason)). Она работает только из России; попробуйте позже или введите номер вручную."
+            case .unreachable(let reason): return "Росреестр не отдал данные приложению (\(reason))."
             }
         }
     }
@@ -425,28 +425,49 @@ final class NSPDClient: NSObject, URLSessionDelegate {
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         let space = challenge.protectionSpace
         guard space.authenticationMethod == NSURLAuthenticationMethodServerTrust, let trust = space.serverTrust,
-              space.host == Self.host || space.host.hasSuffix(".\(Self.host)") else {
+              Self.isNSPD(space.host) else {
             completionHandler(.performDefaultHandling, nil)
             return
         }
-        // Сначала обычная проверка iOS; не прошла — проверка цепочки до встроенного корня Минцифры (имя хоста проверяется).
-        if SecTrustEvaluateWithError(trust, nil) { completionHandler(.useCredential, URLCredential(trust: trust)); return }
-        let anchors = Self.trustedDER.compactMap { text -> SecCertificate? in
+        if let problem = Self.evaluate(trust, host: space.host) {
+            lastTrustError = problem
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        } else {
+            lastTrustError = nil
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        }
+    }
+
+    static func isNSPD(_ host: String) -> Bool { host == Self.host || host.hasSuffix(".\(Self.host)") }
+
+    /// Проверка сертификата: сначала обычная iOS, затем цепочка до встроенных сертификатов Минцифры (имя хоста проверяется).
+    /// nil — доверяем; иначе — причина отказа. Используется и запросами, и встроенной картой.
+    static func evaluate(_ trust: SecTrust, host: String) -> String? {
+        if SecTrustEvaluateWithError(trust, nil) { return nil }
+        let anchors = trustedDER.compactMap { text -> SecCertificate? in
             guard let der = Data(base64Encoded: text.filter { !$0.isWhitespace }) else { return nil }
             return SecCertificateCreateWithData(nil, der as CFData)
         }
-        guard !anchors.isEmpty else { completionHandler(.cancelAuthenticationChallenge, nil); return }
-        SecTrustSetPolicies(trust, SecPolicyCreateSSL(true, space.host as CFString))
+        guard !anchors.isEmpty else { return "нет встроенных сертификатов" }
+        SecTrustSetPolicies(trust, SecPolicyCreateSSL(true, host as CFString))
         SecTrustSetAnchorCertificates(trust, anchors as CFArray)
         SecTrustSetAnchorCertificatesOnly(trust, true)
         var error: CFError?
-        if SecTrustEvaluateWithError(trust, &error) {
-            lastTrustError = nil
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
-            lastTrustError = (error as Error?)?.localizedDescription
-            completionHandler(.cancelAuthenticationChallenge, nil)
+        return SecTrustEvaluateWithError(trust, &error) ? nil : ((error as Error?)?.localizedDescription ?? "не доверяем")
+    }
+
+    /// Публичная кадастровая карта: на точке (если есть) — для просмотра человеком во встроенном окне.
+    static func mapURL(at point: GeoPoint?) -> URL {
+        var components = URLComponents(string: "https://\(host)/map")!
+        var items = [URLQueryItem(name: "thematic", value: "PKK")]
+        if let point {
+            let x = point.lon * .pi / 180 * GeoMath.earthRadius
+            let y = log(tan(.pi / 4 + point.lat * .pi / 360)) * GeoMath.earthRadius
+            items += [URLQueryItem(name: "zoom", value: "18"), URLQueryItem(name: "coordinate_x", value: String(format: "%.2f", x)),
+                      URLQueryItem(name: "coordinate_y", value: String(format: "%.2f", y)), URLQueryItem(name: "active_layers", value: "36048")]
         }
+        components.queryItems = items
+        return components.url!
     }
 }
 #endif

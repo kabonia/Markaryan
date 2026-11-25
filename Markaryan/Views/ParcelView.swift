@@ -12,6 +12,9 @@ struct ParcelView: View {
     @State private var error: String?
     @State private var camera: MapCameraPosition = .automatic
     @State private var showManual = false
+    /// Кадастровая карта для просмотра (если Росреестр не отдал данные приложению напрямую).
+    @State private var mapURL: URL?
+    @State private var notice: String?
 
     var body: some View {
         NavigationStack {
@@ -19,13 +22,17 @@ struct ParcelView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     search
                     if let parcel { details(parcel) }
+                    if let notice { InfoNote(text: notice) }
                     if let error {
                         Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
                             .textSelection(.enabled)
-                        Button { showManual = true } label: { SecondaryActionLabel(title: "Ввести вручную из выписки ЕГРН", icon: "square.and.pencil") }
-                            .buttonStyle(PremiumPressStyle())
                     }
-                    InfoNote(text: "Данные — из публичной кадастровой карты Росреестра (НСПД). Граница участка там с точностью межевания (обычно 0,1–0,3 м); на месте макет привязывается к ней по двум углам участка.")
+                    VStack(spacing: 10) {
+                        Button { openMap(at: nil) } label: { SecondaryActionLabel(title: "Открыть кадастровую карту", icon: "map") }
+                        Button { showManual = true } label: { SecondaryActionLabel(title: "Ввести данные участка", icon: "square.and.pencil") }
+                    }
+                    .buttonStyle(PremiumPressStyle())
+                    InfoNote(text: "Данные — из публичной кадастровой карты Росреестра. Если Росреестр не отдаёт их приложению напрямую, откроется сама карта: нажмите на участок, посмотрите площадь и ВРИ и нажмите «Ввести данные».")
                 }
                 .padding(20)
             }
@@ -33,6 +40,12 @@ struct ParcelView: View {
             .navigationTitle("Участок")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+            .sheet(item: $mapURL) { url in
+                NSPDMapSheet(url: url, number: number.isEmpty ? nil : number) {
+                    // Форма — после того как окно карты закроется (два окна сразу iOS не покажет).
+                    Task { try? await Task.sleep(for: .milliseconds(650)); showManual = true }
+                }
+            }
             .sheet(isPresented: $showManual) {
                 ManualParcelView(number: number) { manual in
                     parcel = manual
@@ -107,6 +120,7 @@ struct ParcelView: View {
 
     private func find(byNumber: Bool) async {
         error = nil
+        notice = nil
         loading = true
         defer { loading = false }
         do {
@@ -118,18 +132,34 @@ struct ParcelView: View {
                     error = "Не удалось определить местоположение. Разрешите доступ к геопозиции или введите кадастровый номер."
                     return
                 }
-                found = try await NSPDClient.shared.parcel(at: GeoPoint(lat: location.coordinate.latitude, lon: location.coordinate.longitude))
+                let point = GeoPoint(lat: location.coordinate.latitude, lon: location.coordinate.longitude)
+                lastPoint = point
+                found = try await NSPDClient.shared.parcel(at: point)
             }
             parcel = found
             number = found.cadNumber
             ParcelStore.save(found)
             focus(found)
             Haptics.success()
+        } catch NSPDClient.Failure.notFound {
+            error = NSPDClient.Failure.notFound.errorDescription
         } catch {
-            self.error = error.localizedDescription
+            // Росреестр не отдаёт данные приложениям напрямую — открываем саму карту на этом месте.
+            notice = "Росреестр не отдаёт данные приложениям напрямую — открыли кадастровую карту. Нажмите на свой участок и затем «Ввести данные»."
+            openMap(at: lastPoint)
         }
     }
+
+    @State private var lastPoint: GeoPoint?
+
+    private func openMap(at point: GeoPoint?) {
+        let value = number.trimmingCharacters(in: .whitespaces)
+        if NSPDClient.isCadastralNumber(value) { UIPasteboard.general.string = value }
+        mapURL = NSPDClient.mapURL(at: point ?? lastPoint)
+    }
 }
+
+extension URL: Identifiable { public var id: String { absoluteString } }
 
 struct FindingRow: View {
     let finding: ParcelFinding
