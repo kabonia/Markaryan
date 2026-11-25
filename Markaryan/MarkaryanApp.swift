@@ -7,7 +7,7 @@ import StoreKit
     @Environment(\.scenePhase) private var scenePhase
     init() {
         // Числа в размерах и проверках — как принято в стране пользователя («1,5» / «1.5»).
-        if !AppLanguage.isRussian { ParcelRules.locale = .current }
+        if !AppLanguage.isRussian { ParcelRules.locale = .current; RoomMaterials.locale = .current }
     }
     var body: some Scene {
         WindowGroup {
