@@ -117,8 +117,9 @@ struct ProposalExportSheet: View {
                 }
                 Section {
                     Toggle("Материалы построчно", isOn: $details.detailed)
+                    Toggle("Примечания сметчика", isOn: $details.includeNotes)
                 } footer: {
-                    Text("Выключите, чтобы в смете-приложении были только работы, а материалы — одной суммой по разделу.")
+                    Text("«Материалы построчно» выключено — в смете-приложении только работы, материалы одной суммой по разделу. «Примечания сметчика» — допущения расчёта в конце документа.")
                 }
                 Section {
                     NavigationLink { ProposalProfileView() } label: {

@@ -93,6 +93,8 @@ struct ProposalDetails {
     var term = ""
     /// Works with their materials line by line; off — materials as one sum per section.
     var detailed = true
+    /// The estimator's assumptions in «Примечания».
+    var includeNotes = true
 
     static func defaultNumber(for r: DocEstimateResult, date: Date = Date()) -> String {
         let f = DateFormatter(); f.locale = Locale(identifier: "ru_RU"); f.dateFormat = "yyMMdd"
@@ -268,8 +270,9 @@ private final class ProposalLayout {
     private func line(_ x: CGFloat, _ yy: CGFloat, _ w: CGFloat, _ color: UIColor, _ thickness: CGFloat = 0.5) {
         color.setFill(); UIRectFill(CGRect(x: x, y: yy, width: w, height: thickness))
     }
-    private func eyebrow(_ s: String) {
-        ensure(30)
+    /// A small gold heading; `keep` — room for what follows it, so the heading never stays alone at the bottom of a page.
+    private func eyebrow(_ s: String, keep: CGFloat = 60) {
+        ensure(14 + keep)
         text(s.uppercased(), x: margin, y: y, w: width, attrs(sans(8, .bold), gold, kern: 1.4))
         y += 14
     }
@@ -310,8 +313,10 @@ private final class ProposalLayout {
     }
 
     private func runningHeader() {
-        text(companyName, x: margin, y: margin, w: width / 2, attrs(sans(7.5, .semibold), muted))
-        text("Коммерческое предложение № \(details.number) от \(dateText)", x: margin + width / 2, y: margin, w: width / 2, attrs(sans(7.5), muted, .right))
+        let rightText = "Коммерческое предложение № \(details.number) от \(dateText)"
+        let rightW = min(ceil((rightText as NSString).size(withAttributes: attrs(sans(7.5), muted)).width) + 4, width * 0.68)
+        text(companyName, x: margin, y: margin, w: width - rightW - 12, attrs(sans(7.5, .semibold), muted))
+        text(rightText, x: margin + width - rightW, y: margin, w: rightW, attrs(sans(7.5), muted, .right))
         line(margin, margin + 14, width, gold, 0.6)
     }
 
@@ -464,7 +469,6 @@ private final class ProposalLayout {
         eyebrow("Условия")
         let validUntil = Calendar.current.date(byAdding: .day, value: max(profile.validityDays, 1), to: date) ?? date
         var rows: [(String, String)] = [("Срок действия предложения", "\(max(profile.validityDays, 1)) дн. — до \(Self.longDate(validUntil))")]
-        if !details.term.trimmed.isEmpty { rows.append(("Сроки выполнения", details.term.trimmed)) }
         if !profile.paymentTerms.trimmed.isEmpty { rows.append(("Порядок оплаты", profile.paymentTerms.trimmed)) }
         if !profile.warranty.trimmed.isEmpty { rows.append(("Гарантия", profile.warranty.trimmed)) }
         rows.append(("Цены", "в рублях\(vat ? ", включая НДС" : ", без НДС"); материалы — с учётом норм расхода и отходов, по рыночным ценам г. \(r.city). Окончательная стоимость фиксируется в договоре."))
@@ -560,7 +564,10 @@ private final class ProposalLayout {
         y += text("\(RussianAmount.words(totals.total))\(vat ? ", в том числе НДС" : ", без НДС").", x: x0, y: y, w: labelW + valueW, attrs(sans(8), muted)) + 18
 
         // Notes.
-        var notes = (r.assumptions ?? []).filter { !$0.trimmed.isEmpty }
+        // The estimator's assumptions, without the inner kitchen of the AI («агент», «ВОР», «чтение»): the client reads this.
+        var notes = details.includeNotes ? (r.assumptions ?? []).filter { n in
+            !n.trimmed.isEmpty && n.range(of: "агент|ВОР|чтени", options: [.regularExpression, .caseInsensitive]) == nil
+        } : []
         if anyEstimated { notes.append("* — цена экспертной оценки: конкретное предложение со ссылкой на дату расчёта не найдено.") }
         notes.append("Расчёт выполнен по рыночным ценам на дату предложения. Документ является коммерческим предложением и не заменяет проектно‑сметную документацию по Градостроительному кодексу РФ.")
         eyebrow("Примечания")
