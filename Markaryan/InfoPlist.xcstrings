@@ -1,0 +1,93 @@
+{
+  "sourceLanguage": "ru",
+  "version": "1.0",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "Название под значком",
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СметаПро"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
+        }
+      }
+    },
+    "CFBundleName": {
+      "comment": "Название приложения",
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СметаПро"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The camera is used for AR measurements of distances and areas, 3D house scans, placing models on site, and photos of your project."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your location is used to apply local prices to estimates and to place your house scan on the map and relative to the sun."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission is needed to save finished visualizations to your Photos."
+          }
+        }
+      }
+    }
+  }
+}

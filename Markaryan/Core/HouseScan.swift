@@ -134,6 +134,8 @@ struct HouseScanManifest: Codable {
     var parcel: CadastralParcel?
     /// Сколько кадров отброшено как смазанные (для отчёта о качестве).
     var rejectedBlurry = 0
+    /// Язык приложения — на нём ИИ описывает крышу и детали в макете.
+    var language: String?
 }
 
 @MainActor final class HouseScanRecorder: NSObject, ObservableObject, ARSessionDelegate {
@@ -482,6 +484,7 @@ struct HouseScanManifest: Codable {
             coverage: .init(sectors: HouseCoverage.sectors, walls: coverage.wallShare, roof: coverage.roofShare, blocked: coverage.blocked.sorted()),
             control: control, frames: frames, stills: stills, parcel: parcel, rejectedBlurry: rejectedBlurry)
         var located = manifest
+        located.language = AppLanguage.code
         if let location {
             located.world.location = .init(lat: location.coordinate.latitude, lon: location.coordinate.longitude,
                                            accuracy: location.horizontalAccuracy, altitude: location.verticalAccuracy >= 0 ? location.altitude : nil)
@@ -772,6 +775,7 @@ struct HouseScanUploader {
         request.httpMethod = method
         request.timeoutInterval = 120
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
+        request.setValue(AppLanguage.code, forHTTPHeaderField: "X-App-Language")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         return request
     }

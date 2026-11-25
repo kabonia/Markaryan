@@ -60,6 +60,7 @@ enum MaterialRecognizer {
         request.httpMethod = "POST"
         request.timeoutInterval = 120
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
+        request.setValue(AppLanguage.code, forHTTPHeaderField: "X-App-Language")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["image": jpeg.base64EncodedString(), "screen": screen, "room": room, "fileName": item.fileName, "text": item.fileText])

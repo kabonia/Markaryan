@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import zlib from 'node:zlib';
 import { config } from './config.js';
-import { ApiError } from './util.js';
+import { ApiError, appLanguage, languageNote } from './util.js';
 import { consume as limitConsume, refund as limitRefund, remaining } from './limits.js';
 import * as billing from './billing.js';
 import * as payments from './payments.js';
@@ -161,6 +161,12 @@ async function handle(req, res) {
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'Метод не поддерживается.' });
   const body = await readBody(req);
+  // Язык ответа ИИ — как у приложения (X-App-Language); по умолчанию — русский.
+  const lang = appLanguage(req);
+  if (lang) {
+    body.language = lang;
+    if (typeof body.system === 'string') body.system += languageNote(lang);
+  }
 
   if (url.pathname === '/v1/ai/chat') {
     const messages = cleanMessages(body.messages);

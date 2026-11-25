@@ -346,6 +346,7 @@ final class DocEstimateCenter: ObservableObject {
         var request = URLRequest(url: base.appendingPathComponent(path))
         request.timeoutInterval = timeout
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
+        request.setValue(AppLanguage.code, forHTTPHeaderField: "X-App-Language")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         return request

@@ -1,7 +1,7 @@
 // «Свой материал»: the client sends a photo or a file of a product or a material (tile, facade panel, toilet, sink, wallpaper…).
 // The AI says what it is, asks where it goes and how (placement and laying method), and gives English wording for the render.
 import * as ai from './ai.js';
-import { ApiError } from './util.js';
+import { ApiError, languageNote } from './util.js';
 
 const SCHEMA = {
   type: 'object',
@@ -26,7 +26,7 @@ const SYSTEM = `Ты — дизайнер интерьеров и экстерь
 export async function identify(body) {
   const context = [body.screen && `Экран: ${String(body.screen).slice(0, 80)}`, body.room && `Помещение: ${String(body.room).slice(0, 80)}`].filter(Boolean).join('. ');
   const result = await ai.json({
-    system: SYSTEM,
+    system: SYSTEM + languageNote(body.language),
     messages: [{ role: 'user', text: `${context || 'Помещение не указано.'}${body.fileName ? `\nФайл: ${String(body.fileName).slice(0, 120)}` : ''}${body.text ? `\nТекст из файла: ${String(body.text).slice(0, 4000)}` : ''}`, image: body.image }],
     schema: SCHEMA, name: 'material', maxTokens: 3000, model: 'anthropic/claude-sonnet-5.5',
   });

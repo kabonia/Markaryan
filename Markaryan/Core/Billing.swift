@@ -114,6 +114,7 @@ final class BillingCenter: ObservableObject {
         var request = URLRequest(url: base.appendingPathComponent(path))
         request.timeoutInterval = 30
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
+        request.setValue(AppLanguage.code, forHTTPHeaderField: "X-App-Language")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         return request

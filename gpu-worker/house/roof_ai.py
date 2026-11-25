@@ -81,12 +81,24 @@ def pick_frames(bundle: Bundle, center: np.ndarray, count: int = 6, tier: str = 
 
 # ---------- ИИ ----------
 
-def ask_openrouter(images_b64: list[str], key: str | None = None) -> tuple[dict, float]:
+LANGUAGE_NAMES = {"en": "English (United States)", "es": "Spanish", "zh": "Simplified Chinese"}
+
+
+def language_note(lang: str | None) -> str:
+    """Описание крыши, деталей и фасада — на языке приложения (поля JSON не переводить)."""
+    if not lang or lang.lower().startswith("ru"):
+        return ""
+    name = LANGUAGE_NAMES.get(lang.split("-")[0].lower(), lang)
+    return (f"\nIMPORTANT: write all descriptive text values (roofTypeRu, covering, color, facade, details.ru, hidden) in {name}; "
+            "keep JSON keys and enum values (roofType, kind) exactly as specified.")
+
+
+def ask_openrouter(images_b64: list[str], key: str | None = None, note: str = "") -> tuple[dict, float]:
     key = key or os.environ["OPENROUTER_API_KEY"]
     content = [{"type": "text", "text": f"Фото дома: {len(images_b64)} шт."}]
     for i, b in enumerate(images_b64):
         content += [{"type": "text", "text": f"Фото {i + 1}:"}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b}"}}]
-    body = {"model": MODEL, "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": content}],
+    body = {"model": MODEL, "messages": [{"role": "system", "content": SYSTEM + note}, {"role": "user", "content": content}],
             "max_tokens": 8000, "response_format": {"type": "json_object"}, "reasoning": {"effort": "medium", "exclude": True},
             "usage": {"include": True}}
     req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=json.dumps(body).encode(),
@@ -252,7 +264,8 @@ def analyze(bundle: Bundle, center: np.ndarray, gables: list[tuple[np.ndarray, f
         b64, scale = prepare_image(bundle.image_bytes(f), turns)
         images.append(b64)
         meta.append((f, turns, scale))
-    ai, cost = ask(images)
+    note = language_note(bundle.manifest.get("language"))
+    ai, cost = ask(images, note=note) if note and ask is ask_openrouter else ask(images)
     w0, h0 = bundle.manifest["image"]["width"], bundle.manifest["image"]["height"]
     marks, opening_marks = [], []
     for (f, turns, scale), photo in zip(meta, ai.get("photos", [])):

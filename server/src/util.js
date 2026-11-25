@@ -116,3 +116,19 @@ export function outOfFunds(message = 'На сервере закончился �
   error.outOfFunds = true;
   return error;
 }
+
+// ---------- язык ответа ИИ ----------
+const LANGUAGE_NAMES = { en: 'English (United States)', es: 'Spanish', zh: 'Simplified Chinese', de: 'German', fr: 'French', pt: 'Portuguese', it: 'Italian' };
+/** Язык приложения из заголовка X-App-Language (en, es, zh-Hans…); null — русский (по умолчанию). */
+export function appLanguage(req) {
+  const raw = String(req?.headers?.['x-app-language'] || '').toLowerCase().slice(0, 12);
+  if (!raw || raw.startsWith('ru')) return null;
+  return raw.split(/[-_]/)[0];
+}
+/** Приписка к системной подсказке: отвечать на языке пользователя (поля JSON не переводить). */
+export function languageNote(lang) {
+  if (!lang) return '';
+  const name = LANGUAGE_NAMES[lang] || lang;
+  return `\n\nIMPORTANT: the user's app language is ${name}. Write ALL user-facing text of the answer in ${name}, `
+    + 'using the construction terms and units customary in that country. Keep JSON keys and enum values exactly as specified.';
+}

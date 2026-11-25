@@ -21,3 +21,4 @@ Claude outputs/
 
 # Any local folder starting with "_" (backups, old updates)
 /_*/
+__pycache__/

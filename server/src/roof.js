@@ -5,7 +5,7 @@
 // или LiDAR), и точка конька переносится в метры. Без размеров масштаб берётся по двери (стандарт ≈ 2,05 м) —
 // ниже точность. У каждого размера метка: measured (дан замер) / photo (геометрия по фото) / assumption.
 import { config } from './config.js';
-import { ApiError, request, readJSON, parseLooseJSON, outOfFunds } from './util.js';
+import { ApiError, request, readJSON, parseLooseJSON, outOfFunds, languageNote } from './util.js';
 
 const MODEL = () => process.env.HOUSE_ROOF_MODEL || 'google/gemini-4-hydrogen';
 const DOOR_HEIGHT = 2.05; // м, типичная входная дверь — масштаб «предположение», когда размеров нет
@@ -267,6 +267,7 @@ export async function analyze(body, { meter } = {}) {
   };
   // Схема — текстом: строгий json_schema у части маршрутов Gemini режет вложенные массивы.
   payload.messages[0].content += `\nСхема:\n${JSON.stringify(SCHEMA)}`;
+  payload.messages[0].content += languageNote(body?.language);
   const response = await request(`${config.openrouter.base}/chat/completions`, {
     method: 'POST', headers: { Authorization: `Bearer ${config.openrouter.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   }, 240_000);

@@ -128,6 +128,7 @@ struct ServerAIClient: AIEngine {
         request.httpMethod = body == nil ? "GET" : "POST"
         request.timeoutInterval = timeout
         request.setValue(AIServerConfig.installID, forHTTPHeaderField: "X-Install-ID")
+        request.setValue(AppLanguage.code, forHTTPHeaderField: "X-App-Language")
         if !AIServerConfig.appToken.isEmpty { request.setValue(AIServerConfig.appToken, forHTTPHeaderField: "X-App-Token") }
         request.setValue(accept, forHTTPHeaderField: "Accept")
         if let body {
