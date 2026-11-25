@@ -23,6 +23,8 @@ class Frame:
     sharpness: float = 0.0
     depth: str | None = None
     conf: str | None = None
+    width: int | None = None     # у снимков 12 Мп — свой размер; у кадров — из manifest.image
+    height: int | None = None
 
     @property
     def cam_to_world_cv(self) -> np.ndarray:
@@ -80,7 +82,8 @@ class Reader:
 def _frame(item: dict) -> Frame:
     pose = np.array(item["pose"], dtype=np.float64).reshape(4, 4).T  # по столбцам, как simd_float4x4
     return Frame(index=item["i"], image=item["image"], pose=pose, K=tuple(item["K"]), tier=item.get("tier", "wall"),
-                 sharpness=float(item.get("sharpness", 0)), depth=item.get("depth"), conf=item.get("conf"))
+                 sharpness=float(item.get("sharpness", 0)), depth=item.get("depth"), conf=item.get("conf"),
+                 width=item.get("width"), height=item.get("height"))
 
 
 def load(source: str | Path) -> Bundle:
