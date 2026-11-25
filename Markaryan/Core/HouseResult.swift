@@ -41,7 +41,32 @@ struct HouseResult: Codable, Equatable {
         var count: Double?
         var seen: Bool?
     }
+    struct Opening: Codable, Equatable, Identifiable {
+        var kind: String?
+        var width: Double?
+        var height: Double?
+        var sill: Double?
+        var area: Double?
+        var frames: Int?
+        var source: String?
+        var center: [Double]?
+        var id: String { "\(kind ?? "")-\(center?.map { String(format: "%.2f", $0) }.joined(separator: ",") ?? UUID().uuidString)" }
+        var title: String {
+            switch kind {
+            case "door": return "Дверь"
+            case "garage_door": return "Гаражные ворота"
+            case "balcony_door": return "Балконная дверь"
+            default: return "Окно"
+            }
+        }
+    }
+    struct OpeningsSummary: Codable, Equatable {
+        var windows: Int?
+        var doors: Int?
+        var area: Double?
+    }
     struct ByPhoto: Codable, Equatable {
+        var facade: String?
         var roofTypeRu: String?
         var covering: String?
         var color: String?
@@ -57,6 +82,8 @@ struct HouseResult: Codable, Equatable {
         var symmetric: Bool?
         var typeByPhoto: String?
         var byPhoto: ByPhoto?
+        var overhangEave: HouseMeasure?
+        var overhangGable: HouseMeasure?
     }
     struct Control: Codable, Equatable {
         var tape: Double?
@@ -78,6 +105,8 @@ struct HouseResult: Codable, Equatable {
     var eaveHeight: HouseMeasure?
     var roof: Roof?
     var control: Control?
+    var openings: [Opening]?
+    var openingsSummary: OpeningsSummary?
     /// Недоступная сторона: введённая длина (техпаспорт, замер изнутри) против достроенной.
     var blockedSide: Control?
     var quality: Quality?
@@ -99,11 +128,29 @@ struct HouseResult: Codable, Equatable {
         return w * l
     }
 
-    /// Площадь кровли (двускатная: длина ската × длина дома × 2, без свесов), м².
+    private var eaveOverhang: Double { roof?.overhangEave?.value ?? 0 }
+    private var gableOverhang: Double { roof?.overhangGable?.value ?? 0 }
+    var hasOverhangs: Bool { roof?.overhangEave?.value != nil || roof?.overhangGable?.value != nil }
+
+    /// Площадь кровли со свесами (двускатная: 2 ската × длина ската × длина с фронтонными свесами), м².
     var roofArea: Double? {
         guard let w = footprint?.gableWidth?.value, let l = footprint?.length?.value else { return nil }
-        guard let pitch = roof?.pitchDeg?.value, pitch > 1, pitch < 80 else { return w * l }
-        return w / cos(pitch * .pi / 180) * l
+        let length = l + 2 * gableOverhang
+        guard let pitch = roof?.pitchDeg?.value, pitch > 1, pitch < 80 else { return (w + 2 * eaveOverhang) * length }
+        return 2 * (w / 2 + eaveOverhang) / cos(pitch * .pi / 180) * length
+    }
+
+    /// Водосточный жёлоб: два карниза с фронтонными свесами, м.
+    var gutterLength: Double? {
+        guard let l = footprint?.length?.value else { return nil }
+        return 2 * (l + 2 * gableOverhang)
+    }
+
+    /// Площадь фасадов за вычетом окон и дверей, м².
+    var facadeNetArea: Double? {
+        guard let gross = facadeArea else { return nil }
+        let openingsArea = openingsSummary?.area ?? (openings ?? []).reduce(0) { $0 + ($1.area ?? 0) }
+        return max(0, gross - openingsArea)
     }
 
     /// Площадь фасадов без проёмов: стены до карниза по периметру + два фронтона, м².

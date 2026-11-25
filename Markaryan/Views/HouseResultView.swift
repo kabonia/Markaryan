@@ -128,6 +128,7 @@ struct HouseResultView: View {
                 model
                 dimensions
                 roof
+                openings
                 areas
                 parcel
                 quality
@@ -173,6 +174,10 @@ struct HouseResultView: View {
             MeasureRow(title: "Длина дома", measure: result.footprint?.length, unit: "м")
             MeasureRow(title: "Высота до карниза", measure: result.eaveHeight, unit: "м")
             MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
+            if result.hasOverhangs {
+                MeasureRow(title: "Свес по карнизу", measure: result.roof?.overhangEave, unit: "м")
+                MeasureRow(title: "Свес по фронтону", measure: result.roof?.overhangGable, unit: "м")
+            }
             if let control = result.control, let tape = control.tape, let delta = control.deltaCm {
                 HStack {
                     Image(systemName: abs(delta) <= 3 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
@@ -224,15 +229,47 @@ struct HouseResultView: View {
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)
     }
 
+    // MARK: Окна и двери
+
+    @ViewBuilder private var openings: some View {
+        let list = result.openings ?? []
+        if !list.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("ОКНА И ДВЕРИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+                if let s = result.openingsSummary {
+                    Text("Окон: \(s.windows ?? 0) · дверей: \(s.doors ?? 0) · площадь проёмов \(ParcelRules.format(s.area ?? 0, digits: 1)) м²")
+                        .font(.subheadline.weight(.semibold))
+                }
+                ForEach(list) { o in
+                    HStack {
+                        Circle().fill(o.source == "photo" ? Theme.gold : Theme.muted).frame(width: 8, height: 8)
+                        Text(o.title).font(.footnote)
+                        Spacer()
+                        Text("\(ParcelRules.format(o.width ?? 0, digits: 2)) × \(ParcelRules.format(o.height ?? 0, digits: 2)) м")
+                            .font(.footnote.weight(.semibold).monospacedDigit())
+                        if let sill = o.sill, sill > 0.15 {
+                            Text("низ \(ParcelRules.format(sill, digits: 2))").font(.caption2).foregroundStyle(Theme.muted)
+                        }
+                    }
+                }
+                Text("Размеры — по фото и стенам, снятым лидаром (±2–3 см). Окно, отмеченное на одном фото, — с серой меткой: проверьте рулеткой.")
+                    .font(.caption).foregroundStyle(Theme.muted)
+            }
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)
+        }
+    }
+
     // MARK: Площади для сметы
 
     private var areas: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ПЛОЩАДИ ДЛЯ СМЕТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             if let a = result.footprintArea { infoLine("Пятно застройки", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if let a = result.roofArea { infoLine("Кровля (без свесов)", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if let a = result.facadeArea { infoLine("Фасады (с проёмами)", "\(ParcelRules.format(a, digits: 1)) м²") }
-            Text("Свесы, окна и двери вычтутся на следующем этапе — после распознавания проёмов.").font(.caption).foregroundStyle(Theme.muted)
+            if let a = result.roofArea { infoLine(result.hasOverhangs ? "Кровля (со свесами)" : "Кровля (без свесов)", "\(ParcelRules.format(a, digits: 1)) м²") }
+            if let a = result.facadeArea { infoLine("Фасады всего", "\(ParcelRules.format(a, digits: 1)) м²") }
+            if !(result.openings ?? []).isEmpty, let a = result.facadeNetArea { infoLine("Фасады без окон и дверей", "\(ParcelRules.format(a, digits: 1)) м²") }
+            if let g = result.gutterLength { infoLine("Водосточный жёлоб", "\(ParcelRules.format(g, digits: 1)) м") }
+            if let facade = result.roof?.byPhoto?.facade, !facade.isEmpty { infoLine("Стены сейчас", facade) }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)
     }
