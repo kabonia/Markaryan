@@ -48,6 +48,12 @@ enum ScreenshotRoute {
             SplashView(revealed: true)
         } else if route == "kp" || route == "kpco" {
             ProposalPreviewRoute(company: route == "kpco")
+        } else if route == "housescans" {
+            HouseScansView()
+        } else if route == "parcel" {
+            ParcelView()
+        } else if route == "housescan" {
+            HouseScanView()
         } else if route == "billing" {
             BillingView()
         } else if route.hasPrefix("intro:"), let intro = FeatureIntro(rawValue: String(route.dropFirst(6))) {

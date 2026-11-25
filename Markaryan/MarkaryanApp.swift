@@ -192,6 +192,7 @@ struct RootView: View {
         .overlay { HelperTourOverlay().animation(.easeInOut(duration: 0.2), value: helper.tourStep) }
         .fullScreenCover(isPresented: $store.showAR) { ARMeasureView() }
         .fullScreenCover(isPresented: $store.showRoomScan) { RoomScanView() }
+        .fullScreenCover(isPresented: $store.showHouseScan) { HouseScanView() }
         .onChange(of: store.planToOpen) { _, id in if id != nil { store.tab = 2 } }
         .onChange(of: store.apartmentToOpen) { _, id in if id != nil { store.tab = 2 } }
         .sheet(item: $store.arTransfer) { transfer in

@@ -1,0 +1,23 @@
+name: Дом снаружи — обработчик скана
+
+on:
+  push:
+    branches: [house-exterior]
+    paths: ['gpu-worker/**', '.github/workflows/house-worker.yml']
+  workflow_dispatch:
+
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: gpu-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      # Синтетический дом с известными размерами: точность сетки, стен, карниза, конька, триангуляции.
+      - run: python -m pytest tests -q -s

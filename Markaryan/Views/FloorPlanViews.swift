@@ -214,6 +214,10 @@ struct FloorPlansView: View {
                             DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать помещение",
                                             subtitle: "Комната, гараж, магазин или кафе: лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
                         }
+                        Button { store.showHouseScan = true } label: {
+                            DesignStartCard(icon: "house.lodge", eyebrow: "НОВОЕ · СНАРУЖИ", title: "3D‑обмер дома",
+                                            subtitle: "Обойдите дом с iPhone — 3D‑макет с размерами стен, окон и крыши. Меняйте крышу и фасад и сразу видьте смету.", accent: Theme.gold)
+                        }
                         HStack(spacing: 12) {
                             NavigationLink { PhotoDesignView() } label: {
                                 DesignStartCard(icon: "camera.aperture", eyebrow: "ФОТО / LIVE", title: "Дизайн по фото",
@@ -248,6 +252,8 @@ struct FloorPlansView: View {
                             Button { store.showAR = true } label: { SecondaryActionLabel(title: "Контур", icon: "point.topleft.down.to.point.bottomright.curvepath") }
                         }
                         .buttonStyle(PremiumPressStyle())
+                        Button { store.showHouseScan = true } label: { SecondaryActionLabel(title: "3D‑обмер дома", icon: "house.lodge") }
+                            .buttonStyle(PremiumPressStyle())
                     }
                 }
             }

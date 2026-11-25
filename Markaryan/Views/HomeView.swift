@@ -35,6 +35,7 @@ struct HomeView: View {
                         case .design: store.tab = 2
                         case .ar: store.showAR = true
                         case .calculator: store.tab = 1
+                        case .house: store.showHouseScan = true
                         default: liveOpen = example
                         }
                     }
@@ -45,6 +46,8 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     HomeSectionHeader(eyebrow: "Популярное", title: "Инструменты")
+                    Button { store.showHouseScan = true } label: { HouseScanHomeCard(paused: !visible) }
+                        .buttonStyle(PremiumCardPressStyle())
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         NavigationLink { DocEstimateHubView() } label: {
                             HomeToolCard(icon: "doc.text.magnifyingglass", title: "Смета по документам", text: "АР, КР, ТЗ или перечень работ — точная смета ИИ‑сметчиками с ценами рынка.", accent: Theme.orange, badge: "НОВОЕ")
@@ -710,7 +713,7 @@ struct ProjectPhotoDiaryView: View {
 // MARK: - Live examples: animated scenes that play by themselves, like a short video of every function
 
 enum LiveExample: String, CaseIterable, Identifiable, Hashable {
-    case documents, design, ar, count, calculator
+    case house, documents, design, ar, count, calculator
     var id: String { rawValue }
     var scene: FeatureSceneKind {
         switch self {
@@ -719,6 +722,7 @@ enum LiveExample: String, CaseIterable, Identifiable, Hashable {
         case .ar: .ar
         case .count: .count
         case .calculator: .calculator
+        case .house: .house
         }
     }
     var title: String {
@@ -728,6 +732,7 @@ enum LiveExample: String, CaseIterable, Identifiable, Hashable {
         case .ar: "AR‑рулетка"
         case .count: "Сколько в пачке"
         case .calculator: "Калькуляторы"
+        case .house: "3D‑обмер дома"
         }
     }
     var text: String {
@@ -737,6 +742,7 @@ enum LiveExample: String, CaseIterable, Identifiable, Hashable {
         case .ar: "Обведите комнату камерой — получите длины и площадь."
         case .count: "Сфотографируйте торцы — ИИ посчитает арматуру и трубы."
         case .calculator: "Бетон, плитка, кладка — объём и стоимость за секунды."
+        case .house: "Обойдите дом с iPhone — размеры стен и крыши за пару минут."
         }
     }
 }
@@ -820,5 +826,41 @@ struct LiveExamplesCard: View {
         userTouched = Date()
         Haptics.tap()
         withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { index = i }
+    }
+}
+
+/// Главная: крупная карточка «3D‑обмер дома» с живой анимацией и описанием под ней.
+struct HouseScanHomeCard: View {
+    var paused = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                FeatureScene(kind: .house, paused: paused).frame(height: 190)
+                Text("НОВОЕ").font(.caption2.weight(.heavy)).tracking(1.2).foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 9).padding(.vertical, 4).background(Lux.goldGradient, in: Capsule())
+                    .padding(14)
+            }
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22, style: .continuous))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("3D‑обмер дома").font(.system(.title3, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+                    Spacer()
+                    Image(systemName: "arrow.right").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+                }
+                Text("Обойдите дом с iPhone — получите 3D‑модель с точными размерами стен и крыши, площади кровли и фасадов для сметы и проверку по границам участка из Росреестра.")
+                    .font(.footnote).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 14) {
+                    Label("5–10 мин обход", systemImage: "figure.walk")
+                    Label("до сантиметров", systemImage: "scope")
+                    Label("кадастр", systemImage: "map")
+                }
+                .font(.caption2.weight(.semibold)).foregroundStyle(Theme.gold)
+            }
+            .padding(16)
+        }
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 1))
+        .shadow(color: Theme.ink.opacity(0.08), radius: 14, y: 6)
     }
 }

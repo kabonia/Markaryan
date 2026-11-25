@@ -1,0 +1,283 @@
+"""Синтетический дом с известными размерами → пакет скана как с iPhone → обработка → сверка с правдой.
+
+Дом: 10 × 8 м, карниз 3,00 м, конёк 6,00 м (уклон 36,87°), двускатная крыша, конёк вдоль длинной стороны.
+Обход: прямоугольник в 3,2 м от стен, шаг 0,6 м, два наклона камеры. LiDAR: 256×192, до 5 м, шум 5 мм + 0,3 % дальности.
+"""
+from __future__ import annotations
+
+import math
+import os
+
+import numpy as np
+import open3d as o3d
+
+from house import bundle as bundle_io
+from house.run import process
+from house.triangulate import robust_triangulate
+
+LENGTH, WIDTH, EAVE, RIDGE = 10.0, 8.0, 3.0, 6.0
+PITCH = math.degrees(math.atan((RIDGE - EAVE) / (WIDTH / 2)))
+IMG_W, IMG_H, F = 1920, 1440, 1500.0
+DEP_W, DEP_H = 256, 192
+
+
+def house_mesh(overhang=(0.0, 0.0)) -> o3d.geometry.TriangleMesh:
+    """overhang = (свес по карнизу, свес по фронтону), м: скаты продолжаются за стены."""
+    x, z = LENGTH / 2, WIDTH / 2
+    oe, og = overhang
+    k = (RIDGE - EAVE) / z
+    ye = EAVE - oe * k
+    v = [
+        # стены: углы у земли и у карниза
+        (-x, 0, -z), (x, 0, -z), (x, 0, z), (-x, 0, z),
+        (-x, EAVE, -z), (x, EAVE, -z), (x, EAVE, z), (-x, EAVE, z),
+        # конёк
+        (-x, RIDGE, 0), (x, RIDGE, 0),
+        # земля
+        (-40, 0, -40), (40, 0, -40), (40, 0, 40), (-40, 0, 40),
+        # скаты со свесами: 14–17 — край карниза, 18–19 — конёк с фронтонным свесом
+        (-x - og, ye, -z - oe), (x + og, ye, -z - oe), (x + og, ye, z + oe), (-x - og, ye, z + oe),
+        (-x - og, RIDGE, 0), (x + og, RIDGE, 0),
+    ]
+    t = [
+        (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7),  # стены
+        (14, 15, 19), (14, 19, 18), (16, 17, 18), (16, 18, 19),                                  # скаты
+        (4, 8, 7), (5, 6, 9),                                                                     # фронтоны
+        (10, 12, 11), (10, 13, 12),                                                               # земля
+    ]
+    mesh = o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(np.array(v, float)), o3d.utility.Vector3iVector(np.array(t)))
+    return mesh
+
+
+def look_pose(position, target) -> np.ndarray:
+    """Поза ARKit (камера→мир): x вправо, y вверх, смотрит вдоль −z."""
+    f = np.asarray(target, float) - position
+    f /= np.linalg.norm(f)
+    x = np.cross(f, [0, 1, 0])
+    x /= np.linalg.norm(x)
+    y = np.cross(x, f)
+    pose = np.eye(4)
+    pose[:3, 0], pose[:3, 1], pose[:3, 2], pose[:3, 3] = x, y, -f, position
+    return pose
+
+
+def walk(offset: float, step: float):
+    """Позиции по прямоугольнику вокруг дома и ближайшая точка стены для каждой."""
+    hx, hz = LENGTH / 2 + offset, WIDTH / 2 + offset
+    corners = [(-hx, -hz), (hx, -hz), (hx, hz), (-hx, hz), (-hx, -hz)]
+    for (x0, z0), (x1, z1) in zip(corners, corners[1:]):
+        n = int(math.hypot(x1 - x0, z1 - z0) / step)
+        for i in range(n):
+            px, pz = x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n
+            nx, nz = np.clip(px, -LENGTH / 2, LENGTH / 2), np.clip(pz, -WIDTH / 2, WIDTH / 2)
+            yield np.array([px, 1.5, pz]), np.array([nx, 0.0, nz])
+
+
+def render_depth(scene, pose, rng):
+    k = F * DEP_W / IMG_W
+    u, v = np.meshgrid(np.arange(DEP_W), np.arange(DEP_H))
+    dirs_cv = np.stack([(u - DEP_W / 2) / k, (v - DEP_H / 2) / k, np.ones_like(u, float)], -1).reshape(-1, 3)
+    cam_cv = pose @ bundle_io.ARKIT_TO_CV
+    dirs = dirs_cv @ cam_cv[:3, :3].T
+    norms = np.linalg.norm(dirs, axis=1, keepdims=True)
+    rays = np.hstack([np.repeat(cam_cv[:3, 3][None], len(dirs), 0), dirs / norms]).astype(np.float32)
+    t = scene.cast_rays(o3d.core.Tensor(rays))["t_hit"].numpy()
+    depth = (t / norms[:, 0]).reshape(DEP_H, DEP_W)
+    depth = depth + rng.normal(0, 1, depth.shape) * (0.005 + 0.003 * depth)
+    valid = np.isfinite(depth) & (depth < 5.0)
+    conf = np.where(valid, 2, 0).astype(np.uint8)
+    depth = np.where(valid, depth, 0).astype(np.float16)
+    return depth, conf
+
+
+def make_scan(tmp_path, skip=None, overhang=(0.0, 0.0), mesh=None, positions=None):
+    """skip(position) → True — кадр не снимаем (например, сторона дома недоступна)."""
+    rng = np.random.default_rng(7)
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(mesh if mesh is not None else house_mesh(overhang)))
+    frames, files = [], {}
+    jpeg = bundle_io.tiny_jpeg()
+    i = 0
+    for position, wall in (positions if positions is not None else walk(3.2, 0.6)):
+        if skip and skip(position):
+            continue
+        for aim_height, tier in ((2.0, "wall"), (4.6, "roof")):
+            i += 1
+            pose = look_pose(position, wall + [0, aim_height, 0])
+            depth, conf = render_depth(scene, pose, rng)
+            name = f"{i:06d}"
+            files[f"frames/{name}.jpg"] = jpeg
+            files[f"depth/{name}.f16"] = depth.tobytes()
+            files[f"conf/{name}.u8"] = conf.tobytes()
+            frames.append({"i": i, "t": i * 0.4, "image": f"frames/{name}.jpg", "depth": f"depth/{name}.f16", "conf": f"conf/{name}.u8",
+                           "pose": pose.T.reshape(-1).tolist(), "K": [F, F, IMG_W / 2, IMG_H / 2], "tracking": "normal",
+                           "exposure": 0.008, "tier": tier, "sharpness": 100.0})
+    manifest = {
+        "format": "smetapro-house-scan", "version": 1, "kind": "house", "createdAt": "2026-11-25T00:00:00Z",
+        "device": "synthetic", "lidar": True, "ios": "26", "image": {"width": IMG_W, "height": IMG_H},
+        "depth": {"width": DEP_W, "height": DEP_H, "format": "f16", "units": "m"},
+        "world": {"alignment": "gravityAndHeading", "up": [0, 1, 0], "units": "m", "location": {"lat": 55.75, "lon": 37.6, "accuracy": 5}},
+        "coverage": {"sectors": 36, "walls": 1.0, "roof": 1.0},
+        "control": [{"kind": "wall_length", "meters": 10.0, "note": "рулетка"}], "frames": frames,
+    }
+    return bundle_io.write(tmp_path, manifest, files)
+
+
+def notice(title, text):
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(f"::notice title={title}::{text}")
+    print(title, text)
+
+
+def test_house_dimensions(tmp_path):
+    scan = make_scan(tmp_path)
+    house = process(scan, tmp_path / "out")
+    fp = house["footprint"]
+    roof = house["roof"]
+    width, length = fp["gableWidth"]["value"], fp["length"]["value"]
+    eave = house["eaveHeight"]["value"]
+    ridge = roof["ridgeHeight"]["value"]
+    pitch = roof["pitchDeg"]["value"]
+    notice("Синтетический дом — правда 8.00 × 10.00 м; карниз 3.00; конёк 6.00; 36.87°",
+           f"ширина {width:.3f} м, длина {length:.3f} м, карниз {eave:.3f} м, конёк {ridge:.3f} м ({roof['ridgeHeight']['source']}), "
+           f"уклон {pitch:.2f}°, по кромке фронтона {roof.get('ridgeByGableEdge')} м, рулетка Δ {house['control']['deltaCm']} см, {house['quality']['seconds']} с")
+    assert abs(width - WIDTH) < 0.03
+    assert abs(length - LENGTH) < 0.03
+    assert abs(eave - EAVE) < 0.04
+    assert roof["type"] == "gable"
+    assert abs(ridge - RIDGE) < 0.10
+    assert abs(pitch - PITCH) < 1.5
+    assert abs(house["control"]["deltaCm"]) < 3
+    assert (tmp_path / "out" / "house.glb").stat().st_size > 1000
+    assert (tmp_path / "out" / "house.obj").stat().st_size > 1000
+    # Углы дома на карте: стороны 8 и 10 м должны сохраниться после перевода в широту/долготу.
+    ll = house["geo"]["footprintLatLon"]
+    m_lat, m_lon = 111_363.0, 111_412.84 * math.cos(math.radians(55.75)) - 93.5 * math.cos(3 * math.radians(55.75))
+    sides = sorted(math.hypot((ll[i][0] - ll[i - 1][0]) * m_lat, (ll[i][1] - ll[i - 1][1]) * m_lon) for i in range(4))
+    assert abs(sides[0] - WIDTH) < 0.1 and abs(sides[-1] - LENGTH) < 0.1, sides
+
+
+def test_ridge_by_triangulation():
+    """Конёк по разметке на фото (ИИ отмечает точку) с известными позами ARKit — даже вне дальности LiDAR."""
+    rng = np.random.default_rng(3)
+    apex = np.array([LENGTH / 2, RIDGE, 0.0])
+    projections, pixels = [], []
+    for position, wall in walk(9.0, 2.5):
+        if position[0] < LENGTH / 2:          # торец виден только с этой стороны
+            continue
+        frame = bundle_io.Frame(index=0, image="", pose=look_pose(position, [LENGTH / 2, 4.5, 0]), K=(F, F, IMG_W / 2, IMG_H / 2))
+        P = frame.projection()
+        p = P @ np.append(apex, 1)
+        u, v = p[0] / p[2], p[1] / p[2]
+        if 0 <= u < IMG_W and 0 <= v < IMG_H and p[2] > 0:
+            projections.append(P)
+            pixels.append((u + rng.normal(0, 2), v + rng.normal(0, 2)))
+    # Один кадр с грубой ошибкой разметки (ИИ промахнулся на 60 px) — должен отброситься.
+    pixels[0] = (pixels[0][0] + 60, pixels[0][1] - 40)
+    point, error, used = robust_triangulate(projections, pixels)
+    notice("Конёк триангуляцией", f"ошибка {np.linalg.norm(point - apex) * 100:.1f} см по {used} кадрам из {len(pixels)}, перепроекция {error:.1f} px")
+    assert np.linalg.norm(point - apex) < 0.05
+    assert used < len(pixels)
+
+
+def test_blocked_side(tmp_path):
+    """Торец справа недоступен (дом впритык к соседу): камера туда не заходит. Длина — по концам длинных стен."""
+    scan = make_scan(tmp_path, skip=lambda p: p[0] > LENGTH / 2 - 1.0)
+    house = process(scan, tmp_path / "out")
+    fp = house["footprint"]
+    length = fp["length"]
+    notice("Сторона недоступна — правда 10.00 м", f"длина {length['value']:.3f} м ({length['source']}); ширина {fp['gableWidth']['value']:.3f} м; "
+           f"конёк {house['roof']['ridgeHeight']['value']} м")
+    assert length["source"] == "extrapolated"
+    assert abs(length["value"] - LENGTH) < 0.05
+    assert abs(fp["gableWidth"]["value"] - WIDTH) < 0.03
+    assert abs(house["roof"]["ridgeHeight"]["value"] - RIDGE) < 0.10
+
+
+def test_overhangs(tmp_path):
+    """Свесы: 0,50 м по карнизу и 0,30 м по фронтону — лидар видит их снизу."""
+    scan = make_scan(tmp_path, overhang=(0.5, 0.3))
+    house = process(scan, tmp_path / "out")
+    roof = house["roof"]
+    eave_o, gable_o = roof["overhangEave"]["value"], roof["overhangGable"]["value"]
+    notice("Свесы — правда 0.50 / 0.30 м", f"по карнизу {eave_o} м; по фронтону {gable_o} м; карниз {house['eaveHeight']['value']} м; "
+           f"конёк {roof['ridgeHeight']['value']} м; уклон {roof['pitchDeg']['value']}°; ширина {house['footprint']['gableWidth']['value']} м")
+    assert abs(eave_o - 0.5) < 0.06
+    assert abs(gable_o - 0.3) < 0.06
+    assert abs(house["eaveHeight"]["value"] - EAVE) < 0.05
+    assert abs(roof["ridgeHeight"]["value"] - RIDGE) < 0.10
+    assert abs(house["footprint"]["gableWidth"]["value"] - WIDTH) < 0.03
+
+
+# ---------- сложные дома ----------
+
+def prism_mesh(outline, eave, roof_triangles):
+    """Стены по контуру (x, z) высотой eave + земля + треугольники крыши (списки из 3 точек)."""
+    v, t = [], []
+    for (x0, z0), (x1, z1) in zip(outline, outline[1:] + outline[:1]):
+        k = len(v)
+        v += [(x0, 0, z0), (x1, 0, z1), (x1, eave, z1), (x0, eave, z0)]
+        t += [(k, k + 1, k + 2), (k, k + 2, k + 3)]
+    k = len(v)
+    v += [(-40, 0, -40), (40, 0, -40), (40, 0, 40), (-40, 0, 40)]
+    t += [(k, k + 2, k + 1), (k, k + 3, k + 2)]
+    for tri in roof_triangles:
+        k = len(v)
+        v += list(tri)
+        t.append((k, k + 1, k + 2))
+    return o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(np.array(v, float)), o3d.utility.Vector3iVector(np.array(t)))
+
+
+def nearest_on_outline(p, outline):
+    best, best_d = None, 1e9
+    for (x0, z0), (x1, z1) in zip(outline, outline[1:] + outline[:1]):
+        a, b = np.array([x0, z0]), np.array([x1, z1])
+        q = np.array([p[0], p[2]])
+        t = np.clip((q - a) @ (b - a) / ((b - a) @ (b - a)), 0, 1)
+        c = a + (b - a) * t
+        d = np.linalg.norm(q - c)
+        if d < best_d:
+            best, best_d = c, d
+    return np.array([best[0], 0.0, best[1]])
+
+
+def walk_path(path, outline, step=0.6):
+    for (x0, z0), (x1, z1) in zip(path, path[1:] + path[:1]):
+        n = max(1, int(math.hypot(x1 - x0, z1 - z0) / step))
+        for i in range(n):
+            p = np.array([x0 + (x1 - x0) * i / n, 1.5, z0 + (z1 - z0) * i / n])
+            yield p, nearest_on_outline(p, outline)
+
+
+def test_l_shaped_house(tmp_path):
+    """Г‑образный дом, плоская кровля 3 м: контур (−5,−4)…, вырез 4 × 4. Площадь 64 м², периметр 36 м."""
+    outline = [(-5, -4), (5, -4), (5, 0), (1, 0), (1, 4), (-5, 4)]
+    roof = [((-5, 3, -4), (5, 3, -4), (5, 3, 0)), ((-5, 3, -4), (5, 3, 0), (-5, 3, 0)),
+            ((-5, 3, 0), (1, 3, 0), (1, 3, 4)), ((-5, 3, 0), (1, 3, 4), (-5, 3, 4))]
+    path = [(-8.2, -7.2), (8.2, -7.2), (8.2, 3.2), (4.2, 3.2), (4.2, 7.2), (-8.2, 7.2)]
+    scan = make_scan(tmp_path, mesh=prism_mesh(outline, 3.0, roof), positions=list(walk_path(path, outline)))
+    house = process(scan, tmp_path / "out")
+    poly = house["footprint"]["polygon"]
+    notice("Г‑образный дом — правда 64.0 м², периметр 36.0 м, 6 углов", f"{poly['shape']}: площадь {poly['area']} м², периметр {poly['perimeter']} м, стороны {poly['sides']}")
+    assert poly["shape"] == "L"
+    assert abs(poly["area"] - 64) < 0.6
+    assert abs(poly["perimeter"] - 36) < 0.15
+
+
+def test_hip_roof(tmp_path):
+    """Вальмовая крыша на доме 10 × 8: конёк 2 м на высоте 6 м, все скаты 36,87°."""
+    x, z = LENGTH / 2, WIDTH / 2
+    outline = [(-x, -z), (x, -z), (x, z), (-x, z)]
+    a, b, c, d = (-x, EAVE, -z), (x, EAVE, -z), (x, EAVE, z), (-x, EAVE, z)
+    r0, r1 = (-1, RIDGE, 0), (1, RIDGE, 0)
+    roof = [(a, b, r1), (a, r1, r0), (c, d, r0), (c, r0, r1), (d, a, r0), (b, c, r1)]
+    scan = make_scan(tmp_path, mesh=prism_mesh(outline, EAVE, roof))
+    house = process(scan, tmp_path / "out")
+    r = house["roof"]
+    notice("Вальмовая крыша — правда: hip; конёк 6.00; 36.87°", f"тип {r['type']}; конёк {r['ridgeHeight']['value']} м; уклон {r['pitchDeg']['value']}°; "
+           f"вальмы {r.get('hipPitchDeg')}°; карниз {house['eaveHeight']['value']} м; {house['footprint']['gableWidth']['value']} × {house['footprint']['length']['value']} м")
+    assert r["type"] == "hip"
+    assert abs(r["ridgeHeight"]["value"] - RIDGE) < 0.10
+    assert abs(r["pitchDeg"]["value"] - PITCH) < 1.0
+    assert abs(r["hipPitchDeg"] - PITCH) < 1.5
+    assert abs(house["eaveHeight"]["value"] - EAVE) < 0.05

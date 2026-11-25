@@ -33,6 +33,13 @@
 		C1F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */; };
 		C1EEC4476D2330A2337F1B2A /* Markaryan/Views/ProposalViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EEC4476D2330A2337F1B2A /* Markaryan/Views/ProposalViews.swift */; };
 		C1410C0C2D4E9E7BCE88E978 /* Markaryan/Core/CommercialProposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2410C0C2D4E9E7BCE88E978 /* Markaryan/Core/CommercialProposal.swift */; };
+		C1940E54D6D91F2BF02C7A2F /* Markaryan/Views/NSPDMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2940E54D6D91F2BF02C7A2F /* Markaryan/Views/NSPDMapView.swift */; };
+		C16D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */; };
+		C1FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */; };
+		C14445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */; };
+		C1DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */; };
+		C177C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */; };
+		C112EC0FB3EC389D4C536C9E /* Markaryan/Core/HouseScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = C212EC0FB3EC389D4C536C9E /* Markaryan/Core/HouseScan.swift */; };
 		C1390217D147431B6BFF47C9 /* Markaryan/Core/PremiumVisuals.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2390217D147431B6BFF47C9 /* Markaryan/Core/PremiumVisuals.swift */; };
 		C17AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */; };
 		C1B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */; };
@@ -104,6 +111,13 @@
 		C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ScreenshotSamples.swift; sourceTree = "<group>"; };
 		C2EEC4476D2330A2337F1B2A /* Markaryan/Views/ProposalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ProposalViews.swift; sourceTree = "<group>"; };
 		C2410C0C2D4E9E7BCE88E978 /* Markaryan/Core/CommercialProposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/CommercialProposal.swift; sourceTree = "<group>"; };
+		C2940E54D6D91F2BF02C7A2F /* Markaryan/Views/NSPDMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/NSPDMapView.swift; sourceTree = "<group>"; };
+		C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseResultView.swift; sourceTree = "<group>"; };
+		C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/HouseResult.swift; sourceTree = "<group>"; };
+		C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ParcelView.swift; sourceTree = "<group>"; };
+		C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Parcel.swift; sourceTree = "<group>"; };
+		C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseScanView.swift; sourceTree = "<group>"; };
+		C212EC0FB3EC389D4C536C9E /* Markaryan/Core/HouseScan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/HouseScan.swift; sourceTree = "<group>"; };
 		C2390217D147431B6BFF47C9 /* Markaryan/Core/PremiumVisuals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/PremiumVisuals.swift; sourceTree = "<group>"; };
 		C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/FeatureIntro.swift; sourceTree = "<group>"; };
 		C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Billing.swift; sourceTree = "<group>"; };
@@ -179,6 +193,13 @@
 				C2F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift */,
 				C2EEC4476D2330A2337F1B2A /* Markaryan/Views/ProposalViews.swift */,
 				C2410C0C2D4E9E7BCE88E978 /* Markaryan/Core/CommercialProposal.swift */,
+				C2940E54D6D91F2BF02C7A2F /* Markaryan/Views/NSPDMapView.swift */,
+				C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */,
+				C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */,
+				C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */,
+				C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */,
+				C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */,
+				C212EC0FB3EC389D4C536C9E /* Markaryan/Core/HouseScan.swift */,
 				C2390217D147431B6BFF47C9 /* Markaryan/Core/PremiumVisuals.swift */,
 				C27AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift */,
 				C2B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift */,
@@ -354,6 +375,13 @@
 				C1F7A5B8C8001F84FACFDC91 /* Markaryan/Views/ScreenshotSamples.swift in Sources */,
 				C1EEC4476D2330A2337F1B2A /* Markaryan/Views/ProposalViews.swift in Sources */,
 				C1410C0C2D4E9E7BCE88E978 /* Markaryan/Core/CommercialProposal.swift in Sources */,
+				C1940E54D6D91F2BF02C7A2F /* Markaryan/Views/NSPDMapView.swift in Sources */,
+				C16D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift in Sources */,
+				C1FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift in Sources */,
+				C14445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift in Sources */,
+				C1DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift in Sources */,
+				C177C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift in Sources */,
+				C112EC0FB3EC389D4C536C9E /* Markaryan/Core/HouseScan.swift in Sources */,
 				C1390217D147431B6BFF47C9 /* Markaryan/Core/PremiumVisuals.swift in Sources */,
 				C17AF94246BE70663EA8DEAC /* Markaryan/Core/FeatureIntro.swift in Sources */,
 				C1B500D6A8030E4096BF0348 /* Markaryan/Core/Billing.swift in Sources */,
@@ -419,7 +447,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "СметаПро";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_FILE = Markaryan/Info.plist;
@@ -447,7 +475,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "СметаПро";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно только чтобы определить ваш город и подставить в смету цены магазинов и мастеров вашего региона.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_FILE = Markaryan/Info.plist;

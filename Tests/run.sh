@@ -12,3 +12,6 @@ swiftc -swift-version 5 -O "$CORE/Calculator.swift" Tests/main.swift -o "$OUT/ma
 # shellcheck disable=SC2086
 swiftc -swift-version 5 -O $PLAN_FILES Tests/Plan/main.swift -o "$OUT/markaryan-plan-tests"
 "$OUT/markaryan-plan-tests"
+
+swiftc -swift-version 5 -O "$CORE/Parcel.swift" Tests/Parcel/main.swift -o "$OUT/markaryan-parcel-tests"
+"$OUT/markaryan-parcel-tests"
