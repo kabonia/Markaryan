@@ -16,6 +16,7 @@ struct HouseScanView: View {
     @State private var error: String?
     @State private var pending: [HouseScanStore.Pending] = []
     @State private var confirmCancel = false
+    @State private var showParcel = false
 
     enum Phase { case intro, scanning, control, uploading, sent }
 
@@ -119,9 +120,11 @@ struct HouseScanView: View {
                     Label("Идите медленно, 5–10 минут. Кольцо вверху покажет, что осталось", systemImage: "circle.dashed")
                 }
                 .font(.subheadline)
+                parcelCard
                 if HouseScanRecorder.isSupported {
                     PrimaryButton(title: "Начать обход", icon: "viewfinder") {
                         error = nil
+                        recorder.parcel = ParcelStore.load()
                         recorder.start()
                         phase = .scanning
                         store.track("house_scan_start")
@@ -134,6 +137,29 @@ struct HouseScanView: View {
             }
             .padding(24)
         }
+    }
+
+    /// Участок по кадастру — до скана: макет сразу встанет на свою границу.
+    private var parcelCard: some View {
+        Button { showParcel = true } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "map").font(.title3).foregroundStyle(Theme.gold)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(parcelTitle).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                    Text("Граница, площадь, ВРИ из Росреестра и проверка отступов").font(.caption).foregroundStyle(Theme.muted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Theme.muted)
+            }
+            .padding(16).panelCard(16)
+        }
+        .buttonStyle(PremiumCardPressStyle())
+        .sheet(isPresented: $showParcel) { ParcelView() }
+    }
+
+    private var parcelTitle: String {
+        guard let parcel = ParcelStore.load() else { return "Участок по кадастру" }
+        return "Участок \(parcel.cadNumber)"
     }
 
     private var accuracyNote: some View {

@@ -4,6 +4,7 @@ import Accelerate
 import CoreImage
 import ImageIO
 import UIKit
+import CoreLocation
 import CryptoKit
 import simd
 
@@ -89,12 +90,23 @@ struct HouseScanFrame: Codable {
     var exposure: Double
     /// "wall" или "roof".
     var tier: String
+    /// Резкость (дисперсия лапласиана по яркости) — GPU берёт резкие кадры первыми.
+    var sharpness: Float = 0
+    /// Опорные точки ARKit этого кадра (points/NNNNNN.bin: float32 x,y,z + uint64 id) — для уточнения поз на GPU.
+    var points: String?
 }
 
 struct HouseScanManifest: Codable {
     struct Size: Codable { var width: Int; var height: Int }
     struct Depth: Codable { var width: Int; var height: Int; var format = "f16"; var units = "m" }
-    struct World: Codable { var alignment = "gravity"; var up: [Float] = [0, 1, 0]; var units = "m" }
+    /// gravityAndHeading: y — вверх, x — на восток, −z — на север (компас, ±5–10°; точно — по углам участка).
+    struct World: Codable {
+        var alignment = "gravityAndHeading"; var up: [Float] = [0, 1, 0]; var units = "m"
+        var location: Location?
+    }
+    struct Location: Codable { var lat: Double; var lon: Double; var accuracy: Double; var altitude: Double? }
+    /// Кадр высокого разрешения (крыша и детали): своя поза и параметры камеры.
+    struct Still: Codable { var i: Int; var image: String; var pose: [Float]; var K: [Float]; var width: Int; var height: Int }
     struct Coverage: Codable { var sectors: Int; var walls: Double; var roof: Double }
     struct Control: Codable { var kind: String; var meters: Double; var note: String? }
 
@@ -114,6 +126,11 @@ struct HouseScanManifest: Codable {
     var coverage: Coverage
     var control: [Control] = []
     var frames: [HouseScanFrame]
+    var stills: [Still] = []
+    /// Участок из НСПД, если найден до скана.
+    var parcel: CadastralParcel?
+    /// Сколько кадров отброшено как смазанные (для отчёта о качестве).
+    var rejectedBlurry = 0
 }
 
 @MainActor final class HouseScanRecorder: NSObject, ObservableObject, ARSessionDelegate {
@@ -152,6 +169,15 @@ struct HouseScanManifest: Codable {
     private var inFlight = 0
     private let writer = DispatchQueue(label: "house-scan-writer", qos: .userInitiated)
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+    /// Резкость последних ключевых кадров: смазанный (< 45 % от медианы) отбрасывается.
+    private var recentSharpness: [Float] = []
+    private(set) var rejectedBlurry = 0
+    private var stills: [HouseScanManifest.Still] = []
+    private var lastStillTime: TimeInterval = 0
+    private var stillInFlight = false
+    private let maxStills = 36
+    private var location: CLLocation?
+    var parcel: CadastralParcel?
 
     override init() {
         folder = HouseScanStore.root.appendingPathComponent(id.uuidString, isDirectory: true)
@@ -162,13 +188,20 @@ struct HouseScanManifest: Codable {
 
     static func configuration() -> ARWorldTrackingConfiguration {
         let config = ARWorldTrackingConfiguration()
-        config.worldAlignment = .gravity
+        // Север из компаса: макет сразу ложится на карту и кадастровый участок (солнце и тени — тоже).
+        config.worldAlignment = .gravityAndHeading
         config.planeDetection = [.horizontal, .vertical]
         if hasLiDAR {
             config.frameSemantics.insert(.sceneDepth)
             if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) { config.sceneReconstruction = .mesh }
         }
-        // 4:3, наибольшее разрешение до 1920 по ширине — больше не нужно, а файлы растут.
+        // Формат, в котором можно брать снимки высокого разрешения (12 Мп) — для крыши и деталей.
+        if let hires = ARWorldTrackingConfiguration.recommendedVideoFormatForHighResolutionFrameCapturing,
+           hires.imageResolution.width <= 1920 {
+            config.videoFormat = hires
+            return config
+        }
+        // Иначе 4:3, наибольшее разрешение до 1920 по ширине — больше не нужно, а файлы растут.
         let formats = ARWorldTrackingConfiguration.supportedVideoFormats
         if let best = formats.filter({ abs($0.imageResolution.width / $0.imageResolution.height - 4.0 / 3.0) < 0.01 && $0.imageResolution.width <= 1920 })
             .max(by: { $0.imageResolution.width < $1.imageResolution.width }) {
@@ -178,8 +211,14 @@ struct HouseScanManifest: Codable {
     }
 
     func start() {
+        if location == nil {
+            Task { [weak self] in
+                let found = await PreciseLocation.current()
+                self?.location = found
+            }
+        }
         // Папки — только когда обход начался: открыть экран и закрыть его ничего не оставляет на диске.
-        for sub in ["frames", "depth", "conf", "mesh"] {
+        for sub in ["frames", "depth", "conf", "mesh", "points", "hires"] {
             try? FileManager.default.createDirectory(at: folder.appendingPathComponent(sub), withIntermediateDirectories: true)
         }
         recording = true
@@ -256,6 +295,14 @@ struct HouseScanManifest: Codable {
             let turned = Self.angle(between: key.pose, and: pose)
             guard moved >= minMove || turned >= minTurn else { return }
         }
+        // Смазанный кадр не берём (резкость считается по яркости с шагом 4 px — доли миллисекунды).
+        let sharpness = Self.sharpness(frame.capturedImage)
+        if recentSharpness.count >= 8 {
+            let median = recentSharpness.sorted()[recentSharpness.count / 2]
+            if sharpness < median * 0.45 { rejectedBlurry += 1; return }
+        }
+        recentSharpness.append(sharpness)
+        if recentSharpness.count > 30 { recentSharpness.removeFirst() }
         lastKey = (pose, time)
         if let sector {
             if tier == "roof" { coverage.roof[sector] += 1 } else { coverage.walls[sector] += 1 }
@@ -270,10 +317,12 @@ struct HouseScanManifest: Codable {
             i: index, t: time - (startTime ?? time), image: "frames/\(name).jpg",
             depth: hasDepth ? "depth/\(name).f16" : nil, conf: hasDepth ? "conf/\(name).u8" : nil,
             pose: Self.flatten(pose), K: [intrinsics[0][0], intrinsics[1][1], intrinsics[2][0], intrinsics[2][1]],
-            tracking: "normal", exposure: exposure, tier: tier)
+            tracking: "normal", exposure: exposure, tier: tier, sharpness: sharpness,
+            points: frame.rawFeaturePoints == nil ? nil : "points/\(name).bin")
         frames.append(item)
         frameCount = frames.count
         write(frame: frame, name: name)
+        if tier == "roof" { captureStill(index: index) }
     }
 
     private func nextHint(tracking: ARCamera.TrackingState, distance: Float?, center: SIMD3<Float>?, sector: Int?) -> HouseScanHint {
@@ -305,11 +354,23 @@ struct HouseScanManifest: Codable {
         if depthSize == nil, let map = frame.sceneDepth?.depthMap {
             depthSize = (CVPixelBufferGetWidth(map), CVPixelBufferGetHeight(map))
         }
+        var points: Data?
+        if let cloud = frame.rawFeaturePoints, !cloud.points.isEmpty {
+            var data = Data(capacity: cloud.points.count * 20)
+            for (point, id) in zip(cloud.points, cloud.identifiers) {
+                withUnsafeBytes(of: point.x) { data.append(contentsOf: $0) }
+                withUnsafeBytes(of: point.y) { data.append(contentsOf: $0) }
+                withUnsafeBytes(of: point.z) { data.append(contentsOf: $0) }
+                withUnsafeBytes(of: id) { data.append(contentsOf: $0) }
+            }
+            points = data
+        }
         let image = CIImage(cvPixelBuffer: frame.capturedImage)
         let folder = folder
         let context = ciContext
         writer.async { [weak self] in
             var written: Int64 = 0
+            if let points { try? points.write(to: folder.appendingPathComponent("points/\(name).bin")); written += Int64(points.count) }
             let space = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
             let quality = CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String)
             if let jpeg = context.jpegRepresentation(of: image, colorSpace: space, options: [quality: 0.8]) {
@@ -326,6 +387,66 @@ struct HouseScanManifest: Codable {
         }
     }
 
+    /// Снимок 12 Мп раз в 2 с на ярусе «крыша» (до 36 штук): по ним ИИ видит кровлю, трубы, водостоки.
+    private func captureStill(index: Int) {
+        guard let session, !stillInFlight, stills.count < maxStills,
+              ARWorldTrackingConfiguration.recommendedVideoFormatForHighResolutionFrameCapturing != nil,
+              Date().timeIntervalSinceReferenceDate - lastStillTime > 2 else { return }
+        stillInFlight = true
+        lastStillTime = Date().timeIntervalSinceReferenceDate
+        session.captureHighResolutionFrame { [weak self] frame, _ in
+            Task { @MainActor in
+                guard let self else { return }
+                defer { self.stillInFlight = false }
+                guard let frame else { return }
+                let name = String(format: "%06d", index)
+                let width = CVPixelBufferGetWidth(frame.capturedImage), height = CVPixelBufferGetHeight(frame.capturedImage)
+                let k = frame.camera.intrinsics
+                self.stills.append(.init(i: index, image: "hires/\(name).jpg", pose: Self.flatten(frame.camera.transform),
+                                         K: [k[0][0], k[1][1], k[2][0], k[2][1]], width: width, height: height))
+                let image = CIImage(cvPixelBuffer: frame.capturedImage)
+                let folder = self.folder
+                let context = self.ciContext
+                self.writer.async {
+                    let space = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
+                    let quality = CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String)
+                    if let jpeg = context.jpegRepresentation(of: image, colorSpace: space, options: [quality: 0.85]) {
+                        try? jpeg.write(to: folder.appendingPathComponent("hires/\(name).jpg"))
+                        Task { @MainActor [weak self] in self?.bytesWritten += Int64(jpeg.count) }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Резкость: дисперсия лапласиана по яркости (плоскость Y), с шагом 4 пикселя.
+    static func sharpness(_ buffer: CVPixelBuffer) -> Float {
+        guard CVPixelBufferGetPlaneCount(buffer) >= 1 else { return 0 }
+        CVPixelBufferLockBaseAddress(buffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddressOfPlane(buffer, 0) else { return 0 }
+        let width = CVPixelBufferGetWidthOfPlane(buffer, 0), height = CVPixelBufferGetHeightOfPlane(buffer, 0)
+        let row = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+        let pixels = base.assumingMemoryBound(to: UInt8.self)
+        let step = 4
+        var sum: Float = 0, sumSq: Float = 0, count: Float = 0
+        var y = step
+        while y < height - step {
+            var x = step
+            while x < width - step {
+                let c = Float(pixels[y * row + x]) * 4
+                let l = c - Float(pixels[y * row + x - step]) - Float(pixels[y * row + x + step])
+                    - Float(pixels[(y - step) * row + x]) - Float(pixels[(y + step) * row + x])
+                sum += l; sumSq += l * l; count += 1
+                x += step
+            }
+            y += step
+        }
+        guard count > 0 else { return 0 }
+        let mean = sum / count
+        return sumSq / count - mean * mean
+    }
+
     /// Ждёт, пока все кадры лягут на диск, сохраняет меш ARKit и manifest.json.
     func finish(control: [HouseScanManifest.Control]) async throws -> URL {
         recording = false
@@ -340,10 +461,15 @@ struct HouseScanManifest: Codable {
             depth: depthSize.map { .init(width: $0.width, height: $0.height) },
             center: center.map { [$0.x, $0.y, $0.z] },
             coverage: .init(sectors: HouseCoverage.sectors, walls: coverage.wallShare, roof: coverage.roofShare),
-            control: control, frames: frames)
+            control: control, frames: frames, stills: stills, parcel: parcel, rejectedBlurry: rejectedBlurry)
+        var located = manifest
+        if let location {
+            located.world.location = .init(lat: location.coordinate.latitude, lon: location.coordinate.longitude,
+                                           accuracy: location.horizontalAccuracy, altitude: location.verticalAccuracy >= 0 ? location.altitude : nil)
+        }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
-        try encoder.encode(manifest).write(to: folder.appendingPathComponent("manifest.json"))
+        try encoder.encode(located).write(to: folder.appendingPathComponent("manifest.json"))
         return folder
     }
 
