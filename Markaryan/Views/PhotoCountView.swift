@@ -360,12 +360,12 @@ struct PhotoCountView: View {
     }
 
     private func row(_ title: String, _ value: String) -> some View {
-        HStack { Text(title).font(.subheadline).foregroundStyle(Theme.muted); Spacer(); Text(value).font(.subheadline.bold()).monospacedDigit() }
+        HStack { Text(title.tr).font(.subheadline).foregroundStyle(Theme.muted); Spacer(); Text(value).font(.subheadline.bold()).monospacedDigit() }
     }
 
     private func field(_ title: String, _ text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
+            Text(title.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
             TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit()).padding(12).fieldSurface(12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

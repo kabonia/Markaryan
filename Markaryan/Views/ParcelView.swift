@@ -107,7 +107,7 @@ struct ParcelView: View {
 
     private func row(_ title: String, _ value: String?) -> some View {
         HStack(alignment: .top) {
-            Text(title).font(.footnote).foregroundStyle(Theme.muted)
+            Text(title.tr).font(.footnote).foregroundStyle(Theme.muted)
             Spacer(minLength: 12)
             Text(value ?? "—").font(.footnote.weight(.semibold)).multilineTextAlignment(.trailing)
         }

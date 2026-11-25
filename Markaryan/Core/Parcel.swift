@@ -194,9 +194,12 @@ enum ParcelRules {
         return findings
     }
 
+    /// Формат чисел: по умолчанию русский («1,5»); приложение при запуске ставит язык пользователя.
+    static var locale = Locale(identifier: "ru_RU")
+
     static func format(_ value: Double, digits: Int = 0) -> String {
         let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = locale
         formatter.minimumFractionDigits = digits
         formatter.maximumFractionDigits = digits
         return formatter.string(from: NSNumber(value: value)) ?? String(value)

@@ -401,7 +401,7 @@ struct PlanEditorView: View {
         Button { Haptics.tap(); action() } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon).foregroundStyle(Theme.orange).frame(width: 24)
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                Text(title.tr).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
                 Text(value).font(.subheadline).foregroundStyle(Theme.muted).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                 Image(systemName: "pencil").font(.caption).foregroundStyle(Theme.muted)
@@ -584,7 +584,7 @@ struct OpeningFormView: View {
 
     private func field(_ title: String, text: Binding<String>) -> some View {
         HStack {
-            Text(title)
+            Text(title.tr)
             Spacer()
             TextField("0,00", text: text)
                 .keyboardType(.decimalPad)

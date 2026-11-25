@@ -272,7 +272,7 @@ struct ParamCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            Text(title.tr.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             content
         }
         .font(.subheadline).foregroundStyle(Theme.ink)
@@ -288,7 +288,7 @@ struct OptionChips: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let title { Text(title).font(.caption).foregroundStyle(Theme.muted) }
+            if let title { Text(title.tr).font(.caption).foregroundStyle(Theme.muted) }
             ChipFlow(spacing: 8) {
                 ForEach(options, id: \.0) { option in
                     let on = selection == option.0
@@ -313,7 +313,7 @@ struct NumberInputField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(Theme.muted)
+            Text(title.tr).font(.caption).foregroundStyle(Theme.muted)
             TextField("0", text: $text).keyboardType(.decimalPad).focused(focused, equals: id)
                 .font(.title3.weight(.semibold)).padding(12).background(Theme.panelRaised.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
         }

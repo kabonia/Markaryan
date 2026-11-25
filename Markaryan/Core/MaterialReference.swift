@@ -132,7 +132,7 @@ struct MaterialReferencesSection: View {
     }
 
     private func chip(_ title: String, _ icon: String) -> some View {
-        Label(title, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+        Label(title.tr, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
             .frame(maxWidth: .infinity).padding(.vertical, 12).background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 

@@ -128,8 +128,8 @@ struct CompactEstimateCard: View {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.gold)
                 .frame(width: 40, height: 40).background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Spacer(minLength: 2)
-            Text(title).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
-            Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
+            Text(title.tr).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+            Text(caption.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 111, alignment: .topLeading)
         .padding(15)
@@ -370,7 +370,7 @@ struct HouseEstimateView: View {
         catch { store.priceSyncMessage = "Не удалось подготовить PDF: \(error.localizedDescription)" }
     }
     private func estimateField(_ title: String, text: Binding<String>, id: String, type: UIKeyboardType = .decimalPad) -> some View {
-        VStack(alignment: .leading, spacing: 7) { Text(title).font(.caption).foregroundStyle(Theme.muted); TextField("0", text: text).keyboardType(type).focused($focused, equals: id).font(.headline.monospacedDigit()).padding(12).panelCard(12) }.frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 7) { Text(title.tr).font(.caption).foregroundStyle(Theme.muted); TextField("0", text: text).keyboardType(type).focused($focused, equals: id).font(.headline.monospacedDigit()).padding(12).panelCard(12) }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

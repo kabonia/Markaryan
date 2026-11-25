@@ -211,7 +211,7 @@ struct DocEstimateNewView: View {
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label).font(.subheadline).foregroundStyle(Theme.muted)
+            Text(label.tr).font(.subheadline).foregroundStyle(Theme.muted)
             content().padding(14).panelCard(16)
         }
     }
@@ -336,7 +336,7 @@ struct DocEstimateResultView: View {
     }
 
     private func line(_ title: String, _ value: Double) -> some View {
-        HStack { Text(title); Spacer(); Text(CalculationEngine.money(value)).monospacedDigit() }.font(.caption).foregroundStyle(.white.opacity(0.9))
+        HStack { Text(title.tr); Spacer(); Text(CalculationEngine.money(value)).monospacedDigit() }.font(.caption).foregroundStyle(.white.opacity(0.9))
     }
 
     private func auditCard(_ audit: DocEstimateResult.Audit) -> some View {
@@ -420,7 +420,7 @@ struct DocEstimateResultView: View {
 
     private func card(_ title: String, _ lines: [String]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
+            Text(title.tr).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
             ForEach(lines, id: \.self) { Text("• " + $0).font(.caption).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true) }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
@@ -470,7 +470,7 @@ struct DocWorkRow: View {
     }
 
     private func tag(_ text: String, _ color: Color) -> some View {
-        Text(text).font(.caption2.weight(.semibold)).padding(.horizontal, 7).padding(.vertical, 3).background(color.opacity(0.12), in: Capsule()).foregroundStyle(color)
+        Text(text.tr).font(.caption2.weight(.semibold)).padding(.horizontal, 7).padding(.vertical, 3).background(color.opacity(0.12), in: Capsule()).foregroundStyle(color)
     }
 }
 

@@ -5,6 +5,10 @@ import StoreKit
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = AppStore()
     @Environment(\.scenePhase) private var scenePhase
+    init() {
+        // Числа в размерах и проверках — как принято в стране пользователя («1,5» / «1.5»).
+        if !AppLanguage.isRussian { ParcelRules.locale = .current }
+    }
     var body: some Scene {
         WindowGroup {
             LaunchGateView().environmentObject(store).tint(Theme.orange).foregroundStyle(Theme.ink).preferredColorScheme(.light).environment(\.colorScheme, .light)
@@ -113,7 +117,7 @@ struct PrimaryButton: View {
     let action: () -> Void
     var body: some View {
         Button { Haptics.tap(); action() } label: {
-            HStack { Text(title).fontWeight(.semibold); Spacer(); Image(systemName: icon) }
+            HStack { Text(title.tr).fontWeight(.semibold); Spacer(); Image(systemName: icon) }
                 .padding(18).foregroundStyle(Theme.onAccent)
                 .background(Theme.accentGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 0.8))
@@ -127,7 +131,7 @@ struct SecondaryActionLabel: View {
     let title: String
     let icon: String
     var body: some View {
-        Label(title, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
+        Label(title.tr, systemImage: icon).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
             .frame(maxWidth: .infinity).padding(15).background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.orange.opacity(0.14), lineWidth: 0.6))
     }
@@ -146,11 +150,11 @@ struct PremiumCardPressStyle: ButtonStyle {
 struct SectionTitle: View {
     let eyebrow: String
     let title: String
-    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.uppercased()).font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold); Text(title).font(.system(.title2, design: .serif, weight: .bold)).tracking(-0.3).foregroundStyle(Theme.ink) }.accessibilityElement(children: .combine) }
+    var body: some View { VStack(alignment: .leading, spacing: 10) { Text(eyebrow.tr.uppercased()).font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold); Text(title.tr).font(.system(.title2, design: .serif, weight: .bold)).tracking(-0.3).foregroundStyle(Theme.ink) }.accessibilityElement(children: .combine) }
 }
 struct InfoNote: View {
     let text: String
-    var body: some View { Label { Text(text).font(.footnote).foregroundStyle(Theme.muted) } icon: { Image(systemName: "info.circle").foregroundStyle(Theme.orange) }.padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16) }
+    var body: some View { Label { Text(text.tr).font(.footnote).foregroundStyle(Theme.muted) } icon: { Image(systemName: "info.circle").foregroundStyle(Theme.orange) }.padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16) }
 }
 struct RootView: View {
     @EnvironmentObject private var store: AppStore

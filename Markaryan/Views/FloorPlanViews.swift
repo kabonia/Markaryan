@@ -309,9 +309,9 @@ struct DesignStartCard: View {
                 Spacer()
                 Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(accent)
             }
-            Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-            Text(title).font(prominent ? .title3.bold() : .headline).foregroundStyle(Theme.ink).lineLimit(2)
-            Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            Text(eyebrow.tr).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
+            Text(title.tr).font(prominent ? .title3.bold() : .headline).foregroundStyle(Theme.ink).lineLimit(2)
+            Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
         .padding(16)
@@ -889,7 +889,7 @@ struct FloorPlanDetailView: View {
 
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button { Haptics.tap(); withAnimation(.snappy) { action() } } label: {
-            Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
+            Text(title.tr).font(.caption.weight(.semibold)).lineLimit(1).padding(.horizontal, 12).padding(.vertical, 8)
                 .background(selected ? Theme.orange : Theme.panel, in: Capsule()).overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1)).foregroundStyle(selected ? Theme.onAccent : Theme.ink)
         }
     }
@@ -1212,7 +1212,7 @@ struct MeasurementGroupCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            Text(title.tr.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             ForEach(rows) { row in
                 HStack(alignment: .firstTextBaseline) {
                     Text(row.title).font(.subheadline).foregroundStyle(Theme.ink.opacity(0.9))
@@ -1244,7 +1244,7 @@ struct AIModelsRow: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "cpu").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.orange)
-                Text(title).font(.subheadline).foregroundStyle(Theme.muted)
+                Text(title.tr).font(.subheadline).foregroundStyle(Theme.muted)
                 Spacer(minLength: 8)
                 Text(value).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
                     .lineLimit(1).minimumScaleFactor(0.75)
@@ -1300,7 +1300,7 @@ struct AIModelsView: View {
 
     private func section<Rows: View>(_ title: String, works: Bool, @ViewBuilder rows: () -> Rows) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            Text(title.tr.uppercased()).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             VStack(spacing: 0) { rows() }.panelCard(18)
         }
         .opacity(works ? 1 : 0.6)
@@ -1310,7 +1310,7 @@ struct AIModelsView: View {
         Button { Haptics.tap(); pick() } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
+                    Text(title.tr).font(.body.weight(.semibold)).foregroundStyle(Theme.ink)
                     Text(note).font(.caption).foregroundStyle(Theme.muted).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
@@ -1491,7 +1491,7 @@ struct PlanStat: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value).font(.subheadline.bold()).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.caption2).foregroundStyle(Theme.muted)
+            Text(title.tr).font(.caption2).foregroundStyle(Theme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading).padding(12).panelCard(14)
     }

@@ -96,7 +96,7 @@ struct HouseScanView: View {
 
     private var header: some View {
         HStack {
-            Text(title).font(.headline).tracking(2)
+            Text(title.tr).font(.headline).tracking(2)
             Spacer()
             if phase == .scanning { TorchButton() }
             if phase == .intro {

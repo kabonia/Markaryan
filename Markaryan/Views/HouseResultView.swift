@@ -303,7 +303,7 @@ struct HouseResultView: View {
 
     private func infoLine(_ title: String, _ value: String) -> some View {
         HStack(alignment: .top) {
-            Text(title).font(.footnote).foregroundStyle(Theme.muted)
+            Text(title.tr).font(.footnote).foregroundStyle(Theme.muted)
             Spacer(minLength: 12)
             Text(value).font(.footnote.weight(.semibold)).multilineTextAlignment(.trailing)
         }
@@ -328,7 +328,7 @@ struct MeasureRow: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Circle().fill(color).frame(width: 8, height: 8)
-                Text(title).font(.subheadline)
+                Text(title.tr).font(.subheadline)
                 Spacer()
                 if let value = measure?.value {
                     Text("\(ParcelRules.format(value, digits: digits)) \(unit)").font(.subheadline.weight(.semibold).monospacedDigit())
@@ -350,7 +350,7 @@ struct Legend: View {
     let color: Color
     let text: String
     var body: some View {
-        HStack(spacing: 5) { Circle().fill(color).frame(width: 7, height: 7); Text(text).font(.caption2).foregroundStyle(Theme.muted) }
+        HStack(spacing: 5) { Circle().fill(color).frame(width: 7, height: 7); Text(text.tr).font(.caption2).foregroundStyle(Theme.muted) }
     }
 }
 

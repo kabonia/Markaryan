@@ -54,7 +54,7 @@ struct RoomScanView: View {
             #endif
             VStack {
                 HStack {
-                    Text(title).font(.headline).tracking(2)
+                    Text(title.tr).font(.headline).tracking(2)
                     Spacer()
                     if phase == .scanning { TorchButton() }
                     // Closing after some rooms keeps them and opens what was scanned.

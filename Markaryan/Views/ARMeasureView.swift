@@ -448,7 +448,7 @@ struct ARMeasureView: View {
         }.padding(20).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26)).padding(12)
     }
     func dimension(_ label: String, _ binding: Binding<String>) -> some View {
-        VStack(alignment: .leading) { Text(label).font(.caption); TextField("м", text: binding).keyboardType(.decimalPad).padding(10).background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10)) }
+        VStack(alignment: .leading) { Text(label.tr).font(.caption); TextField("м", text: binding).keyboardType(.decimalPad).padding(10).background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10)) }
     }
     func savePlan() {
         guard let plan = FloorPlanBuilder.fromContour(model.points, name: "Помещение \(store.floorPlans.count + 1)") else { return }

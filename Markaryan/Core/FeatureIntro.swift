@@ -119,9 +119,9 @@ struct FeatureIntroSheet: View {
                 hero
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(intro.title).font(.system(size: 30, weight: .bold, design: .serif)).tracking(-0.5).foregroundStyle(Theme.ink)
+                        Text(intro.title.tr).font(.system(size: 30, weight: .bold, design: .serif)).tracking(-0.5).foregroundStyle(Theme.ink)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(intro.summary).font(.body).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                        Text(intro.summary.tr).font(.body).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
                     }
                     .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 12)
 
@@ -141,7 +141,7 @@ struct FeatureIntroSheet: View {
                     if let tip = intro.tip {
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: "lightbulb.max.fill").font(.headline).foregroundStyle(Theme.gold)
-                            Text(tip).font(.footnote).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                            Text(tip.tr).font(.footnote).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                         .background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -196,7 +196,7 @@ struct FeatureIntroSheet: View {
                         .frame(width: 1.2).frame(maxHeight: .infinity)
                 }
             }
-            Text(text).font(.subheadline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+            Text(text.tr).font(.subheadline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6).padding(.bottom, last ? 0 : 18)
             Spacer(minLength: 0)
         }

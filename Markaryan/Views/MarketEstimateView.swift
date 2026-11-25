@@ -147,7 +147,7 @@ struct MarketEstimateView: View {
     private func section(_ title: String, _ items: [MarketEstimateRow]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if !items.isEmpty {
-                Text(title).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+                Text(title.tr).font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 ForEach(items) { row in MarketEstimateRowCard(row: row) }
             }
         }

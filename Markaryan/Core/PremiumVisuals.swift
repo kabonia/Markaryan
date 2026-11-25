@@ -324,7 +324,7 @@ private struct CalculatorScene: View {
 
     private func row(_ title: String, _ value: String, visible: Double) -> some View {
         HStack {
-            Text(title).font(.subheadline).foregroundStyle(.white.opacity(0.7))
+            Text(title.tr).font(.subheadline).foregroundStyle(.white.opacity(0.7))
             Spacer()
             Text(value).font(.system(.subheadline, design: .rounded, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 10).padding(.vertical, 5)
@@ -369,7 +369,7 @@ private struct DesignScene: View {
     }
 
     private func tag(_ text: String, gold: Bool) -> some View {
-        Text(text.uppercased()).font(.system(size: 9, weight: .heavy)).tracking(1)
+        Text(text.tr.uppercased()).font(.system(size: 9, weight: .heavy)).tracking(1)
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(gold ? Theme.orange : Color.black.opacity(0.45), in: Capsule())
             .foregroundStyle(.white)
@@ -497,7 +497,7 @@ private struct ProjectScene: View {
     private func stage(_ title: String, done: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: done ? "checkmark.circle.fill" : "circle").foregroundStyle(done ? Lux.goldBright : .white.opacity(0.4))
-            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(done ? 1 : 0.55))
+            Text(title.tr).font(.subheadline.weight(.medium)).foregroundStyle(.white.opacity(done ? 1 : 0.55))
         }
     }
 }
@@ -605,7 +605,7 @@ struct HouseScanScene: View {
     }
 
     private func label(_ text: String) -> some View {
-        Text(text).font(.system(.caption, design: .rounded, weight: .bold)).foregroundStyle(Theme.ink)
+        Text(text.tr).font(.system(.caption, design: .rounded, weight: .bold)).foregroundStyle(Theme.ink)
             .padding(.horizontal, 8).padding(.vertical, 3).background(Lux.goldBright, in: Capsule())
     }
 }

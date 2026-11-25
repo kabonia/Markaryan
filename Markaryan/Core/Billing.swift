@@ -140,7 +140,7 @@ struct BillingView: View {
                     InfoNote(text: "Сейчас все функции бесплатны. Когда включится оплата, баланс и тарифы будут здесь.")
                 }
                 if billing.russia { russiaCard } else { storeCard }
-                if let message = billing.message { Text(message).font(.footnote).foregroundStyle(Theme.muted) }
+                if let message = billing.message { Text(message.tr).font(.footnote).foregroundStyle(Theme.muted) }
                 pricesCard
             }
             .padding(20)
@@ -234,7 +234,7 @@ struct BillingView: View {
             Text("СКОЛЬКО СТОИТ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
             ForEach(priceNames, id: \.0) { key, title in
                 if let credits = billing.me?.prices[key] {
-                    HStack { Text(title).font(.subheadline).foregroundStyle(Theme.ink); Spacer(); HStack(spacing: 5) { Text("\(credits)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink); CreditCoin(size: 15, shine: false) } }
+                    HStack { Text(title.tr).font(.subheadline).foregroundStyle(Theme.ink); Spacer(); HStack(spacing: 5) { Text("\(credits)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink); CreditCoin(size: 15, shine: false) } }
                 }
             }
             Text("Калькуляторы, AR‑рулетка, типовые сметы и проекты — бесплатно. Если ИИ не справился, кредиты возвращаются.").font(.caption).foregroundStyle(Theme.muted)

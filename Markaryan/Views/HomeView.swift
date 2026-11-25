@@ -182,8 +182,8 @@ struct HomeSectionHeader: View {
     let title: String
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(eyebrow.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.gold)
-            Text(title).font(.title3.bold()).tracking(-0.4)
+            Text(eyebrow.tr.uppercased()).font(.caption.weight(.bold)).tracking(1.6).foregroundStyle(Theme.gold)
+            Text(title.tr).font(.title3.bold()).tracking(-0.4)
         }
     }
 }
@@ -256,8 +256,8 @@ struct HomeToolCard: View {
                         .overlay(Capsule().strokeBorder(Theme.gold.opacity(0.25), lineWidth: 0.5))
                 }
             }
-            Text(title).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
-            Text(text).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            Text(title.tr).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.85)
+            Text(text.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(4).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             Spacer(minLength: 0)
         }
         .padding(15)
@@ -275,8 +275,8 @@ struct HomeWideToolCard: View {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
-                Text(text).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+                Text(title.tr).font(.subheadline.weight(.bold)).foregroundStyle(Theme.ink)
+                Text(text.tr).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
@@ -317,7 +317,7 @@ struct PriceAlertBanner: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "arrow.triangle.2.circlepath.circle.fill").font(.title3).foregroundStyle(Theme.orange)
-            VStack(alignment: .leading, spacing: 5) { Text("Цены обновились").font(.headline); Text(text).font(.caption).foregroundStyle(Theme.muted) }
+            VStack(alignment: .leading, spacing: 5) { Text("Цены обновились").font(.headline); Text(text.tr).font(.caption).foregroundStyle(Theme.muted) }
             Spacer()
             Button(action: onClose) { Image(systemName: "xmark").foregroundStyle(Theme.muted).padding(4) }.accessibilityLabel("Скрыть")
         }
@@ -372,8 +372,8 @@ struct HomeActionCard: View {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(accent)
                 .frame(width: 40, height: 40).background(accent.opacity(0.13), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             Spacer(minLength: 4)
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2)
-            Text(subtitle).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
+            Text(title.tr).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink).lineLimit(2)
+            Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
         .padding(16)
@@ -388,7 +388,7 @@ struct HomeMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value).font(.title2.bold()).monospacedDigit().foregroundStyle(Theme.ink)
-            Text(caption).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
+            Text(caption.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -555,13 +555,13 @@ struct ProjectMetric: View {
     let value: String
     let title: String
     var alert = false
-    var body: some View { VStack(alignment: .leading, spacing: 6) { Text(title.uppercased()).font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(Theme.muted); Text(value).font(.headline.bold()).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7).foregroundStyle(alert ? Theme.danger : .white) }.frame(maxWidth: .infinity, alignment: .leading).padding(16).panelCard(18) }
+    var body: some View { VStack(alignment: .leading, spacing: 6) { Text(title.tr.uppercased()).font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(Theme.muted); Text(value).font(.headline.bold()).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7).foregroundStyle(alert ? Theme.danger : .white) }.frame(maxWidth: .infinity, alignment: .leading).padding(16).panelCard(18) }
 }
 struct ProjectHubRow: View {
     let icon: String
     let title: String
     let subtitle: String
-    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title).font(.headline).foregroundStyle(Theme.ink); Text(subtitle).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
+    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(Theme.orange).frame(width: 32); VStack(alignment: .leading, spacing: 4) { Text(title.tr).font(.headline).foregroundStyle(Theme.ink); Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.muted) }.padding(18).panelCard(18) }
 }
 
 struct ProjectPlanView: View {

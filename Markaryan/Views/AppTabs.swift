@@ -111,9 +111,9 @@ struct ProjectStatTile: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Theme.muted)
             }
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+            Text(title.tr).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
             Text(value).font(.title3.bold()).monospacedDigit().foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.6)
-            Text(caption).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
+            Text(caption.tr).font(.caption2).foregroundStyle(Theme.muted).lineLimit(1)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -509,9 +509,9 @@ struct ToolFeatureCard: View {
                 .frame(width: 48, height: 48)
                 .background(accent, in: RoundedRectangle(cornerRadius: 15))
             VStack(alignment: .leading, spacing: 6) {
-                Text(eyebrow).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
-                Text(title).font(.headline).foregroundStyle(Theme.ink)
-                Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                Text(eyebrow.tr).font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(accent)
+                Text(title.tr).font(.headline).foregroundStyle(Theme.ink)
+                Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(.top, 6)
@@ -534,8 +534,8 @@ struct AppTabRow: View {
                 .frame(width: 42, height: 42)
                 .background(Theme.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 13))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
-                Text(subtitle).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+                Text(title.tr).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.muted)
@@ -578,7 +578,7 @@ struct ProfileQuickAction: View {
         VStack(spacing: 8) {
             Image(systemName: icon).font(.title3.weight(.semibold)).foregroundStyle(Theme.onAccent)
                 .frame(width: 46, height: 46).background(Theme.orange, in: Circle())
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
+            Text(title.tr).font(.caption.weight(.semibold)).foregroundStyle(Theme.ink)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14).panelCard(18)
     }
