@@ -80,6 +80,12 @@ def _gable_profile(points2d: np.ndarray, eave: float, bin_size: float = 0.1):
     if len(env) < 6:
         return None
     env = np.array(env)
+    seen_top = env[:, 1].max()
+    # Плато у верха — это предел дальности LiDAR, а не кромка крыши: такие корзины в прямые не берём.
+    # Если конёк реально снят, отбрасывается только узкая полоска у вершины — прямые по скатам остаются.
+    plateau = env[:, 1] >= seen_top - 0.12
+    if (~plateau).sum() >= 6:
+        env = env[~plateau]
     mid = (s_min + s_max) / 2
     left, right = env[env[:, 0] < mid], env[env[:, 0] >= mid]
     if len(left) < 3 or len(right) < 3:
@@ -90,7 +96,6 @@ def _gable_profile(points2d: np.ndarray, eave: float, bin_size: float = 0.1):
         return None
     s_apex = (br - bl) / (kl - kr)
     h_apex = kl * s_apex + bl
-    seen_top = env[:, 1].max()
     return {
         "ridge": float(h_apex), "apexOffset": float(s_apex - mid),
         "pitchLeft": math.degrees(math.atan(kl)), "pitchRight": math.degrees(math.atan(-kr)),
