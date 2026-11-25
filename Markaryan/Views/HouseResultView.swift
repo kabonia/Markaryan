@@ -170,7 +170,11 @@ struct HouseResultView: View {
     private var dimensions: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("РАЗМЕРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
-            MeasureRow(title: "Ширина торца", measure: result.footprint?.gableWidth, unit: "м")
+            if let shape = result.shapeTitle, let sides = result.footprint?.polygon?.sides {
+                Text("\(shape) дом: стороны \(sides.map { ParcelRules.format($0, digits: 2) }.joined(separator: " · ")) м")
+                    .font(.footnote).foregroundStyle(Theme.muted)
+            }
+            MeasureRow(title: result.roof?.type == "gable" ? "Ширина торца" : "Ширина дома", measure: result.footprint?.gableWidth, unit: "м")
             MeasureRow(title: "Длина дома", measure: result.footprint?.length, unit: "м")
             MeasureRow(title: "Высота до карниза", measure: result.eaveHeight, unit: "м")
             MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
@@ -265,6 +269,7 @@ struct HouseResultView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ПЛОЩАДИ ДЛЯ СМЕТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             if let a = result.footprintArea { infoLine("Пятно застройки", "\(ParcelRules.format(a, digits: 1)) м²") }
+            if let p = result.perimeter { infoLine("Периметр (отмостка, цоколь)", "\(ParcelRules.format(p, digits: 1)) м") }
             if let a = result.roofArea { infoLine(result.hasOverhangs ? "Кровля (со свесами)" : "Кровля (без свесов)", "\(ParcelRules.format(a, digits: 1)) м²") }
             if let a = result.facadeArea { infoLine("Фасады всего", "\(ParcelRules.format(a, digits: 1)) м²") }
             if !(result.openings ?? []).isEmpty, let a = result.facadeNetArea { infoLine("Фасады без окон и дверей", "\(ParcelRules.format(a, digits: 1)) м²") }

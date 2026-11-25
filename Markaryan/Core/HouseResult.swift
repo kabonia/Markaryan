@@ -29,9 +29,18 @@ struct HouseMeasure: Codable, Equatable {
 }
 
 struct HouseResult: Codable, Equatable {
+    struct Polygon: Codable, Equatable {
+        var corners: [[Double]]?
+        var area: Double?
+        var perimeter: Double?
+        var sides: [Double]?
+        /// rectangle · L · complex
+        var shape: String?
+    }
     struct Footprint: Codable, Equatable {
         var gableWidth: HouseMeasure?
         var length: HouseMeasure?
+        var polygon: Polygon?
         /// Углы в мире ARKit [x, z], метры.
         var corners: [[Double]]?
     }
@@ -82,6 +91,7 @@ struct HouseResult: Codable, Equatable {
         var symmetric: Bool?
         var typeByPhoto: String?
         var byPhoto: ByPhoto?
+        var hipPitchDeg: Double?
         var overhangEave: HouseMeasure?
         var overhangGable: HouseMeasure?
     }
@@ -117,15 +127,31 @@ struct HouseResult: Codable, Equatable {
         switch roof?.type {
         case "gable": return "Двускатная"
         case "hip": return "Вальмовая"
+        case "half_hip": return "Полувальмовая"
         case "flat_or_unknown": return "Плоская или не определена"
         default: return "Не определена"
         }
     }
 
-    /// Площадь застройки по футпринту, м².
+    /// Площадь застройки (по контуру дома — Г‑образный тоже), м².
     var footprintArea: Double? {
+        if let area = footprint?.polygon?.area, area > 0 { return area }
         guard let w = footprint?.gableWidth?.value, let l = footprint?.length?.value else { return nil }
         return w * l
+    }
+
+    var perimeter: Double? {
+        if let p = footprint?.polygon?.perimeter, p > 0 { return p }
+        guard let w = footprint?.gableWidth?.value, let l = footprint?.length?.value else { return nil }
+        return 2 * (w + l)
+    }
+
+    var shapeTitle: String? {
+        switch footprint?.polygon?.shape {
+        case "L": return "Г‑образный"
+        case "complex": return "Сложной формы"
+        default: return nil
+        }
     }
 
     private var eaveOverhang: Double { roof?.overhangEave?.value ?? 0 }
@@ -136,8 +162,15 @@ struct HouseResult: Codable, Equatable {
     var roofArea: Double? {
         guard let w = footprint?.gableWidth?.value, let l = footprint?.length?.value else { return nil }
         let length = l + 2 * gableOverhang
-        guard let pitch = roof?.pitchDeg?.value, pitch > 1, pitch < 80 else { return (w + 2 * eaveOverhang) * length }
-        return 2 * (w / 2 + eaveOverhang) / cos(pitch * .pi / 180) * length
+        let pitch = roof?.pitchDeg?.value ?? 0
+        let cosine = pitch > 1 && pitch < 80 ? cos(pitch * .pi / 180) : 1
+        if roof?.type == "gable" && footprint?.polygon?.shape != "L" && footprint?.polygon?.shape != "complex" {
+            return 2 * (w / 2 + eaveOverhang) / cosine * length
+        }
+        // Вальмовая, плоская, сложный план: все скаты с одним уклоном → площадь = план со свесами / cos(уклона).
+        guard let plan = footprintArea, let p = perimeter else { return nil }
+        let overhang = max(eaveOverhang, gableOverhang)
+        return (plan + p * overhang + 4 * overhang * overhang) / cosine
     }
 
     /// Водосточный жёлоб: два карниза с фронтонными свесами, м.
@@ -155,10 +188,11 @@ struct HouseResult: Codable, Equatable {
 
     /// Площадь фасадов без проёмов: стены до карниза по периметру + два фронтона, м².
     var facadeArea: Double? {
-        guard let w = footprint?.gableWidth?.value, let l = footprint?.length?.value, let eave = eaveHeight?.value else { return nil }
+        guard let w = footprint?.gableWidth?.value, let p = perimeter, let eave = eaveHeight?.value else { return nil }
         let gables: Double
-        if let ridge = roof?.ridgeHeight?.value, ridge > eave { gables = w * (ridge - eave) } else { gables = 0 } // 2 треугольника = w·h
-        return 2 * (w + l) * eave + gables
+        // Фронтоны только у двускатной: 2 треугольника = w·h; у вальмовой фронтонов нет.
+        if roof?.type == "gable", let ridge = roof?.ridgeHeight?.value, ridge > eave { gables = w * (ridge - eave) } else { gables = 0 }
+        return p * eave + gables
     }
 
     /// Дом как постройка на участке (местная система участка) — для проверки отступов.

@@ -130,6 +130,76 @@ def _plane_intersection_near(a: Plane, b: Plane, near: np.ndarray):
         return None
 
 
+def _footprint_polygon(groups: dict, u: np.ndarray, v: np.ndarray):
+    """Контур дома (Г‑образный, с пристройками) — разбиением плана линиями стен на клетки.
+    Клетка внутри, если слева от неё нечётное число стен оси A, перекрывающих её по второй оси."""
+    def lines(group, axis, other):
+        out = []
+        for w in group:
+            s = w.points @ other
+            out.append((float(w.points.mean(axis=0) @ axis), float(np.percentile(s, 1)), float(np.percentile(s, 99))))
+        return out
+    a_walls, b_walls = lines(groups["A"], u, v), lines(groups["B"], v, u)
+
+    def coords(walls):
+        values = sorted(w[0] for w in walls)
+        merged = []
+        for x in values:
+            if merged and x - merged[-1][-1] < 0.2:
+                merged[-1].append(x)
+            else:
+                merged.append([x])
+        return [float(np.mean(m)) for m in merged]
+    xs, ys = coords(a_walls), coords(b_walls)
+    if len(xs) < 2 or len(ys) < 2:
+        return None
+    nx, ny = len(xs) - 1, len(ys) - 1
+    inside = np.zeros((nx, ny), bool)
+    for i in range(nx):
+        for j in range(ny):
+            ac, bc = (xs[i] + xs[i + 1]) / 2, (ys[j] + ys[j + 1]) / 2
+            count = sum(1 for off, lo, hi in a_walls if off < ac and lo - 0.3 <= bc <= hi + 0.3)
+            inside[i, j] = count % 2 == 1
+    if not inside.any():
+        return None
+    area = float(sum((xs[i + 1] - xs[i]) * (ys[j + 1] - ys[j]) for i in range(nx) for j in range(ny) if inside[i, j]))
+
+    def cell(i, j):
+        return 0 <= i < nx and 0 <= j < ny and inside[i, j]
+    # Граничные рёбра с внутренностью слева (обход против часовой в осях a, b).
+    edges = {}
+    for i in range(nx):
+        for j in range(ny):
+            if not inside[i, j]:
+                continue
+            if not cell(i, j - 1): edges[(i, j)] = (i + 1, j)
+            if not cell(i + 1, j): edges[(i + 1, j)] = (i + 1, j + 1)
+            if not cell(i, j + 1): edges[(i + 1, j + 1)] = (i, j + 1)
+            if not cell(i - 1, j): edges[(i, j + 1)] = (i, j)
+    start = next(iter(edges))
+    loop, point = [start], edges[start]
+    while point != start and len(loop) <= len(edges):
+        loop.append(point)
+        point = edges.get(point)
+        if point is None:
+            return None
+    # Убираем вершины на прямой.
+    corners = []
+    for k, p in enumerate(loop):
+        prev, nxt = loop[k - 1], loop[(k + 1) % len(loop)]
+        if (prev[0] == p[0] == nxt[0]) or (prev[1] == p[1] == nxt[1]):
+            continue
+        corners.append(p)
+    pts = [(xs[i], ys[j]) for i, j in corners]
+    sides = [math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]) for k in range(len(pts))]
+    world = [u * a + v * b for a, b in pts]
+    return {
+        "corners": [[round(float(c[0]), 3), round(float(c[2]), 3)] for c in world],
+        "area": round(area, 3), "perimeter": round(float(sum(sides)), 3), "sides": [round(x, 3) for x in sides],
+        "shape": "rectangle" if len(pts) == 4 else ("L" if len(pts) == 6 else "complex"),
+    }
+
+
 def _side(size, ext):
     """Размер стороны дома: измерен по двум стенам или достроен по концам соседних (сторона недоступна)."""
     if ext[4] == "inferred":
@@ -223,13 +293,18 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
     tops_a, tops_b = tops(groups["A"]), tops(groups["B"])
     # Фронтонные стены выше карнизных: по ним определяем направление конька.
     gable_axis = "A" if max(tops_a) > max(tops_b) + 0.3 else "B" if max(tops_b) > max(tops_a) + 0.3 else None
-    eave_group = groups["B"] if gable_axis == "A" else groups["A"]
+    # Без фронтонов (вальмовая, плоская) — все стены карнизные.
+    eave_group = walls if gable_axis is None else (groups["B"] if gable_axis == "A" else groups["A"])
     eave_tops = [float(np.percentile(w.points[:, 1], 99) - ground_y) for w in eave_group]
     eave = float(np.median(eave_tops))
     eave_sigma = float(np.std(eave_tops)) if len(eave_tops) > 1 else 0.03
 
-    width_gable = ext_b[0] if gable_axis == "A" else ext_a[0]   # ширина торца (под фронтоном)
-    length = ext_a[0] if gable_axis == "A" else ext_b[0]
+    if gable_axis:
+        width_gable = ext_b[0] if gable_axis == "A" else ext_a[0]   # ширина торца (под фронтоном)
+        length = ext_a[0] if gable_axis == "A" else ext_b[0]
+    else:
+        # Без фронтонов: ширина — короткая сторона, длина — длинная.
+        width_gable, length = sorted((ext_a[0], ext_b[0]))
 
     roof = {"type": "flat_or_unknown"}
     if gable_axis:
@@ -281,6 +356,16 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
                 })
                 if profile_ridge is not None:
                     roof["ridgeByGableEdge"] = round(profile_ridge, 3)  # сверка: кромка фронтона
+                # Скаты и поперёк конька → вальмовая (без фронтонов) или полувальмовая (фронтон есть, но со скатом сверху).
+                ridge_dir = np.cross(r1.normal, r2.normal)
+                ridge_dir[1] = 0
+                if np.linalg.norm(ridge_dir) > 1e-6:
+                    ridge_dir /= np.linalg.norm(ridge_dir)
+                    hips = [r for r in roofs if 0.26 < abs(r.normal[1]) < 0.99 and r.size >= 150
+                            and abs(np.array([r.normal[0], 0, r.normal[2]]) @ ridge_dir) / max(1e-6, math.hypot(r.normal[0], r.normal[2])) > 0.8]
+                    if hips:
+                        roof["type"] = "half_hip" if gable_axis else "hip"
+                        roof["hipPitchDeg"] = round(float(np.median([math.degrees(math.acos(min(1.0, abs(h.normal[1])))) for h in hips])), 2)
 
     # Карниз точнее — как линия пересечения ската со стеной: верх стены под свесом лидару часто не виден.
     if roofs and eave_group:
@@ -323,10 +408,11 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
     corners = [(u * a + v * b) for a, b in ((a_lo, b_lo), (a_hi, b_lo), (a_hi, b_hi), (a_lo, b_hi))]
     return {
         "footprint": {
-            "gableWidth": _side(width_gable, ext_b if gable_axis == "A" else ext_a),
-            "length": _side(length, ext_a if gable_axis == "A" else ext_b),
+            "gableWidth": _side(width_gable, (ext_b if gable_axis == "A" else ext_a) if gable_axis else min(ext_a, ext_b, key=lambda e: e[0])),
+            "length": _side(length, (ext_a if gable_axis == "A" else ext_b) if gable_axis else max(ext_a, ext_b, key=lambda e: e[0])),
             "corners": [[round(float(c[0]), 3), round(float(c[2]), 3)] for c in corners],
             "axisDeg": round(math.degrees(theta), 2),
+            "polygon": _footprint_polygon(groups, u, v),
         },
         "groundY": round(ground_y, 3),
         "eaveHeight": house_eave or _value(eave, "measured", sigma=eave_sigma + 0.01),

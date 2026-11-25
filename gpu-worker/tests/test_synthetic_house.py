@@ -90,15 +90,15 @@ def render_depth(scene, pose, rng):
     return depth, conf
 
 
-def make_scan(tmp_path, skip=None, overhang=(0.0, 0.0)):
+def make_scan(tmp_path, skip=None, overhang=(0.0, 0.0), mesh=None, positions=None):
     """skip(position) → True — кадр не снимаем (например, сторона дома недоступна)."""
     rng = np.random.default_rng(7)
     scene = o3d.t.geometry.RaycastingScene()
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(house_mesh(overhang)))
+    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(mesh if mesh is not None else house_mesh(overhang)))
     frames, files = [], {}
     jpeg = bundle_io.tiny_jpeg()
     i = 0
-    for position, wall in walk(3.2, 0.6):
+    for position, wall in (positions if positions is not None else walk(3.2, 0.6)):
         if skip and skip(position):
             continue
         for aim_height, tier in ((2.0, "wall"), (4.6, "roof")):
@@ -207,3 +207,77 @@ def test_overhangs(tmp_path):
     assert abs(house["eaveHeight"]["value"] - EAVE) < 0.05
     assert abs(roof["ridgeHeight"]["value"] - RIDGE) < 0.10
     assert abs(house["footprint"]["gableWidth"]["value"] - WIDTH) < 0.03
+
+
+# ---------- сложные дома ----------
+
+def prism_mesh(outline, eave, roof_triangles):
+    """Стены по контуру (x, z) высотой eave + земля + треугольники крыши (списки из 3 точек)."""
+    v, t = [], []
+    for (x0, z0), (x1, z1) in zip(outline, outline[1:] + outline[:1]):
+        k = len(v)
+        v += [(x0, 0, z0), (x1, 0, z1), (x1, eave, z1), (x0, eave, z0)]
+        t += [(k, k + 1, k + 2), (k, k + 2, k + 3)]
+    k = len(v)
+    v += [(-40, 0, -40), (40, 0, -40), (40, 0, 40), (-40, 0, 40)]
+    t += [(k, k + 2, k + 1), (k, k + 3, k + 2)]
+    for tri in roof_triangles:
+        k = len(v)
+        v += list(tri)
+        t.append((k, k + 1, k + 2))
+    return o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(np.array(v, float)), o3d.utility.Vector3iVector(np.array(t)))
+
+
+def nearest_on_outline(p, outline):
+    best, best_d = None, 1e9
+    for (x0, z0), (x1, z1) in zip(outline, outline[1:] + outline[:1]):
+        a, b = np.array([x0, z0]), np.array([x1, z1])
+        q = np.array([p[0], p[2]])
+        t = np.clip((q - a) @ (b - a) / ((b - a) @ (b - a)), 0, 1)
+        c = a + (b - a) * t
+        d = np.linalg.norm(q - c)
+        if d < best_d:
+            best, best_d = c, d
+    return np.array([best[0], 0.0, best[1]])
+
+
+def walk_path(path, outline, step=0.6):
+    for (x0, z0), (x1, z1) in zip(path, path[1:] + path[:1]):
+        n = max(1, int(math.hypot(x1 - x0, z1 - z0) / step))
+        for i in range(n):
+            p = np.array([x0 + (x1 - x0) * i / n, 1.5, z0 + (z1 - z0) * i / n])
+            yield p, nearest_on_outline(p, outline)
+
+
+def test_l_shaped_house(tmp_path):
+    """Г‑образный дом, плоская кровля 3 м: контур (−5,−4)…, вырез 4 × 4. Площадь 64 м², периметр 36 м."""
+    outline = [(-5, -4), (5, -4), (5, 0), (1, 0), (1, 4), (-5, 4)]
+    roof = [((-5, 3, -4), (5, 3, -4), (5, 3, 0)), ((-5, 3, -4), (5, 3, 0), (-5, 3, 0)),
+            ((-5, 3, 0), (1, 3, 0), (1, 3, 4)), ((-5, 3, 0), (1, 3, 4), (-5, 3, 4))]
+    path = [(-8.2, -7.2), (8.2, -7.2), (8.2, 3.2), (4.2, 3.2), (4.2, 7.2), (-8.2, 7.2)]
+    scan = make_scan(tmp_path, mesh=prism_mesh(outline, 3.0, roof), positions=list(walk_path(path, outline)))
+    house = process(scan, tmp_path / "out")
+    poly = house["footprint"]["polygon"]
+    notice("Г‑образный дом — правда 64.0 м², периметр 36.0 м, 6 углов", f"{poly['shape']}: площадь {poly['area']} м², периметр {poly['perimeter']} м, стороны {poly['sides']}")
+    assert poly["shape"] == "L"
+    assert abs(poly["area"] - 64) < 0.6
+    assert abs(poly["perimeter"] - 36) < 0.15
+
+
+def test_hip_roof(tmp_path):
+    """Вальмовая крыша на доме 10 × 8: конёк 2 м на высоте 6 м, все скаты 36,87°."""
+    x, z = LENGTH / 2, WIDTH / 2
+    outline = [(-x, -z), (x, -z), (x, z), (-x, z)]
+    a, b, c, d = (-x, EAVE, -z), (x, EAVE, -z), (x, EAVE, z), (-x, EAVE, z)
+    r0, r1 = (-1, RIDGE, 0), (1, RIDGE, 0)
+    roof = [(a, b, r1), (a, r1, r0), (c, d, r0), (c, r0, r1), (d, a, r0), (b, c, r1)]
+    scan = make_scan(tmp_path, mesh=prism_mesh(outline, EAVE, roof))
+    house = process(scan, tmp_path / "out")
+    r = house["roof"]
+    notice("Вальмовая крыша — правда: hip; конёк 6.00; 36.87°", f"тип {r['type']}; конёк {r['ridgeHeight']['value']} м; уклон {r['pitchDeg']['value']}°; "
+           f"вальмы {r.get('hipPitchDeg')}°; карниз {house['eaveHeight']['value']} м; {house['footprint']['gableWidth']['value']} × {house['footprint']['length']['value']} м")
+    assert r["type"] == "hip"
+    assert abs(r["ridgeHeight"]["value"] - RIDGE) < 0.10
+    assert abs(r["pitchDeg"]["value"] - PITCH) < 1.0
+    assert abs(r["hipPitchDeg"] - PITCH) < 1.5
+    assert abs(house["eaveHeight"]["value"] - EAVE) < 0.05

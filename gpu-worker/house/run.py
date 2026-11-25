@@ -97,7 +97,8 @@ def process(scan: Path, out: Path) -> dict:
     house["geo"] = {"location": world.get("location"), "alignment": world.get("alignment")}
     if world.get("alignment") == "gravityAndHeading":
         # Предварительно: точность = GPS (5–15 м) и компас (5–10°); точно — после привязки по углам участка.
-        house["geo"]["footprintLatLon"] = footprint_latlon(house["footprint"]["corners"], world.get("location"))
+        poly = house["footprint"].get("polygon")
+        house["geo"]["footprintLatLon"] = footprint_latlon(poly["corners"] if poly else house["footprint"]["corners"], world.get("location"))
     if bundle.manifest.get("parcel"):
         house["parcel"] = {"cadNumber": bundle.manifest["parcel"].get("cadNumber")}
     stage("Сохраняем модель", 0.9)
