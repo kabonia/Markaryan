@@ -130,6 +130,13 @@ def _plane_intersection_near(a: Plane, b: Plane, near: np.ndarray):
         return None
 
 
+def _side(size, ext):
+    """Размер стороны дома: измерен по двум стенам или достроен по концам соседних (сторона недоступна)."""
+    if ext[4] == "inferred":
+        return _value(size, "extrapolated", sigma=ext[3] + 0.01, note="одна сторона недоступна — по концам соседних стен")
+    return _value(size, "measured", sigma=ext[3] + 0.01)
+
+
 def _value(value, source, sigma=None, note=None):
     out = {"value": None if value is None else round(float(value), 3), "source": source}
     if sigma is not None:
@@ -162,21 +169,34 @@ def build_house(planes: list[Plane]) -> dict:
         along_a = abs(w.normal @ u) > abs(w.normal @ v)
         groups["A" if along_a else "B"].append(w)
 
-    def extent(group, axis):
-        if len(group) < 2:
+    def extent(group, axis, others):
+        """Габарит вдоль оси: (размер, (смещение, стена|None) низ, верх, σ, None|"inferred")."""
+        offsets = sorted(((float(w.points.mean(axis=0) @ axis), w) for w in group), key=lambda t: t[0])
+        if len(offsets) >= 2 and offsets[-1][0] - offsets[0][0] >= 2.0:
+            lo, hi = offsets[0], offsets[-1]
+            # Расстояние между плоскостями — по точкам обеих стен (усреднение снимает шум LiDAR).
+            sigma = math.hypot(np.std(lo[1].points @ axis), np.std(hi[1].points @ axis)) / math.sqrt(min(lo[1].size, hi[1].size))
+            return hi[0] - lo[0], lo, hi, sigma, None
+        # Сторона недоступна (впритык к соседу, забору): её положение — по концам перпендикулярных стен,
+        # они доходят до угла дома. Точность — чуть ниже, метка «extrapolated».
+        if not others:
             return None
-        offsets = [(float(w.points.mean(axis=0) @ axis), w) for w in group]
-        offsets.sort(key=lambda t: t[0])
-        lo, hi = offsets[0], offsets[-1]
+        proj = np.concatenate([w.points @ axis for w in others])
+        if len(proj) < 50:
+            return None
+        end_lo, end_hi = float(np.percentile(proj, 0.2)), float(np.percentile(proj, 99.8))
+        if not offsets:
+            lo, hi = (end_lo, None), (end_hi, None)
+        else:
+            off, wall = offsets[0] if len(offsets) == 1 else max(offsets, key=lambda t: t[1].size)
+            lo, hi = ((off, wall), (end_hi, None)) if abs(off - end_lo) < abs(off - end_hi) else ((end_lo, None), (off, wall))
         if hi[0] - lo[0] < 2.0:
             return None
-        # Расстояние между плоскостями — по точкам обеих стен (усреднение снимает шум LiDAR).
-        sigma = math.hypot(np.std(lo[1].points @ axis), np.std(hi[1].points @ axis)) / math.sqrt(min(lo[1].size, hi[1].size))
-        return hi[0] - lo[0], lo, hi, sigma
+        return hi[0] - lo[0], lo, hi, 0.03, "inferred"
 
-    ext_a, ext_b = extent(groups["A"], u), extent(groups["B"], v)
+    ext_a, ext_b = extent(groups["A"], u, groups["B"]), extent(groups["B"], v, groups["A"])
     if ext_a is None or ext_b is None:
-        raise ValueError("не хватает противоположных стен — обойдите дом целиком")
+        raise ValueError("не хватает стен — снимите хотя бы три стороны дома или отметьте недоступную сторону")
 
     def tops(group):
         return [float(np.percentile(w.points[:, 1], 98) - ground_y) for w in group]
@@ -249,8 +269,8 @@ def build_house(planes: list[Plane]) -> dict:
     corners = [(u * a + v * b) for a, b in ((a_lo, b_lo), (a_hi, b_lo), (a_hi, b_hi), (a_lo, b_hi))]
     return {
         "footprint": {
-            "gableWidth": _value(width_gable, "measured", sigma=(ext_b if gable_axis == "A" else ext_a)[3] + 0.01),
-            "length": _value(length, "measured", sigma=(ext_a if gable_axis == "A" else ext_b)[3] + 0.01),
+            "gableWidth": _side(width_gable, ext_b if gable_axis == "A" else ext_a),
+            "length": _side(length, ext_a if gable_axis == "A" else ext_b),
             "corners": [[round(float(c[0]), 3), round(float(c[2]), 3)] for c in corners],
             "axisDeg": round(math.degrees(theta), 2),
         },

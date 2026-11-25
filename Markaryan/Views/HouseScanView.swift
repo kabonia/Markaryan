@@ -19,6 +19,7 @@ struct HouseScanView: View {
     @State private var showParcel = false
     @State private var showScans = false
     @State private var showIntro = false
+    @State private var blockedText = ""
 
     enum Phase { case intro, scanning, control, uploading, sent }
 
@@ -248,6 +249,11 @@ struct HouseScanView: View {
             .padding(14).background(.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .padding(.horizontal, 12).padding(.top, 10)
             Spacer()
+            Button { recorder.markBlocked() } label: {
+                Label("Сторона недоступна", systemImage: "hand.raised").font(.footnote.weight(.semibold)).foregroundStyle(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 9).background(.ultraThinMaterial, in: Capsule())
+            }
+            .disabled(recorder.coverage.current == nil)
             HStack(spacing: 10) {
                 Button { recorder.recording ? recorder.pause() : recorder.start() } label: {
                     Label(recorder.recording ? "Пауза" : "Дальше", systemImage: recorder.recording ? "pause.fill" : "play.fill")
@@ -295,6 +301,12 @@ struct HouseScanView: View {
                     .font(.footnote).foregroundStyle(Theme.muted)
                 TextField("Например, 9,42", text: $controlText)
                     .keyboardType(.decimalPad).padding(14).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14))
+                if recorder.hasBlocked {
+                    Text("Недоступная сторона: если знаете её длину (техпаспорт, замер изнутри + толщина стен) — впишите, сверим с достроенной.")
+                        .font(.footnote).foregroundStyle(Theme.muted)
+                    TextField("Длина недоступной стороны, м (необязательно)", text: $blockedText)
+                        .keyboardType(.decimalPad).padding(14).background(Theme.panel, in: RoundedRectangle(cornerRadius: 14))
+                }
                 PrimaryButton(title: "Отправить на обработку", icon: "icloud.and.arrow.up") { Task { await sendScan() } }
                 if HouseScanRecorder.hasLiDAR {
                     Button("Без размера") { controlText = ""; Task { await sendScan() } }.font(.subheadline).frame(maxWidth: .infinity)
@@ -312,7 +324,10 @@ struct HouseScanView: View {
             error = "Введите длину стены в метрах — без неё размеры будут неточными."
             return
         }
-        let control = meters.flatMap { $0 > 0.5 && $0 < 100 ? [HouseScanManifest.Control(kind: "wall_length", meters: $0, note: "рулетка")] : nil } ?? []
+        var control = meters.flatMap { $0 > 0.5 && $0 < 100 ? [HouseScanManifest.Control(kind: "wall_length", meters: $0, note: "рулетка")] : nil } ?? []
+        if let side = Double(blockedText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)), side > 0.5, side < 100 {
+            control.append(HouseScanManifest.Control(kind: "blocked_side_length", meters: side, note: "недоступная сторона: техпаспорт или замер"))
+        }
         do {
             let folder = try await recorder.finish(control: control)
             var state = HouseScanStore.State(frames: recorder.frameCount, bytes: recorder.bytesWritten)

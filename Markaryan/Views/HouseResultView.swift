@@ -181,6 +181,14 @@ struct HouseResultView: View {
                         .font(.footnote)
                 }
             }
+            if let side = result.blockedSide, let tape = side.tape, let delta = side.deltaCm {
+                HStack {
+                    Image(systemName: abs(delta) <= 5 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                        .foregroundStyle(abs(delta) <= 5 ? Theme.success : Theme.gold)
+                    Text("Недоступная сторона: введено \(ParcelRules.format(tape, digits: 2)) м — достроено \(delta >= 0 ? "+" : "")\(ParcelRules.format(delta, digits: 1)) см")
+                        .font(.footnote)
+                }
+            }
             HStack(spacing: 14) {
                 Legend(color: Theme.success, text: "измерено")
                 Legend(color: Theme.gold, text: "по фото")

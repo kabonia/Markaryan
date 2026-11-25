@@ -83,7 +83,8 @@ def render_depth(scene, pose, rng):
     return depth, conf
 
 
-def make_scan(tmp_path):
+def make_scan(tmp_path, skip=None):
+    """skip(position) → True — кадр не снимаем (например, сторона дома недоступна)."""
     rng = np.random.default_rng(7)
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(house_mesh()))
@@ -91,6 +92,8 @@ def make_scan(tmp_path):
     jpeg = bundle_io.tiny_jpeg()
     i = 0
     for position, wall in walk(3.2, 0.6):
+        if skip and skip(position):
+            continue
         for aim_height, tier in ((2.0, "wall"), (4.6, "roof")):
             i += 1
             pose = look_pose(position, wall + [0, aim_height, 0])
@@ -168,3 +171,17 @@ def test_ridge_by_triangulation():
     notice("Конёк триангуляцией", f"ошибка {np.linalg.norm(point - apex) * 100:.1f} см по {used} кадрам из {len(pixels)}, перепроекция {error:.1f} px")
     assert np.linalg.norm(point - apex) < 0.05
     assert used < len(pixels)
+
+
+def test_blocked_side(tmp_path):
+    """Торец справа недоступен (дом впритык к соседу): камера туда не заходит. Длина — по концам длинных стен."""
+    scan = make_scan(tmp_path, skip=lambda p: p[0] > LENGTH / 2 - 1.0)
+    house = process(scan, tmp_path / "out")
+    fp = house["footprint"]
+    length = fp["length"]
+    notice("Сторона недоступна — правда 10.00 м", f"длина {length['value']:.3f} м ({length['source']}); ширина {fp['gableWidth']['value']:.3f} м; "
+           f"конёк {house['roof']['ridgeHeight']['value']} м")
+    assert length["source"] == "extrapolated"
+    assert abs(length["value"] - LENGTH) < 0.05
+    assert abs(fp["gableWidth"]["value"] - WIDTH) < 0.03
+    assert abs(house["roof"]["ridgeHeight"]["value"] - RIDGE) < 0.10

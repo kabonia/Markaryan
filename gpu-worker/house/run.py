@@ -74,6 +74,14 @@ def process(scan: Path, out: Path) -> dict:
         target = control[0]["meters"]
         nearest = min(measured, key=lambda m: abs(m - target))
         house["control"] = {"tape": target, "model": nearest, "deltaCm": round((nearest - target) * 100, 1)}
+    # Недоступная сторона: длина из техпаспорта/замера изнутри — сверка с достроенной по соседним стенам.
+    side = [c for c in bundle.manifest.get("control", []) if c.get("kind") == "blocked_side_length"]
+    if side:
+        sides = [house["footprint"]["gableWidth"], house["footprint"]["length"]]
+        inferred = [s_ for s_ in sides if s_.get("source") == "extrapolated"] or sides
+        target = side[0]["meters"]
+        nearest = min((s_["value"] for s_ in inferred), key=lambda m: abs(m - target))
+        house["blockedSide"] = {"tape": target, "model": nearest, "deltaCm": round((nearest - target) * 100, 1)}
     house["quality"] = {
         "framesWithDepth": used, "frames": len(bundle.frames), "rejectedBlurry": bundle.manifest.get("rejectedBlurry", 0),
         "coverage": bundle.manifest.get("coverage"), "seconds": round(time.time() - started, 1),

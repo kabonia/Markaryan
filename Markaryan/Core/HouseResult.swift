@@ -78,6 +78,8 @@ struct HouseResult: Codable, Equatable {
     var eaveHeight: HouseMeasure?
     var roof: Roof?
     var control: Control?
+    /// Недоступная сторона: введённая длина (техпаспорт, замер изнутри) против достроенной.
+    var blockedSide: Control?
     var quality: Quality?
     var geo: Geo?
 

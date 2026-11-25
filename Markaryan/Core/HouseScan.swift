@@ -20,9 +20,12 @@ struct HouseCoverage: Equatable {
     var roof = [Int](repeating: 0, count: sectors)
     /// Сектор, в котором сейчас стоит человек (nil — центр дома ещё не найден).
     var current: Int?
+    /// Секторы, куда не пройти (дом впритык к соседу, забору): считаются закрытыми, сторону достроит обработчик.
+    var blocked = Set<Int>()
 
-    var wallShare: Double { Double(walls.filter { $0 > 0 }.count) / Double(Self.sectors) }
-    var roofShare: Double { Double(roof.filter { $0 > 0 }.count) / Double(Self.sectors) }
+    private func done(_ list: [Int], _ i: Int) -> Bool { list[i] > 0 || blocked.contains(i) }
+    var wallShare: Double { Double((0..<Self.sectors).filter { done(walls, $0) }.count) / Double(Self.sectors) }
+    var roofShare: Double { Double((0..<Self.sectors).filter { done(roof, $0) }.count) / Double(Self.sectors) }
     /// Общий процент: стены важнее (60 %), крыша — 40 %.
     var total: Double { wallShare * 0.6 + roofShare * 0.4 }
 
@@ -32,9 +35,9 @@ struct HouseCoverage: Equatable {
         var best: (Int, Int)? = nil
         var i = 0
         while i < Self.sectors {
-            if walls[i] == 0 {
+            if !done(walls, i) {
                 var length = 0
-                while length < Self.sectors && walls[(i + length) % Self.sectors] == 0 { length += 1 }
+                while length < Self.sectors && !done(walls, (i + length) % Self.sectors) { length += 1 }
                 if best == nil || length > best!.1 { best = (i, length) }
                 i += max(length, 1)
             } else { i += 1 }
@@ -107,7 +110,7 @@ struct HouseScanManifest: Codable {
     struct Location: Codable { var lat: Double; var lon: Double; var accuracy: Double; var altitude: Double? }
     /// Кадр высокого разрешения (крыша и детали): своя поза и параметры камеры.
     struct Still: Codable { var i: Int; var image: String; var pose: [Float]; var K: [Float]; var width: Int; var height: Int }
-    struct Coverage: Codable { var sectors: Int; var walls: Double; var roof: Double }
+    struct Coverage: Codable { var sectors: Int; var walls: Double; var roof: Double; var blocked: [Int] = [] }
     struct Control: Codable { var kind: String; var meters: Double; var note: String? }
 
     var format = "smetapro-house-scan"
@@ -225,6 +228,21 @@ struct HouseScanManifest: Codable {
     }
     func pause() { recording = false }
 
+    /// «Сторона недоступна»: закрывает самую большую неснятую дугу (или ±40° вокруг человека) — её достроит обработчик.
+    func markBlocked() {
+        var sectors: [Int] = []
+        if let gap = coverage.largestGap, gap.length < HouseCoverage.sectors {
+            sectors = (0..<gap.length).map { (gap.start + $0) % HouseCoverage.sectors }
+        } else if let current = coverage.current {
+            sectors = (-4...4).map { (current + $0 + HouseCoverage.sectors) % HouseCoverage.sectors }
+        }
+        guard !sectors.isEmpty else { return }
+        coverage.blocked.formUnion(sectors)
+        hasBlocked = true
+        Haptics.success()
+    }
+    @Published private(set) var hasBlocked = false
+
     // MARK: ARSessionDelegate
 
     nonisolated func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
@@ -333,6 +351,7 @@ struct HouseScanManifest: Codable {
         if let distance, distance < 3 { return .stepBack }
         if let distance, distance > 20 { return .closer }
         guard center != nil, let sector else { return .findHouse }
+        if coverage.blocked.contains(sector) { return .keepGoing }
         if coverage.walls[sector] > 0 && coverage.roof[sector] == 0 { return .raiseCamera }
         if coverage.wallShare >= 0.9 && coverage.roofShare >= 0.6 { return .done }
         if coverage.walls[sector] > 0, let gap = coverage.largestGap, gap.length >= 4 {
@@ -460,7 +479,7 @@ struct HouseScanManifest: Codable {
             ios: UIDevice.current.systemVersion, image: .init(width: imageSize.width, height: imageSize.height),
             depth: depthSize.map { .init(width: $0.width, height: $0.height) },
             center: center.map { [$0.x, $0.y, $0.z] },
-            coverage: .init(sectors: HouseCoverage.sectors, walls: coverage.wallShare, roof: coverage.roofShare),
+            coverage: .init(sectors: HouseCoverage.sectors, walls: coverage.wallShare, roof: coverage.roofShare, blocked: coverage.blocked.sorted()),
             control: control, frames: frames, stills: stills, parcel: parcel, rejectedBlurry: rejectedBlurry)
         var located = manifest
         if let location {
