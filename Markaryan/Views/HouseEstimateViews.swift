@@ -238,8 +238,7 @@ struct HouseEstimateParamsView: View {
     private func chips(_ options: [(String, String)], selection: Binding<String>, title: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             if let title { Text(title).font(.caption).foregroundStyle(Theme.muted) }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+            ChipFlow(spacing: 8) {
                     ForEach(options, id: \.0) { option in
                         let on = selection.wrappedValue == option.0
                         Button { withAnimation(.snappy) { selection.wrappedValue = option.0 }; Haptics.tap() } label: {
@@ -250,7 +249,6 @@ struct HouseEstimateParamsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                }
             }
         }
     }
@@ -260,6 +258,35 @@ struct HouseEstimateParamsView: View {
             Text(title).font(.caption).foregroundStyle(Theme.muted)
             TextField("0", text: text).keyboardType(.decimalPad).focused($focused, equals: id)
                 .font(.title3.weight(.semibold)).padding(12).background(Theme.panelRaised.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+/// Chips that wrap onto the next line instead of running off the screen.
+struct ChipFlow: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, row: CGFloat = 0, widest: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > 0 && x + size.width > width { x = 0; y += row + spacing; row = 0 }
+            x += size.width + spacing
+            row = max(row, size.height)
+            widest = max(widest, x - spacing)
+        }
+        return CGSize(width: proposal.width ?? widest, height: y + row)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, row: CGFloat = 0
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x > bounds.minX && x + size.width > bounds.maxX { x = bounds.minX; y += row + spacing; row = 0 }
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            row = max(row, size.height)
         }
     }
 }
