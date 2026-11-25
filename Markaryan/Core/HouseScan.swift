@@ -48,7 +48,7 @@ struct HouseCoverage: Equatable {
 
 /// Одна подсказка за раз — самая важная (спецификация §1.1 B).
 enum HouseScanHint: Equatable {
-    case findHouse, lowLight, slower, stepBack, closer, raiseCamera, keepGoing, gap(String), done
+    case findHouse, lowLight, slower, stepBack, closer, raiseCamera, keepGoing, gap(String), done, hot
 
     var text: String {
         switch self {
@@ -59,8 +59,9 @@ enum HouseScanHint: Equatable {
         case .closer: return "Подойдите ближе — до стены больше 20 м"
         case .raiseCamera: return "Поднимите камеру — снимите крышу и фронтон"
         case .keepGoing: return "Хорошо! Идите дальше по кругу"
-        case .gap(let side): return "Осталось снять: \(side)"
+        case .gap(let side): return "Осталось снять:".tr + " " + side.tr
         case .done: return "Дом снят со всех сторон — можно нажимать «Готово»"
+        case .hot: return "Телефон перегрелся — сделайте паузу на минуту в тени"
         }
     }
     var icon: String {
@@ -74,6 +75,7 @@ enum HouseScanHint: Equatable {
         case .keepGoing: return "figure.walk"
         case .gap: return "arrow.triangle.turn.up.right.circle"
         case .done: return "checkmark.seal"
+        case .hot: return "thermometer.sun"
         }
     }
 }
@@ -145,6 +147,16 @@ struct HouseScanManifest: Codable {
     @Published private(set) var bytesWritten: Int64 = 0
     @Published private(set) var recording = false
     @Published private(set) var trackingOK = false
+    /// Расстояние до того, что в центре кадра, м (округлено до 0,1).
+    @Published private(set) var distance: Float?
+    /// Мини‑карта: путь человека и точки стен, куда смотрела камера (вид сверху, x/z).
+    @Published private(set) var track: [SIMD2<Float>] = []
+    @Published private(set) var wallPoints: [SIMD2<Float>] = []
+    /// Где человек сейчас и куда смотрит (для мини‑карты; обновляется ~5 раз в секунду).
+    @Published private(set) var here: (position: SIMD2<Float>, heading: Float)?
+    @Published private(set) var stillCount = 0
+    private var lastHereUpdate: TimeInterval = 0
+    private var darkSince: TimeInterval?
 
     static var isSupported: Bool { ARWorldTrackingConfiguration.isSupported }
     static var hasLiDAR: Bool { ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) }
@@ -267,6 +279,7 @@ struct HouseScanManifest: Codable {
         let exposure = frame.camera.exposureDuration
         let resolution = frame.camera.imageResolution
         let depthMedian = Self.centerDepth(frame.sceneDepth?.depthMap)
+        let light = frame.lightEstimate.map { Float($0.ambientIntensity) }
         // Без LiDAR — расстояние до стены по лучу из центра кадра (оценочная плоскость ARKit).
         var hitDistance: Float? = depthMedian
         if hitDistance == nil {
@@ -277,18 +290,23 @@ struct HouseScanManifest: Codable {
         }
         Task { @MainActor in
             self.process(frame: frame, pose: pose, time: time, tracking: tracking, intrinsics: intrinsics,
-                         exposure: exposure, resolution: resolution, distance: hitDistance, lidarDepth: depthMedian)
+                         exposure: exposure, resolution: resolution, distance: hitDistance, lidarDepth: depthMedian, light: light)
         }
     }
 
     private func process(frame: ARFrame, pose: simd_float4x4, time: TimeInterval, tracking: ARCamera.TrackingState,
-                         intrinsics: simd_float3x3, exposure: TimeInterval, resolution: CGSize, distance: Float?, lidarDepth: Float?) {
+                         intrinsics: simd_float3x3, exposure: TimeInterval, resolution: CGSize, distance: Float?, lidarDepth: Float?,
+                         light: Float? = nil) {
         if let last = lastFrame, time > last.time {
             let turn = Self.angle(between: last.pose, and: pose)
             angularSpeed = angularSpeed * 0.7 + Float(turn / Float(time - last.time)) * 0.3
         }
         lastFrame = (pose, time)
         lastDepthMedian = distance
+        let rounded = distance.map { ($0 * 10).rounded() / 10 }
+        if rounded != self.distance { self.distance = rounded }
+        // Темно дольше секунды (меньше ~250 лм) — подсказка про свет.
+        if let light, light < 250 { if darkSince == nil { darkSince = time } } else { darkSince = nil }
         let position = pose.columns.3.xyz
         if groundY == nil, case .normal = tracking { groundY = position.y - 1.4 } // телефон на уровне груди
         let forward = -pose.columns.2.xyz
@@ -306,11 +324,20 @@ struct HouseScanManifest: Codable {
         let tier = (lookingUp || hitHigh) ? "roof" : "wall"
 
         if coverage.current != sector { coverage.current = sector }
-        hint = nextHint(tracking: tracking, distance: distance, center: center, sector: sector)
+        var next = nextHint(tracking: tracking, distance: distance, center: center, sector: sector)
+        if let darkSince, time - darkSince > 1 { next = .lowLight }
+        let thermal = ProcessInfo.processInfo.thermalState
+        if thermal == .serious || thermal == .critical { next = .hot }
+        if hint != next { hint = next }
+        if time - lastHereUpdate > 0.2 {
+            lastHereUpdate = time
+            here = (SIMD2(position.x, position.z), atan2(forward.x, -forward.z))
+        }
 
         guard recording, case .normal = tracking, angularSpeed < maxAngularSpeed, inFlight < 2 else { return }
         if let key = lastKey {
-            guard time - key.time >= minInterval else { return }
+            let interval = ProcessInfo.processInfo.thermalState == .serious ? minInterval * 2 : minInterval
+            guard time - key.time >= interval else { return }
             let moved = simd_distance(key.pose.columns.3.xyz, position)
             let turned = Self.angle(between: key.pose, and: pose)
             guard moved >= minMove || turned >= minTurn else { return }
@@ -324,6 +351,11 @@ struct HouseScanManifest: Codable {
         recentSharpness.append(sharpness)
         if recentSharpness.count > 30 { recentSharpness.removeFirst() }
         lastKey = (pose, time)
+        track.append(SIMD2(position.x, position.z))
+        if let distance, distance < 25 {
+            let p = position + forward * distance
+            if wallPoints.count < 3000 { wallPoints.append(SIMD2(p.x, p.z)) }
+        }
         if let sector {
             if tier == "roof" { coverage.roof[sector] += 1 } else { coverage.walls[sector] += 1 }
             if (tier == "roof" ? coverage.roof[sector] : coverage.walls[sector]) == 1 { Haptics.tap() }
@@ -423,6 +455,7 @@ struct HouseScanManifest: Codable {
                 let name = String(format: "%06d", index)
                 let width = CVPixelBufferGetWidth(frame.capturedImage), height = CVPixelBufferGetHeight(frame.capturedImage)
                 let k = frame.camera.intrinsics
+                self.stillCount += 1
                 self.stills.append(.init(i: index, image: "hires/\(name).jpg", pose: Self.flatten(frame.camera.transform),
                                          K: [k[0][0], k[1][1], k[2][0], k[2][1]], width: width, height: height))
                 let image = CIImage(cvPixelBuffer: frame.capturedImage)
@@ -856,5 +889,26 @@ struct HouseScanUploader {
         var hasher = SHA256()
         while let chunk = try handle.read(upToCount: 4 * 1_048_576), !chunk.isEmpty { hasher.update(data: chunk) }
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+
+/// Проверки перед обходом: место в памяти, нагрев, лидар.
+enum HouseScanPrecheck {
+    static func issues() -> [String] {
+        var list: [String] = []
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        if let free = try? home.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage,
+           free < 1_500_000_000 {
+            list.append("Мало места в памяти iPhone (\(free / 1_000_000_000) ГБ) — для обхода нужно около 1,5 ГБ.")
+        }
+        switch ProcessInfo.processInfo.thermalState {
+        case .serious, .critical: list.append("iPhone перегрет — дайте ему остыть несколько минут, иначе кадры будут реже.")
+        default: break
+        }
+        if ProcessInfo.processInfo.isLowPowerModeEnabled {
+            list.append("Включён режим энергосбережения — камера может работать медленнее. Лучше выключить на время обхода.")
+        }
+        return list
     }
 }

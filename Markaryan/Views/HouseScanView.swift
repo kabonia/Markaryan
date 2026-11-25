@@ -8,6 +8,7 @@ struct HouseScanView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @StateObject private var recorder = HouseScanRecorder()
+    @StateObject private var voice = HouseScanVoice()
     @State private var phase: Phase = .intro
     @State private var controlText = ""
     @State private var uploadShare = 0.0
@@ -133,6 +134,9 @@ struct HouseScanView: View {
                 Text("Обойдите дом с iPhone — получите точный 3D‑макет дома с размерами стен, окон и крыши. Потом в нём можно менять крышу, фасад и окна и сразу видеть смету.")
                     .foregroundStyle(Theme.muted)
                 accuracyNote
+                ForEach(HouseScanPrecheck.issues(), id: \.self) { issue in
+                    Label(issue.tr, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.gold)
+                }
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Днём, лучше в пасмурную погоду — без резких теней", systemImage: "sun.haze")
                     Label("Обойдите дом по кругу в 4–8 м от стен", systemImage: "figure.walk.circle")
@@ -233,21 +237,36 @@ struct HouseScanView: View {
 
     private var scanningOverlay: some View {
         VStack(spacing: 12) {
-            HStack(alignment: .center, spacing: 14) {
-                CoverageRing(coverage: recorder.coverage).frame(width: 96, height: 96)
+            HStack(alignment: .center, spacing: 12) {
+                CoverageRing(coverage: recorder.coverage).frame(width: 84, height: 84)
                 VStack(alignment: .leading, spacing: 6) {
-                    Label(recorder.hint.text, systemImage: recorder.hint.icon)
+                    Label(recorder.hint.text.tr, systemImage: recorder.hint.icon)
+                        .onChange(of: recorder.hint) { _, hint in voice.say(hint) }
+                        .onAppear { voice.prepare(); voice.say(recorder.hint) }
+                        .onDisappear { voice.stop() }
                         .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
                         .animation(.easeInOut(duration: 0.2), value: recorder.hint)
                     Text("Стены \(Int(recorder.coverage.wallShare * 100)) % · крыша \(Int(recorder.coverage.roofShare * 100)) %")
                         .font(.caption).foregroundStyle(.white.opacity(0.8))
                     Text("\(recorder.frameCount) кадров · \(HouseScanUploader.mb(recorder.bytesWritten))")
                         .font(.caption.monospacedDigit()).foregroundStyle(.white.opacity(0.7))
+                    HouseScanDistanceChip(meters: recorder.distance)
                 }
                 Spacer(minLength: 0)
+                HouseScanMiniMap(wallPoints: recorder.wallPoints, track: recorder.track, here: recorder.here)
+                    .frame(width: 92, height: 92)
             }
-            .padding(14).background(.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .padding(.horizontal, 12).padding(.top, 10)
+            .padding(12).background(.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .padding(.horizontal, 10).padding(.top, 10)
+            HStack {
+                Spacer()
+                Button { voice.enabled.toggle() } label: {
+                    Image(systemName: voice.enabled ? "speaker.wave.2.fill" : "speaker.slash.fill").font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white).padding(10).background(.ultraThinMaterial, in: Circle())
+                }
+                .accessibilityLabel(voice.enabled ? "Выключить голос" : "Включить голос")
+            }
+            .padding(.horizontal, 14)
             Spacer()
             Button { recorder.markBlocked() } label: {
                 Label("Сторона недоступна", systemImage: "hand.raised").font(.footnote.weight(.semibold)).foregroundStyle(.white)
@@ -291,10 +310,40 @@ struct HouseScanView: View {
 
     // MARK: Контрольный размер
 
+    /// Итог обхода перед отправкой: что снято; если мало — «Доснять».
+    private var scanSummary: some View {
+        let walls = Int(recorder.coverage.wallShare * 100)
+        let roof = Int(recorder.coverage.roofShare * 100)
+        let short = walls < 85 || roof < 50
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: short ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
+                    .foregroundStyle(short ? Theme.gold : Theme.success)
+                Text("Снято: стены \(walls) %, крыша \(roof) %").font(.subheadline.weight(.semibold))
+            }
+            Text("Кадров: \(recorder.frameCount) · снимков крыши: \(recorder.stillCount) · смазанных отброшено: \(recorder.rejectedBlurry)")
+                .font(.caption).foregroundStyle(Theme.muted)
+            if short {
+                Text(walls < 85 ? "Часть стен не снята — макет будет неполным. Лучше доснять." : "Крыша снята мало — поднимите камеру на скаты и фронтоны.")
+                    .font(.footnote).foregroundStyle(Theme.ink)
+                Button { resumeScan() } label: { SecondaryActionLabel(title: "Доснять", icon: "arrow.uturn.backward") }
+                    .buttonStyle(PremiumPressStyle())
+            }
+        }
+        .padding(14).background(Theme.panel, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func resumeScan() {
+        error = nil
+        recorder.start()
+        phase = .scanning
+    }
+
     private var controlStep: some View {
         VStack {
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
+                scanSummary
                 Text(HouseScanRecorder.hasLiDAR ? "Контрольный размер (по желанию)" : "Измерьте рулеткой одну стену")
                     .font(.headline)
                 Text(controlHint)
