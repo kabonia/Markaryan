@@ -11,6 +11,7 @@ struct ParcelView: View {
     @State private var loading = false
     @State private var error: String?
     @State private var camera: MapCameraPosition = .automatic
+    @State private var showManual = false
 
     var body: some View {
         NavigationStack {
@@ -18,7 +19,12 @@ struct ParcelView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     search
                     if let parcel { details(parcel) }
-                    if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+                    if let error {
+                        Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger)
+                            .textSelection(.enabled)
+                        Button { showManual = true } label: { SecondaryActionLabel(title: "Ввести вручную из выписки ЕГРН", icon: "square.and.pencil") }
+                            .buttonStyle(PremiumPressStyle())
+                    }
                     InfoNote(text: "Данные — из публичной кадастровой карты Росреестра (НСПД). Граница участка там с точностью межевания (обычно 0,1–0,3 м); на месте макет привязывается к ней по двум углам участка.")
                 }
                 .padding(20)
@@ -27,6 +33,13 @@ struct ParcelView: View {
             .navigationTitle("Участок")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+            .sheet(isPresented: $showManual) {
+                ManualParcelView(number: number) { manual in
+                    parcel = manual
+                    ParcelStore.save(manual)
+                    error = nil
+                }
+            }
         }
     }
 
@@ -47,6 +60,7 @@ struct ParcelView: View {
 
     private func details(_ parcel: CadastralParcel) -> some View {
         VStack(alignment: .leading, spacing: 14) {
+            if !parcel.isEmpty {
             Map(position: $camera) {
                 MapPolygon(coordinates: parcel.outline.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) })
                     .foregroundStyle(Theme.gold.opacity(0.18))
@@ -56,12 +70,13 @@ struct ParcelView: View {
             .frame(height: 260)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .onAppear { focus(parcel) }
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(parcel.cadNumber).font(.system(.title3, design: .serif, weight: .bold))
                 if let address = parcel.address { Text(address).font(.footnote).foregroundStyle(Theme.muted) }
                 row("Площадь по ЕГРН", parcel.areaDocument.map { "\(ParcelRules.format($0)) м²" })
-                row("Площадь по границе", "\(ParcelRules.format(parcel.areaOutline)) м²")
+                if !parcel.isEmpty { row("Площадь по границе", "\(ParcelRules.format(parcel.areaOutline)) м²") }
                 row("Категория", parcel.category)
                 row("Разрешённое использование", parcel.permittedUse)
                 row("Кадастровая стоимость", parcel.cadastralValue.map { "\(ParcelRules.format($0)) ₽" })
@@ -205,5 +220,48 @@ enum ParcelStore {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in if self.best == nil { self.finish(nil) } }
+    }
+}
+
+/// Участок вручную — если кадастровая карта недоступна: данные из выписки ЕГРН (без границы).
+struct ManualParcelView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State var number: String
+    @State private var area = ""
+    @State private var category = "Земли населённых пунктов"
+    @State private var use = "Для индивидуального жилищного строительства"
+    let onSave: (CadastralParcel) -> Void
+
+    private let categories = ["Земли населённых пунктов", "Земли сельскохозяйственного назначения", "Земли промышленности", "Другое"]
+    private let uses = ["Для индивидуального жилищного строительства", "Для ведения личного подсобного хозяйства", "Ведение садоводства", "Для сельскохозяйственного производства", "Другое"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Из выписки ЕГРН") {
+                    TextField("Кадастровый номер", text: $number).keyboardType(.numbersAndPunctuation)
+                    TextField("Площадь, м²", text: $area).keyboardType(.decimalPad)
+                    Picker("Категория", selection: $category) { ForEach(categories, id: \.self) { Text($0) } }
+                    Picker("Вид разрешённого использования", selection: $use) { ForEach(uses, id: \.self) { Text($0) } }
+                }
+                Section {
+                    Text("Без границы участка проверятся категория земли и ВРИ. Отступы дома от границ — после привязки по углам участка.")
+                        .font(.footnote).foregroundStyle(Theme.muted)
+                }
+            }
+            .navigationTitle("Участок вручную")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Сохранить") {
+                        let value = Double(area.replacingOccurrences(of: ",", with: ".").filter { "0123456789.".contains($0) })
+                        onSave(CadastralParcel(cadNumber: number.trimmingCharacters(in: .whitespaces).isEmpty ? "без номера" : number.trimmingCharacters(in: .whitespaces),
+                                               areaDocument: value, category: category, permittedUse: use, outline: [], source: "Вручную (выписка ЕГРН)"))
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
