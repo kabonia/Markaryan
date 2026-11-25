@@ -374,6 +374,10 @@ struct ProfileTabView: View {
                     AppTabRow(icon: "map.fill", title: "Экскурсия по приложению", subtitle: "Что где находится и для чего — за минуту")
                 }
                 .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { ProposalProfileView() } label: {
+                    AppTabRow(icon: "building.2.fill", title: "Реквизиты для КП", subtitle: "Ваша компания и логотип в коммерческих предложениях")
+                }
+                .buttonStyle(PremiumCardPressStyle())
                 NavigationLink { AboutAppView() } label: {
                     AppTabRow(icon: "info.circle.fill", title: "О приложении", subtitle: "Версия, данные и конфиденциальность")
                 }

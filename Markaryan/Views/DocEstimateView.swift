@@ -282,6 +282,7 @@ struct DocEstimateResultView: View {
     let result: DocEstimateResult
     @State private var tab = 0
     @State private var shareFile: SharedFile?
+    @State private var proposalOpen = false
     @State private var expanded: Set<String> = []
 
     private var t: DocTotals { result.totals.typical }
@@ -301,7 +302,7 @@ struct DocEstimateResultView: View {
                 default: basisList
                 }
                 HStack(spacing: 10) {
-                    Button { if let url = DocEstimateExport.pdf(result) { shareFile = SharedFile(url: url) } } label: { SecondaryActionLabel(title: "PDF", icon: "doc.richtext") }
+                    Button { proposalOpen = true } label: { SecondaryActionLabel(title: "КП в PDF", icon: "doc.richtext") }
                     Button { if let url = DocEstimateExport.csv(result) { shareFile = SharedFile(url: url) } } label: { SecondaryActionLabel(title: "Excel", icon: "tablecells") }
                 }
                 .buttonStyle(PremiumPressStyle())
@@ -313,6 +314,7 @@ struct DocEstimateResultView: View {
         .navigationTitle(result.title).helperScreen("Смета по документам: \(result.title)", details: "Итого \(CalculationEngine.money(t.total)); разделы: " + result.sections.map { "\($0.title) \(CalculationEngine.money($0.total))" }.joined(separator: "; "))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
+        .sheet(isPresented: $proposalOpen) { ProposalExportSheet(result: result) }
     }
 
     private var hero: some View {
