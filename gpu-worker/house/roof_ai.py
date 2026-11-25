@@ -120,16 +120,24 @@ def hit_plane(origin, direction, normal, d) -> np.ndarray | None:
     return origin + t * direction if t > 0 else None
 
 
-def ridge_from_marks(marks: list[tuple[Frame, float, float]], gables: list[tuple[np.ndarray, float]], ground_y: float):
-    """Отметки конька (кадр, u, v в пикселях сенсорного кадра) → высоты концов конька по фронтонам."""
+def ridge_from_marks(marks: list[tuple[Frame, float, float]], gables: list[tuple], ground_y: float):
+    """gables: (нормаль, d[, центр стены, полуширина]) — фронтонные стены, измеренные LiDAR."""
     per_gable: dict[int, list[float]] = {}
     for frame, u, v in marks:
         origin, direction = ray(frame, u, v)
         best = None
-        for gi, (normal, d) in enumerate(gables):
+        for gi, gable in enumerate(gables):
+            normal, d = gable[0], gable[1]
             p = hit_plane(origin, direction, normal, d)
             if p is None:
                 continue
+            # Только в пределах самой стены (центр и полуширина), а не её бесконечного продолжения.
+            if len(gable) >= 4:
+                center, half = np.asarray(gable[2]), float(gable[3])
+                offset = p - center
+                offset[1] = 0
+                if np.linalg.norm(offset) > half + 0.5:
+                    continue
             dist = np.linalg.norm(p - origin)
             if best is None or dist < best[0]:
                 best = (dist, gi, p)

@@ -56,7 +56,7 @@ def test_ridge_heights_from_marks(tmp_path):
     bundle = bundle_io.load(bundle_io.write(tmp_path, manifest, files))
     assert all(upright_turns(f) in (1, 3) for f in bundle.frames)
 
-    gables = [(np.array([1.0, 0, 0]), -LENGTH / 2), (np.array([-1.0, 0, 0]), -LENGTH / 2)]
+    gables = [(np.array([1.0, 0, 0]), -LENGTH / 2, [LENGTH / 2, 0, 0], WIDTH / 2), (np.array([-1.0, 0, 0]), -LENGTH / 2, [-LENGTH / 2, 0, 0], WIDTH / 2)]
     asked = {}
 
     def fake_ai(images):
