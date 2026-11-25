@@ -17,6 +17,18 @@
             "state": "translated",
             "value": "Estimate 3D"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
         }
       }
     },
@@ -31,6 +43,18 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate 3D"
+          }
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "Estimate 3D"
@@ -52,6 +76,18 @@
             "state": "translated",
             "value": "The camera is used for AR measurements of distances and areas, 3D house scans, placing models on site, and photos of your project."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cámara se usa para medir distancias y áreas con RA, escanear tu casa en 3D, colocar modelos en el terreno y tomar fotos de tu obra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相机用于 AR 测量距离和面积、房屋 3D 扫描、在现场放置模型以及拍摄项目照片。"
+          }
         }
       }
     },
@@ -69,6 +105,18 @@
             "state": "translated",
             "value": "Your location is used to apply local prices to estimates and to place your house scan on the map and relative to the sun."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu ubicación se usa para aplicar precios locales a los presupuestos y situar el escaneo de tu casa en el mapa y respecto al sol."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "位置信息用于在估价中使用当地价格，并将房屋扫描定位到地图上及相对太阳的方位。"
+          }
         }
       }
     },
@@ -85,6 +133,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Permission is needed to save finished visualizations to your Photos."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se necesita permiso para guardar las visualizaciones terminadas en Fotos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要权限才能将完成的效果图保存到“照片”。"
           }
         }
       }

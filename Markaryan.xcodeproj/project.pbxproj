@@ -15,6 +15,7 @@
 		62CE50039C12941EF4975E4F /* Markaryan/MarkaryanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14600005F965A4565541595B /* Markaryan/MarkaryanApp.swift */; };
 		7EC411016DD3A84EE22689FE /* Markaryan/Views/CalculatorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F0A62D50EEE9C1BCE3DBDD /* Markaryan/Views/CalculatorsView.swift */; };
 		7FCFA250E8AB4FF673D67220 /* Markaryan/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */; };
+		C32453CAC268339AFB6F5C49 /* Markaryan/Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = C42453CAC268339AFB6F5C49 /* Markaryan/Localizable.xcstrings */; };
 		C3F10BE84F2AF58D6788C051 /* Markaryan/InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = C4F10BE84F2AF58D6788C051 /* Markaryan/InfoPlist.xcstrings */; };
 		A1B2C3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */; };
 		AA10000000000000000000B1 /* Markaryan/Core/Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B1 /* Markaryan/Core/Brand.swift */; };
@@ -165,6 +166,7 @@
 		AE7A221B5C03AA02418C806D /* Markaryan/Views/ARMeasureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ARMeasureView.swift; sourceTree = "<group>"; };
 		C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PriceServerSettingsView.swift; sourceTree = "<group>"; };
 		D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Markaryan/Assets.xcassets; sourceTree = "<group>"; };
+		C42453CAC268339AFB6F5C49 /* Markaryan/Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Markaryan/Localizable.xcstrings; sourceTree = "<group>"; };
 		C4F10BE84F2AF58D6788C051 /* Markaryan/InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Markaryan/InfoPlist.xcstrings; sourceTree = "<group>"; };
 		E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/AppTabs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -259,6 +261,7 @@
 				C1B2A3D4E5F60708090A0B0C /* Markaryan/Views/PriceServerSettingsView.swift */,
 				E3B8A7C6D5F40123456789AB /* Markaryan/Views/AppTabs.swift */,
 				D67512BC6A8D96BD001C0498 /* Markaryan/Assets.xcassets */,
+				C42453CAC268339AFB6F5C49 /* Markaryan/Localizable.xcstrings */,
 				C4F10BE84F2AF58D6788C051 /* Markaryan/InfoPlist.xcstrings */,
 				287A87EF29FDDB1211210671 /* Markaryan/PrivacyInfo.xcprivacy */,
 				FBDC4F23F93125BBEEAE800C /* Products */,
@@ -310,6 +313,8 @@
 			knownRegions = (
 				ru,
 				en,
+				es,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = B28B7AF69320201D1CF206EB;
@@ -328,6 +333,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7FCFA250E8AB4FF673D67220 /* Markaryan/Assets.xcassets in Resources */,
+				C32453CAC268339AFB6F5C49 /* Markaryan/Localizable.xcstrings in Resources */,
 				C3F10BE84F2AF58D6788C051 /* Markaryan/InfoPlist.xcstrings in Resources */,
 				BED89B0B916E9CA1B5B3BC84 /* Markaryan/PrivacyInfo.xcprivacy in Resources */,
 				AA1000000000000000000C10 /* Markaryan/AIServer.plist in Resources */,
