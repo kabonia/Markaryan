@@ -42,6 +42,22 @@ import simd
         synth.speak(utterance)
     }
 
+    /// Любая фраза (подсказки скана комнаты RoomPlan): не повторяем ту же чаще раза в 6 с.
+    func speak(_ phrase: String) {
+        guard enabled else { return }
+        let text = phrase.tr
+        let now = Date()
+        if text == lastText && now.timeIntervalSince(lastTime) < 6 { return }
+        if synth.isSpeaking && now.timeIntervalSince(lastTime) < 2.5 { return }
+        lastText = text
+        lastTime = now
+        synth.stopSpeaking(at: .word)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: voiceLanguage)
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 1.05
+        synth.speak(utterance)
+    }
+
     func stop() {
         synth.stopSpeaking(at: .immediate)
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)

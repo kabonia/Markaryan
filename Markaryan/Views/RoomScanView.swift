@@ -30,6 +30,7 @@ struct RoomScanView: View {
     @State private var saved: [FloorPlan.ID] = []
     /// The room being processed is followed by another one.
     @State private var continuing = false
+    @StateObject private var voice = HouseScanVoice()
 
     enum Phase { case intro, scanning, processing, between }
 
@@ -46,7 +47,7 @@ struct RoomScanView: View {
             Theme.background.ignoresSafeArea()
             #if canImport(RoomPlan)
             if phase != .intro && isSupported {
-                RoomCaptureRepresentable(command: command) { room, captureError in
+                RoomCaptureRepresentable(command: command, voice: voice) { room, captureError in
                     handle(room: room, error: captureError)
                 }
                 .ignoresSafeArea()
@@ -56,7 +57,13 @@ struct RoomScanView: View {
                 HStack {
                     Text(title.tr).font(.headline).tracking(2)
                     Spacer()
-                    if phase == .scanning { TorchButton() }
+                    if phase == .scanning {
+                        Button { voice.enabled.toggle() } label: {
+                            Image(systemName: voice.enabled ? "speaker.wave.2.fill" : "speaker.slash.fill").padding(12).background(.ultraThinMaterial, in: Circle())
+                        }
+                        .accessibilityLabel(voice.enabled ? "Выключить голос" : "Включить голос")
+                        TorchButton()
+                    }
                     // Closing after some rooms keeps them and opens what was scanned.
                     Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
                 }
@@ -218,6 +225,7 @@ struct RoomScanView: View {
 /// Wraps Apple's RoomCaptureView (live scan UI with the growing 3D model).
 struct RoomCaptureRepresentable: UIViewRepresentable {
     let command: ScanCommand
+    let voice: HouseScanVoice
     let onResult: (CapturedRoom?, Error?) -> Void
 
     func makeCoordinator() -> RoomScanCoordinator { RoomScanCoordinator() }
@@ -225,7 +233,10 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> RoomCaptureView {
         let view = RoomCaptureView(frame: .zero)
         context.coordinator.onResult = onResult
+        context.coordinator.voice = voice
+        voice.prepare()
         view.delegate = context.coordinator
+        view.captureSession.delegate = context.coordinator
         view.captureSession.run(configuration: RoomCaptureSession.Configuration())
         context.coordinator.token = command.token
         context.coordinator.stopped = false
@@ -250,11 +261,30 @@ struct RoomCaptureRepresentable: UIViewRepresentable {
 
     static func dismantleUIView(_ view: RoomCaptureView, coordinator: RoomScanCoordinator) {
         if !coordinator.stopped { view.captureSession.stop() }
+        Task { @MainActor in coordinator.voice?.stop() }
     }
 }
 
-final class RoomScanCoordinator: NSObject, RoomCaptureViewDelegate {
+final class RoomScanCoordinator: NSObject, RoomCaptureViewDelegate, RoomCaptureSessionDelegate {
     var onResult: ((CapturedRoom?, Error?) -> Void)?
+    /// Голос: подсказки RoomPlan проговариваются — смотрите на комнату, а не в экран.
+    var voice: HouseScanVoice?
+
+    func captureSession(_ session: RoomCaptureSession, didProvide instruction: RoomCaptureSession.Instruction) {
+        let phrase: String?
+        switch instruction {
+        case .moveCloseToWall: phrase = "Подойдите ближе к стене"
+        case .moveAwayFromWall: phrase = "Отойдите от стены"
+        case .slowDown: phrase = "Медленнее"
+        case .turnOnLight: phrase = "Включите свет — темно"
+        case .lowTexture: phrase = "Мало деталей — наведите камеру на стену с предметами"
+        case .normal: phrase = nil
+        @unknown default: phrase = nil
+        }
+        guard let phrase else { return }
+        let voice = voice
+        Task { @MainActor in voice?.speak(phrase) }
+    }
     var stopped = false
     /// The last command acted on.
     var token = 0

@@ -206,33 +206,33 @@ struct FloorPlansView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                if store.floorPlans.isEmpty {
-                    // First visit: what it is and how to start.
-                    DesignStudioHero()
-                    VStack(alignment: .leading, spacing: 12) {
+                if store.floorPlans.isEmpty { DesignStudioHero() }
+                // Разделы — всегда вверху, крупно; под каждым — что получите, чтобы не путаться.
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionTitle(eyebrow: "Что сделать", title: "Разделы дизайна")
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         Button { store.showRoomScan = true } label: {
-                            DesignStartCard(icon: "cube.transparent", eyebrow: "ШАГ 1 · СКАН", title: "Сканировать помещение",
-                                            subtitle: "Комната, гараж, магазин или кафе: лидар iPhone снимает стены, окна, двери и мебель за 1–2 минуты. Квартиру можно снять целиком.", accent: Theme.orange, prominent: true)
+                            DesignTile(icon: "cube.transparent", title: "Скан комнаты", subtitle: "План, 3D, дизайн и расчёт материалов", badge: "ЛИДАР", accent: Theme.orange)
+                        }
+                        NavigationLink { PhotoDesignView() } label: {
+                            DesignTile(icon: "camera.aperture", title: "Дизайн по фото", subtitle: "Новый стиль комнаты за минуту", badge: "ИИ", accent: Theme.sky)
+                        }
+                        NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
+                            DesignTile(icon: "house.and.flag", title: "Фасад и участок", subtitle: "Визуализация дома снаружи, крыши, забора", badge: nil, accent: Theme.sage)
                         }
                         Button { store.showHouseScan = true } label: {
-                            DesignStartCard(icon: "house.lodge", eyebrow: "НОВОЕ · СНАРУЖИ", title: "3D‑обмер дома",
-                                            subtitle: "Обойдите дом с iPhone — 3D‑макет с размерами стен, окон и крыши. Меняйте крышу и фасад и сразу видьте смету.", accent: Theme.gold)
-                        }
-                        HStack(spacing: 12) {
-                            NavigationLink { PhotoDesignView() } label: {
-                                DesignStartCard(icon: "camera.aperture", eyebrow: "ФОТО / LIVE", title: "Дизайн по фото",
-                                                subtitle: "Снимите кухню или санузел — ИИ сделает новый дизайн.", accent: Theme.sky)
-                            }
-                            Button { store.showAR = true } label: {
-                                DesignStartCard(icon: "point.topleft.down.to.point.bottomright.curvepath", eyebrow: "БЕЗ ЛИДАРА", title: "Контур в AR",
-                                                subtitle: "Обойдите углы пола камерой любого iPhone.", accent: Theme.success)
-                            }
+                            DesignTile(icon: "house.lodge", title: "3D‑обмер дома", subtitle: "Размеры дома, окон и крыши, площади", badge: "НОВОЕ", accent: Theme.gold)
                         }
                     }
-                    .buttonStyle(PremiumCardPressStyle())
+                    Button { store.showAR = true } label: {
+                        SecondaryActionLabel(title: "Без лидара: контур комнаты в AR", icon: "point.topleft.down.to.point.bottomright.curvepath")
+                    }
+                    .buttonStyle(PremiumPressStyle())
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                if store.floorPlans.isEmpty {
                     DesignStepsStrip()
                 } else {
-                    // The rooms first; a new one from one row.
                     SectionTitle(eyebrow: "Мои помещения", title: "Планы и дизайны")
                     LazyVStack(spacing: 12) {
                         ForEach(store.apartments) { apartment in
@@ -243,17 +243,6 @@ struct FloorPlansView: View {
                             NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
                                 .buttonStyle(PremiumCardPressStyle())
                         }
-                    }
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("НОВОЕ ПОМЕЩЕНИЕ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
-                        HStack(spacing: 10) {
-                            Button { store.showRoomScan = true } label: { SecondaryActionLabel(title: "Скан", icon: "cube.transparent") }
-                            NavigationLink { PhotoDesignView() } label: { SecondaryActionLabel(title: "По фото", icon: "camera.aperture") }
-                            Button { store.showAR = true } label: { SecondaryActionLabel(title: "Контур", icon: "point.topleft.down.to.point.bottomright.curvepath") }
-                        }
-                        .buttonStyle(PremiumPressStyle())
-                        Button { store.showHouseScan = true } label: { SecondaryActionLabel(title: "3D‑обмер дома", icon: "house.lodge") }
-                            .buttonStyle(PremiumPressStyle())
                     }
                 }
             }
@@ -1779,5 +1768,41 @@ struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+}
+
+
+/// Плитка раздела на вкладке «Дизайн»: значок, название и что получите — крупно, чтобы не путаться.
+struct DesignTile: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let badge: String?
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
+                Image(systemName: icon).font(.title2.weight(.semibold)).foregroundStyle(.white)
+                    .frame(width: 48, height: 48)
+                    .background(LinearGradient(colors: [accent, accent.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                Spacer()
+                if let badge {
+                    Text(badge.tr).font(.caption2.weight(.heavy)).tracking(0.8).foregroundStyle(accent)
+                        .padding(.horizontal, 7).padding(.vertical, 3).background(accent.opacity(0.12), in: Capsule())
+                }
+            }
+            Text(title.tr).font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+                .lineLimit(2).minimumScaleFactor(0.85)
+            Text(subtitle.tr).font(.caption).foregroundStyle(Theme.muted).lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 168, alignment: .topLeading)
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(accent.opacity(0.25), lineWidth: 1))
+        .shadow(color: Theme.ink.opacity(0.06), radius: 10, y: 4)
     }
 }
