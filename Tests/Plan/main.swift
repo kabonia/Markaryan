@@ -820,26 +820,26 @@ let selfNamed = try aiDesign(#"{"title":"x","designModel":"made-up","items":[]}"
 check(selfNamed.designModel == nil, "The AI cannot name the model itself")
 
 // MARK: Материалы комнаты по скану (санузел 2 × 1,5 м, потолок 2,5 м, дверь 0,7 × 2,0)
-let bath = room("Санузел", [(0, 0), (2, 0), (2, 1.5), (0, 1.5)], doors: [segment(.door, 0.5, 1.5, 1.2, 1.5, height: 2.0)], height: 2.5)
-let bathSurfaces = RoomMaterials.surfaces(bath)
-near(bathSurfaces.floor, 3.0, "Пол санузла")
-near(bathSurfaces.perimeter, 7.0, "Периметр санузла")
-near(bathSurfaces.wallsNet, 7.0 * 2.5 - 0.7 * 2.0, "Стены без двери")
+let rmBath = room("Санузел", [(0, 0), (2, 0), (2, 1.5), (0, 1.5)], doors: [segment(.door, 0.5, 1.5, 1.2, 1.5, height: 2.0)], height: 2.5)
+let rmSurfaces = RoomMaterials.surfaces(rmBath)
+near(rmSurfaces.floor, 3.0, "Пол санузла")
+near(rmSurfaces.perimeter, 7.0, "Периметр санузла")
+near(rmSurfaces.wallsNet, 7.0 * 2.5 - 0.7 * 2.0, "Стены без двери")
 near(RoomMaterials.groutRate(widthMM: 300, lengthMM: 300, thicknessMM: 9, jointMM: 2), 600.0 / 90000 * 9 * 2 * 1.6 * 1.1, "Формула затирки")
 check(RoomMaterials.adhesiveRate(longSide: 0.3).rate == 4.0 && RoomMaterials.adhesiveRate(longSide: 1.2).comb == 12, "Клей по формату плитки")
-let bathWorks = RoomWorks.suggested(for: .bathroom)
-let bathGroups = RoomMaterials.calculate(bath, works: bathWorks)
-func line(_ group: String, _ prefix: String) -> MaterialLine? { bathGroups.first { $0.title == group }?.lines.first { $0.name.hasPrefix(prefix) } }
-check(line("Плитка", "Плитка 300×300 мм — пол") != nil, "Плитка на пол санузла")
-let floorTile = line("Плитка", "Плитка 300×300 мм — пол")!
-check(floorTile.quantity >= 3.0 * 1.05 && floorTile.quantity <= 3.0 * 1.4, "Плитки на пол — площадь с запасом: \(floorTile.quantity)")
-near(line("Гидроизоляция", "Обмазочная")!.quantity, (3.0 + 7.0 * 0.3 + 4.8) * 1.5, "Гидроизоляция: пол, заход 30 см, душевая зона", 0.001)
-let plaster = line("Штукатурка стен по маякам", "Цементная")!
-near(plaster.quantity, (7.0 * 2.5 - 1.4) * 1.7 * 15, "Цементная штукатурка 15 мм", 0.001)
-check(plaster.packs == Int(((7.0 * 2.5 - 1.4) * 1.7 * 15 / 25).rounded(.up)), "Мешки штукатурки")
-check((line("Штукатурка стен по маякам", "Маяки")?.quantity ?? 0) >= 8, "Маяки по всем стенам")
-near(line("Стяжка пола", "Пескобетон")!.quantity, 3.0 * 40 * 2.0, "Стяжка 40 мм", 0.001)
-check(line("Напольное покрытие", "Ламинат") == nil, "В санузле нет ламината")
-check(RoomMaterials.text(bath, groups: bathGroups).contains("ГИДРОИЗОЛЯЦИЯ"), "Текст для отправки")
+let rmWorks = RoomWorks.suggested(for: .bathroom)
+let rmGroups = RoomMaterials.calculate(rmBath, works: rmWorks)
+func rmLine(_ group: String, _ prefix: String) -> MaterialLine? { rmGroups.first { $0.title == group }?.lines.first { $0.name.hasPrefix(prefix) } }
+check(rmLine("Плитка", "Плитка 300×300 мм — пол") != nil, "Плитка на пол санузла")
+let rmFloorTile = rmLine("Плитка", "Плитка 300×300 мм — пол")!
+check(rmFloorTile.quantity >= 3.0 * 1.05 && rmFloorTile.quantity <= 3.0 * 1.4, "Плитки на пол — площадь с запасом: \(rmFloorTile.quantity)")
+near(rmLine("Гидроизоляция", "Обмазочная")!.quantity, (3.0 + 7.0 * 0.3 + 4.8) * 1.5, "Гидроизоляция: пол, заход 30 см, душевая зона", 0.001)
+let rmPlaster = rmLine("Штукатурка стен по маякам", "Цементная")!
+near(rmPlaster.quantity, (7.0 * 2.5 - 1.4) * 1.7 * 15, "Цементная штукатурка 15 мм", 0.001)
+check(rmPlaster.packs == Int(((7.0 * 2.5 - 1.4) * 1.7 * 15 / 25).rounded(.up)), "Мешки штукатурки")
+check((rmLine("Штукатурка стен по маякам", "Маяки")?.quantity ?? 0) >= 8, "Маяки по всем стенам")
+near(rmLine("Стяжка пола", "Пескобетон")!.quantity, 3.0 * 40 * 2.0, "Стяжка 40 мм", 0.001)
+check(rmLine("Напольное покрытие", "Ламинат") == nil, "В санузле нет ламината")
+check(RoomMaterials.text(rmBath, groups: rmGroups).contains("ГИДРОИЗОЛЯЦИЯ"), "Текст для отправки")
 
 print("PASS: \(passed) plan and design checks")

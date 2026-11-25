@@ -25,7 +25,12 @@ jobs:
           PLIST
 
       - name: Тесты калькуляторов и планировок
-        run: sh Tests/run.sh
+        run: |
+          sh Tests/run.sh > tests.log 2>&1 || {
+            # Ошибки компиляции и упавшие проверки — аннотациями (видно без скачивания журнала).
+            grep -E "error:|FAIL|Fatal error" tests.log | sort -u | head -20 | sed 's/^/::error::/'
+            tail -30 tests.log; exit 1; }
+          grep -E "PASS|passed" tests.log
 
       - name: Сборка приложения для симулятора
         run: |
