@@ -112,6 +112,8 @@ struct DocEstimateNewView: View {
     @State private var docs: [DocAttachment] = []
     @State private var vat = false
     @State private var delivery = 4.0
+    /// Доставка процентом от материалов вместо расчёта рейсов (когда доставка уже заложена в ценах или считается иначе).
+    @State private var deliveryPercent = false
     @State private var contingency = 5.0
     @State private var importing = false
     @State private var photos: [PhotosPickerItem] = []
@@ -176,7 +178,13 @@ struct DocEstimateNewView: View {
                 Text("НАЧИСЛЕНИЯ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 VStack(spacing: 12) {
                     Toggle("НДС 22 %", isOn: $vat).foregroundStyle(Theme.ink)
-                    Stepper("Доставка материалов: \(Int(delivery)) %", value: $delivery, in: 0...15).foregroundStyle(Theme.ink)
+                    Toggle("Доставка процентом вместо рейсов", isOn: $deliveryPercent.animation()).foregroundStyle(Theme.ink)
+                    if deliveryPercent {
+                        Stepper("Доставка материалов: \(Int(delivery)) %", value: $delivery, in: 0...15).foregroundStyle(Theme.ink)
+                    } else {
+                        Text("Техника — по реальной аренде (смены, минимальный заказ, подача), доставка — рейсами по закупке. Строки доставки из ваших документов не задваиваются.")
+                            .font(.caption).foregroundStyle(Theme.muted).frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     Stepper("Непредвиденные: \(Int(contingency)) %", value: $contingency, in: 0...20).foregroundStyle(Theme.ink)
                 }
                 .font(.subheadline).padding(14).panelCard(16)
@@ -250,7 +258,7 @@ struct DocEstimateNewView: View {
         defer { busy = false }
         do {
             _ = try await DocEstimateCenter.shared.start(title: title.trimmingCharacters(in: .whitespaces), city: store.projectCity, text: text, docs: docs,
-                                                          options: .init(vat: vat, vatPct: 22, deliveryPct: delivery, contingencyPct: contingency))
+                                                          options: .init(vat: vat, vatPct: 22, deliveryPct: deliveryPercent ? delivery : 0, contingencyPct: contingency, deliveryMode: deliveryPercent ? "percent" : "lines"))
             Haptics.success()
             dismiss()
         } catch {
@@ -370,7 +378,7 @@ struct DocEstimateResultView: View {
 
     private var purchaseList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Все материалы объекта, сложенные по работам, с нормами и отходами.").font(.caption).foregroundStyle(Theme.muted)
+            Text("Все материалы объекта, сложенные по работам, с нормами и отходами; техника и рейсы доставки.").font(.caption).foregroundStyle(Theme.muted)
             ForEach(result.materials + result.machines) { item in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .top) {
@@ -398,7 +406,10 @@ struct DocEstimateResultView: View {
                 "Объёмы сняты с документов двумя независимыми агентами на разных моделях ИИ и сведены главным сметчиком.",
                 "Материалы — по нормам расхода (ГЭСН и практика) с отходами; одинаковые материалы сложены в закупку.",
                 "Цены — рыночные предложения магазинов, маркетплейсов и подрядчиков в г. \(result.city); работа считается отдельно от материалов.",
-                "Доставка \(CalculationEngine.format(result.options?.deliveryPct ?? 4)) % от материалов, непредвиденные \(CalculationEngine.format(result.options?.contingencyPct ?? 5)) %\(result.options?.vat == true ? ", НДС 22 %" : "").",
+                result.options?.deliveryAsPercent == false
+                    ? "Техника — по реальной аренде: смены и минимальный заказ, подача и перебазировка; мелкий инструмент — в работе бригады. Доставка — рейсами по закупке. Цены техники и рейсов — медиана нескольких предложений (Авито, частники, компании)."
+                    : "Доставка \(CalculationEngine.format(result.options?.deliveryPct ?? 4)) % от материалов.",
+                "Непредвиденные \(CalculationEngine.format(result.options?.contingencyPct ?? 5)) %\(result.options?.vat == true ? ", НДС 22 %" : "").",
             ])
         }
     }

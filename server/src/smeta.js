@@ -45,7 +45,7 @@ const num = (v) => { const x = Number(String(v ?? '').replace(/\s/g, '').replace
 const str = (v, n = 300) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
 const round = (x, unit = '') => {
   if (!x) return 0;
-  if (/^(шт|компл|комплект|место|точк|упак|мешок|рулон|лист|т\.|ед)/i.test(unit)) return Math.ceil(x - 1e-9);
+  if (/^(шт|компл|комплект|место|точк|упак|мешок|рулон|лист|т\.|ед|рейс)/i.test(unit)) return Math.ceil(x - 1e-9);
   return x >= 100 ? Math.round(x * 10) / 10 : Math.round(x * 100) / 100;
 };
 const keyOf = (name, unit) => `${String(name).toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/g, ' ').trim()}|${String(unit).toLowerCase().replace(/\s/g, '')}`;
@@ -73,12 +73,15 @@ export function aggregateMaterials(works) {
 }
 
 /** Totals with surcharges; every sum also as a market range (cheap — expensive offers). */
-export function totals(sections, options = {}) {
+export function totals(sections, options = {}, extra = null) {
   const sum = (field, kind) => sections.reduce((t, s) => t + s[kind][field], 0);
-  const base = (field) => ({ works: sum(field, 'works'), materials: sum(field, 'materials'), machines: sum(field, 'machines') });
+  // extra: the rental plan ({ machines, delivery } ranges) — then machines and delivery trips are real lines, and the
+  // percent of materials is added only when the user chose it (deliveryMode «percent»). Without a plan — the old way.
+  const base = (field) => ({ works: sum(field, 'works'), materials: sum(field, 'materials'), machines: extra ? extra.machines[field] : sum(field, 'machines') });
   const make = (field) => {
     const b = base(field);
-    const delivery = b.materials * (options.deliveryPct ?? 4) / 100;
+    const pct = !extra || options.deliveryMode === 'percent' ? (options.deliveryPct ?? 4) : 0;
+    const delivery = (extra ? extra.delivery[field] : 0) + b.materials * pct / 100;
     const direct = b.works + b.materials + b.machines + delivery;
     const contingency = direct * (options.contingencyPct ?? 5) / 100;
     const subtotal = direct + contingency;
@@ -166,6 +169,34 @@ const NORMS_SYSTEM = `Ты — сметчик‑нормировщик. Для �
 • machines: техника и механизмы с единицей (маш.‑ч, смена, рейс) и norm — расход на единицу работы (экскаватор, автобетононасос, автокран, вибратор и т.п.), только где они действительно нужны;
 • laborName — как искать на рынке цену самой работы (только работа, без материалов), с той же единицей, что и работа;
 • не включай материалы, если работа — монтаж оборудования заказчика.`;
+
+const LOGISTICS_SYSTEM = `Ты — прораб‑снабженец. По списку работ (с потребностью в технике по нормам) и закупке материалов составь РЕАЛЬНЫЙ план
+аренды техники и доставок для объекта — так, как его заказывают у частников и компаний в городе.
+ТЕХНИКА (machines):
+• объедини одинаковую технику из разных работ в одну строку (один автобетононасос на заливку, а не три строки);
+• считай как реально сдают в аренду: смена 8 ч, либо часы с минимальным заказом (обычно 4–7 ч), либо рейс; каждый отдельный выезд
+  округляй вверх до минимального заказа; заливки/работы в разные дни — разные выезды (trips);
+• подача: технику на гусеницах (бульдозер, гусеничный экскаватор, каток) везут тралом — отдельная строка «Перебазировка <техника> тралом», рейсы туда и обратно;
+• мелкий инструмент и малая механизация (вибраторы, виброплиты до 120 кг, генераторы до 10 кВт, станки резки и гибки арматуры, сварочные
+  аппараты, перфораторы, бетономешалки до 300 л) обычно входят в цену работы бригады — НЕ включай их в machines, перечисли в crewTools;
+• name — техника с главным параметром (например «Автобетононасос, стрела 32–36 м»), unit — «смена», «маш.‑ч», «рейс» или «сутки»,
+  quantity — сколько оплатить с учётом минимального заказа, trips — выездов, basis — коротко как посчитано, works — id работ.
+ДОСТАВКА (deliveries):
+• по закупке посчитай рейсы подходящим транспортом: песок, щебень, ПГС, грунт — самосвал по тоннажу и объёму; арматура и металл 11,7 м — длинномер;
+  блоки, кирпич, поддоны — манипулятор; листовые и длинные материалы — длинномер или манипулятор; мелочь — «газель»;
+• товарный бетон и раствор с завода: доставка миксером обычно в цене бетона — отдельно не добавляй;
+• один рейс может везти несколько материалов от одного поставщика, если они влезают по весу и габаритам;
+• name — «Доставка <чего> <каким транспортом>», unit — «рейс», quantity — рейсов, basis — тоннаж/объём и расчёт;
+• строки доставки и перевозки, которые уже есть в документах (alreadyInDocs), не дублируй.`;
+
+const LOGISTICS_SCHEMA = {
+  type: 'object',
+  properties: {
+    machines: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, unit: { type: 'string' }, quantity: { type: 'number' }, trips: { type: 'number' }, basis: { type: 'string' }, works: { type: 'array', items: { type: 'string' } } } } },
+    deliveries: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, unit: { type: 'string' }, quantity: { type: 'number' }, basis: { type: 'string' } } } },
+    crewTools: { type: 'array', items: { type: 'string' } },
+  },
+};
 
 const NORMS_SCHEMA = {
   type: 'object',
@@ -299,13 +330,44 @@ async function norms(works, input) {
   });
 }
 
-async function price(works, input, onProgress) {
+const DELIVERY_WORDS = /доставк|перевозк|транспортировк|вывоз/i;
+
+/** The rental plan: machines as they are really hired (shifts, minimum order, trips, transport by trawl) and delivery trips. */
+export async function logistics(works, input) {
   const materials = aggregateMaterials(works);
-  const machines = aggregateMaterials(works.map((w) => ({ id: w.id, materials: w.machines })));
+  const brief = {
+    works: works.map((w) => ({ id: w.id, name: w.name, unit: w.unit, quantity: w.quantity, machines: (w.machines || []).map((m) => `${m.name} ${m.quantity} ${m.unit}`) })),
+    materials: materials.map((m) => ({ name: m.name, unit: m.unit, quantity: m.quantity })),
+    alreadyInDocs: works.filter((w) => DELIVERY_WORDS.test(w.name)).map((w) => `${w.name} ${w.quantity} ${w.unit}`),
+  };
+  const answer = await retry(() => askJSON({
+    system: LOGISTICS_SYSTEM, messages: [{ role: 'user', text: `Город: ${input.city}.\n${json(brief).slice(0, 120_000)}` }],
+    schema: LOGISTICS_SCHEMA, name: 'logistics', maxTokens: 12_000, model: CHECK_MODEL, anyModel: true, effort: EFFORT,
+  }));
+  const line = (x, unit) => {
+    const u = str(x.unit, 20) || unit;
+    const quantity = round(num(x.quantity), u);
+    return { key: keyOf(x.name, u), name: str(x.name, 160), unit: u, quantity, trips: num(x.trips) || undefined, basis: str(x.basis, 300), works: Array.isArray(x.works) ? x.works.map((id) => str(id, 12)) : [] };
+  };
+  const machines = (answer.machines || []).map((m) => line(m, 'смена')).filter((m) => m.name && m.quantity);
+  const deliveries = input.options.deliveryMode === 'percent' ? [] : (answer.deliveries || []).map((d) => line(d, 'рейс')).filter((d) => d.name && d.quantity);
+  return { machines, deliveries, crewTools: (answer.crewTools || []).map((t) => str(t, 80)).filter(Boolean).slice(0, 20) };
+}
+
+// Hire and transport prices differ the most between offers: several real ones, private ads included, the median.
+const machineHint = (city, unit) => `аренда в г. ${city}: найди 3+ реальных предложения — Авито (avito.ru, частники), сайты компаний аренды спецтехники, доски объявлений; typical — медиана; учти минимальный заказ и подачу; цена за ${unit}`;
+const deliveryHint = (city) => `перевозка по г. ${city} и району: найди 3+ реальных предложения — Авито (avito.ru, частники), грузоперевозчики, поставщики с доставкой; typical — медиана за один рейс`;
+
+async function price(works, input, onProgress, plan = null) {
+  const materials = aggregateMaterials(works);
+  // Without a plan (it could not be made) — the old way: machines summed from the norms of every work.
+  const machines = plan ? plan.machines : aggregateMaterials(works.map((w) => ({ id: w.id, materials: w.machines })));
+  const deliveries = plan ? plan.deliveries : [];
   const items = [
     ...works.map((w) => ({ name: `${w.laborName} — только работа, без материалов`, kind: 'work', unit: w.unit, quantity: w.quantity, ref: { type: 'work', id: w.id } })),
     ...materials.map((m) => ({ name: m.name, kind: 'material', unit: m.unit, quantity: m.quantity, ref: { type: 'material', key: m.key } })),
-    ...machines.map((m) => ({ name: `Аренда: ${m.name} (с оператором)`, kind: 'work', unit: m.unit, quantity: m.quantity, ref: { type: 'machine', key: m.key } })),
+    ...machines.map((m) => ({ name: `Аренда: ${m.name} (с оператором)`, kind: 'work', unit: m.unit, quantity: m.quantity, ref: { type: 'machine', key: m.key }, ...(plan ? { hint: machineHint(input.city, m.unit) } : {}) })),
+    ...deliveries.map((d) => ({ name: d.name, kind: 'work', unit: d.unit, quantity: d.quantity, ref: { type: 'delivery', key: d.key }, hint: deliveryHint(input.city) })),
   ];
   const parts = [];
   for (let i = 0; i < items.length; i += 20) parts.push(items.slice(i, i + 20));
@@ -327,6 +389,8 @@ async function price(works, input, onProgress) {
     works: works.map((w) => ({ ...w, price: pick(prices.get(`w:${w.id}`)) })),
     materials: materials.map((m) => ({ ...m, price: pick(prices.get(`material:${m.key}`)) })),
     machines: machines.map((m) => ({ ...m, price: pick(prices.get(`machine:${m.key}`)) })),
+    deliveries: deliveries.map((d) => ({ ...d, price: pick(prices.get(`delivery:${d.key}`)) })),
+    planned: Boolean(plan),
   };
 }
 
@@ -349,6 +413,7 @@ export async function verifyPrices(priced, input, onProgress = () => {}) {
     ...priced.works.map((w) => ({ ref: `w:${w.id}`, kind: 'work', name: `${w.laborName || w.name} — только работа`, unit: w.unit, quantity: w.quantity, target: w })),
     ...priced.materials.map((m, i) => ({ ref: `m:${i}`, kind: 'material', name: m.name, unit: m.unit, quantity: m.quantity, target: m })),
     ...priced.machines.map((m, i) => ({ ref: `t:${i}`, kind: 'work', name: `Аренда: ${m.name} (с оператором)`, unit: m.unit, quantity: m.quantity, target: m })),
+    ...(priced.deliveries || []).map((d, i) => ({ ref: `d:${i}`, kind: 'work', name: d.name, unit: d.unit, quantity: d.quantity, target: d })),
   ];
   const byRef = new Map(lines.map((l) => [l.ref, l]));
   const groups = [];
@@ -408,11 +473,27 @@ export function assemble(priced) {
     const s = sections.get(w.section) || { title: w.section, works: zero(), materials: zero(), machines: zero(), items: [] };
     add(s.works, w.price, w.quantity);
     const mats = w.materials.map((m) => { const line = materialByKey.get(keyOf(m.name, m.unit)); add(s.materials, line.price, m.quantity); return { ...m, price: line.price, sum: line.price.typical * m.quantity }; });
-    const machs = w.machines.map((m) => { const line = machineByKey.get(keyOf(m.name, m.unit)); add(s.machines, line.price, m.quantity); return { ...m, price: line.price, sum: line.price.typical * m.quantity }; });
+    const machs = priced.planned ? [] : w.machines.map((m) => { const line = machineByKey.get(keyOf(m.name, m.unit)); add(s.machines, line.price, m.quantity); return { ...m, price: line.price, sum: line.price.typical * m.quantity }; });
     s.items.push({ ...w, materials: mats, machines: machs, laborSum: w.price.typical * w.quantity, sum: w.price.typical * w.quantity + mats.reduce((t, m) => t + m.sum, 0) + machs.reduce((t, m) => t + m.sum, 0) });
     sections.set(w.section, s);
   }
+  if (priced.planned && (priced.machines.length || priced.deliveries.length)) {
+    const s = { title: 'Техника и доставка', works: zero(), materials: zero(), machines: zero(), items: [] };
+    const lines = [...priced.machines.map((m) => ({ ...m, name: `Аренда: ${m.name}` })), ...priced.deliveries];
+    lines.forEach((l, i) => {
+      add(s.machines, l.price, l.quantity);
+      const sum = l.price.typical * l.quantity;
+      s.items.push({ id: `Т${i + 1}`, section: s.title, name: l.name, unit: l.unit, quantity: l.quantity, basis: l.basis, confidence: 'medium', price: l.price, materials: [], machines: [], laborSum: sum, sum });
+    });
+    sections.set(s.title, s);
+  }
   return [...sections.values()];
+}
+
+/** Ranges of the rental plan for the totals: machines and delivery trips. */
+export function planTotals(priced) {
+  const range = (list) => list.reduce((t, l) => ({ low: t.low + l.price.low * l.quantity, typical: t.typical + l.price.typical * l.quantity, high: t.high + l.price.high * l.quantity }), { low: 0, typical: 0, high: 0 });
+  return { machines: range(priced.machines), delivery: range(priced.deliveries) };
 }
 
 // ---------- jobs ----------
@@ -455,7 +536,8 @@ export function cleanInput(body) {
   const pct = (v, d, max) => (Number.isFinite(Number(v)) ? Math.min(Math.max(Number(v), 0), max) : d);
   return {
     title: str(body?.title, 120), city: str(body?.city, 60) || 'Москва', docs, text,
-    options: { vat: Boolean(o.vat), vatPct: 22, deliveryPct: pct(o.deliveryPct, 4, 20), contingencyPct: pct(o.contingencyPct, 5, 30) },
+    // Delivery: trips counted from the purchase (default), or — if the user chose it — a percent of materials instead.
+    options: { vat: Boolean(o.vat), vatPct: 22, deliveryMode: o.deliveryMode === 'percent' ? 'percent' : 'lines', deliveryPct: o.deliveryMode === 'percent' ? pct(o.deliveryPct, 4, 20) : 0, contingencyPct: pct(o.contingencyPct, 5, 30) },
   };
 }
 
@@ -505,8 +587,24 @@ async function runJob(job, input, meter) {
       works = await norms(vor.works, input);
       saveStages(key, { vor, works });
     }
-    stage('prices', `Рыночные цены в г. ${input.city}: работы, материалы, техника`);
-    let priced = await price(works, input, (p) => update(job, { progress: p }));
+    const notes = [];
+    const makePlan = async () => {
+      try {
+        const plan = await logistics(works, input);
+        notes.length = 0;
+        if (plan.crewTools.length) notes.push(`Мелкая механизация входит в работу бригады, отдельно не считалась: ${plan.crewTools.join(', ')}.`);
+        return plan;
+      } catch (error) {
+        if (isOutOfFunds(error)) throw error;
+        notes.length = 0;
+        notes.push('План аренды техники и доставок не составился — техника посчитана по нормам работ, доставка — 4 % от материалов.');
+        return null;
+      }
+    };
+    stage('logistics', 'Снабженец: аренда техники по сменам и рейсы доставки', 0.5);
+    let plan = await makePlan();
+    stage('prices', `Рыночные цены в г. ${input.city}: работы, материалы, техника, доставка`);
+    let priced = await price(works, input, (p) => update(job, { progress: p }), plan);
     stage('audit', 'Аудитор проверяет смету', 0.5);
     const check = await audit(input, vor, priced);
     const additions = (check.additions || []).map((a, i) => ({
@@ -516,19 +614,23 @@ async function runJob(job, input, meter) {
     if (additions.length) {
       stage('additions', 'Считаем работы, добавленные аудитором', 0.3);
       works = [...works, ...(await norms(additions, input))];
-      priced = await price(works, input, () => {});
+      plan = await makePlan();
+      priced = await price(works, input, () => {}, plan);
     }
     stage('verify', 'Ценовой аудитор проверяет каждую цену', 0);
     const priceCheck = await verifyPrices(priced, input, (p) => update(job, { progress: p }));
     const sections = assemble(priced);
+    // Without a plan the delivery falls back to the percent (the note in the assumptions says so).
+    const options = priced.planned ? input.options : { ...input.options, deliveryMode: 'percent', deliveryPct: input.options.deliveryPct || 4 };
     const result = {
       title: input.title || vor.object?.name || 'Смета', city: input.city, createdAt: new Date().toISOString(),
-      object: vor.object, sections, materials: priced.materials, machines: priced.machines,
-      totals: totals(sections, input.options), options: input.options,
-      assumptions: vor.assumptions, discrepancies: vor.discrepancies,
+      object: vor.object, sections, materials: priced.materials,
+      machines: [...priced.machines.map((m) => ({ ...m, name: priced.planned ? `Аренда: ${m.name}` : m.name })), ...(priced.deliveries || [])],
+      totals: totals(sections, options, priced.planned ? planTotals(priced) : null), options,
+      assumptions: [...(vor.assumptions || []), ...notes], discrepancies: vor.discrepancies,
       audit: { verdict: str(check.verdict, 1200), issues: (check.issues || []).map((x) => ({ severity: x.severity, text: str(x.text, 600) })), added: additions.length, pricesChecked: priceCheck.checked, pricesFixed: priceCheck.flagged },
       sources: input.docs.map((d) => ({ name: d.name, kind: d.kind, pages: d.pages.length })),
-      unpriced: priced.works.filter((w) => w.price.missing).length + priced.materials.filter((m) => m.price.missing).length,
+      unpriced: [...priced.works, ...priced.materials, ...priced.machines, ...(priced.deliveries || [])].filter((x) => x.price.missing).length,
     };
     dropStages(key);
     update(job, { status: 'done', stage: 'done', stageTitle: 'Готово', progress: 1, result });

@@ -83,7 +83,12 @@ struct DocIssue: Codable, Hashable { var severity: String; var text: String }
 
 struct DocEstimateResult: Codable, Hashable {
     struct Totals: Codable, Hashable { var typical: DocTotals; var low: DocTotals; var high: DocTotals }
-    struct Options: Codable, Hashable { var vat: Bool = false; var vatPct: Double = 22; var deliveryPct: Double = 4; var contingencyPct: Double = 5 }
+    struct Options: Codable, Hashable {
+        var vat: Bool = false; var vatPct: Double = 22; var deliveryPct: Double = 4; var contingencyPct: Double = 5
+        /// «lines» — техника по реальной аренде и доставка рейсами (по умолчанию); «percent» — доставка процентом от материалов. Старые сметы — nil (процент).
+        var deliveryMode: String? = nil
+        var deliveryAsPercent: Bool { deliveryMode != "lines" }
+    }
     struct Audit: Codable, Hashable { var verdict: String = ""; var issues: [DocIssue] = []; var added: Int = 0; var pricesChecked: Int? = nil; var pricesFixed: Int? = nil }
     struct ObjectInfo: Codable, Hashable { var name: String? = nil; var type: String? = nil; var area: Double? = nil; var floors: Double? = nil; var summary: String? = nil }
     struct Source: Codable, Hashable { var name: String; var kind: String; var pages: Int }
@@ -254,7 +259,7 @@ final class DocEstimateCenter: ObservableObject {
         guard let base = AIServerConfig.marketURL else { throw DocEstimateError.noServer }
         let body: [String: Any] = [
             "title": title, "city": city, "text": text, "docs": docs.map(\.payload),
-            "options": ["vat": options.vat, "deliveryPct": options.deliveryPct, "contingencyPct": options.contingencyPct],
+            "options": ["vat": options.vat, "deliveryPct": options.deliveryPct, "contingencyPct": options.contingencyPct, "deliveryMode": options.deliveryMode ?? "lines"],
         ]
         var request = Self.request(base, "v1/ai/smeta", timeout: 180)
         request.httpMethod = "POST"

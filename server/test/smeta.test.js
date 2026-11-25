@@ -50,6 +50,7 @@ test('whole job: two readers, merge, norms, prices, audit additions, sections an
         return { works: ids.map((id) => ({ id, laborName: 'Кладка газобетона', materials: [{ name: 'Блок газобетон D500 600×300×250', unit: 'м³', norm: 0.3, waste: 5 }], machines: [] })) };
       }
       if (name === 'price_audit') return { flags: [] };
+      if (name === 'logistics') return { machines: [{ name: 'Автокран 25 т', unit: 'смена', quantity: 1, trips: 1, basis: 'монтаж перемычек' }], deliveries: [{ name: 'Доставка блоков манипулятором', unit: 'рейс', quantity: 1.2, basis: '31 м³ блоков' }], crewTools: ['вибратор'] };
       if (name === 'audit') return { verdict: 'Не хватает перемычек', issues: [{ severity: 'warning', text: 'Нет перемычек' }], additions: [{ section: 'Стены', name: 'Монтаж перемычек', unit: 'шт', quantity: 6, basis: 'проёмы АР‑5' }] };
       throw new Error(name);
     },
@@ -68,6 +69,14 @@ test('whole job: two readers, merge, norms, prices, audit additions, sections an
   assert.equal(Math.round(walls.works.typical), 100 * 1000 + 6 * 1000);
   assert.equal(Math.round(walls.materials.typical), Math.round((31.5 + 1.89) * 7000)); // the added lintels use blocks too in this mock
   assert.equal(r.audit.added, 1);
+  // Rental plan: machines and delivery trips are their own lines; no percent of materials by default.
+  const plan = r.sections.find((x) => x.title === 'Техника и доставка');
+  assert.equal(plan.items.length, 2);
+  assert.equal(plan.items[1].quantity, 2); // trips are whole
+  assert.equal(Math.round(r.totals.typical.machines), 1000);
+  assert.equal(Math.round(r.totals.typical.delivery), 2 * 1000);
+  assert.equal(r.options.deliveryMode, 'lines');
+  assert.ok(r.assumptions.some((a) => a.includes('вибратор')));
   assert.ok(r.totals.typical.total > r.totals.typical.subtotal - 1);
   smeta.setAgents();
 });
@@ -161,4 +170,14 @@ test('price auditor: a price without a link is searched again and stays marked a
   assert.equal(priced.materials[0].price.typical, 40);
   assert.equal(priced.materials[0].price.estimated, true);
   smeta.setAgents();
+});
+
+test('totals: delivery as a percent only when chosen; trips otherwise', async () => {
+  const { totals } = await import('../src/smeta.js');
+  const p = (x) => ({ low: x, typical: x, high: x });
+  const sections = [{ works: p(100_000), materials: p(200_000), machines: p(0) }];
+  const extra = { machines: p(30_000), delivery: p(12_000) };
+  assert.equal(totals(sections, { deliveryMode: 'lines', deliveryPct: 0, contingencyPct: 0 }, extra).typical.delivery, 12_000);
+  assert.equal(totals(sections, { deliveryMode: 'percent', deliveryPct: 5, contingencyPct: 0 }, { machines: p(30_000), delivery: p(0) }).typical.delivery, 10_000);
+  assert.equal(totals(sections, { deliveryMode: 'lines', contingencyPct: 0 }, extra).typical.machines, 30_000);
 });
