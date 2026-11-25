@@ -1,18 +1,21 @@
 """Обработка одного скана: python -m house.run scan.zip out/
 
 Шаги этапа 1b (без нейросетей): глубина LiDAR + позы ARKit → TSDF-сетка → плоскости → house.json + house.glb.
-Сегментация, крыша по фото (ИИ + триангуляция) и splatting подключаются следующими шагами (SPEC §1.5).
+Крыша по фото — если задан OPENROUTER_API_KEY. Сегментация и splatting — следующие шаги (SPEC §1.5).
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
+import numpy as np
 import open3d as o3d
 
 from . import bundle as bundle_io
+from . import roof_ai
 from .fuse import fuse
 from .model import build_house, extract_planes
 
@@ -26,6 +29,23 @@ def process(scan: Path, out: Path) -> dict:
     mesh, cloud, used = fuse(bundle)
     planes = extract_planes(cloud)
     house = build_house(planes)
+    # Крыша по фото (тип, покрытие, детали; конёк — лучами до фронтонов LiDAR). Нужен ключ OpenRouter, ≈ $0.03.
+    if os.environ.get("OPENROUTER_API_KEY") and house.get("gableWalls") and os.environ.get("HOUSE_NO_AI") != "1":
+        try:
+            corners = np.array(house["footprint"]["corners"])
+            center = np.array([corners[:, 0].mean(), 0.0, corners[:, 1].mean()])
+            gables = [(np.array(g["normal"]), g["d"], np.array(g["center"]), g["halfWidth"]) for g in house["gableWalls"]]
+            photo = roof_ai.analyze(bundle, center, gables, house["groundY"])
+            house["roof"]["byPhoto"] = photo
+            ends = [e["height"] for e in photo["ridgeEnds"] if e["frames"] >= 2]
+            ridge = house["roof"].get("ridgeHeight", {})
+            if ends and ridge.get("source") != "measured":
+                house["roof"]["ridgeHeight"] = {"value": round(float(np.median(ends)), 3), "source": "photo",
+                                                "note": "конёк отмечен ИИ на фото, высота — лучами из поз ARKit до фронтона LiDAR"}
+            if photo.get("roofType"):
+                house["roof"]["typeByPhoto"] = photo["roofType"]
+        except Exception as error:  # ИИ недоступен — геометрия LiDAR остаётся
+            house["roof"]["byPhotoError"] = str(error)[:300]
     # Контрольный размер (рулетка): сравнение с измеренной стороной футпринта.
     control = [c for c in bundle.manifest.get("control", []) if c.get("kind") == "wall_length"]
     if control:

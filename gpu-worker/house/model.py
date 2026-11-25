@@ -258,4 +258,10 @@ def build_house(planes: list[Plane]) -> dict:
         "eaveHeight": _value(eave, "measured", sigma=eave_sigma + 0.01),
         "roof": roof,
         "planes": {"walls": len(walls), "roof": len(roofs), "ground": len(grounds)},
+        # Фронтонные стены (для конька по фото): нормаль, d, центр, полуширина.
+        "gableWalls": [] if not gable_axis else [
+            {"normal": [round(float(x), 5) for x in w.normal], "d": round(float(w.d), 4),
+             "center": [round(float(x), 3) for x in w.points.mean(axis=0)],
+             "halfWidth": round(float(np.ptp(w.points @ (v if gable_axis == "A" else u)) / 2), 3)}
+            for w in groups[gable_axis]],
     }
