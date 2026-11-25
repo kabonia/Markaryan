@@ -1,0 +1,2854 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 http://docs.oasis-open.org/xliff/v1.2/os/xliff-core-1.2-strict.xsd">
+  <file original="Markaryan/ru.lproj/InfoPlist.strings" datatype="plaintext" source-language="ru" target-language="en">
+    <header>
+      <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="26.6" build-num="17F113"/>
+    </header>
+    <body>
+      <trans-unit id="CFBundleDisplayName" xml:space="preserve">
+        <source>СметаПро</source>
+        <note>Bundle display name</note>
+      </trans-unit>
+      <trans-unit id="CFBundleName" xml:space="preserve">
+        <source>Markaryan</source>
+        <note>Bundle name</note>
+      </trans-unit>
+      <trans-unit id="NSCameraUsageDescription" xml:space="preserve">
+        <source>Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта.</source>
+        <note>Privacy - Camera Usage Description</note>
+      </trans-unit>
+      <trans-unit id="NSLocationWhenInUseUsageDescription" xml:space="preserve">
+        <source>Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу.</source>
+        <note>Privacy - Location When In Use Usage Description</note>
+      </trans-unit>
+      <trans-unit id="NSPhotoLibraryAddUsageDescription" xml:space="preserve">
+        <source>Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото.</source>
+        <note>Privacy - Photo Library Additions Usage Description</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="Markaryan/ru.lproj/Localizable.strings" datatype="plaintext" source-language="ru" target-language="en">
+    <header>
+      <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="26.6" build-num="17F113"/>
+    </header>
+    <body>
+      <trans-unit id="%@ %@" xml:space="preserve">
+        <source>%@ %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ %@ · %@" xml:space="preserve">
+        <source>%@ %@ · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ %@ · материалы %@ · работа %@" xml:space="preserve">
+        <source>%@ %@ · материалы %@ · работа %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ %@ × %@" xml:space="preserve">
+        <source>%@ %@ × %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ %@ × %@ работа" xml:space="preserve">
+        <source>%@ %@ × %@ работа</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ %@ × %@%@" xml:space="preserve">
+        <source>%@ %@ × %@%@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ · %@" xml:space="preserve">
+        <source>%@ · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ · %lld" xml:space="preserve">
+        <source>%@ · %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ · вариантов: %lld" xml:space="preserve">
+        <source>%@ · вариантов: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ × %@ м" xml:space="preserve">
+        <source>%@ × %@ м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ до %@" xml:space="preserve">
+        <source>%@ до %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ дом: стороны %@ м" xml:space="preserve">
+        <source>%@ дом: стороны %@ м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ м²" xml:space="preserve">
+        <source>%@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ м² · %@" xml:space="preserve">
+        <source>%@ м² · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@ – %@" xml:space="preserve">
+        <source>%@ – %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@%@" xml:space="preserve">
+        <source>%@%@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@, %@" xml:space="preserve">
+        <source>%@, %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@: %@" xml:space="preserve">
+        <source>%@: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@: %@ в смету" xml:space="preserve">
+        <source>%@: %@ в смету</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%@: %lld градусов. %@" xml:space="preserve">
+        <source>%@: %lld градусов. %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld" xml:space="preserve">
+        <source>%lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld %@ · %@ м²" xml:space="preserve">
+        <source>%lld %@ · %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld из %lld" xml:space="preserve">
+        <source>%lld из %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld из %lld пунктов" xml:space="preserve">
+        <source>%lld из %lld пунктов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld из %lld этапов" xml:space="preserve">
+        <source>%lld из %lld этапов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld кадров · %@" xml:space="preserve">
+        <source>%lld кадров · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld%%" xml:space="preserve">
+        <source>%lld%%</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld%% · %@" xml:space="preserve">
+        <source>%lld%% · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld°" xml:space="preserve">
+        <source>%lld°</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="%lld° / %lld°" xml:space="preserve">
+        <source>%lld° / %lld°</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="0" xml:space="preserve">
+        <source>0</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="0,00" xml:space="preserve">
+        <source>0,00</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="1. Снимите или выберите фото. 2. Укажите, что на нём, и выберите стиль. 3. Нажмите «Сгенерировать». ИИ сохранит стены, окна и ракурс, а отделку, мебель и свет сделает в выбранном стиле. Все результаты сохраняются на iPhone." xml:space="preserve">
+        <source>1. Снимите или выберите фото. 2. Укажите, что на нём, и выберите стиль. 3. Нажмите «Сгенерировать». ИИ сохранит стены, окна и ракурс, а отделку, мебель и свет сделает в выбранном стиле. Все результаты сохраняются на iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="3D‑обмер дома" xml:space="preserve">
+        <source>3D‑обмер дома</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="3D‑просмотр комнаты" xml:space="preserve">
+        <source>3D‑просмотр комнаты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="4,20 м" xml:space="preserve">
+        <source>4,20 м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="5–10 мин обход" xml:space="preserve">
+        <source>5–10 мин обход</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="18,6" xml:space="preserve">
+        <source>18,6</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="AR недоступен на этом устройстве" xml:space="preserve">
+        <source>AR недоступен на этом устройстве</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="AR-СТУДИЯ" xml:space="preserve">
+        <source>AR-СТУДИЯ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Claude отвечает с учётом всей переписки, видит фото, читает сметы и рисует расстановку мебели на плане комнаты. Без ключа работает сервер приложения." xml:space="preserve">
+        <source>Claude отвечает с учётом всей переписки, видит фото, читает сметы и рисует расстановку мебели на плане комнаты. Без ключа работает сервер приложения.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="LIVE" xml:space="preserve">
+        <source>LIVE</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Seedream рисует 1–3 минуты. Не сворачивайте приложение." xml:space="preserve">
+        <source>Seedream рисует 1–3 минуты. Не сворачивайте приложение.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Workspace" xml:space="preserve">
+        <source>Workspace</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Workspace ID: wrkspc_…" xml:space="preserve">
+        <source>Workspace ID: wrkspc_…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="https://example.ru" xml:space="preserve">
+        <source>https://example.ru</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="iPhone сканирует комнату лидаром: стены, окна, двери и мебель. Получите точный план сверху с размерами, 3D‑модель и дизайн‑проект от ИИ прямо по этой планировке." xml:space="preserve">
+        <source>iPhone сканирует комнату лидаром: стены, окна, двери и мебель. Получите точный план сверху с размерами, 3D‑модель и дизайн‑проект от ИИ прямо по этой планировке.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="sk-ant-… или sk-or-… (OpenRouter)" xml:space="preserve">
+        <source>sk-ant-… или sk-or-… (OpenRouter)</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="«Материалы построчно» выключено — в смете-приложении только работы, материалы одной суммой по разделу. «Примечания сметчика» — допущения расчёта в конце документа." xml:space="preserve">
+        <source>«Материалы построчно» выключено — в смете-приложении только работы, материалы одной суммой по разделу. «Примечания сметчика» — допущения расчёта в конце документа.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="«От начала» — по ходу нумерации стен, как на плане. Можно вводить в сантиметрах: 80 — это 0,8 м." xml:space="preserve">
+        <source>«От начала» — по ходу нумерации стен, как на плане. Можно вводить в сантиметрах: 80 — это 0,8 м.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="±%@ см" xml:space="preserve">
+        <source>±%@ см</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="· %@" xml:space="preserve">
+        <source>· %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="АКТИВНЫЙ ОБЪЕКТ" xml:space="preserve">
+        <source>АКТИВНЫЙ ОБЪЕКТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="АР, КР, ТЗ, готовая смета в Excel или просто перечень работ — объёмы снимут два независимых ИИ‑агента, нормы расхода посчитает нормировщик, цены — по рынку вашего города, а аудитор проверит пропуски и ошибки." xml:space="preserve">
+        <source>АР, КР, ТЗ, готовая смета в Excel или просто перечень работ — объёмы снимут два независимых ИИ‑агента, нормы расхода посчитает нормировщик, цены — по рынку вашего города, а аудитор проверит пропуски и ошибки.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="АР, КР, ТЗ, готовая смета или перечень работ — точный расчёт ИИ‑сметчиками" xml:space="preserve">
+        <source>АР, КР, ТЗ, готовая смета или перечень работ — точный расчёт ИИ‑сметчиками</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Автопродление подписки" xml:space="preserve">
+        <source>Автопродление подписки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Адрес должен начинаться с https://" xml:space="preserve">
+        <source>Адрес должен начинаться с https://</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Адрес или район" xml:space="preserve">
+        <source>Адрес или район</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Адрес объекта" xml:space="preserve">
+        <source>Адрес объекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Адрес сервера" xml:space="preserve">
+        <source>Адрес сервера</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Анонимные технические события (открытие экранов, ошибки) помогают нам исправлять проблемы и не содержат личных данных." xml:space="preserve">
+        <source>Анонимные технические события (открытие экранов, ошибки) помогают нам исправлять проблемы и не содержат личных данных.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="БАЛАНС" xml:space="preserve">
+        <source>БАЛАНС</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="БЕТОН" xml:space="preserve">
+        <source>БЕТОН</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="БЫЛО" xml:space="preserve">
+        <source>БЫЛО</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Баланс: %lld кредитов. Пополнить" xml:space="preserve">
+        <source>Баланс: %lld кредитов. Пополнить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Банковские реквизиты" xml:space="preserve">
+        <source>Банковские реквизиты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Без границы участка проверятся категория земли и ВРИ. Отступы дома от границ — после привязки по углам участка." xml:space="preserve">
+        <source>Без границы участка проверятся категория земли и ВРИ. Отступы дома от границ — после привязки по углам участка.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Без лидара: точность ±2–5 %" xml:space="preserve">
+        <source>Без лидара: точность ±2–5 %</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Без подписки · %lld вопросов помощнику в день бесплатно" xml:space="preserve">
+        <source>Без подписки · %lld вопросов помощнику в день бесплатно</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Без размера" xml:space="preserve">
+        <source>Без размера</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Без рыночной цены: %lld позиций — уточните у поставщиков." xml:space="preserve">
+        <source>Без рыночной цены: %lld позиций — уточните у поставщиков.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Бетонный пол" xml:space="preserve">
+        <source>Бетонный пол</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Больше не показывать" xml:space="preserve">
+        <source>Больше не показывать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Бюджет" xml:space="preserve">
+        <source>Бюджет</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Бюджет %@" xml:space="preserve">
+        <source>Бюджет %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Бюджет по этапам" xml:space="preserve">
+        <source>Бюджет по этапам</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Бюджет проекта" xml:space="preserve">
+        <source>Бюджет проекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="В калькулятор" xml:space="preserve">
+        <source>В калькулятор</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="В проект" xml:space="preserve">
+        <source>В проект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="В проекте" xml:space="preserve">
+        <source>В проекте</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="В шапке — ваши название, логотип и реквизиты." xml:space="preserve">
+        <source>В шапке — ваши название, логотип и реквизиты.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="В этой концепции нет расстановки — создайте ещё вариант дизайна." xml:space="preserve">
+        <source>В этой концепции нет расстановки — создайте ещё вариант дизайна.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ВАШ КОНЦЕПТ" xml:space="preserve">
+        <source>ВАШ КОНЦЕПТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ВАШ ОБЪЕКТ" xml:space="preserve">
+        <source>ВАШ ОБЪЕКТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ВИЗУАЛИЗАТОР ОБЪЕКТА" xml:space="preserve">
+        <source>ВИЗУАЛИЗАТОР ОБЪЕКТА</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ВНЕСТИ ПРАВКУ" xml:space="preserve">
+        <source>ВНЕСТИ ПРАВКУ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вариант %lld из %lld" xml:space="preserve">
+        <source>Вариант %lld из %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ваши данные" xml:space="preserve">
+        <source>Ваши данные</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ввести данные" xml:space="preserve">
+        <source>Ввести данные</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вернуть сервер по умолчанию" xml:space="preserve">
+        <source>Вернуть сервер по умолчанию</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Версия %@" xml:space="preserve">
+        <source>Версия %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Версия прайса" xml:space="preserve">
+        <source>Версия прайса</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вид" xml:space="preserve">
+        <source>Вид</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вид разрешённого использования" xml:space="preserve">
+        <source>Вид разрешённого использования</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Визуализация ИИ" xml:space="preserve">
+        <source>Визуализация ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вилка: %@ – %@" xml:space="preserve">
+        <source>Вилка: %@ – %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Включите свет и откройте двери" xml:space="preserve">
+        <source>Включите свет и откройте двери</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Включить фонарик" xml:space="preserve">
+        <source>Включить фонарик</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Водопровод" xml:space="preserve">
+        <source>Водопровод</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вопросы ИИ‑помощнику и прикреплённые фото передаются через сервер приложения поставщику модели только для ответа." xml:space="preserve">
+        <source>Вопросы ИИ‑помощнику и прикреплённые фото передаются через сервер приложения поставщику модели только для ответа.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Восстановить покупки" xml:space="preserve">
+        <source>Восстановить покупки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Вращайте одним пальцем, двигайте двумя, приближайте щипком" xml:space="preserve">
+        <source>Вращайте одним пальцем, двигайте двумя, приближайте щипком</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Все" xml:space="preserve">
+        <source>Все</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Все материалы объекта, сложенные по работам, с нормами и отходами; техника и рейсы доставки." xml:space="preserve">
+        <source>Все материалы объекта, сложенные по работам, с нормами и отходами; техника и рейсы доставки.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Все обмеры" xml:space="preserve">
+        <source>Все обмеры</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Все этапы закрыты" xml:space="preserve">
+        <source>Все этапы закрыты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Все этапы закрыты — поздравляем!" xml:space="preserve">
+        <source>Все этапы закрыты — поздравляем!</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Второй круг — дальше, с поднятой камерой: крыша и фронтоны" xml:space="preserve">
+        <source>Второй круг — дальше, с поднятой камерой: крыша и фронтоны</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Входные двери: %lld" xml:space="preserve">
+        <source>Входные двери: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выберите город для цен" xml:space="preserve">
+        <source>Выберите город для цен</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выберите стиль — посмотрите комнату в нём" xml:space="preserve">
+        <source>Выберите стиль — посмотрите комнату в нём</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выберите тип объекта. Внутри — все материалы, работы, техника и доставка по строкам." xml:space="preserve">
+        <source>Выберите тип объекта. Внутри — все материалы, работы, техника и доставка по строкам.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выбранная модель отвечает первой; если она не ответит, работу сделает следующая." xml:space="preserve">
+        <source>Выбранная модель отвечает первой; если она не ответит, работу сделает следующая.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выбрать изображение из файлов" xml:space="preserve">
+        <source>Выбрать изображение из файлов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выбрать фото из галереи" xml:space="preserve">
+        <source>Выбрать фото из галереи</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выйти без сохранения?" xml:space="preserve">
+        <source>Выйти без сохранения?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Выключить фонарик" xml:space="preserve">
+        <source>Выключить фонарик</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Высота потолка" xml:space="preserve">
+        <source>Высота потолка</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Гарантия" xml:space="preserve">
+        <source>Гарантия</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Главная" xml:space="preserve">
+        <source>Главная</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Город" xml:space="preserve">
+        <source>Город</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Город для цен" xml:space="preserve">
+        <source>Город для цен</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Город нужен, чтобы подставлять рыночные цены вашего региона. Определяется по геопозиции только с вашего разрешения или выбирается вручную; точные координаты не сохраняются." xml:space="preserve">
+        <source>Город нужен, чтобы подставлять рыночные цены вашего региона. Определяется по геопозиции только с вашего разрешения или выбирается вручную; точные координаты не сохраняются.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Города" xml:space="preserve">
+        <source>Города</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Готовим и отправляем документы…" xml:space="preserve">
+        <source>Готовим и отправляем документы…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Готовность проекта" xml:space="preserve">
+        <source>Готовность проекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Готово" xml:space="preserve">
+        <source>Готово</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Готовый макет" xml:space="preserve">
+        <source>Готовый макет</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Граница, площадь, ВРИ из Росреестра и проверка отступов" xml:space="preserve">
+        <source>Граница, площадь, ВРИ из Росреестра и проверка отступов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Грунтовка и окраска металла" xml:space="preserve">
+        <source>Грунтовка и окраска металла</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ДВЕРИ И ОКНА" xml:space="preserve">
+        <source>ДВЕРИ И ОКНА</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ДОКУМЕНТЫ" xml:space="preserve">
+        <source>ДОКУМЕНТЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Далее" xml:space="preserve">
+        <source>Далее</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дальняя часть комнаты сдвинется вдоль стены, мебель и проёмы — вместе с ней." xml:space="preserve">
+        <source>Дальняя часть комнаты сдвинется вдоль стены, мебель и проёмы — вместе с ней.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дальше" xml:space="preserve">
+        <source>Дальше</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Данные сохранены" xml:space="preserve">
+        <source>Данные сохранены</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дверь" xml:space="preserve">
+        <source>Дверь</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Двигайте ползунок: слева — было, справа — стало. Двойное касание — на весь экран. Все варианты сохранены в «Моих дизайнах»." xml:space="preserve">
+        <source>Двигайте ползунок: слева — было, справа — стало. Двойное касание — на весь экран. Все варианты сохранены в «Моих дизайнах».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Движок" xml:space="preserve">
+        <source>Движок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Действия" xml:space="preserve">
+        <source>Действия</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Держите iPhone на уровне груди" xml:space="preserve">
+        <source>Держите iPhone на уровне груди</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Детали" xml:space="preserve">
+        <source>Детали</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дизайн" xml:space="preserve">
+        <source>Дизайн</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дизайн ещё не создан" xml:space="preserve">
+        <source>Дизайн ещё не создан</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дизайн и расстановка: %@" xml:space="preserve">
+        <source>Дизайн и расстановка: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дизайн по фото" xml:space="preserve">
+        <source>Дизайн по фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Длина недоступной стороны, м (необязательно)" xml:space="preserve">
+        <source>Длина недоступной стороны, м (необязательно)</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Длина стены %lld" xml:space="preserve">
+        <source>Длина стены %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Для замеров нужен совместимый iPhone с камерой. Обычные калькуляторы работают без AR." xml:space="preserve">
+        <source>Для замеров нужен совместимый iPhone с камерой. Обычные калькуляторы работают без AR.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Для объекта автоматически создадутся отдельные этапы, бюджет, фото-дневник и журнал решений." xml:space="preserve">
+        <source>Для объекта автоматически создадутся отдельные этапы, бюджет, фото-дневник и журнал решений.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Днём, лучше в пасмурную погоду — без резких теней" xml:space="preserve">
+        <source>Днём, лучше в пасмурную погоду — без резких теней</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавить" xml:space="preserve">
+        <source>Добавить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавить задачу" xml:space="preserve">
+        <source>Добавить задачу</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавить логотип" xml:space="preserve">
+        <source>Добавить логотип</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавить объект" xml:space="preserve">
+        <source>Добавить объект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавить предмет" xml:space="preserve">
+        <source>Добавить предмет</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавлено проверкой работ: %lld — отмечены в смете." xml:space="preserve">
+        <source>Добавлено проверкой работ: %lld — отмечены в смете.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавляйте фото выполненных этапов, скрытых работ и согласованных решений. Они останутся на вашем iPhone." xml:space="preserve">
+        <source>Добавляйте фото выполненных этапов, скрытых работ и согласованных решений. Они останутся на вашем iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавьте первую запись: встреча, решение или выполненный этап." xml:space="preserve">
+        <source>Добавьте первую запись: встреча, решение или выполненный этап.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Добавьте работу, укажите ответственного и срок." xml:space="preserve">
+        <source>Добавьте работу, укажите ответственного и срок.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дом · фасад · интерьер · мебель · участок" xml:space="preserve">
+        <source>Дом · фасад · интерьер · мебель · участок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дом, навес, ангар, забор — по размерам, с работами, техникой и доставкой" xml:space="preserve">
+        <source>Дом, навес, ангар, забор — по размерам, с работами, техникой и доставкой</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Дорожная карта" xml:space="preserve">
+        <source>Дорожная карта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Доставка материалов: %lld %%" xml:space="preserve">
+        <source>Доставка материалов: %lld %%</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Доставка процентом вместо рейсов" xml:space="preserve">
+        <source>Доставка процентом вместо рейсов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Доступ к геопозиции выключен. Выберите город из списка или разрешите доступ в Настройках." xml:space="preserve">
+        <source>Доступ к геопозиции выключен. Выберите город из списка или разрешите доступ в Настройках.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Думаю…" xml:space="preserve">
+        <source>Думаю…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Есть лидар: точность до сантиметров" xml:space="preserve">
+        <source>Есть лидар: точность до сантиметров</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Есть сохранённые размеры" xml:space="preserve">
+        <source>Есть сохранённые размеры</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ещё" xml:space="preserve">
+        <source>Ещё</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Журнал решений" xml:space="preserve">
+        <source>Журнал решений</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Забор — длина" xml:space="preserve">
+        <source>Забор — длина</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Загружаем предложения App Store…" xml:space="preserve">
+        <source>Загружаем предложения App Store…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Загрузите PDF, Excel, фото листов или текст" xml:space="preserve">
+        <source>Загрузите PDF, Excel, фото листов или текст</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Задайте вопрос о стройке, материалах или порядке работ. Помощник не заменяет проектировщика для несущих конструкций." xml:space="preserve">
+        <source>Задайте вопрос о стройке, материалах или порядке работ. Помощник не заменяет проектировщика для несущих конструкций.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Задач пока нет" xml:space="preserve">
+        <source>Задач пока нет</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Задача" xml:space="preserve">
+        <source>Задача</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Задачи команды" xml:space="preserve">
+        <source>Задачи команды</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Задачи сохраняются отдельно для этого объекта." xml:space="preserve">
+        <source>Задачи сохраняются отдельно для этого объекта.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Заказчик: ФИО или компания" xml:space="preserve">
+        <source>Заказчик: ФИО или компания</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Закрыть" xml:space="preserve">
+        <source>Закрыть</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Закрыть AR" xml:space="preserve">
+        <source>Закрыть AR</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Закрыть камеру" xml:space="preserve">
+        <source>Закрыть камеру</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Закупка" xml:space="preserve">
+        <source>Закупка</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Заменить логотип" xml:space="preserve">
+        <source>Заменить логотип</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Заметка" xml:space="preserve">
+        <source>Заметка</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Запрашиваем кадастровую карту…" xml:space="preserve">
+        <source>Запрашиваем кадастровую карту…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Значения по умолчанию приведены для примера. Последние введённые размеры запоминаются при сохранении расчёта." xml:space="preserve">
+        <source>Значения по умолчанию приведены для примера. Последние введённые размеры запоминаются при сохранении расчёта.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="И ещё %lld" xml:space="preserve">
+        <source>И ещё %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ" xml:space="preserve">
+        <source>ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ изучает расчёт…" xml:space="preserve">
+        <source>ИИ изучает расчёт…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ подберёт мебель, отделку и свет, а приложение расставит всё с проходами и свободной дверью." xml:space="preserve">
+        <source>ИИ подберёт мебель, отделку и свет, а приложение расставит всё с проходами и свободной дверью.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ подбирает материалы, свет и композицию…" xml:space="preserve">
+        <source>ИИ подбирает материалы, свет и композицию…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ превратит точную 3D‑модель комнаты в фотореалистичный рендер в стиле «%@», не сдвигая стены и мебель. Около 1–2 минут." xml:space="preserve">
+        <source>ИИ превратит точную 3D‑модель комнаты в фотореалистичный рендер в стиле «%@», не сдвигая стены и мебель. Около 1–2 минут.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ проектирует интерьер" xml:space="preserve">
+        <source>ИИ проектирует интерьер</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ распознаёт…" xml:space="preserve">
+        <source>ИИ распознаёт…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ рисует вашу комнату… ~30 с" xml:space="preserve">
+        <source>ИИ рисует вашу комнату… ~30 с</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ сам определит, что на фото" xml:space="preserve">
+        <source>ИИ сам определит, что на фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ создаёт дизайн" xml:space="preserve">
+        <source>ИИ создаёт дизайн</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ сохранит важные особенности объекта." xml:space="preserve">
+        <source>ИИ сохранит важные особенности объекта.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ считает…" xml:space="preserve">
+        <source>ИИ считает…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ‑движок" xml:space="preserve">
+        <source>ИИ‑движок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ‑помощник" xml:space="preserve">
+        <source>ИИ‑помощник</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИИ‑сметчик пересчитает дом по описанию с поиском цен под ваш объект — за кредиты, 10–30 минут. Результат появится в «Смета по документам»." xml:space="preserve">
+        <source>ИИ‑сметчик пересчитает дом по описанию с поиском цен под ваш объект — за кредиты, 10–30 минут. Результат появится в «Смета по документам».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИСХОДНОЕ ФОТО" xml:space="preserve">
+        <source>ИСХОДНОЕ ФОТО</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИТОГО · %@" xml:space="preserve">
+        <source>ИТОГО · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ИТОГО ПО СМЕТЕ · %@" xml:space="preserve">
+        <source>ИТОГО ПО СМЕТЕ · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Идите медленно, 5–10 минут. Кольцо вверху покажет, что осталось" xml:space="preserve">
+        <source>Идите медленно, 5–10 минут. Кольцо вверху покажет, что осталось</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Из выписки ЕГРН" xml:space="preserve">
+        <source>Из выписки ЕГРН</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Из галереи" xml:space="preserve">
+        <source>Из галереи</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Изменить" xml:space="preserve">
+        <source>Изменить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Изменить статус: %@" xml:space="preserve">
+        <source>Изменить статус: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Измерьте рулеткой одну стену" xml:space="preserve">
+        <source>Измерьте рулеткой одну стену</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Измеряйте расстояния и площадь пола. Размещайте на площадке плиту, стены, крышу, окна, двери и септик с заданными размерами." xml:space="preserve">
+        <source>Измеряйте расстояния и площадь пола. Размещайте на площадке плиту, стены, крышу, окна, двери и септик с заданными размерами.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Импортировать файл прайса" xml:space="preserve">
+        <source>Импортировать файл прайса</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Исполнитель" xml:space="preserve">
+        <source>Исполнитель</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Использовать «%@»" xml:space="preserve">
+        <source>Использовать «%@»</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Использовать длину в калькуляторе" xml:space="preserve">
+        <source>Использовать длину в калькуляторе</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Использовать длину в расчёте" xml:space="preserve">
+        <source>Использовать длину в расчёте</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Использовать площадь в расчёте" xml:space="preserve">
+        <source>Использовать площадь в расчёте</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Используется только город, чтобы подставить цены магазинов и мастеров вашего региона. Точные координаты не сохраняются." xml:space="preserve">
+        <source>Используется только город, чтобы подставить цены магазинов и мастеров вашего региона. Точные координаты не сохраняются.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="История" xml:space="preserve">
+        <source>История</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Исходное фото добавлено" xml:space="preserve">
+        <source>Исходное фото добавлено</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Итого 1 248 300 ₽" xml:space="preserve">
+        <source>Итого 1 248 300 ₽</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ищем цены в магазинах и у мастеров %@…" xml:space="preserve">
+        <source>Ищем цены в магазинах и у мастеров %@…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="КАК ПОЛЬЗОВАТЬСЯ" xml:space="preserve">
+        <source>КАК ПОЛЬЗОВАТЬСЯ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="КАК ЭТО РАБОТАЕТ" xml:space="preserve">
+        <source>КАК ЭТО РАБОТАЕТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="КОНТУР AR" xml:space="preserve">
+        <source>КОНТУР AR</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="КРЫША" xml:space="preserve">
+        <source>КРЫША</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Кадастровая карта" xml:space="preserve">
+        <source>Кадастровая карта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Кадастровый номер" xml:space="preserve">
+        <source>Кадастровый номер</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Кадастровый номер, напр. 50:20:0010101:123" xml:space="preserve">
+        <source>Кадастровый номер, напр. 50:20:0010101:123</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Кадров с лидаром: %lld из %lld; смазанных отброшено: %lld; обработка %lld с." xml:space="preserve">
+        <source>Кадров с лидаром: %lld из %lld; смазанных отброшено: %lld; обработка %lld с.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Как" xml:space="preserve">
+        <source>Как</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Как есть" xml:space="preserve">
+        <source>Как есть</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Как пользоваться" xml:space="preserve">
+        <source>Как пользоваться</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Как рассчитано" xml:space="preserve">
+        <source>Как рассчитано</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Калитки: %lld" xml:space="preserve">
+        <source>Калитки: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Калькуляторы, AR‑рулетка, типовые сметы и проекты — бесплатно. Если ИИ не справился, кредиты возвращаются." xml:space="preserve">
+        <source>Калькуляторы, AR‑рулетка, типовые сметы и проекты — бесплатно. Если ИИ не справился, кредиты возвращаются.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Камера используется для AR‑замеров, скана помещения и съёмки. Фото уходит на сервер ИИ только после нажатия кнопки — для одного ответа или одной картинки." xml:space="preserve">
+        <source>Камера используется для AR‑замеров, скана помещения и съёмки. Фото уходит на сервер ИИ только после нажатия кнопки — для одного ответа или одной картинки.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Камера не записывается. AR-замеры приблизительны; перед закупкой перепроверьте размеры рулеткой." xml:space="preserve">
+        <source>Камера не записывается. AR-замеры приблизительны; перед закупкой перепроверьте размеры рулеткой.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Касание пустого места — добавить метку, касание метки — убрать." xml:space="preserve">
+        <source>Касание пустого места — добавить метку, касание метки — убрать.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Категория" xml:space="preserve">
+        <source>Категория</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Квартира удалена" xml:space="preserve">
+        <source>Квартира удалена</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Квартира целиком" xml:space="preserve">
+        <source>Квартира целиком</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Квартира целиком: после комнаты нажмите «Следующая комната» и идите дальше" xml:space="preserve">
+        <source>Квартира целиком: после комнаты нажмите «Следующая комната» и идите дальше</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Кладка — длина стен" xml:space="preserve">
+        <source>Кладка — длина стен</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ключ Claude API" xml:space="preserve">
+        <source>Ключ Claude API</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ключ встроен в эту сборку (ClaudeKey.plist)" xml:space="preserve">
+        <source>Ключ встроен в эту сборку (ClaudeKey.plist)</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ключ сохранён в Связке ключей iPhone" xml:space="preserve">
+        <source>Ключ сохранён в Связке ключей iPhone</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ключ хранится только в зашифрованной Связке ключей этого iPhone и отправляется только на api.anthropic.com. Не публикуйте сборку для клиентов с вашим ключом: для App Store ключ должен лежать на сервере приложения." xml:space="preserve">
+        <source>Ключ хранится только в зашифрованной Связке ключей этого iPhone и отправляется только на api.anthropic.com. Не публикуйте сборку для клиентов с вашим ключом: для App Store ключ должен лежать на сервере приложения.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Коммерческое предложение" xml:space="preserve">
+        <source>Коммерческое предложение</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Комната %lld сохранена. Перейдите в следующую комнату, не закрывая скан, — комнаты встанут на свои места на общем плане." xml:space="preserve">
+        <source>Комната %lld сохранена. Перейдите в следующую комнату, не закрывая скан, — комнаты встанут на свои места на общем плане.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Компания" xml:space="preserve">
+        <source>Компания</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Контакты" xml:space="preserve">
+        <source>Контакты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Контрольный размер (по желанию)" xml:space="preserve">
+        <source>Контрольный размер (по желанию)</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Контур AR: окна и двери добавьте в «Исправить»." xml:space="preserve">
+        <source>Контур AR: окна и двери добавьте в «Исправить».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Концепт сохранён в Фото" xml:space="preserve">
+        <source>Концепт сохранён в Фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Концепций: %lld" xml:space="preserve">
+        <source>Концепций: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Концепция удалена" xml:space="preserve">
+        <source>Концепция удалена</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Копировать" xml:space="preserve">
+        <source>Копировать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Короткая экскурсия по разделам — меньше минуты. Её можно включить позже в профиле или спросить у помощника." xml:space="preserve">
+        <source>Короткая экскурсия по разделам — меньше минуты. Её можно включить позже в профиле или спросить у помощника.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Крутите пальцем, щипок — масштаб" xml:space="preserve">
+        <source>Крутите пальцем, щипок — масштаб</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Куда" xml:space="preserve">
+        <source>Куда</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ЛИДАР‑СКАН" xml:space="preserve">
+        <source>ЛИДАР‑СКАН</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ленточный фундамент — длина лент" xml:space="preserve">
+        <source>Ленточный фундамент — длина лент</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Лидар: точность около 1–2 см на метр." xml:space="preserve">
+        <source>Лидар: точность около 1–2 см на метр.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Листов: %lld из %lld. Укажите тип каждого документа — АР, КР, ТЗ или смета: агенты читают их по‑разному." xml:space="preserve">
+        <source>Листов: %lld из %lld. Укажите тип каждого документа — АР, КР, ТЗ или смета: агенты читают их по‑разному.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Любое помещение —&#10;в новом стиле" xml:space="preserve">
+        <source>Любое помещение —
+в новом стиле</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="МОИ ДИЗАЙНЫ ПО ФОТО" xml:space="preserve">
+        <source>МОИ ДИЗАЙНЫ ПО ФОТО</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="МОИ СМЕТЫ" xml:space="preserve">
+        <source>МОИ СМЕТЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Макет готов" xml:space="preserve">
+        <source>Макет готов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Макет дома" xml:space="preserve">
+        <source>Макет дома</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материал" xml:space="preserve">
+        <source>Материал</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы" xml:space="preserve">
+        <source>Материалы</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы · %lld" xml:space="preserve">
+        <source>Материалы · %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы и смета" xml:space="preserve">
+        <source>Материалы и смета</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы построчно" xml:space="preserve">
+        <source>Материалы построчно</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы, условия или комментарий" xml:space="preserve">
+        <source>Материалы, условия или комментарий</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы, этапы, объёмы и наша цена — простым языком." xml:space="preserve">
+        <source>Материалы, этапы, объёмы и наша цена — простым языком.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Материалы: %@" xml:space="preserve">
+        <source>Материалы: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Мебель" xml:space="preserve">
+        <source>Мебель</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Медленно обходите помещение, наводя камеру на стены, углы, окна и двери." xml:space="preserve">
+        <source>Медленно обходите помещение, наводя камеру на стены, углы, окна и двери.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Мелочь (гайки, болты) рассыпьте в один слой на контрастном фоне" xml:space="preserve">
+        <source>Мелочь (гайки, болты) рассыпьте в один слой на контрастном фоне</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Металл считается по длине каждого профиля и весу метра, работа — по тоннам, окраска — по площади поверхности. Цены — реальные предложения вашего города, раз в неделю." xml:space="preserve">
+        <source>Металл считается по длине каждого профиля и весу метра, работа — по тоннам, окраска — по площади поверхности. Цены — реальные предложения вашего города, раз в неделю.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Металлоконструкции" xml:space="preserve">
+        <source>Металлоконструкции</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Метры, например 2,7" xml:space="preserve">
+        <source>Метры, например 2,7</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Метры, например 3,42" xml:space="preserve">
+        <source>Метры, например 3,42</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Модели ИИ" xml:space="preserve">
+        <source>Модели ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Модель Claude" xml:space="preserve">
+        <source>Модель Claude</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Можно спросить" xml:space="preserve">
+        <source>Можно спросить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Мои обмеры" xml:space="preserve">
+        <source>Мои обмеры</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Мои расчёты" xml:space="preserve">
+        <source>Мои расчёты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Мой проект" xml:space="preserve">
+        <source>Мой проект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="НАЧИСЛЕНИЯ" xml:space="preserve">
+        <source>НАЧИСЛЕНИЯ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="НДС 22 %" xml:space="preserve">
+        <source>НДС 22 %</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="НЕОТПРАВЛЕННЫЕ И В ОБРАБОТКЕ" xml:space="preserve">
+        <source>НЕОТПРАВЛЕННЫЕ И В ОБРАБОТКЕ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="НОВОЕ" xml:space="preserve">
+        <source>НОВОЕ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="НОВОЕ ПОМЕЩЕНИЕ" xml:space="preserve">
+        <source>НОВОЕ ПОМЕЩЕНИЕ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="На плане нет дверей и окон. Добавьте их, чтобы мебель не закрывала проходы и окна." xml:space="preserve">
+        <source>На плане нет дверей и окон. Добавьте их, чтобы мебель не закрывала проходы и окна.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Наведите на пачку или кучу и сделайте снимок" xml:space="preserve">
+        <source>Наведите на пачку или кучу и сделайте снимок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Наведите центр на поверхность и добавьте точку." xml:space="preserve">
+        <source>Наведите центр на поверхность и добавьте точку.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нажмите на комнату, чтобы открыть её план, дизайн и чертежи." xml:space="preserve">
+        <source>Нажмите на комнату, чтобы открыть её план, дизайн и чертежи.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нажмите на предмет и перетащите его. У стены он встанет вплотную и ровно." xml:space="preserve">
+        <source>Нажмите на предмет и перетащите его. У стены он встанет вплотную и ровно.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нажмите на свой участок — откроется карточка с площадью и ВРИ" xml:space="preserve">
+        <source>Нажмите на свой участок — откроется карточка с площадью и ВРИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нажмите, чтобы выбрать" xml:space="preserve">
+        <source>Нажмите, чтобы выбрать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Название и район подставятся в сметы, PDF и чертежи. Данные хранятся на вашем iPhone." xml:space="preserve">
+        <source>Название и район подставятся в сметы, PDF и чертежи. Данные хранятся на вашем iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Название квартиры" xml:space="preserve">
+        <source>Название квартиры</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Название объекта" xml:space="preserve">
+        <source>Название объекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Название плана" xml:space="preserve">
+        <source>Название плана</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Название, например: Дом в Хосте" xml:space="preserve">
+        <source>Название, например: Дом в Хосте</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Назначение" xml:space="preserve">
+        <source>Назначение</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Найти: бетон, плитка, забор…" xml:space="preserve">
+        <source>Найти: бетон, плитка, забор…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Напишите вопрос" xml:space="preserve">
+        <source>Напишите вопрос</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например, 9,42" xml:space="preserve">
+        <source>Например, 9,42</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например, гостиная" xml:space="preserve">
+        <source>Например, гостиная</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например, дом в Хосте" xml:space="preserve">
+        <source>Например, дом в Хосте</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например, квартира на Ленина" xml:space="preserve">
+        <source>Например, квартира на Ленина</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: Жилой дом 10×12, Сочи" xml:space="preserve">
+        <source>Например: Жилой дом 10×12, Сочи</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: дом 10×12 из газобетона D500 300 мм, лента 400×1200 B25, перекрытие монолит 200 мм, кровля металлочерепица… Или просто список наименований с объёмами." xml:space="preserve">
+        <source>Например: дом 10×12 из газобетона D500 300 мм, лента 400×1200 B25, перекрытие монолит 200 мм, кровля металлочерепица… Или просто список наименований с объёмами.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: душ вместо ванны, крупная светлая плитка, тёплый свет" xml:space="preserve">
+        <source>Например: душ вместо ванны, крупная светлая плитка, тёплый свет</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: душ с трапом вместо ванны, подвесной унитаз, место под стиральную машину" xml:space="preserve">
+        <source>Например: душ с трапом вместо ванны, подвесной унитаз, место под стиральную машину</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: пол светлее, кровать к окну, добавить рабочее место" xml:space="preserve">
+        <source>Например: пол светлее, кровать к окну, добавить рабочее место</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: рабочее место у окна, много хранения, кровать 180 см, светлый пол" xml:space="preserve">
+        <source>Например: рабочее место у окна, много хранения, кровать 180 см, светлый пол</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: светлый пол, больше хранения, рабочее место у окна" xml:space="preserve">
+        <source>Например: светлый пол, больше хранения, рабочее место у окна</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: сделай стены темнее, убери люстру, добавь растения" xml:space="preserve">
+        <source>Например: сделай стены темнее, убери люстру, добавь растения</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Например: фасады цвета шалфея, столешница под камень, открытые полки" xml:space="preserve">
+        <source>Например: фасады цвета шалфея, столешница под камень, открытые полки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Настройки прайса" xml:space="preserve">
+        <source>Настройки прайса</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Не закрывайте приложение до конца загрузки. Если связь пропадёт — продолжим с того же места." xml:space="preserve">
+        <source>Не закрывайте приложение до конца загрузки. Если связь пропадёт — продолжим с того же места.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Не сейчас" xml:space="preserve">
+        <source>Не сейчас</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Не сохранять" xml:space="preserve">
+        <source>Не сохранять</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Не удалось сохранить PDF. Попробуйте ещё раз." xml:space="preserve">
+        <source>Не удалось сохранить PDF. Попробуйте ещё раз.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Не учитывать" xml:space="preserve">
+        <source>Не учитывать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Недоступная сторона: введено %@ м — достроено %@%@ см" xml:space="preserve">
+        <source>Недоступная сторона: введено %@ м — достроено %@%@ см</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Недоступная сторона: если знаете её длину (техпаспорт, замер изнутри + толщина стен) — впишите, сверим с достроенной." xml:space="preserve">
+        <source>Недоступная сторона: если знаете её длину (техпаспорт, замер изнутри + толщина стен) — впишите, сверим с достроенной.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Необязательно. Если указан расчётный счёт — реквизиты попадут в раздел «Условия»." xml:space="preserve">
+        <source>Необязательно. Если указан расчётный счёт — реквизиты попадут в раздел «Условия».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Непредвиденные: %lld %%" xml:space="preserve">
+        <source>Непредвиденные: %lld %%</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нет доступа к камере" xml:space="preserve">
+        <source>Нет доступа к камере</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Нет надёжных рыночных данных — уточните цену у продавца." xml:space="preserve">
+        <source>Нет надёжных рыночных данных — уточните цену у продавца.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новая дверь" xml:space="preserve">
+        <source>Новая дверь</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новая задача" xml:space="preserve">
+        <source>Новая задача</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новая запись" xml:space="preserve">
+        <source>Новая запись</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новая смета" xml:space="preserve">
+        <source>Новая смета</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новая статья, например «Забор»" xml:space="preserve">
+        <source>Новая статья, например «Забор»</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новое окно" xml:space="preserve">
+        <source>Новое окно</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новое фото" xml:space="preserve">
+        <source>Новое фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новый дизайн" xml:space="preserve">
+        <source>Новый дизайн</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Новый объект" xml:space="preserve">
+        <source>Новый объект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Номер" xml:space="preserve">
+        <source>Номер</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Номер %@ скопирован — вставьте в поиск карты" xml:space="preserve">
+        <source>Номер %@ скопирован — вставьте в поиск карты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="О приложении" xml:space="preserve">
+        <source>О приложении</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ОБЪЕКТ" xml:space="preserve">
+        <source>ОБЪЕКТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ОКНА И ДВЕРИ" xml:space="preserve">
+        <source>ОКНА И ДВЕРИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ОПЛАТА В РОССИИ" xml:space="preserve">
+        <source>ОПЛАТА В РОССИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО" xml:space="preserve">
+        <source>ОРИЕНТИР · ПРЕДВАРИТЕЛЬНО</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ОТДЕЛКА" xml:space="preserve">
+        <source>ОТДЕЛКА</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обмерный план, расстановка, электрика, плитка и развёртки — листы А3 в масштабе." xml:space="preserve">
+        <source>Обмерный план, расстановка, электрика, плитка и развёртки — листы А3 в масштабе.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обновить рыночные цены" xml:space="preserve">
+        <source>Обновить рыночные цены</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обновить цены сейчас" xml:space="preserve">
+        <source>Обновить цены сейчас</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обойдите дом по кругу в 4–8 м от стен" xml:space="preserve">
+        <source>Обойдите дом по кругу в 4–8 м от стен</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обойдите дом с iPhone — получите 3D‑модель с точными размерами стен и крыши, площади кровли и фасадов для сметы и проверку по границам участка из Росреестра." xml:space="preserve">
+        <source>Обойдите дом с iPhone — получите 3D‑модель с точными размерами стен и крыши, площади кровли и фасадов для сметы и проверку по границам участка из Росреестра.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обойдите дом с iPhone — получите точный 3D‑макет дома с размерами стен, окон и крыши. Потом в нём можно менять крышу, фасад и окна и сразу видеть смету." xml:space="preserve">
+        <source>Обойдите дом с iPhone — получите точный 3D‑макет дома с размерами стен, окон и крыши. Потом в нём можно менять крышу, фасад и окна и сразу видеть смету.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обойдите комнату по периметру за 1–2 минуты" xml:space="preserve">
+        <source>Обойдите комнату по периметру за 1–2 минуты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обсудить концепцию с ИИ" xml:space="preserve">
+        <source>Обсудить концепцию с ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Общий план с перегородками, номерами и площадями комнат и экспликацией — лист А3 со штампом. Листы каждой комнаты — в её разделе." xml:space="preserve">
+        <source>Общий план с перегородками, номерами и площадями комнат и экспликацией — лист А3 со штампом. Листы каждой комнаты — в её разделе.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Объёмы считаются по размерам дома: периметр, стены за вычетом окон, кровля по скатам, фундамент. Цены — реальные предложения вашего города, обновляются раз в неделю." xml:space="preserve">
+        <source>Объёмы считаются по размерам дома: периметр, стены за вычетом окон, кровля по скатам, фундамент. Цены — реальные предложения вашего города, обновляются раз в неделю.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Объект" xml:space="preserve">
+        <source>Объект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Объясняет смету и ищет, где сэкономить" xml:space="preserve">
+        <source>Объясняет смету и ищет, где сэкономить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обычно 5–15 минут. Можно свернуть приложение — пришлём уведомление." xml:space="preserve">
+        <source>Обычно 5–15 минут. Можно свернуть приложение — пришлём уведомление.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обычно 15–40 секунд. Можно свернуть приложение — пришлём уведомление." xml:space="preserve">
+        <source>Обычно 15–40 секунд. Можно свернуть приложение — пришлём уведомление.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обычно 20–60 секунд. Не сворачивайте приложение." xml:space="preserve">
+        <source>Обычно 20–60 секунд. Не сворачивайте приложение.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Обычно 30–90 секунд. Не сворачивайте приложение." xml:space="preserve">
+        <source>Обычно 30–90 секунд. Не сворачивайте приложение.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Один запрос, как в чате: выберите сценарий, добавьте фото или снимите объект камерой и опишите пожелания." xml:space="preserve">
+        <source>Один запрос, как в чате: выберите сценарий, добавьте фото или снимите объект камерой и опишите пожелания.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Один и тот же кадр комнаты через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от %lld %%." xml:space="preserve">
+        <source>Один и тот же кадр комнаты через каждый движок. «Совпадение» — насколько ИИ сохранил стены, проёмы и расстановку; в презентацию идут кадры от %lld %%.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Одна горизонтальная поверхность. Углы по периметру." xml:space="preserve">
+        <source>Одна горизонтальная поверхность. Углы по периметру.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Окно" xml:space="preserve">
+        <source>Окно</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Окон: %lld · дверей: %lld · площадь проёмов %@ м²" xml:space="preserve">
+        <source>Окон: %lld · дверей: %lld · площадь проёмов %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Определить по местоположению" xml:space="preserve">
+        <source>Определить по местоположению</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Основания" xml:space="preserve">
+        <source>Основания</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Остаток" xml:space="preserve">
+        <source>Остаток</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ответственный: имя или бригада" xml:space="preserve">
+        <source>Ответственный: имя или бригада</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отвечает потоком, как в чате, и помнит контекст разговора" xml:space="preserve">
+        <source>Отвечает потоком, как в чате, и помнит контекст разговора</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отвечу про нормы и расход материалов, разберу смету или фото, подскажу, где что в приложении. Сейчас открыто: «%@»." xml:space="preserve">
+        <source>Отвечу про нормы и расход материалов, разберу смету или фото, подскажу, где что в приложении. Сейчас открыто: «%@».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Открывает выбор города" xml:space="preserve">
+        <source>Открывает выбор города</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Открыть Настройки" xml:space="preserve">
+        <source>Открыть Настройки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Открыть настройки" xml:space="preserve">
+        <source>Открыть настройки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отмена" xml:space="preserve">
+        <source>Отмена</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отменить правку" xml:space="preserve">
+        <source>Отменить правку</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отменить точку" xml:space="preserve">
+        <source>Отменить точку</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отметьте две точки" xml:space="preserve">
+        <source>Отметьте две точки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отметьте углы пола" xml:space="preserve">
+        <source>Отметьте углы пола</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отмечайте закрытые этапы. Карточка «Мой проект» покажет общий прогресс и поможет не потерять следующий шаг." xml:space="preserve">
+        <source>Отмечайте закрытые этапы. Карточка «Мой проект» покажет общий прогресс и поможет не потерять следующий шаг.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отправить" xml:space="preserve">
+        <source>Отправить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отправить вопрос" xml:space="preserve">
+        <source>Отправить вопрос</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отступы дома и построек от границ, процент застройки и разрывы проверятся, когда появится макет дома после скана." xml:space="preserve">
+        <source>Отступы дома и построек от границ, процент застройки и разрывы проверятся, когда появится макет дома после скана.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Отчёт по объекту" xml:space="preserve">
+        <source>Отчёт по объекту</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Очистить" xml:space="preserve">
+        <source>Очистить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Очистить поиск" xml:space="preserve">
+        <source>Очистить поиск</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ошибка: %@" xml:space="preserve">
+        <source>Ошибка: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПЕРЕЧЕНЬ РАБОТ ИЛИ ТЗ" xml:space="preserve">
+        <source>ПЕРЕЧЕНЬ РАБОТ ИЛИ ТЗ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПЛАНИРОВКА И ДИЗАЙН" xml:space="preserve">
+        <source>ПЛАНИРОВКА И ДИЗАЙН</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПЛОЩАДИ ДЛЯ СМЕТЫ" xml:space="preserve">
+        <source>ПЛОЩАДИ ДЛЯ СМЕТЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПО СТЕНАМ" xml:space="preserve">
+        <source>ПО СТЕНАМ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПОГОДА НА СТРОЙКЕ · СОЧИ" xml:space="preserve">
+        <source>ПОГОДА НА СТРОЙКЕ · СОЧИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПОДПИСКИ И КРЕДИТЫ" xml:space="preserve">
+        <source>ПОДПИСКИ И КРЕДИТЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПОДРЯДЧИКИ · %@" xml:space="preserve">
+        <source>ПОДРЯДЧИКИ · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПОДСКАЗКА · %@" xml:space="preserve">
+        <source>ПОДСКАЗКА · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПРИЛОЖЕНИЕ" xml:space="preserve">
+        <source>ПРИЛОЖЕНИЕ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ПРОВЕРКИ" xml:space="preserve">
+        <source>ПРОВЕРКИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Палитра концепции" xml:space="preserve">
+        <source>Палитра концепции</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Паспорт объекта" xml:space="preserve">
+        <source>Паспорт объекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Паспорт объекта, бюджет и дневник хранятся только на этом iPhone." xml:space="preserve">
+        <source>Паспорт объекта, бюджет и дневник хранятся только на этом iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Паспорт, чек-листы и дневник хранятся только на этом iPhone." xml:space="preserve">
+        <source>Паспорт, чек-листы и дневник хранятся только на этом iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пауза" xml:space="preserve">
+        <source>Пауза</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Переименовать" xml:space="preserve">
+        <source>Переименовать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Перерасход" xml:space="preserve">
+        <source>Перерасход</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Перерасход %@" xml:space="preserve">
+        <source>Перерасход %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пересобрать презентацию" xml:space="preserve">
+        <source>Пересобрать презентацию</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Петли с другой стороны" xml:space="preserve">
+        <source>Петли с другой стороны</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План" xml:space="preserve">
+        <source>План</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План %@" xml:space="preserve">
+        <source>План %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План · %lld открыто · %lld готово" xml:space="preserve">
+        <source>План · %lld открыто · %lld готово</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План квартиры: %lld комнат, %@ квадратных метров" xml:space="preserve">
+        <source>План квартиры: %lld комнат, %@ квадратных метров</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План помещения: площадь %@ квадратных метров" xml:space="preserve">
+        <source>План помещения: площадь %@ квадратных метров</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План стройки" xml:space="preserve">
+        <source>План стройки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План удалён" xml:space="preserve">
+        <source>План удалён</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="План, мебель или правки изменены после рендера — обновите его." xml:space="preserve">
+        <source>План, мебель или правки изменены после рендера — обновите его.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Планировка за минуту" xml:space="preserve">
+        <source>Планировка за минуту</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Плита — длина" xml:space="preserve">
+        <source>Плита — длина</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Плита — ширина" xml:space="preserve">
+        <source>Плита — ширина</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Плитка, фасад, унитаз, раковина, обои, ламинат, светильник — пришлите фото или файл, ИИ узнает, что это, спросит, куда и как, и поставит именно это." xml:space="preserve">
+        <source>Плитка, фасад, унитаз, раковина, обои, ламинат, светильник — пришлите фото или файл, ИИ узнает, что это, спросит, куда и как, и поставит именно это.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Площадь %@ м²" xml:space="preserve">
+        <source>Площадь %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Площадь дома %@ м² · пятно застройки %@ м²" xml:space="preserve">
+        <source>Площадь дома %@ м² · пятно застройки %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Площадь заполнения %@ м²" xml:space="preserve">
+        <source>Площадь заполнения %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Площадь, м²" xml:space="preserve">
+        <source>Площадь, м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="По вашей цене. Без работ, доставки и сопутствующих материалов." xml:space="preserve">
+        <source>По вашей цене. Без работ, доставки и сопутствующих материалов.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="По скану это %@, а выбрано «%@». Проверьте назначение." xml:space="preserve">
+        <source>По скану это %@, а выбрано «%@». Проверьте назначение.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Повторить" xml:space="preserve">
+        <source>Повторить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Повторить вопрос" xml:space="preserve">
+        <source>Повторить вопрос</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Поделиться" xml:space="preserve">
+        <source>Поделиться</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Поделиться планом" xml:space="preserve">
+        <source>Поделиться планом</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Подписант" xml:space="preserve">
+        <source>Подписант</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Подписка продлевается автоматически, пока её не отменят в настройках Apple ID не позднее чем за 24 часа до конца периода." xml:space="preserve">
+        <source>Подписка продлевается автоматически, пока её не отменят в настройках Apple ID не позднее чем за 24 часа до конца периода.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Подпись к фото, например: армирование плиты" xml:space="preserve">
+        <source>Подпись к фото, например: армирование плиты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пожелания" xml:space="preserve">
+        <source>Пожелания</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Позиций" xml:space="preserve">
+        <source>Позиций</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пока название пустое, предложения выходят под «%@». Оформление документа не меняется — меняются только данные в шапке и подписи." xml:space="preserve">
+        <source>Пока название пустое, предложения выходят под «%@». Оформление документа не меняется — меняются только данные в шапке и подписи.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пока нет расчётов" xml:space="preserve">
+        <source>Пока нет расчётов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пока нет фото" xml:space="preserve">
+        <source>Пока нет фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пока список доступен на этом iPhone; синхронизация с участниками ещё не подключена." xml:space="preserve">
+        <source>Пока список доступен на этом iPhone; синхронизация с участниками ещё не подключена.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Покажем будущее&#10;до начала работ." xml:space="preserve">
+        <source>Покажем будущее
+до начала работ.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Показать" xml:space="preserve">
+        <source>Показать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Показать мою комнату в этом стиле" xml:space="preserve">
+        <source>Показать мою комнату в этом стиле</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Показать, что где в приложении" xml:space="preserve">
+        <source>Показать, что где в приложении</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Показать, что где?" xml:space="preserve">
+        <source>Показать, что где?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Полная смета объекта" xml:space="preserve">
+        <source>Полная смета объекта</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Полная смета объекта или %lld калькуляторов материалов — результат в PDF и с рыночными ценами вашего города." xml:space="preserve">
+        <source>Полная смета объекта или %lld калькуляторов материалов — результат в PDF и с рыночными ценами вашего города.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Полные сметы" xml:space="preserve">
+        <source>Полные сметы</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Полный текст ведомости" xml:space="preserve">
+        <source>Полный текст ведомости</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Получить ключ на console.anthropic.com" xml:space="preserve">
+        <source>Получить ключ на console.anthropic.com</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Помощник видит параметры текущего расчёта и объясняет объёмы, смету и порядок работ. Он не заменяет проектировщика для несущих конструкций." xml:space="preserve">
+        <source>Помощник видит параметры текущего расчёта и объясняет объёмы, смету и порядок работ. Он не заменяет проектировщика для несущих конструкций.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Понятно" xml:space="preserve">
+        <source>Понятно</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Попробовать" xml:space="preserve">
+        <source>Попробовать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Попробовать дизайн по фото" xml:space="preserve">
+        <source>Попробовать дизайн по фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Порядок оплаты" xml:space="preserve">
+        <source>Порядок оплаты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="После обхода измерьте рулеткой одну стену — макет подгонится под этот размер." xml:space="preserve">
+        <source>После обхода измерьте рулеткой одну стену — макет подгонится под этот размер.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Посчитать заново" xml:space="preserve">
+        <source>Посчитать заново</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Потрачено" xml:space="preserve">
+        <source>Потрачено</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Правка плана" xml:space="preserve">
+        <source>Правка плана</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прайс" xml:space="preserve">
+        <source>Прайс</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прайс-лист" xml:space="preserve">
+        <source>Прайс-лист</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Превью вашей комнаты в этом стиле от ИИ. Итоговый рендер будет по готовому дизайну." xml:space="preserve">
+        <source>Превью вашей комнаты в этом стиле от ИИ. Итоговый рендер будет по готовому дизайну.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Предварительно: дом поставлен на карту по GPS и компасу (±5–15 м). Точная привязка — по двум углам участка, на этапе «Участок»." xml:space="preserve">
+        <source>Предварительно: дом поставлен на карту по GPS и компасу (±5–15 м). Точная привязка — по двум углам участка, на этапе «Участок».</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Предложение" xml:space="preserve">
+        <source>Предложение</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прервать" xml:space="preserve">
+        <source>Прервать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прервать скан? Снятые кадры удалятся." xml:space="preserve">
+        <source>Прервать скан? Снятые кадры удалятся.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций." xml:space="preserve">
+        <source>Приблизительный замер. Не используйте для разбивки осей и контроля несущих конструкций.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прикрепить фото" xml:space="preserve">
+        <source>Прикрепить фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прикрепить фото к вопросу" xml:space="preserve">
+        <source>Прикрепить фото к вопросу</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прилипать к стенам" xml:space="preserve">
+        <source>Прилипать к стенам</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Применить к этому варианту" xml:space="preserve">
+        <source>Применить к этому варианту</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Применить правки" xml:space="preserve">
+        <source>Применить правки</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Примечание" xml:space="preserve">
+        <source>Примечание</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Примечания сметчика" xml:space="preserve">
+        <source>Примечания сметчика</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проверить Claude" xml:space="preserve">
+        <source>Проверить Claude</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проверить соединение" xml:space="preserve">
+        <source>Проверить соединение</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проверка аудитором" xml:space="preserve">
+        <source>Проверка аудитором</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Прогноз недоступен без интернета." xml:space="preserve">
+        <source>Прогноз недоступен без интернета.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Продолжить снимать" xml:space="preserve">
+        <source>Продолжить снимать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проём" xml:space="preserve">
+        <source>Проём</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проект" xml:space="preserve">
+        <source>Проект</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пропустить" xml:space="preserve">
+        <source>Пропустить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Пространство&#10;в цифрах." xml:space="preserve">
+        <source>Пространство
+в цифрах.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Профиль" xml:space="preserve">
+        <source>Профиль</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Проходы, двери и окна свободны" xml:space="preserve">
+        <source>Проходы, двери и окна свободны</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РАБОЧИЕ ЧЕРТЕЖИ" xml:space="preserve">
+        <source>РАБОЧИЕ ЧЕРТЕЖИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РАЗМЕРЫ" xml:space="preserve">
+        <source>РАЗМЕРЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РЕЗУЛЬТАТ" xml:space="preserve">
+        <source>РЕЗУЛЬТАТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РЕЗУЛЬТАТ · %@" xml:space="preserve">
+        <source>РЕЗУЛЬТАТ · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РЫНОК · %@" xml:space="preserve">
+        <source>РЫНОК · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="РЫНОЧНАЯ ЦЕНА · %@" xml:space="preserve">
+        <source>РЫНОЧНАЯ ЦЕНА · %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Работа: %@" xml:space="preserve">
+        <source>Работа: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Работы %@ · материалы %@%@" xml:space="preserve">
+        <source>Работы %@ · материалы %@%@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Работы: %@" xml:space="preserve">
+        <source>Работы: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Рабочие инструменты" xml:space="preserve">
+        <source>Рабочие инструменты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Разбирает фото объекта: трещины, кладка, кровля" xml:space="preserve">
+        <source>Разбирает фото объекта: трещины, кладка, кровля</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Разделить" xml:space="preserve">
+        <source>Разделить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Разделить квартиру? Комнаты останутся отдельными планами." xml:space="preserve">
+        <source>Разделить квартиру? Комнаты останутся отдельными планами.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Разделить на отдельные комнаты" xml:space="preserve">
+        <source>Разделить на отдельные комнаты</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Размеры уже подставлены из плана: пол %@ м², стены %@ м², окна и двери %@ м²." xml:space="preserve">
+        <source>Размеры уже подставлены из плана: пол %@ м², стены %@ м², окна и двери %@ м².</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Размеры — по фото и стенам, снятым лидаром (±2–3 см). Окно, отмеченное на одном фото, — с серой меткой: проверьте рулеткой." xml:space="preserve">
+        <source>Размеры — по фото и стенам, снятым лидаром (±2–3 см). Окно, отмеченное на одном фото, — с серой меткой: проверьте рулеткой.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Размеры, м" xml:space="preserve">
+        <source>Размеры, м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Разрешите камеру в настройках iPhone, затем откройте AR снова." xml:space="preserve">
+        <source>Разрешите камеру в настройках iPhone, затем откройте AR снова.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Район: Адлер, Хоста, Дагомыс…" xml:space="preserve">
+        <source>Район: Адлер, Хоста, Дагомыс…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Распашные ворота 4 м: %lld" xml:space="preserve">
+        <source>Распашные ворота 4 м: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Расставляет мебель и зонирует комнату по скану" xml:space="preserve">
+        <source>Расставляет мебель и зонирует комнату по скану</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Рассчитайте материалы и сохраните результат — он появится здесь." xml:space="preserve">
+        <source>Рассчитайте материалы и сохраните результат — он появится здесь.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Расчёты, сметы, объекты, планировки, фото и журнал хранятся только на вашем iPhone. Удаление приложения удаляет их." xml:space="preserve">
+        <source>Расчёты, сметы, объекты, планировки, фото и журнал хранятся только на вашем iPhone. Удаление приложения удаляет их.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Режим AR" xml:space="preserve">
+        <source>Режим AR</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Результат строится по дизайну: сначала выберите стиль на шаге «Дизайн». Чертежи можно сделать и по одному скану." xml:space="preserve">
+        <source>Результат строится по дизайну: сначала выберите стиль на шаге «Дизайн». Чертежи можно сделать и по одному скану.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Реквизиты для КП" xml:space="preserve">
+        <source>Реквизиты для КП</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Реквизиты и логотип хранятся только на этом iPhone." xml:space="preserve">
+        <source>Реквизиты и логотип хранятся только на этом iPhone.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ремонт и стройка,&#10;которые видно заранее" xml:space="preserve">
+        <source>Ремонт и стройка,
+которые видно заранее</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Рулетка %@ м — макет %@%@ см" xml:space="preserve">
+        <source>Рулетка %@ м — макет %@%@ см</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Рынок: %@ – %@" xml:space="preserve">
+        <source>Рынок: %@ – %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter." xml:space="preserve">
+        <source>С ключом Anthropic работают только модели Claude, а модель рендера выбирается с ключом OpenRouter.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СВОИ МАТЕРИАЛЫ И ТОВАРЫ" xml:space="preserve">
+        <source>СВОИ МАТЕРИАЛЫ И ТОВАРЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СКОЛЬКО СТОИТ" xml:space="preserve">
+        <source>СКОЛЬКО СТОИТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СТАЛО" xml:space="preserve">
+        <source>СТАЛО</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СТЕНЫ" xml:space="preserve">
+        <source>СТЕНЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СТРОЙПОМОЩНИК" xml:space="preserve">
+        <source>СТРОЙПОМОЩНИК</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СЧИТАЕТСЯ" xml:space="preserve">
+        <source>СЧИТАЕТСЯ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Санузлов: %lld" xml:space="preserve">
+        <source>Санузлов: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Санузлов: по площади" xml:space="preserve">
+        <source>Санузлов: по площади</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сбросить" xml:space="preserve">
+        <source>Сбросить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сбросить к примеру" xml:space="preserve">
+        <source>Сбросить к примеру</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сваи не держат тяжёлые стены — выберите ленту или плиту, или каркас/брус." xml:space="preserve">
+        <source>Сваи не держат тяжёлые стены — выберите ленту или плиту, или каркас/брус.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Свет и советы" xml:space="preserve">
+        <source>Свет и советы</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сдвиньтесь к следующей части без перекрытия и снимите ещё" xml:space="preserve">
+        <source>Сдвиньтесь к следующей части без перекрытия и снимите ещё</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сделано: %@" xml:space="preserve">
+        <source>Сделано: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сейчас в шапке «%@». Впишите свою компанию — оформление останется тем же." xml:space="preserve">
+        <source>Сейчас в шапке «%@». Впишите свою компанию — оформление останется тем же.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сейчас отвечает" xml:space="preserve">
+        <source>Сейчас отвечает</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Секционные ворота 4×4 м: %lld" xml:space="preserve">
+        <source>Секционные ворота 4×4 м: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере приложения." xml:space="preserve">
+        <source>Сервер ИИ пока выбирает модели сам: выбор работает с ключом OpenRouter на обновлённом сервере приложения.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сервер нужен для автоматического обновления цен, заявок, ИИ‑помощника и визуализаций. Ключ модели хранится только на сервере. Без сервера прайс можно импортировать JSON‑файлом в полной смете." xml:space="preserve">
+        <source>Сервер нужен для автоматического обновления цен, заявок, ИИ‑помощника и визуализаций. Ключ модели хранится только на сервере. Без сервера прайс можно импортировать JSON‑файлом в полной смете.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Синхронизация" xml:space="preserve">
+        <source>Синхронизация</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скан на обработке" xml:space="preserve">
+        <source>Скан на обработке</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF." xml:space="preserve">
+        <source>Скан → обмеры → стиль → фотореалистичный рендер по точной геометрии и PDF.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скаты разные: %@° и %@°" xml:space="preserve">
+        <source>Скаты разные: %@° и %@°</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скважина на воду" xml:space="preserve">
+        <source>Скважина на воду</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скопировано" xml:space="preserve">
+        <source>Скопировано</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Скрыть" xml:space="preserve">
+        <source>Скрыть</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Следующая комната" xml:space="preserve">
+        <source>Следующая комната</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Следующий шаг: %@" xml:space="preserve">
+        <source>Следующий шаг: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сменить город" xml:space="preserve">
+        <source>Сменить город</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета" xml:space="preserve">
+        <source>Смета</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета без непонятных строк" xml:space="preserve">
+        <source>Смета без непонятных строк</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета дома" xml:space="preserve">
+        <source>Смета дома</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета не найдена" xml:space="preserve">
+        <source>Смета не найдена</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета по документам" xml:space="preserve">
+        <source>Смета по документам</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смета по рынку" xml:space="preserve">
+        <source>Смета по рынку</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сметы · замеры · дизайн" xml:space="preserve">
+        <source>Сметы · замеры · дизайн</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Смотрите по сторонам пальцем, шагайте двумя пальцами" xml:space="preserve">
+        <source>Смотрите по сторонам пальцем, шагайте двумя пальцами</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снимайте прямо с камеры или загружайте фото. Большую пачку снимайте по частям — итог сложится сам." xml:space="preserve">
+        <source>Снимайте прямо с камеры или загружайте фото. Большую пачку снимайте по частям — итог сложится сам.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снимайте прямо, перпендикулярно пачке или сверху на кучу" xml:space="preserve">
+        <source>Снимайте прямо, перпендикулярно пачке или сверху на кучу</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снимайте часть за частью — счёт идёт сразу" xml:space="preserve">
+        <source>Снимайте часть за частью — счёт идёт сразу</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снимите помещение —&#10;увидьте его обновлённым" xml:space="preserve">
+        <source>Снимите помещение —
+увидьте его обновлённым</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снято %lld процентов" xml:space="preserve">
+        <source>Снято %lld процентов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снято меньше 60 % — макет будет неполным" xml:space="preserve">
+        <source>Снято меньше 60 % — макет будет неполным</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снять" xml:space="preserve">
+        <source>Снять</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снять камерой" xml:space="preserve">
+        <source>Снять камерой</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снять сейчас" xml:space="preserve">
+        <source>Снять сейчас</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Снять часть" xml:space="preserve">
+        <source>Снять часть</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Собираем стены, проёмы и мебель…" xml:space="preserve">
+        <source>Собираем стены, проёмы и мебель…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Совет: в полной смете нажмите «В бюджет проекта» — плановые суммы заполнятся автоматически. Фактические суммы не передаются на сервер." xml:space="preserve">
+        <source>Совет: в полной смете нажмите «В бюджет проекта» — плановые суммы заполнятся автоматически. Фактические суммы не передаются на сервер.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Совпадение со сканом: %lld %%" xml:space="preserve">
+        <source>Совпадение со сканом: %lld %%</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Создаём визуализацию" xml:space="preserve">
+        <source>Создаём визуализацию</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Создать" xml:space="preserve">
+        <source>Создать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Создать визуализацию" xml:space="preserve">
+        <source>Создать визуализацию</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Создать по фото или идее" xml:space="preserve">
+        <source>Создать по фото или идее</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранение" xml:space="preserve">
+        <source>Сохранение</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохраните первый этап, чтобы вести историю объекта." xml:space="preserve">
+        <source>Сохраните первый этап, чтобы вести историю объекта.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить" xml:space="preserve">
+        <source>Сохранить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить Workspace ID" xml:space="preserve">
+        <source>Сохранить Workspace ID</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить в Фото" xml:space="preserve">
+        <source>Сохранить в Фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить запись" xml:space="preserve">
+        <source>Сохранить запись</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить как план" xml:space="preserve">
+        <source>Сохранить как план</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить ключ" xml:space="preserve">
+        <source>Сохранить ключ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сохранить снимок AR" xml:space="preserve">
+        <source>Сохранить снимок AR</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Спросите что угодно…" xml:space="preserve">
+        <source>Спросите что угодно…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сравнение движков" xml:space="preserve">
+        <source>Сравнение движков</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сравниваем движки рендера… 1–3 мин" xml:space="preserve">
+        <source>Сравниваем движки рендера… 1–3 мин</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сравните рыночную оценку с ценой подрядчика: отправьте ему расчёт." xml:space="preserve">
+        <source>Сравните рыночную оценку с ценой подрядчика: отправьте ему расчёт.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сравнить движки рендера" xml:space="preserve">
+        <source>Сравнить движки рендера</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Срок" xml:space="preserve">
+        <source>Срок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Срок действия предложения: %lld дн." xml:space="preserve">
+        <source>Срок действия предложения: %lld дн.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Срок работ, например «45 рабочих дней»" xml:space="preserve">
+        <source>Срок работ, например «45 рабочих дней»</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стена" xml:space="preserve">
+        <source>Стена</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стена %lld · %@ м" xml:space="preserve">
+        <source>Стена %lld · %@ м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стены %lld %% · крыша %lld %%" xml:space="preserve">
+        <source>Стены %lld %% · крыша %lld %%</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стены и проёмы измеряются лидаром, крыша — по фото и геометрии стен." xml:space="preserve">
+        <source>Стены и проёмы измеряются лидаром, крыша — по фото и геометрии стен.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стиль" xml:space="preserve">
+        <source>Стиль</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стиль (необязательно)" xml:space="preserve">
+        <source>Стиль (необязательно)</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Стиль — выберите карточку" xml:space="preserve">
+        <source>Стиль — выберите карточку</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сторона недоступна" xml:space="preserve">
+        <source>Сторона недоступна</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СтройПомощник" xml:space="preserve">
+        <source>СтройПомощник</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="СтройПомощник думает…" xml:space="preserve">
+        <source>СтройПомощник думает…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сформировать PDF" xml:space="preserve">
+        <source>Сформировать PDF</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Сфотографируйте комнату — ИИ покажет её в новом стиле." xml:space="preserve">
+        <source>Сфотографируйте комнату — ИИ покажет её в новом стиле.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Счёт по фото" xml:space="preserve">
+        <source>Счёт по фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Считаем металл и цены…" xml:space="preserve">
+        <source>Считаем металл и цены…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Считаем объёмы и цены…" xml:space="preserve">
+        <source>Считаем объёмы и цены…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Считать камерой" xml:space="preserve">
+        <source>Считать камерой</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ТЕКУЩИЙ ОБЪЕКТ" xml:space="preserve">
+        <source>ТЕКУЩИЙ ОБЪЕКТ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Тарифы и баланс" xml:space="preserve">
+        <source>Тарифы и баланс</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Тарифы и кредиты оплачиваются на сайте СметаПро через СБП или банковской картой. Укажите там номер аккаунта — кредиты появятся здесь сразу после оплаты." xml:space="preserve">
+        <source>Тарифы и кредиты оплачиваются на сайте СметаПро через СБП или банковской картой. Укажите там номер аккаунта — кредиты появятся здесь сразу после оплаты.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Текущий этап" xml:space="preserve">
+        <source>Текущий этап</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Техника — по реальной аренде (смены, минимальный заказ, подача), доставка — рейсами по закупке. Строки доставки из ваших документов не задваиваются." xml:space="preserve">
+        <source>Техника — по реальной аренде (смены, минимальный заказ, подача), доставка — рейсами по закупке. Строки доставки из ваших документов не задваиваются.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Тип" xml:space="preserve">
+        <source>Тип</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="УЧАСТОК %@" xml:space="preserve">
+        <source>УЧАСТОК %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Убрать" xml:space="preserve">
+        <source>Убрать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Убрать Workspace ID" xml:space="preserve">
+        <source>Убрать Workspace ID</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Убрать логотип" xml:space="preserve">
+        <source>Убрать логотип</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Убрать фото" xml:space="preserve">
+        <source>Убрать фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить" xml:space="preserve">
+        <source>Удалить</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить квартиру" xml:space="preserve">
+        <source>Удалить квартиру</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить квартиру со всеми комнатами и концепциями?" xml:space="preserve">
+        <source>Удалить квартиру со всеми комнатами и концепциями?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить ключ" xml:space="preserve">
+        <source>Удалить ключ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить план" xml:space="preserve">
+        <source>Удалить план</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить план и все концепции?" xml:space="preserve">
+        <source>Удалить план и все концепции?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить фото" xml:space="preserve">
+        <source>Удалить фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить фото из дневника?" xml:space="preserve">
+        <source>Удалить фото из дневника?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить часть" xml:space="preserve">
+        <source>Удалить часть</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удалить этот дизайн с iPhone?" xml:space="preserve">
+        <source>Удалить этот дизайн с iPhone?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Удерживайте карточку, чтобы удалить." xml:space="preserve">
+        <source>Удерживайте карточку, чтобы удалить.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Указать адрес сервера ИИ" xml:space="preserve">
+        <source>Указать адрес сервера ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Указать срок" xml:space="preserve">
+        <source>Указать срок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Уклон: %lld°" xml:space="preserve">
+        <source>Уклон: %lld°</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Условия по умолчанию" xml:space="preserve">
+        <source>Условия по умолчанию</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Уточнение: например, шов 2 мм графит, только нижняя половина стены" xml:space="preserve">
+        <source>Уточнение: например, шов 2 мм графит, только нижняя половина стены</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Участок" xml:space="preserve">
+        <source>Участок</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Участок вручную" xml:space="preserve">
+        <source>Участок вручную</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ФОТО → НОВЫЙ ДИЗАЙН" xml:space="preserve">
+        <source>ФОТО → НОВЫЙ ДИЗАЙН</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фото" xml:space="preserve">
+        <source>Фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фото будет отправлено с вопросом" xml:space="preserve">
+        <source>Фото будет отправлено с вопросом</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фото прикреплено" xml:space="preserve">
+        <source>Фото прикреплено</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фото с отметками: %lld" xml:space="preserve">
+        <source>Фото с отметками: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фотореализм" xml:space="preserve">
+        <source>Фотореализм</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фотореализм сейчас недоступен — PDF соберётся с планами и концепцией, без визуализаций." xml:space="preserve">
+        <source>Фотореализм сейчас недоступен — PDF соберётся с планами и концепцией, без визуализаций.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Фото‑дневник" xml:space="preserve">
+        <source>Фото‑дневник</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Ценовой аудитор проверил %lld цен, исправлено: %lld." xml:space="preserve">
+        <source>Ценовой аудитор проверил %lld цен, исправлено: %lld.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Цены для: %@" xml:space="preserve">
+        <source>Цены для: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Цены и сервер" xml:space="preserve">
+        <source>Цены и сервер</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Цены обновились" xml:space="preserve">
+        <source>Цены обновились</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Цены: %@" xml:space="preserve">
+        <source>Цены: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ЧЕРТЕЖИ КВАРТИРЫ" xml:space="preserve">
+        <source>ЧЕРТЕЖИ КВАРТИРЫ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Части не должны перекрываться — каждый предмет только в одном кадре" xml:space="preserve">
+        <source>Части не должны перекрываться — каждый предмет только в одном кадре</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Часть %lld · %lld шт." xml:space="preserve">
+        <source>Часть %lld · %lld шт.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Часть %lld: %lld штук" xml:space="preserve">
+        <source>Часть %lld: %lld штук</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Чек-лист контроля" xml:space="preserve">
+        <source>Чек-лист контроля</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Чек-листы" xml:space="preserve">
+        <source>Чек-листы</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Чем помочь?" xml:space="preserve">
+        <source>Чем помочь?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что на фото" xml:space="preserve">
+        <source>Что на фото</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что нужно сделать" xml:space="preserve">
+        <source>Что нужно сделать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что поменять? ИИ переделает концепцию, рендер учтёт правки." xml:space="preserve">
+        <source>Что поменять? ИИ переделает концепцию, рендер учтёт правки.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что сделать" xml:space="preserve">
+        <source>Что сделать</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что спросить про фото?" xml:space="preserve">
+        <source>Что спросить про фото?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что строим?" xml:space="preserve">
+        <source>Что строим?</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что считать: гайки М12, кирпич, мешки цемента…" xml:space="preserve">
+        <source>Что считать: гайки М12, кирпич, мешки цемента…</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что умеет ИИ" xml:space="preserve">
+        <source>Что умеет ИИ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Что это" xml:space="preserve">
+        <source>Что это</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ЭКСПЛИКАЦИЯ ПОМЕЩЕНИЙ" xml:space="preserve">
+        <source>ЭКСПЛИКАЦИЯ ПОМЕЩЕНИЙ</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Электрика" xml:space="preserve">
+        <source>Электрика</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Элемент" xml:space="preserve">
+        <source>Элемент</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Этажей: %lld" xml:space="preserve">
+        <source>Этажей: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Этап: %@ · далее: %@" xml:space="preserve">
+        <source>Этап: %@ · далее: %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Этапы" xml:space="preserve">
+        <source>Этапы</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="Это личный список контроля. Он не заменяет проект, технадзор и условия договора." xml:space="preserve">
+        <source>Это личный список контроля. Он не заменяет проект, технадзор и условия договора.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="готово" xml:space="preserve">
+        <source>готово</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="до сантиметров" xml:space="preserve">
+        <source>до сантиметров</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="кадастр" xml:space="preserve">
+        <source>кадастр</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="конёк 6,00 м · 36,9°" xml:space="preserve">
+        <source>конёк 6,00 м · 36,9°</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="кредитов" xml:space="preserve">
+        <source>кредитов</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="м" xml:space="preserve">
+        <source>м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="м² · площадь" xml:space="preserve">
+        <source>м² · площадь</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="м³" xml:space="preserve">
+        <source>м³</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="низ %@" xml:space="preserve">
+        <source>низ %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="обновляется сразу" xml:space="preserve">
+        <source>обновляется сразу</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="обычно %@" xml:space="preserve">
+        <source>обычно %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="ориентир · нет рыночных данных" xml:space="preserve">
+        <source>ориентир · нет рыночных данных</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="потрачено %@" xml:space="preserve">
+        <source>потрачено %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="рынок · %lld предложений" xml:space="preserve">
+        <source>рынок · %lld предложений</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="рынок · мало предложений" xml:space="preserve">
+        <source>рынок · мало предложений</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="считаем %lld" xml:space="preserve">
+        <source>считаем %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="частей: %lld" xml:space="preserve">
+        <source>частей: %lld</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="шт" xml:space="preserve">
+        <source>шт</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="шт." xml:space="preserve">
+        <source>шт.</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="—" xml:space="preserve">
+        <source>—</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="• %@" xml:space="preserve">
+        <source>• %@</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="≈ %@ за м²" xml:space="preserve">
+        <source>≈ %@ за м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="≈ %@ за м² · %@ м²" xml:space="preserve">
+        <source>≈ %@ за м² · %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="≈ %@ м" xml:space="preserve">
+        <source>≈ %@ м</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+      <trans-unit id="≈ %@ м²" xml:space="preserve">
+        <source>≈ %@ м²</source>
+        <note>No comment provided by engineer.</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
