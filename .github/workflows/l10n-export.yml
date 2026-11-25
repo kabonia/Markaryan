@@ -1,0 +1,47 @@
+name: Локализация — выгрузка строк
+
+# Xcode собирает все строки интерфейса (с правильными шаблонами чисел, %lld / %@) в XLIFF и кладёт его
+# в ветку: l10n/en.xliff. Запуск: изменить файл .github/l10n-export.request (или вручную, workflow_dispatch).
+on:
+  push:
+    branches: [house-exterior]
+    paths: ['.github/l10n-export.request']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Заглушка AIServer.plist
+        run: |
+          cat > Markaryan/AIServer.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>AI_SERVER_URL</key><string>https://ai.example.ru</string>
+          <key>APP_TOKEN</key><string></string>
+          </dict></plist>
+          PLIST
+      - name: Выгрузка строк
+        run: |
+          set -o pipefail
+          xcodebuild -exportLocalizations -project Markaryan.xcodeproj -localizationPath "$RUNNER_TEMP/l10n" \
+            -exportLanguage en -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO > "$RUNNER_TEMP/export.log" 2>&1 || {
+              grep -E "error" "$RUNNER_TEMP/export.log" | sort -u | head -20 | sed 's/^/::error::/'
+              tail -30 "$RUNNER_TEMP/export.log"; exit 1; }
+          f=$(find "$RUNNER_TEMP/l10n" -name "*.xliff" | head -1)
+          mkdir -p l10n && cp "$f" l10n/en.xliff
+          echo "::notice title=Строк для перевода::$(grep -c '<trans-unit' l10n/en.xliff)"
+      - name: Сохранить в ветку
+        run: |
+          git config user.name "l10n-bot"
+          git config user.email "l10n-bot@users.noreply.github.com"
+          git add l10n/en.xliff
+          git diff --cached --quiet && exit 0
+          git commit -m "Локализация: выгрузка строк из Xcode [skip ci]"
+          git push origin HEAD:${GITHUB_REF_NAME}
