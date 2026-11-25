@@ -17,6 +17,7 @@ struct HouseScanView: View {
     @State private var pending: [HouseScanStore.Pending] = []
     @State private var confirmCancel = false
     @State private var showParcel = false
+    @State private var showScans = false
 
     enum Phase { case intro, scanning, control, uploading, sent }
 
@@ -49,6 +50,8 @@ struct HouseScanView: View {
                 phaseView
             }
         }
+        // На уровне всего экрана: «Мои сканы» открываются и со вступления, и после отправки.
+        .sheet(isPresented: $showScans) { HouseScansView() }
     }
 
     @ViewBuilder private var phaseView: some View {
@@ -121,6 +124,8 @@ struct HouseScanView: View {
                 }
                 .font(.subheadline)
                 parcelCard
+                Button { showScans = true } label: { SecondaryActionLabel(title: "Мои сканы дома", icon: "square.stack.3d.up") }
+                    .buttonStyle(PremiumPressStyle())
                 if HouseScanRecorder.isSupported {
                     PrimaryButton(title: "Начать обход", icon: "viewfinder") {
                         error = nil
@@ -345,8 +350,9 @@ struct HouseScanView: View {
             Spacer()
             Image(systemName: "checkmark.seal.fill").font(.system(size: 54)).foregroundStyle(Theme.success)
             Text("Скан на обработке").font(.system(.title, design: .serif, weight: .bold))
-            Text(resultText ?? "Макет будет готов через 15–30 минут — пришлём уведомление.").foregroundStyle(Theme.muted)
-            PrimaryButton(title: "Готово", icon: "checkmark") { dismiss() }
+            Text(resultText ?? "Макет будет готов через несколько минут.").foregroundStyle(Theme.muted)
+            PrimaryButton(title: "Следить за обработкой", icon: "square.stack.3d.up") { showScans = true }
+            Button("Закрыть") { dismiss() }.font(.subheadline).frame(maxWidth: .infinity)
             Spacer()
         }
         .padding(24)

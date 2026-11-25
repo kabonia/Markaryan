@@ -683,13 +683,62 @@ private extension Data {
 
 /// Загрузка scan.zip частями по 8 МБ с докачкой (сервер помнит полученные части).
 struct HouseScanUploader {
-    struct Remote: Decodable {
+    struct Remote: Decodable, Identifiable {
         let id: String
         let status: String
         let parts: Int
         let partBytes: Int
         let received: [Int]
         let message: String?
+        var progress: Double?
+        var createdAt: String?
+        var queuePosition: Int?
+        var hasModel = false
+        /// Макет (house.json обработчика); разбирается мягко — новые поля сервера не ломают старое приложение.
+        var result: HouseResult?
+
+        private enum CodingKeys: String, CodingKey { case id, status, parts, partBytes, received, message, progress, createdAt, queuePosition, hasModel, result }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decode(String.self, forKey: .id)
+            status = try c.decode(String.self, forKey: .status)
+            parts = (try? c.decode(Int.self, forKey: .parts)) ?? 0
+            partBytes = (try? c.decode(Int.self, forKey: .partBytes)) ?? 8 * 1_048_576
+            received = (try? c.decode([Int].self, forKey: .received)) ?? []
+            message = try? c.decode(String.self, forKey: .message)
+            progress = try? c.decode(Double.self, forKey: .progress)
+            createdAt = try? c.decode(String.self, forKey: .createdAt)
+            queuePosition = try? c.decode(Int.self, forKey: .queuePosition)
+            hasModel = (try? c.decode(Bool.self, forKey: .hasModel)) ?? false
+            result = try? c.decode(HouseResult.self, forKey: .result)
+        }
+    }
+
+    private struct ScanList: Decodable { let scans: [Remote] }
+
+    /// Сканы этого iPhone на сервере (новые сверху).
+    func list() async throws -> [Remote] {
+        var req = request("v1/ai/house/scans", method: "GET")
+        req.timeoutInterval = 30
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw ClaudeError.api("Сервер не ответил. Проверьте интернет.") }
+        return try JSONDecoder().decode(ScanList.self, from: data).scans
+    }
+
+    func status(_ id: String) async throws -> Remote { try await call(request("v1/ai/house/scans/\(id)", method: "GET")) }
+
+    /// 3D‑модель готового макета (OBJ) — скачивается один раз и хранится в телефоне.
+    func model(_ id: String) async throws -> URL {
+        let folder = HouseScanStore.root.appendingPathComponent("models", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = folder.appendingPathComponent("\(id).obj")
+        if FileManager.default.fileExists(atPath: file.path) { return file }
+        var req = request("v1/ai/house/scans/\(id)/model.obj", method: "GET")
+        req.timeoutInterval = 180
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard (response as? HTTPURLResponse)?.statusCode == 200, data.count > 100 else { throw ClaudeError.api("3D‑модель ещё не готова.") }
+        try data.write(to: file)
+        return file
     }
 
     let base: URL

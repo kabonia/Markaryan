@@ -44,6 +44,8 @@ enum ScreenshotRoute {
             DocEstimateNewView()
         } else if route == "splash" {
             SplashView(revealed: true)
+        } else if route == "housescans" {
+            HouseScansView()
         } else if route == "parcel" {
             ParcelView()
         } else if route == "housescan" {

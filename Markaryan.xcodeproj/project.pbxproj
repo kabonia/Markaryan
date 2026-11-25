@@ -27,6 +27,8 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C16D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */; };
+		C1FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */; };
 		C14445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */; };
 		C1DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */; };
 		C177C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */; };
@@ -96,6 +98,8 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseResultView.swift; sourceTree = "<group>"; };
+		C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/HouseResult.swift; sourceTree = "<group>"; };
 		C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ParcelView.swift; sourceTree = "<group>"; };
 		C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/Parcel.swift; sourceTree = "<group>"; };
 		C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseScanView.swift; sourceTree = "<group>"; };
@@ -169,6 +173,8 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C26D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift */,
+				C2FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift */,
 				C24445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift */,
 				C2DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift */,
 				C277C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift */,
@@ -342,6 +348,8 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C16D0093A5F32018D740FFF6 /* Markaryan/Views/HouseResultView.swift in Sources */,
+				C1FCC766976396FE19114BFE /* Markaryan/Core/HouseResult.swift in Sources */,
 				C14445E8A97392E32225B791 /* Markaryan/Views/ParcelView.swift in Sources */,
 				C1DD3BDCBA4B61F5CF252236 /* Markaryan/Core/Parcel.swift in Sources */,
 				C177C554BD376CBE4EC387E9 /* Markaryan/Views/HouseScanView.swift in Sources */,
