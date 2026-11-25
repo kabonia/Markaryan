@@ -71,6 +71,7 @@ struct ProposalProfileView: View {
                 Text("Реквизиты и логотип хранятся только на этом iPhone.").font(.footnote).foregroundStyle(Theme.muted)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Реквизиты для КП")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: logoItem) { _, item in
@@ -147,6 +148,7 @@ struct ProposalExportSheet: View {
                     if failed { Text("Не удалось сохранить PDF. Попробуйте ещё раз.").font(.footnote).foregroundStyle(Theme.danger) }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Коммерческое предложение")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Закрыть") { dismiss() } } }

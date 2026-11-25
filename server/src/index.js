@@ -13,6 +13,7 @@ import { designChoices } from './providers/openrouter.js';
 import * as hh from './hh.js';
 import * as avito from './avito.js';
 import * as market from './market.js';
+import * as house from './house.js';
 import * as reports from './reports.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
@@ -71,6 +72,13 @@ async function handle(req, res) {
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { ok: true });
 
   if (req.method === 'GET' && url.pathname === '/v1/market/price-book') return send(res, 200, market.priceBook(url));
+  // «Смета дома»: geometry + the city's weekly price book, no AI per request — free and instant. The city counts as demand.
+  if (req.method === 'POST' && url.pathname === '/v1/house/estimate') {
+    const body = await readBody(req);
+    const lat = Number.parseFloat(body?.lat), lon = Number.parseFloat(body?.lon);
+    house.noteDemand(body?.city, lat, lon);
+    return send(res, 200, house.estimate(body, { lat, lon }));
+  }
   if (url.pathname.startsWith('/v1/partners') || url.pathname.startsWith('/v1/admin/partners')) return handlePartners(req, res, url);
   if (req.method === 'POST' && url.pathname === '/v1/report') return send(res, 200, await reports.report(await readBody(req), clientIP(req)));
   if (url.pathname.startsWith('/v1/auth/hh/') || url.pathname.startsWith('/v1/hh/')) return handleHH(req, res, url);

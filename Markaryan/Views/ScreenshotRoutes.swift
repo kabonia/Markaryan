@@ -29,7 +29,7 @@ enum ScreenshotRoute {
         } else if route.hasPrefix("calc:"), let kind = CalculationKind(rawValue: String(route.dropFirst(5))) {
             CalculatorView(kind: kind)
         } else if route == "estimate" {
-            HouseEstimateView(kind: .house)
+            HouseEstimateParamsView()
         } else if route == "assistant" {
             AIAssistantView(context: .general)
         } else if route == "about" {

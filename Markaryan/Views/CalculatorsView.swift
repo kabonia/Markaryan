@@ -67,7 +67,7 @@ struct CalculatorsView: View {
 
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Theme.muted)
-                    TextField("Найти: бетон, плитка, забор…", text: $search)
+                    TextField("Найти: бетон, плитка, забор…", text: $search).submitLabel(.search)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                     if !search.isEmpty { Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.muted) }.accessibilityLabel("Очистить поиск") }
@@ -156,7 +156,7 @@ struct FullEstimateHubView: View {
             SectionTitle(eyebrow: "Прозрачная стоимость", title: "Смета для вашего объекта")
             Text("Выберите тип объекта. Внутри — все материалы, работы, техника и доставка по строкам.").font(.subheadline).foregroundStyle(Theme.muted)
             ForEach(FullEstimateKind.allCases) { kind in
-                NavigationLink { HouseEstimateView(kind: kind) } label: {
+                NavigationLink { if kind == .house { HouseEstimateParamsView() } else { HouseEstimateView(kind: kind) } } label: {
                     HStack(spacing: 15) {
                         Image(systemName: kind.icon).font(.title2).foregroundStyle(Theme.onAccent).frame(width: 48, height: 48).background(Theme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         VStack(alignment: .leading, spacing: 5) { Text(kind.title).font(.headline).foregroundStyle(Theme.ink); Text(kind.subtitle).font(.caption).foregroundStyle(Theme.muted) }

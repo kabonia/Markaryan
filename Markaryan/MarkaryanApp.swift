@@ -94,7 +94,10 @@ struct LaunchGateView: View {
                 SplashView(revealed: revealsLogo)
                     .transition(.opacity)
             }
-        }.task {
+        }
+        .background(KeyboardDismissInstaller().frame(width: 0, height: 0))
+        .task {
+            KeyboardHelper.install()
             Task { await store.refreshPriceBook(silent: true) }
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { revealsLogo = true }
             try? await Task.sleep(for: .milliseconds(1250))

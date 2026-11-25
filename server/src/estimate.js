@@ -86,7 +86,8 @@ ${unitRule}${opts.strict ? '\nМинимум 2 независимых источ
 ${unitRule}${opts.strict ? '\ntypical — реалистичная рыночная медиана города, а не минимальная цена.' : ''}
 Ответ — только JSON: {"items":[{"name","kind":"material|work","unit","quantity","low","typical","high","example","sources":[]}]} в том же порядке.`;
   // Money on OpenRouter — web prices with links; otherwise — market knowledge via Hermes.
-  const useHermes = opts.hermes === true || (hasHermesJson() && !(await orAlive()));
+  // webOnly (the weekly price collection): real offers with links or nothing — never prices «from memory».
+  const useHermes = !opts.webOnly && (opts.hermes === true || (hasHermesJson() && !(await orAlive())));
   const system = useHermes ? knowledgeSystem : webSystem;
   // Hermes (профиль smeta-json): цены из знания рынка; при сбое — OpenRouter (веб, если живой).
   if (useHermes) {
@@ -132,7 +133,7 @@ export async function priceEstimate(body, opts = {}) {
     // A batch that fails twice only leaves its lines without a price; the rest of the estimate still comes back.
     const batches = [];
     // Hermes-агент ищет по каждой позиции: мелкие батчи стабильнее и быстрее (250–430 с батч по 5).
-    let useHermes = hasHermesJson() && !(await orAlive());
+    let useHermes = !opts.webOnly && hasHermesJson() && !(await orAlive());
     let size = opts.batch || BATCH;
     if (useHermes) size = Math.min(size, 4); // Hermes без веба: батч до 4 позиций ≈ 1 мин
     for (let i = 0; i < missing.length; i += size) batches.push(missing.slice(i, i + size));
@@ -142,7 +143,7 @@ export async function priceEstimate(body, opts = {}) {
       if (errors.some(isOutOfFunds) && !useHermes) return [];
       try { return await ask(city, batch, useHermes ? { ...opts, hermes: true } : opts); } catch (error) {
         // Funds ran out mid-run: drop the «OpenRouter is alive» cache, the rest goes via Hermes.
-        if (isOutOfFunds(error) && hasHermesJson()) { orAliveReset(); useHermes = true; }
+        if (isOutOfFunds(error) && hasHermesJson() && !opts.webOnly) { orAliveReset(); useHermes = true; }
         errors.push(error);
         return [];
       }
