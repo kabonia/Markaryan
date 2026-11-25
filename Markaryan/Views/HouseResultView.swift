@@ -82,7 +82,7 @@ struct HouseScanRow: View {
         case "processing": return scan.message ?? "Обрабатываем…"
         case "ready":
             if let w = scan.result?.footprint?.gableWidth?.value, let l = scan.result?.footprint?.length?.value {
-                return "Готово · \(ParcelRules.format(w, digits: 2)) × \(ParcelRules.format(l, digits: 2)) м"
+                return String(localized: "Готово · \(Units.length(w)) × \(Units.length(l))")
             }
             return "Готово"
         case "failed": return scan.message ?? "Не получилось"
@@ -119,6 +119,8 @@ struct HouseResultView: View {
     let scan: HouseScanUploader.Remote
     @State private var modelURL: URL?
     @State private var modelError: String?
+    /// Единицы: м или футы (по стране iPhone, можно переключить).
+    @State private var imperial = Units.imperial
 
     private var result: HouseResult { scan.result ?? HouseResult() }
 
@@ -139,6 +141,13 @@ struct HouseResultView: View {
         .navigationTitle("Макет дома")
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadModel() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(imperial ? "ft → м" : "м → ft") { imperial.toggle(); Units.imperial = imperial }
+                    .font(.subheadline.weight(.semibold))
+            }
+        }
+        .id(imperial)
     }
 
     // MARK: 3D
@@ -171,7 +180,7 @@ struct HouseResultView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("РАЗМЕРЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             if let shape = result.shapeTitle, let sides = result.footprint?.polygon?.sides {
-                Text("\(shape) дом: стороны \(sides.map { ParcelRules.format($0, digits: 2) }.joined(separator: " · ")) м")
+                Text("\(shape.tr) дом: стороны \(sides.map { Units.length($0) }.joined(separator: " · "))")
                     .font(.footnote).foregroundStyle(Theme.muted)
             }
             MeasureRow(title: result.roof?.type == "gable" ? "Ширина торца" : "Ширина дома", measure: result.footprint?.gableWidth, unit: "м")
@@ -186,7 +195,7 @@ struct HouseResultView: View {
                 HStack {
                     Image(systemName: abs(delta) <= 3 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(abs(delta) <= 3 ? Theme.success : Theme.gold)
-                    Text("Рулетка \(ParcelRules.format(tape, digits: 2)) м — макет \(delta >= 0 ? "+" : "")\(ParcelRules.format(delta, digits: 1)) см")
+                    Text("Рулетка \(Units.length(tape)) — макет \(Units.delta(cm: delta))")
                         .font(.footnote)
                 }
             }
@@ -194,7 +203,7 @@ struct HouseResultView: View {
                 HStack {
                     Image(systemName: abs(delta) <= 5 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(abs(delta) <= 5 ? Theme.success : Theme.gold)
-                    Text("Недоступная сторона: введено \(ParcelRules.format(tape, digits: 2)) м — достроено \(delta >= 0 ? "+" : "")\(ParcelRules.format(delta, digits: 1)) см")
+                    Text("Недоступная сторона: введено \(Units.length(tape)) — достроено \(Units.delta(cm: delta))")
                         .font(.footnote)
                 }
             }
@@ -241,7 +250,7 @@ struct HouseResultView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("ОКНА И ДВЕРИ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
                 if let s = result.openingsSummary {
-                    Text("Окон: \(s.windows ?? 0) · дверей: \(s.doors ?? 0) · площадь проёмов \(ParcelRules.format(s.area ?? 0, digits: 1)) м²")
+                    Text("Окон: \(s.windows ?? 0) · дверей: \(s.doors ?? 0) · площадь проёмов \(Units.area(s.area ?? 0))")
                         .font(.subheadline.weight(.semibold))
                 }
                 ForEach(list) { o in
@@ -249,10 +258,10 @@ struct HouseResultView: View {
                         Circle().fill(o.source == "photo" ? Theme.gold : Theme.muted).frame(width: 8, height: 8)
                         Text(o.title).font(.footnote)
                         Spacer()
-                        Text("\(ParcelRules.format(o.width ?? 0, digits: 2)) × \(ParcelRules.format(o.height ?? 0, digits: 2)) м")
+                        Text("\(Units.length(o.width ?? 0)) × \(Units.length(o.height ?? 0))")
                             .font(.footnote.weight(.semibold).monospacedDigit())
                         if let sill = o.sill, sill > 0.15 {
-                            Text("низ \(ParcelRules.format(sill, digits: 2))").font(.caption2).foregroundStyle(Theme.muted)
+                            Text("низ \(Units.length(sill))").font(.caption2).foregroundStyle(Theme.muted)
                         }
                     }
                 }
@@ -268,12 +277,12 @@ struct HouseResultView: View {
     private var areas: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ПЛОЩАДИ ДЛЯ СМЕТЫ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
-            if let a = result.footprintArea { infoLine("Пятно застройки", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if let p = result.perimeter { infoLine("Периметр (отмостка, цоколь)", "\(ParcelRules.format(p, digits: 1)) м") }
-            if let a = result.roofArea { infoLine(result.hasOverhangs ? "Кровля (со свесами)" : "Кровля (без свесов)", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if let a = result.facadeArea { infoLine("Фасады всего", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if !(result.openings ?? []).isEmpty, let a = result.facadeNetArea { infoLine("Фасады без окон и дверей", "\(ParcelRules.format(a, digits: 1)) м²") }
-            if let g = result.gutterLength { infoLine("Водосточный жёлоб", "\(ParcelRules.format(g, digits: 1)) м") }
+            if let a = result.footprintArea { infoLine("Пятно застройки", Units.area(a)) }
+            if let p = result.perimeter { infoLine("Периметр (отмостка, цоколь)", Units.run(p)) }
+            if let a = result.roofArea { infoLine(result.hasOverhangs ? "Кровля (со свесами)" : "Кровля (без свесов)", Units.area(a)) }
+            if let a = result.facadeArea { infoLine("Фасады всего", Units.area(a)) }
+            if !(result.openings ?? []).isEmpty, let a = result.facadeNetArea { infoLine("Фасады без окон и дверей", Units.area(a)) }
+            if let g = result.gutterLength { infoLine("Водосточный жёлоб", Units.run(g)) }
             if let facade = result.roof?.byPhoto?.facade, !facade.isEmpty { infoLine("Стены сейчас", facade) }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)
@@ -331,9 +340,9 @@ struct MeasureRow: View {
                 Text(title.tr).font(.subheadline)
                 Spacer()
                 if let value = measure?.value {
-                    Text("\(ParcelRules.format(value, digits: digits)) \(unit)").font(.subheadline.weight(.semibold).monospacedDigit())
+                    Text(unit == "м" ? Units.length(value, digits: digits) : "\(ParcelRules.format(value, digits: digits))\(unit)").font(.subheadline.weight(.semibold).monospacedDigit())
                     if let sigma = measure?.sigma, unit == "м" {
-                        Text("±\(ParcelRules.format(sigma * 100, digits: 0)) см").font(.caption2).foregroundStyle(Theme.muted)
+                        Text(Units.tolerance(sigma)).font(.caption2).foregroundStyle(Theme.muted)
                     }
                 } else {
                     Text("—").foregroundStyle(Theme.muted)
