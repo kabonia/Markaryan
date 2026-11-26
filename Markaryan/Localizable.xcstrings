@@ -2711,6 +2711,28 @@
         }
       }
     },
+    "8 букв и цифр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 letters and digits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 letras y cifras"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8位字母和数字"
+          }
+        }
+      }
+    },
     "8,00 м": {
       "extractionState": "manual",
       "localizations": {
@@ -3851,6 +3873,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "20___年______________月____日"
+          }
+        }
+      }
+    },
+    "«Бюджет полтора миллиона» · «Потратил 20 тысяч на плитку» · «Задача купить клей»": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Budget 50,000\" · \"Spent 2,000 on tiles\" · \"Task buy adhesive\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Presupuesto 50 000» · «Gasté 2000 en azulejos» · «Tarea comprar adhesivo»"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“预算 50000” · “瓷砖花了 2000” · “任务 买胶”"
           }
         }
       }
@@ -5562,6 +5606,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "银行识别代码（БИК）"
+          }
+        }
+      }
+    },
+    "БЛИЖАЙШИЕ ЗАДАЧИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPCOMING TASKS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRÓXIMAS TAREAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近期任务"
           }
         }
       }
@@ -11157,6 +11223,28 @@
         }
       }
     },
+    "Выключить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
     "Выключить голос": {
       "extractionState": "manual",
       "localizations": {
@@ -11198,6 +11286,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "关闭手电筒"
+          }
+        }
+      }
+    },
+    "Выполнить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejecutar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "执行"
           }
         }
       }
@@ -12573,6 +12683,28 @@
         }
       }
     },
+    "Готовим…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备中……"
+          }
+        }
+      }
+    },
     "Готовность": {
       "localizations": {
         "en": {
@@ -13185,6 +13317,28 @@
         }
       }
     },
+    "ДЕНЬГИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MONEY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DINERO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "资金"
+          }
+        }
+      }
+    },
     "ДИЗАЙН‑ПРОЕКТ ИНТЕРЬЕРА": {
       "extractionState": "manual",
       "localizations": {
@@ -13678,6 +13832,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "拖动滑块对比：左侧是原图，右侧是改造效果。轻点两下可全屏查看。所有方案均已保存到「我的照片改造方案」。"
+          }
+        }
+      }
+    },
+    "Двигайте шторку: слева 3D‑вид из скана, справа — с отделкой. Нажмите «Открыть», чтобы увеличить.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the slider: the 3D view from the scan on the left, with the finish on the right. Tap \"Open\" to enlarge."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueva la cortina: a la izquierda la vista 3D del escaneo, a la derecha con el acabado. Toque «Abrir» para ampliar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动滑块：左侧为扫描的3D视图，右侧为装修效果。点击“打开”可放大。"
           }
         }
       }
@@ -14338,6 +14514,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "设计与 AI"
+          }
+        }
+      }
+    },
+    "Дизайн и визуализация": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Design and visualization"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diseño y visualización"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设计和效果图"
           }
         }
       }
@@ -17137,6 +17335,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "再生成一个方案"
+          }
+        }
+      }
+    },
+    "Ещё: фото‑дневник, журнал, контроль, паспорт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More: photo diary, log, control, passport"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más: diario de fotos, registro, control, ficha"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多：照片日志、记录、检查、档案"
           }
         }
       }
@@ -20215,6 +20435,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "所选方案下房间精确 3D 模型的等轴测图"
+          }
+        }
+      }
+    },
+    "Или напишите команду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or type a command"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O escriba un comando"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "或输入命令"
           }
         }
       }
@@ -23583,6 +23825,50 @@
         }
       }
     },
+    "Код вам пришлёт владелец объекта.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The project owner will send you the code."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El propietario del proyecto le enviará el código."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目所有者会把代码发给您。"
+          }
+        }
+      }
+    },
+    "Код объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目代码"
+          }
+        }
+      }
+    },
     "Кожа": {
       "extractionState": "manual",
       "localizations": {
@@ -24034,6 +24320,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "检查"
+          }
+        }
+      }
+    },
+    "Контроль качества": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quality control"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control de calidad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "质量检查"
           }
         }
       }
@@ -28525,6 +28833,28 @@
         }
       }
     },
+    "Микрофон занят.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The microphone is busy."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El micrófono está ocupado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风被占用。"
+          }
+        }
+      }
+    },
     "Микроцемент": {
       "extractionState": "manual",
       "localizations": {
@@ -28929,6 +29259,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "我的测算"
+          }
+        }
+      }
+    },
+    "Мой бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的预算"
+          }
+        }
+      }
+    },
+    "Мой бюджет на объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My project budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi presupuesto del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的项目预算"
           }
         }
       }
@@ -30142,6 +30516,28 @@
         }
       }
     },
+    "Нажмите на задачу — она отметится выполненной.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a task to mark it done."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque una tarea para marcarla como hecha."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击任务即可标记为完成。"
+          }
+        }
+      }
+    },
     "Нажмите на комнату, чтобы открыть её план, дизайн и чертежи.": {
       "localizations": {
         "en": {
@@ -30836,6 +31232,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "地面饰面"
+          }
+        }
+      }
+    },
+    "Например, 1 500 000": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example, 1,500,000"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por ejemplo, 1 500 000"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如 1,500,000"
           }
         }
       }
@@ -34673,6 +35091,50 @@
         }
       }
     },
+    "Объект не найден.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project not found."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proyecto no encontrado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到项目。"
+          }
+        }
+      }
+    },
+    "Объект открыт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project opened"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proyecto abierto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目已打开"
+          }
+        }
+      }
+    },
     "Объект целиком": {
       "extractionState": "manual",
       "localizations": {
@@ -36125,6 +36587,28 @@
         }
       }
     },
+    "Остановить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止"
+          }
+        }
+      }
+    },
     "Остаток": {
       "localizations": {
         "en": {
@@ -36625,6 +37109,50 @@
         }
       }
     },
+    "Открытых задач нет. Добавьте вручную, голосом или из сметы → «План работ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No open tasks. Add them manually, by voice or from an estimate → \"Work plan\"."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay tareas abiertas. Añádalas a mano, por voz o desde un presupuesto → «Plan de obra»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有未完成的任务。可手动、语音或从估算 →“施工计划”添加。"
+          }
+        }
+      }
+    },
+    "Открыть": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开"
+          }
+        }
+      }
+    },
     "Открыть PDF": {
       "extractionState": "manual",
       "localizations": {
@@ -36693,6 +37221,28 @@
         }
       }
     },
+    "Открыть картинку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the picture"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir la imagen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开图片"
+          }
+        }
+      }
+    },
     "Открыть контур в AR": {
       "extractionState": "manual",
       "localizations": {
@@ -36734,6 +37284,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开设置"
+          }
+        }
+      }
+    },
+    "Открыть объект по коду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a project by code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir un proyecto por código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过代码打开项目"
+          }
+        }
+      }
+    },
+    "Открыть по коду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open by code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir por código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过代码打开"
           }
         }
       }
@@ -43762,6 +44356,28 @@
         }
       }
     },
+    "Потрачено (факт)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent (actual)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gastado (real)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已花费（实际）"
+          }
+        }
+      }
+    },
     "Похоже, пропал интернет. Проверьте связь и нажмите ещё раз — всё, что вы ввели, сохранилось.": {
       "extractionState": "manual",
       "localizations": {
@@ -44162,6 +44778,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "设备"
+          }
+        }
+      }
+    },
+    "Пригласить супруга или прораба": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite a spouse or site manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invitar a su pareja o jefe de obra"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邀请配偶或工长"
           }
         }
       }
@@ -47138,6 +47776,28 @@
         }
       }
     },
+    "Распознавание речи сейчас недоступно.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition is unavailable right now."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reconocimiento de voz no está disponible ahora."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音识别暂不可用。"
+          }
+        }
+      }
+    },
     "Распознать свой материал": {
       "extractionState": "manual",
       "localizations": {
@@ -49093,6 +49753,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "SmetaPro · 建筑工程计算"
+          }
+        }
+      }
+    },
+    "СОВМЕСТНЫЙ ДОСТУП": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SHARED ACCESS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ACCESO COMPARTIDO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共享访问"
           }
         }
       }
@@ -51075,6 +51757,72 @@
         }
       }
     },
+    "Синхронизировано": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synced"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已同步"
+          }
+        }
+      }
+    },
+    "Синхронизировать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步"
+          }
+        }
+      }
+    },
+    "Синхронизируем…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在同步……"
+          }
+        }
+      }
+    },
     "Системы хранения": {
       "extractionState": "manual",
       "localizations": {
@@ -51117,6 +51865,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "请说明你已准备好提供帮助。"
+          }
+        }
+      }
+    },
+    "Скажите или напишите": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say or type"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diga o escriba"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说出或输入"
+          }
+        }
+      }
+    },
+    "Сказать команду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say a command"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decir un comando"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说出命令"
           }
         }
       }
@@ -51435,6 +52227,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "整捆点数"
+          }
+        }
+      }
+    },
+    "Сколько вы готовы потратить. Сравним со сметой и тратами.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How much you're ready to spend. We'll compare it with the estimate and expenses."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuánto está dispuesto a gastar. Lo compararemos con el presupuesto y los gastos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您准备花费多少。我们将与估算和支出进行比较。"
           }
         }
       }
@@ -51849,6 +52663,28 @@
         }
       }
     },
+    "Слушаю…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在聆听……"
+          }
+        }
+      }
+    },
     "Сменить город": {
       "localizations": {
         "en": {
@@ -51889,6 +52725,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "预算"
+          }
+        }
+      }
+    },
+    "Смета (план)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate (plan)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto (plan)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算（计划）"
           }
         }
       }
@@ -52025,6 +52883,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有图纸等资料？输入尺寸、选择材料，即可按当地实际价格估算房屋或金属结构造价。"
+          }
+        }
+      }
+    },
+    "Смета и бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate and budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto y gastos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算和预算"
           }
         }
       }
@@ -52945,6 +53825,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "提示：在完整造价估算中点击“加入项目预算”，即可自动填入计划金额。实际金额不会上传到服务器。"
+          }
+        }
+      }
+    },
+    "Совместный доступ выключен": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared access is off"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceso compartido desactivado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共享访问已关闭"
           }
         }
       }
@@ -54255,6 +55157,28 @@
         }
       }
     },
+    "Статьи и траты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Items and expenses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partidas y gastos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预算项和支出"
+          }
+        }
+      }
+    },
     "Стекло": {
       "extractionState": "manual",
       "localizations": {
@@ -55459,6 +56383,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "条形基础总长按轴线计算,交叉处不得重复计入。截面恒定,无台阶和加宽。模板为两侧全高侧模。"
+          }
+        }
+      }
+    },
+    "Супруг или прораб видят смету, бюджет, задачи и комнаты и вносят свои правки. Фото остаются у каждого в телефоне.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your spouse or site manager see the estimate, budget, tasks and rooms and can make changes. Photos stay on each person's phone."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su pareja o el jefe de obra ven el presupuesto, los gastos, las tareas y las habitaciones y pueden hacer cambios. Las fotos se quedan en cada teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配偶或工长可以查看估算、预算、任务和房间并进行修改。照片保留在各自的手机上。"
           }
         }
       }
@@ -58138,6 +59084,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "填写面积、层数和预留量。"
+          }
+        }
+      }
+    },
+    "Укажите свой бюджет — покажем, укладывается ли смета.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set your budget and we'll show whether the estimate fits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indique su presupuesto y le mostraremos si el cálculo encaja."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置预算，我们会显示估算是否在预算内。"
           }
         }
       }
@@ -62783,6 +63751,28 @@
         }
       }
     },
+    "ЭТАПЫ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STAGES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ETAPAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阶段"
+          }
+        }
+      }
+    },
     "Эко": {
       "extractionState": "manual",
       "localizations": {
@@ -64271,6 +65261,28 @@
         }
       }
     },
+    "вносите траты в «Статьи и траты» или голосом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "log expenses in \"Items and expenses\" or by voice"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "registre gastos en «Partidas y gastos» o por voz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“预算项和支出”中或用语音记录支出"
+          }
+        }
+      }
+    },
     "водонагрев": {
       "extractionState": "manual",
       "localizations": {
@@ -65253,6 +66265,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "复核时新增"
+          }
+        }
+      }
+    },
+    "добавьте смету или материалы в бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "add an estimate or materials to the budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "añada un presupuesto o materiales"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将估算或材料加入预算"
           }
         }
       }
@@ -71716,6 +72750,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "洗手间"
+          }
+        }
+      }
+    },
+    "указать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "set"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "indicar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
           }
         }
       }
