@@ -172,6 +172,7 @@ struct HomeView: View {
                     .foregroundStyle(Theme.muted)
                 }
                 .buttonStyle(.plain)
+                ObjectContextChip().padding(.top, 2)
             }
             Spacer()
             NavigationLink { BillingView() } label: { BalanceChip() }

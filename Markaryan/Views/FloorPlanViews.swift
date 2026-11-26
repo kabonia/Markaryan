@@ -430,6 +430,7 @@ struct FloorPlanDetailView: View {
     @State private var furnitureTarget: FurnitureTarget?
     /// Расчёт материалов раскрыт прямо на странице комнаты.
     @AppStorage("roomMaterialsOpen") private var materialsOpen = true
+    @State private var movingToObject = false
 
     /// The concept whose furniture is being moved by hand.
     struct FurnitureTarget: Identifiable { let id: UUID }
@@ -470,6 +471,15 @@ struct FloorPlanDetailView: View {
                 .presentationDetents([.large])
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
+        .sheet(isPresented: $movingToObject) {
+            NavigationStack {
+                ObjectPickerSheet(title: "В какой объект", current: store.inObject ? store.activeProjectID : nil) { target in
+                    store.moveFloorPlan(planID, to: target)
+                    dismiss()
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
         .sheet(item: $openedPhoto) { item in NavigationStack { RenderResultView(image: item.image, title: proposal?.title ?? plan?.name ?? "Интерьер") } }
         .sheet(item: $comparison) { item in NavigationStack { EngineComparisonView(comparison: item) } }
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView() }.presentationDetents([.large]) }
@@ -803,6 +813,7 @@ struct FloorPlanDetailView: View {
     private var moreMenu: some View {
         Menu {
             Button { newName = plan?.name ?? ""; showRename = true } label: { Label("Переименовать", systemImage: "pencil") }
+            Button { movingToObject = true } label: { Label(store.inObject ? "Перенести в другой объект" : "Сохранить в объект", systemImage: "folder.badge.plus") }
             Button { show3D = true } label: { Label("3D‑просмотр комнаты", systemImage: "rotate.3d") }
             if let plan {
                 Button { sharePlan(plan) } label: { Label("Поделиться планом", systemImage: "square.and.arrow.up") }

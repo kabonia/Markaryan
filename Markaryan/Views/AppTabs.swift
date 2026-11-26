@@ -4,6 +4,7 @@ import StoreKit
 struct ProjectsTabView: View {
     @EnvironmentObject private var store: AppStore
     @State private var showNewProject = false
+    @State private var objectToDelete: ProjectWorkspace?
 
     private var openTasks: Int { store.projectTasks.filter { $0.status != .done }.count }
 
@@ -22,10 +23,13 @@ struct ProjectsTabView: View {
                         }
                         .buttonStyle(PremiumPressStyle())
                     }
-                    if store.projectWorkspaces.count > 1 {
+                    if !store.inObject {
+                        InfoNote(text: "Сейчас вы работаете без объекта: сканы, расчёты и картинки сохраняются в «Без объекта». Выберите объект ниже или создайте новый — и всё дальше будет в нём. Сделанное раньше можно перенести кнопкой «Сохранить в объект».")
+                    }
+                    if !store.objects.isEmpty || !store.inObject {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
-                                ForEach(store.projectWorkspaces) { workspace in
+                                ForEach(store.objects) { workspace in
                                     Button {
                                         withAnimation(.snappy) { store.selectProject(workspace.id) }
                                         Haptics.tap()
@@ -34,16 +38,41 @@ struct ProjectsTabView: View {
                                             .frame(width: 250)
                                     }
                                     .buttonStyle(PremiumCardPressStyle())
+                                    .contextMenu {
+                                        Button(role: .destructive) { objectToDelete = workspace } label: { Label("Удалить объект", systemImage: "trash") }
+                                    }
+                                }
+                                if store.inObject {
+                                    Button { withAnimation(.snappy) { store.workWithoutObject() }; Haptics.tap() } label: {
+                                        Label("Без объекта", systemImage: "tray").font(.subheadline.weight(.semibold))
+                                            .padding(16).frame(height: 90).panelCard(18)
+                                    }
+                                    .buttonStyle(PremiumCardPressStyle())
                                 }
                             }
                             .padding(.horizontal, 20)
                         }
                         .padding(.horizontal, -20)
                     }
-                    NavigationLink { ProjectHubView() } label: {
-                        HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
+                    if store.inObject {
+                        NavigationLink { ProjectHubView() } label: {
+                            HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
+                        }
+                        .buttonStyle(PremiumCardPressStyle())
+                        .contextMenu {
+                            if let active = store.activeWorkspace { Button(role: .destructive) { objectToDelete = active } label: { Label("Удалить объект", systemImage: "trash") } }
+                        }
+                        ObjectLinkedItems()
+                        if store.objects.count > 0 { Text("Долгое нажатие на объект — удалить.").font(.caption2).foregroundStyle(Theme.muted) }
                     }
-                    .buttonStyle(PremiumCardPressStyle())
+                }
+                .confirmationDialog("Удалить объект «\(objectToDelete?.passport.name ?? "")»? Удалятся его планы комнат, бюджет, фото и задачи. Обмеры дома, сметы и расчёты останутся — без объекта.",
+                                    isPresented: Binding(get: { objectToDelete != nil }, set: { if !$0 { objectToDelete = nil } }), titleVisibility: .visible) {
+                    Button("Удалить объект", role: .destructive) {
+                        if let id = objectToDelete?.id { withAnimation { store.deleteObject(id) }; Haptics.success() }
+                        objectToDelete = nil
+                    }
+                    Button("Отмена", role: .cancel) { objectToDelete = nil }
                 }
 
                 VStack(alignment: .leading, spacing: 10) {

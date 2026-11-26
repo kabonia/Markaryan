@@ -225,12 +225,14 @@ struct HouseVisualCard: View {
                     SecondaryActionLabel(title: "Отправить картинку", icon: "square.and.arrow.up")
                 }
                 .buttonStyle(PremiumPressStyle())
+                SavePictureToObjectButton(image: picture, title: "Дом с отделкой")
             }
             if drawing {
                 HStack(spacing: 10) { ProgressView(); Text("Рисуем дом… около 1–2 минут").font(.subheadline).foregroundStyle(Theme.muted) }
                     .frame(maxWidth: .infinity).padding(10)
             } else {
                 PrimaryButton(title: picture == nil ? "Показать дом с этой отделкой" : "Нарисовать заново", icon: "wand.and.stars") { Task { await draw() } }
+                PaidNote(kind: "imageEdit")
             }
             if let pictureError { Label(pictureError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
         }

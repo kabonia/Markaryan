@@ -273,7 +273,13 @@ struct DocEstimateNewView: View {
 struct DocEstimateResultLoader: View {
     let id: String
     var body: some View {
-        if let result = DocEstimateCenter.shared.result(id) { DocEstimateResultView(result: result) }
+        if let result = DocEstimateCenter.shared.result(id) {
+            DocEstimateResultView(result: result)
+                .safeAreaInset(edge: .bottom) {
+                    SaveToObjectButton(kind: .docEstimate, id: id, title: result.title, subtitle: CalculationEngine.money(result.totals.typical.total))
+                        .padding(.horizontal, 20).padding(.vertical, 8).background(.ultraThinMaterial)
+                }
+        }
         else { ContentUnavailableView("Смета не найдена", systemImage: "doc.questionmark") }
     }
 }

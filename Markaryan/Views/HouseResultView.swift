@@ -171,6 +171,8 @@ struct HouseResultView: View {
                 }
                 model
                 HouseNextSteps(result: result, snapshotter: snapshotter, hasModel: scan.hasModel)
+                SaveToObjectButton(kind: .houseScan, id: scan.id, title: "3D‑обмер дома",
+                                   subtitle: result.footprintArea.map { "Пятно застройки \(Units.area($0))" })
                 dimensions
                 roof
                 openings

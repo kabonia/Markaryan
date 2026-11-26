@@ -226,6 +226,7 @@ struct RoomMaterialsView: View {
                 if estimate == nil {
                     PrimaryButton(title: pricing ? "Ищем цены…" : "Цены в вашем городе", icon: "rublesign.circle") { Task { await price() } }
                         .disabled(pricing)
+                    PaidNote(kind: "priceEstimate10")
                 }
                 if let priceError { Label(priceError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
             }
@@ -327,6 +328,7 @@ struct RoomMaterialsView: View {
                     SecondaryActionLabel(title: "Отправить картинку", icon: "square.and.arrow.up")
                 }
                 .buttonStyle(PremiumPressStyle())
+                SavePictureToObjectButton(image: render, title: "Комната «\(plan.name)» с отделкой")
             }
             if rendering {
                 HStack(spacing: 10) { ProgressView(); Text("Рисуем комнату… около 1–2 минут").font(.subheadline).foregroundStyle(Theme.muted) }
@@ -334,6 +336,7 @@ struct RoomMaterialsView: View {
             } else {
                 PrimaryButton(title: render == nil ? "Показать комнату с этой отделкой" : "Нарисовать заново", icon: "wand.and.stars") { Task { await visualize() } }
                     .disabled(!(store.photorealAvailable || store.usesAIServer))
+                PaidNote(kind: "imageEdit")
             }
             if let renderError { Label(renderError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
         }

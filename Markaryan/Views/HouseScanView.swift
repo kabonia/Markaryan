@@ -146,6 +146,7 @@ struct HouseScanView: View {
                 .font(.subheadline)
                 parcelCard
                 if HouseScanRecorder.isSupported {
+                    PaidNote(kind: "houseScan")
                     PrimaryButton(title: "Начать обход", icon: "viewfinder") {
                         error = nil
                         recorder.parcel = ParcelStore.load()

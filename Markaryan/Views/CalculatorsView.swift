@@ -533,6 +533,7 @@ struct CalculatorView: View {
                 SecondaryActionLabel(title: pricing ? "Ищем цены…" : "Цены в вашем городе — со ссылками", icon: "rublesign.circle")
             }
             .buttonStyle(PremiumPressStyle()).disabled(pricing)
+            PaidNote(kind: "priceEstimate10")
             if let priceError { Label(priceError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
         }
     }
@@ -600,6 +601,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+            SaveToObjectButton(kind: .calculation, id: item.id.uuidString, title: item.kind.title, subtitle: item.result.lines.first.map { "\($0.label): \($0.formatted)" })
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).helperScreen(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }
