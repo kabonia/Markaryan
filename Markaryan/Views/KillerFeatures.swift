@@ -358,3 +358,132 @@ struct ReceiptScanView: View {
         }
     }
 }
+
+// MARK: - Ремонт по фото: без лидара — размеры комнаты по снимку, дальше материалы, цены и визуализация
+
+struct PhotoRoomReading: Codable {
+    var room: String?
+    var length: Double
+    var width: Double
+    var height: Double
+    var windows: Int?
+    var doors: Int?
+    var confidence: String?
+    var notes: String?
+}
+
+struct PhotoRoomView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var photos: [UIImage] = []
+    @State private var reading: PhotoRoomReading?
+    @State private var length = ""
+    @State private var width = ""
+    @State private var height = ""
+    @State private var name = "Комната"
+    @State private var busy = false
+    @State private var error: String?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Нет лидара — не беда. Сфотографируйте комнату из угла (1–3 фото, чтобы были видны пол, потолок и дверь). ИИ оценит размеры по двери и потолку, вы поправите цифры — и получите материалы, цены и визуализацию.")
+                    .font(.footnote).foregroundStyle(Theme.muted)
+                if !photos.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) { ForEach(photos.indices, id: \.self) { Image(uiImage: photos[$0]).resizable().scaledToFill().frame(width: 110, height: 140).clipShape(RoundedRectangle(cornerRadius: 12)) } }
+                    }
+                }
+                PhotosPicker(selection: $pickerItems, maxSelectionCount: 3, matching: .images) { SecondaryActionLabel(title: photos.isEmpty ? "Выбрать фото комнаты" : "Другие фото", icon: "photo.on.rectangle") }
+                    .buttonStyle(PremiumPressStyle())
+                if busy { HStack(spacing: 10) { ProgressView(); Text("Оцениваем размеры…").foregroundStyle(Theme.muted) }.frame(maxWidth: .infinity) }
+                if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+                if reading == nil && !photos.isEmpty && !busy {
+                    PrimaryButton(title: "Оценить размеры", icon: "ruler") { Task { await read() } }
+                    PaidNote(kind: "vision")
+                }
+                if let reading { sizesCard(reading) }
+            }
+            .padding(20)
+        }
+        .background(Theme.background)
+        .navigationTitle("Ремонт по фото").navigationBarTitleDisplayMode(.inline)
+        .onChange(of: pickerItems) { _, items in
+            Task {
+                var loaded: [UIImage] = []
+                for item in items { if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) { loaded.append(image) } }
+                photos = loaded; reading = nil
+            }
+        }
+    }
+
+    private func sizesCard(_ r: PhotoRoomReading) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("РАЗМЕРЫ ПО ФОТО").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            TextField("Название", text: $name).padding(10).background(Theme.background, in: RoundedRectangle(cornerRadius: 10))
+            HStack(spacing: 10) {
+                field("Длина, м", $length); field("Ширина, м", $width); field("Высота, м", $height)
+            }
+            Text("Окон: \(r.windows ?? 0) · дверей: \(r.doors ?? 1)" + (r.confidence.map { " · точность: \($0)" } ?? "")).font(.caption).foregroundStyle(Theme.muted)
+            if let notes = r.notes, !notes.isEmpty { Text(notes).font(.caption).foregroundStyle(Theme.muted) }
+            Label("Это оценка ±5–10 %. Для точной закупки измерьте рулеткой одну стену и поправьте цифру.", systemImage: "ruler").font(.caption).foregroundStyle(Theme.gold)
+            PrimaryButton(title: "Создать комнату и посчитать", icon: "arrow.right.circle") { create() }
+                .disabled(value(length) < 0.8 || value(width) < 0.8 || value(height) < 1.8)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
+    }
+
+    private func field(_ title: String, _ text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.tr).font(.caption2).foregroundStyle(Theme.muted)
+            TextField("0", text: text).keyboardType(.decimalPad).font(.headline.monospacedDigit())
+                .padding(10).background(Theme.background, in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    private func value(_ text: String) -> Double { CalculationEngine.parse(text) ?? 0 }
+
+    private func create() {
+        let l = Float(value(length)), w = Float(value(width))
+        let points: [SIMD3<Float>] = [SIMD3(0, 0, 0), SIMD3(l, 0, 0), SIMD3(l, 0, w), SIMD3(0, 0, w)]
+        guard let plan = FloorPlan.fromContour(points, name: name.trimmingCharacters(in: .whitespaces).isEmpty ? "Комната" : name, ceilingHeight: value(height)) else { return }
+        store.floorPlans.append(plan)
+        store.track("photo_room_created")
+        Haptics.success()
+        store.planToOpen = plan.id
+        store.tab = 2
+        dismiss()
+    }
+
+    private func read() async {
+        guard let base = AIServerConfig.baseURL else { error = "Работает через сервер приложения."; return }
+        busy = true; error = nil
+        defer { busy = false }
+        let schema: [String: Any] = (try? JSONSerialization.jsonObject(with: Data(#"""
+        {"type":"object","properties":{"room":{"type":"string"},"length":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"},
+          "windows":{"type":"integer"},"doors":{"type":"integer"},"confidence":{"type":"string"},"notes":{"type":"string"}},
+          "required":["length","width","height"]}
+        """#.utf8))) as? [String: Any] ?? [:]
+        let system = """
+        Ты — замерщик. По фото комнаты оцени её размеры в метрах: длину (большая сторона), ширину и высоту потолка.
+        Опоры масштаба: межкомнатная дверь 2,0–2,1 м высотой и 0,8 м шириной, розетка 0,3 м от пола, подоконник 0,8–0,9 м,
+        плитка 60×60 или 30×30 см, ламинат — доска 19–20 см шириной, типовой потолок 2,5–2,8 м. Сосчитай окна и двери.
+        room — тип помещения по‑русски (кухня, санузел, спальня…). confidence — «высокая», «средняя» или «низкая». notes — что мешало, одним предложением.
+        """
+        do {
+            var turns = photos.map { ClaudeTurn(role: .user, text: "Фото комнаты", image: $0) }
+            turns.append(ClaudeTurn(role: .user, text: "Оцени размеры комнаты."))
+            let data = try await ServerAIClient(base: base).structured(system: system, turns: turns, toolName: "room_size", toolDescription: "Размеры комнаты по фото", schema: schema, maxTokens: 2000)
+            let r = try JSONDecoder().decode(PhotoRoomReading.self, from: data)
+            reading = r
+            length = CalculationEngine.format((r.length * 10).rounded() / 10)
+            width = CalculationEngine.format((r.width * 10).rounded() / 10)
+            height = CalculationEngine.format((r.height * 100).rounded() / 100)
+            if let room = r.room, !room.isEmpty { name = room.prefix(1).uppercased() + room.dropFirst() }
+            Haptics.success()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
