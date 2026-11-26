@@ -78,7 +78,7 @@ export const PACKS = [
   { id: 'pack_renovation', title: 'Ремонт квартиры', titleEn: 'Apartment renovation', rub: 2490, usd: 34.99, apple: 'smetapro.pack.renovation',
     grants: { json: 6, imageEdit: 20, priceEstimateItem: 100, smeta: 1, smetaPage: 4, vision: 5 },
     includes: '6 дизайн‑концепций, 20 кадров, цены на 100 позиций, 1 смета до 6 листов, 5 разборов фото' },
-  { id: 'pack_object', title: 'Объект под ключ', titleEn: 'Turnkey project', rub: 1190, usd: 15.99, apple: 'smetapro.pack.object',
+  { id: 'pack_object', title: 'Объект под ключ', titleEn: 'Turnkey project', rub: 1090, usd: 14.99, apple: 'smetapro.pack.object',
     grants: { houseScan: 1, json: 2, imageEdit: 10, priceEstimateItem: 100, vision: 5, chat: 5 },
     includes: '1 3D‑обмер дома, 2 дизайна комнат, 10 визуализаций, цены на 100 позиций, 5 разборов фото, 5 вопросов ИИ' },
   { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 1390, usd: 18.99, apple: 'smetapro.pack.foreman',
