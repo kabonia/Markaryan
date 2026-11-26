@@ -29,6 +29,7 @@
 		AA10000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */; };
 		AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */; };
 		AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */; };
+		C161A7EA2BA29F9EB0F2949F /* Markaryan/Views/ObjectTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = C261A7EA2BA29F9EB0F2949F /* Markaryan/Views/ObjectTools.swift */; };
 		C1C15D450FC454D60225E87C /* Markaryan/Views/ObjectViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2C15D450FC454D60225E87C /* Markaryan/Views/ObjectViews.swift */; };
 		C10127E9BAD9BF64FA332696 /* Markaryan/Core/ObjectLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20127E9BAD9BF64FA332696 /* Markaryan/Core/ObjectLinks.swift */; };
 		C17722C49C056BBF93D0F4E8 /* Markaryan/Views/HouseResultActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27722C49C056BBF93D0F4E8 /* Markaryan/Views/HouseResultActions.swift */; };
@@ -116,6 +117,7 @@
 		AA20000000000000000000B9 /* Markaryan/Views/PhotoCountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/PhotoCountView.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/UserRegion.swift; sourceTree = "<group>"; };
 		AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/RegionViews.swift; sourceTree = "<group>"; };
+		C261A7EA2BA29F9EB0F2949F /* Markaryan/Views/ObjectTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ObjectTools.swift; sourceTree = "<group>"; };
 		C2C15D450FC454D60225E87C /* Markaryan/Views/ObjectViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/ObjectViews.swift; sourceTree = "<group>"; };
 		C20127E9BAD9BF64FA332696 /* Markaryan/Core/ObjectLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Core/ObjectLinks.swift; sourceTree = "<group>"; };
 		C27722C49C056BBF93D0F4E8 /* Markaryan/Views/HouseResultActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markaryan/Views/HouseResultActions.swift; sourceTree = "<group>"; };
@@ -209,6 +211,7 @@
 				AA20000000000000000000B2 /* Markaryan/Core/SiteWeather.swift */,
 				AA20000000000000000000F1 /* Markaryan/Core/UserRegion.swift */,
 				AA20000000000000000000F2 /* Markaryan/Views/RegionViews.swift */,
+				C261A7EA2BA29F9EB0F2949F /* Markaryan/Views/ObjectTools.swift */,
 				C2C15D450FC454D60225E87C /* Markaryan/Views/ObjectViews.swift */,
 				C20127E9BAD9BF64FA332696 /* Markaryan/Core/ObjectLinks.swift */,
 				C27722C49C056BBF93D0F4E8 /* Markaryan/Views/HouseResultActions.swift */,
@@ -406,6 +409,7 @@
 				AA10000000000000000000B2 /* Markaryan/Core/SiteWeather.swift in Sources */,
 				AA10000000000000000000F1 /* Markaryan/Core/UserRegion.swift in Sources */,
 				AA10000000000000000000F2 /* Markaryan/Views/RegionViews.swift in Sources */,
+				C161A7EA2BA29F9EB0F2949F /* Markaryan/Views/ObjectTools.swift in Sources */,
 				C1C15D450FC454D60225E87C /* Markaryan/Views/ObjectViews.swift in Sources */,
 				C10127E9BAD9BF64FA332696 /* Markaryan/Core/ObjectLinks.swift in Sources */,
 				C17722C49C056BBF93D0F4E8 /* Markaryan/Views/HouseResultActions.swift in Sources */,

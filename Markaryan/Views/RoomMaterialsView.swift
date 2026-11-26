@@ -270,6 +270,7 @@ struct RoomMaterialsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("ЦЕНЫ · \(estimate.city.uppercased())").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             Text(CalculationEngine.money(total)).font(.system(.title, design: .serif, weight: .bold)).monospacedDigit()
+            VariantsRow(low: estimate.items.reduce(0) { $0 + $1.totalLow }, typical: total, high: estimate.items.reduce(0) { $0 + $1.totalHigh })
             ForEach(estimate.items) { row in
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {

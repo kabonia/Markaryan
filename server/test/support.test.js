@@ -63,3 +63,18 @@ test('чужое обращение и чужой чат не принимают
   await assert.rejects(support.create(ID, { topic: 'other', text: 'шестой' }), (e) => e.status === 429);
   await assert.rejects(support.create(ID, { text: '' }), (e) => e.status === 400);
 });
+
+test('ссылка для подрядчика: страница открывается, картинки отдаются, мусор отклоняется', async () => {
+  const shares = await import('../src/shares.js');
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(200, 1)]).toString('base64');
+  const made = shares.create(ID, { title: 'Дача <b>', text: 'СМЕТА · СОЧИ\nИтого 100 ₽ https://example.com/x', images: [jpeg, 'bm90LWpwZWc='] });
+  assert.match(made.id, /^[A-Za-z0-9_-]{12}$/);
+  const page = shares.page(made.id);
+  assert.match(page, /Дача &lt;b&gt;/);
+  assert.match(page, /<h2>СМЕТА · СОЧИ<\/h2>/);
+  assert.match(page, /href="https:\/\/example.com\/x"/);
+  assert.ok(shares.image(made.id, 0));
+  assert.equal(shares.image(made.id, 1), null); // не JPEG — не сохранён
+  assert.equal(shares.page('../../etc/pa'), null);
+  assert.throws(() => shares.create(ID, { text: '' }), (e) => e.status === 400);
+});

@@ -63,6 +63,7 @@ struct ProjectsTabView: View {
                             if let active = store.activeWorkspace { Button(role: .destructive) { objectToDelete = active } label: { Label("Удалить объект", systemImage: "trash") } }
                         }
                         ObjectLinkedItems()
+                        ObjectToolsSection()
                         if store.objects.count > 0 { Text("Долгое нажатие на объект — удалить.").font(.caption2).foregroundStyle(Theme.muted) }
                     }
                 }

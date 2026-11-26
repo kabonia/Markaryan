@@ -312,6 +312,12 @@ struct DocEstimateResultView: View {
                     Button { if let url = DocEstimateExport.csv(result) { shareFile = SharedFile(url: url) } } label: { SecondaryActionLabel(title: "Excel", icon: "tablecells") }
                 }
                 .buttonStyle(PremiumPressStyle())
+                VariantsRow(low: result.totals.low.total, typical: t.total, high: result.totals.high.total)
+                EstimateToObjectButtons(result: result)
+                ContractorLinkButton(title: result.title, text: {
+                    (["СМЕТА · \(result.city.uppercased())", "\(result.title)", "Итого: \(CalculationEngine.money(t.total))", ""]
+                     + result.sections.map { "\($0.title): \(CalculationEngine.money($0.total))" }).joined(separator: "\n")
+                })
                 PartnerOfferSection(category: "house", summary: "Здравствуйте! Смета «\(result.title)» по рыночным ценам: \(CalculationEngine.money(t.total)). Подскажите вашу цену?")
             }
             .padding(20)

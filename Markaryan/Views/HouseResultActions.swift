@@ -121,6 +121,8 @@ struct HouseNextSteps: View {
                 PlanStat(value: CalculationEngine.money(r.totals.typical.works + r.totals.typical.machines), title: "Работа и техника")
             }
             sourcesBlock(r)
+            VariantsRow(low: r.totals.low.total, typical: r.totals.typical.total, high: r.totals.high.total)
+            EstimateToObjectButtons(result: r)
             NavigationLink { DocEstimateResultView(result: r) } label: { SecondaryActionLabel(title: "Подробная смета по позициям", icon: "list.bullet.rectangle") }
                 .buttonStyle(PremiumPressStyle())
         }

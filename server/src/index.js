@@ -19,6 +19,7 @@ import * as house from './house.js';
 import * as metal from './metal.js';
 import * as reports from './reports.js';
 import * as support from './support.js';
+import * as shares from './shares.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
 import { xlsxToText } from './xlsx.js';
@@ -106,12 +107,24 @@ async function handle(req, res) {
   if (req.method === 'GET' && (url.pathname === '/v1/market/resumes' || url.pathname === '/v1/market/owner')) return handleResumeSearch(req, res, url);
   if (url.pathname.startsWith('/v1/auth/avito/') || url.pathname.startsWith('/v1/avito/')) return handleMarket(req, res, url, avito, 'avito', 'Avito');
   // Payments: the page (Russia), ЮKassa and App Store notifications — no app token, every payment is checked with its provider.
+  // Сводка объекта для подрядчика: открывается в браузере без приложения.
+  const sharePath = /^\/s\/([A-Za-z0-9_-]{12})(?:\/([0-3])\.jpg)?$/.exec(url.pathname);
+  if (req.method === 'GET' && sharePath) {
+    if (sharePath[2] !== undefined) {
+      const picture = shares.image(sharePath[1], sharePath[2]);
+      if (!picture) return send(res, 404, { error: 'Не найдено' });
+      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': picture.length, 'Cache-Control': 'public, max-age=86400' });
+      return res.end(picture);
+    }
+    const page = shares.page(sharePath[1]);
+    return page ? html(res, page) : send(res, 404, { error: 'Ссылка устарела или не найдена.' });
+  }
   if (req.method === 'GET' && url.pathname === '/pay') return html(res, payPage());
   if (req.method === 'GET' && url.pathname === '/pay/done') return html(res, donePage());
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/create') return send(res, 200, await payments.createYookassa(await readBody(req, 64 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
-  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
+  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/') && url.pathname !== '/v1/share') return send(res, 404, { error: 'Не найдено' });
   if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
@@ -129,6 +142,7 @@ async function handle(req, res) {
   const ticketPath = /^\/v1\/support\/tickets\/([0-9a-f-]{36})\/messages$/.exec(url.pathname);
   if (req.method === 'POST' && ticketPath) return send(res, 200, await support.reply(installId, ticketPath[1], await readBody(req, 2_200_000)));
   if (url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
+  if (req.method === 'POST' && url.pathname === '/v1/share') return send(res, 200, shares.create(installId, await readBody(req, 8_000_000)));
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
