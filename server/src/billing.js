@@ -19,16 +19,20 @@ const WELCOME_PER_IP = 3;
  * (the most expensive model, retries, the longest answer), so no usage pattern can make a loss.
  */
 export const PRICES = {
-  helper: 1,          // the in‑app helper after HELPER_FREE_PER_DAY free questions (worst cost ≈ 0.3 ₽)
-  chat: 12,           // a question to the strong model (worst ≈ 36 ₽ incl. reasoning; typical 3–5 ₽)
-  material: 2,        // «свой материал» recognised (worst ≈ 6 ₽)
-  priceEstimateItem: 1, // market price of one line with web search (worst ≈ 2.5 ₽)
-  imageEdit: 8,       // one photoreal picture (worst ≈ 25 ₽)
+  // Правило (аудит 26.11): цена ≥ 3× обычной себестоимости и ≥ 1,3× худшей — даже при самом дешёвом кредите
+  // (5,40 ₽: App Store, комиссия 30 %); ценные функции — 4–8×. Себестоимость: docs/audit/ECONOMICS-2026-11.md.
+  helper: 1,          // помощник после HELPER_FREE_PER_DAY бесплатных (обычно 0,05 ₽, худшая 0,3 ₽)
+  chat: 12,           // вопрос сильной модели (обычно 6 ₽, худшая 43 ₽)
+  material: 3,        // «свой материал» (обычно 2,5 ₽, худшая 9 ₽)
+  priceEstimateItem: 1, // цена одной строки с поиском (обычно 0,3 ₽, худшая 2,5 ₽)
+  imageEdit: 8,       // фотореалистичный кадр (обычно 13 ₽, худшая 30 ₽ — резервный движок + повтор)
   image: 8,
-  vision: 10,         // photo counting and other photo analysis (worst ≈ 30 ₽)
-  json: 20,           // design concept of a room (worst ≈ 60 ₽)
-  smeta: 200,         // estimate from documents: up to 2 sheets or 6 000 characters of text/Excel (worst ≈ 600 ₽)
-  smetaPage: 40,      // every further sheet or 6 000 characters (worst ≈ 75 ₽ per sheet incl. pricing and checks)
+  vision: 14,         // счёт и анализ по фото (обычно 12 ₽, худшая 58 ₽)
+  json: 25,           // дизайн‑концепция комнаты (обычно 27 ₽, худшая 50 ₽) — ценная функция, ×5
+  smeta: 200,         // смета по документам до 2 листов / 6 000 знаков (обычно 45–180 ₽, худшая 450 ₽) — ×8
+  smetaPage: 40,      // каждый следующий лист (обычно 20–75 ₽)
+  houseRoof: 3,       // крыша по 3–5 фото (обычно 2,7 ₽, худшая 5,4 ₽)
+  houseScan: 25,      // 3D‑обмер дома: обработка + крыша по фото (сейчас ≈1 ₽, с GPU ≈24 ₽); при неудаче — возврат
 };
 export const SMETA_MAX_PAGES = 100;
 export const TEXT_PER_PAGE = 6000;

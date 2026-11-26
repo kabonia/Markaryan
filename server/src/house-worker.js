@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { record } from './costs.js';
+import * as billing from './billing.js';
 
 const PYTHON = () => process.env.HOUSE_WORKER_PYTHON || '/opt/smetapro-worker/venv/bin/python';
 const WORKER_DIR = () => process.env.HOUSE_WORKER_DIR || '/opt/smetapro-worker';
@@ -87,6 +88,9 @@ function next() {
       console.log(`[house] скан ${id} готов за ${seconds} с: ${result.footprint?.gableWidth?.value}×${result.footprint?.length?.value} м`);
     } else {
       const reason = failure || (code === 137 || code === null ? 'не хватило памяти сервера' : 'ошибка обработки');
+      // Не получилось — кредиты за обмер возвращаются.
+      const failedMeta = hooks.load(id);
+      if (failedMeta?.credits) { billing.refund(failedMeta.installId, 'houseScan', failedMeta.credits); update(id, { credits: 0, refunded: failedMeta.credits }); }
       update(id, { status: 'failed', progress: null, message: `Не удалось собрать макет: ${reason}. Попробуйте снять дом ещё раз — медленнее и со всех сторон.`, seconds });
       console.warn(`[house] скан ${id}: код ${code}, ${reason}\n${tail.split('\n').slice(-8).join('\n')}`);
     }

@@ -68,7 +68,8 @@ test('refund below zero blocks further use', () => {
   const id = ID(4);
   billing.account(id, '4.4.4.4');
   billing.grant(id, 'credits_100', 'yookassa', 'yk:2');
-  billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json');
+  // 10 приветственных + 100 − 4 × 25 (дизайн‑концепция) = 10.
+  billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json');
   assert.equal(billing.account(id).credits, 10);
   billing.revoke('yk:2', 'yookassa');
   assert.equal(billing.account(id).credits, -90);

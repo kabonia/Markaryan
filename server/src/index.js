@@ -153,7 +153,12 @@ async function handle(req, res) {
   const scanPath = url.pathname.match(/^\/v1\/ai\/house\/scans(?:\/([0-9a-f-]{36}))?(?:\/(parts\/(\d+)|complete|model\.obj))?$/);
   if (scanPath) {
     const [, id, action, part] = scanPath;
-    if (req.method === 'POST' && !id) return send(res, 200, houseScans.create(await readBody(req, 256 * 1024), installId));
+    if (req.method === 'POST' && !id) {
+      // 3D‑обмер платный (когда оплата включена): кредиты списываются при создании, при неудачной обработке — возврат.
+      const input = await readBody(req, 256 * 1024);
+      const credits = consume('json', installId, ip, undefined, 'houseScan');
+      try { return send(res, 200, houseScans.create(input, installId, { credits })); } catch (error) { refund('json', installId, ip, credits); throw error; }
+    }
     if (req.method === 'PUT' && id && part !== undefined) return send(res, 200, await houseScans.putPart(req, id, Number(part), installId));
     if (req.method === 'POST' && id && action === 'complete') return send(res, 200, await houseScans.complete(id, installId));
     if (req.method === 'GET' && id && !action) return send(res, 200, houseScans.status(id, installId));
