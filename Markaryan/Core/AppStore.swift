@@ -435,7 +435,39 @@ enum VisualizationError: LocalizedError {
     }
     private static func read<T: Decodable>(_ key: String) -> T? {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(T.self, from: data)
+        do { return try JSONDecoder().decode(T.self, from: data) } catch {
+            // Не прочиталось (например, после обновления формата) — сохраняем копию, чтобы следующая запись
+            // не стёрла данные пользователя насовсем; их можно восстановить.
+            backup(data, key: key, reason: error)
+            return nil
+        }
+    }
+
+    /// Списки (комнаты, расчёты, фото…) читаются поштучно: одна испорченная запись не обнуляет весь список.
+    private static func read<E: Decodable>(_ key: String) -> [E]? {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        if let all = try? JSONDecoder().decode([E].self, from: data) { return all }
+        guard let items = try? JSONDecoder().decode([LossyItem<E>].self, from: data) else {
+            backup(data, key: key, reason: nil)
+            return nil
+        }
+        backup(data, key: key, reason: nil)
+        return items.compactMap(\.value)
+    }
+
+    private struct LossyItem<E: Decodable>: Decodable {
+        let value: E?
+        init(from decoder: Decoder) throws { value = try? E(from: decoder) }
+    }
+
+    /// Копия сохранённых данных, которые не удалось прочитать: Application Support/Backups/<ключ>-<время>.json.
+    private static func backup(_ data: Data, key: String, reason: Error?) {
+        guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let folder = base.appendingPathComponent("Backups", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        try? data.write(to: folder.appendingPathComponent("\(key)-\(stamp).json"), options: [.atomic, .completeFileProtection])
+        if let reason { print("[storage] \(key): не прочиталось (\(reason)); копия сохранена") }
     }
     private func scheduleSave<T: Encodable>(_ value: T, key: String) {
         pendingSaves[key] = { [weak self] in

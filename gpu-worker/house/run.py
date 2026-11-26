@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -116,8 +117,16 @@ if __name__ == "__main__":
     try:
         result = process(Path(sys.argv[1]), target)
     except (ValueError, SystemExit) as error:
-        # Понятная причина для приложения (короткий скан, нет стен, нет LiDAR).
-        print(f"FAIL {error}", file=sys.stderr, flush=True)
+        # Понятная причина для приложения; технические тексты Python человеку не показываем.
+        text = str(error)
+        if not re.search(r"[А-Яа-я]", text):
+            print(f"[worker] {type(error).__name__}: {text}", file=sys.stderr, flush=True)
+            text = "мало данных для сборки макета — снимайте медленнее и со всех сторон"
+        print(f"FAIL {text}", file=sys.stderr, flush=True)
         sys.exit(2)
+    except Exception as error:  # noqa: BLE001 — любая другая ошибка: в журнал подробно, человеку — понятно
+        print(f"[worker] {type(error).__name__}: {error}", file=sys.stderr, flush=True)
+        print("FAIL внутренняя ошибка обработки — мы уже знаем о ней, попробуйте ещё раз позже", file=sys.stderr, flush=True)
+        sys.exit(3)
     stage("Готово", 1.0)
     print(json.dumps(result, ensure_ascii=False, indent=1))

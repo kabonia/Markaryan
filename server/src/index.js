@@ -27,6 +27,13 @@ import * as houseScans from './house-scans.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
+/** Сравнение токена приложения за постоянное время (нельзя подобрать по скорости ответа). */
+function sameToken(given, expected) {
+  const a = Buffer.from(String(given || ''));
+  const b = Buffer.from(String(expected));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 function send(res, status, body) {
   const data = JSON.stringify(body);
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': Buffer.byteLength(data), 'Cache-Control': 'no-store' });
@@ -103,7 +110,7 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
   if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
-  if (config.appToken && req.headers['x-app-token'] !== config.appToken) return send(res, 401, { error: 'Нет доступа.' });
+  if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
   const ip = clientIP(req);
@@ -297,7 +304,7 @@ async function handleHH(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/v1/hh/status') return send(res, 200, await hh.status(url.searchParams.get('key')));
 
   // App requests
-  if (config.appToken && req.headers['x-app-token'] !== config.appToken) return send(res, 401, { error: 'Нет доступа.' });
+  if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
   const orderToken = String(req.headers['x-hh-order-token'] || '');
@@ -325,7 +332,7 @@ async function handleHH(req, res, url) {
 const searchCache = new Map();
 /** Vacancies of other employers on hh.ru and Avito (construction, the chosen city) — one merged list for the app. */
 async function handleMarketSearch(req, res, url) {
-  if (config.appToken && req.headers['x-app-token'] !== config.appToken) return send(res, 401, { error: 'Нет доступа.' });
+  if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
   const text = String(url.searchParams.get('text') || '').slice(0, 100);
@@ -393,7 +400,7 @@ async function handleMarket(req, res, url, provider, slug, title) {
   }
   if (req.method === 'GET' && url.pathname === `/v1/${slug}/status`) return send(res, 200, await provider.status(url.searchParams.get('key')));
 
-  if (config.appToken && req.headers['x-app-token'] !== config.appToken) return send(res, 401, { error: 'Нет доступа.' });
+  if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
   const orderToken = String(req.headers['x-hh-order-token'] || req.headers['x-order-token'] || '');

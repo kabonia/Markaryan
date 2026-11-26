@@ -609,7 +609,7 @@ struct ProjectBudgetTrackerView: View {
                 .onDelete { store.budgetItems.remove(atOffsets: $0) }
                 HStack {
                     TextField("Новая статья, например «Забор»", text: $newTitle)
-                    Button { addItem() } label: { Image(systemName: "plus.circle.fill").font(.title3) }.disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button { addItem() } label: { Image(systemName: "plus.circle.fill").accessibilityLabel("Добавить").font(.title3) }.disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             Section { Text("Совет: в полной смете нажмите «В бюджет проекта» — плановые суммы заполнятся автоматически. Фактические суммы не передаются на сервер.").font(.footnote).foregroundStyle(Theme.muted) }

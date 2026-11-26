@@ -273,6 +273,10 @@ struct HouseScanView: View {
                     .padding(.horizontal, 14).padding(.vertical, 9).background(.ultraThinMaterial, in: Capsule())
             }
             .disabled(recorder.coverage.current == nil)
+            if recorder.blockedLimitReached {
+                Text("Недоступной может быть не больше трети дома — остальное нужно снять.").font(.caption).foregroundStyle(.white)
+                    .padding(.horizontal, 12).padding(.vertical, 6).background(.black.opacity(0.5), in: Capsule())
+            }
             HStack(spacing: 10) {
                 Button { recorder.recording ? recorder.pause() : recorder.start() } label: {
                     Label(recorder.recording ? "Пауза" : "Дальше", systemImage: recorder.recording ? "pause.fill" : "play.fill")

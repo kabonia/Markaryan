@@ -341,7 +341,7 @@ struct HelperChatView: View {
                     Image(uiImage: image).resizable().scaledToFill().frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                     Text("Фото прикреплено").font(.footnote).foregroundStyle(Theme.muted)
                     Spacer()
-                    Button { self.image = nil; photo = nil } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.muted) }
+                    Button { self.image = nil; photo = nil } label: { Image(systemName: "xmark.circle.fill").accessibilityLabel("Очистить").foregroundStyle(Theme.muted) }
                 }
             }
             HStack(spacing: 10) {

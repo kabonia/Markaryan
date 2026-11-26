@@ -40,6 +40,9 @@ const tryLoad = (id) => { try { return JSON.parse(fs.readFileSync(metaPath(id), 
 worker.init({ load: tryLoad, save, dir });
 
 const DAY = 86_400_000;
+function listMeta() {
+  try { return fs.readdirSync(root()).filter((id) => ID.test(id)).map(tryLoad).filter(Boolean); } catch { return []; }
+}
 /** Уборка: пакет скана (сотни МБ) — через 7 дней после готового макета; неудачные и брошенные — через 14 дней. */
 export function cleanup(now = Date.now()) {
   let ids = [];
@@ -79,6 +82,12 @@ export function create(body, installId) {
   const bytes = Number(body?.bytes);
   if (!(bytes > 0) || bytes > MAX_SCAN_BYTES) throw new ApiError(400, `Скан слишком большой (больше ${Math.round(MAX_SCAN_BYTES / 1024 / 1024)} МБ).`);
   if (usedBytes() + bytes > MAX_TOTAL_BYTES) throw new ApiError(503, 'Хранилище сканов заполнено. Попробуйте позже.', { retryable: true });
+  // Один пользователь не может занять всё хранилище: не больше 3 сканов в работе и 10 в сутки.
+  const mine = listMeta().filter((m) => m.installId === installId);
+  const active = mine.filter((m) => ['uploading', 'queued', 'processing'].includes(m.status)).length;
+  const today = mine.filter((m) => Date.now() - Date.parse(m.createdAt) < 86_400_000).length;
+  if (active >= Number(process.env.HOUSE_SCAN_ACTIVE_MAX || 3)) throw new ApiError(429, 'Уже идут 3 скана — дождитесь, пока они обработаются.');
+  if (today >= Number(process.env.HOUSE_SCAN_DAY_MAX || 10)) throw new ApiError(429, 'Не больше 10 сканов в сутки. Продолжите завтра.');
   const id = crypto.randomUUID();
   fs.mkdirSync(dir(id), { recursive: true });
   const manifest = body?.manifest && typeof body.manifest === 'object' ? body.manifest : {};

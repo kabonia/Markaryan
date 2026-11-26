@@ -153,7 +153,7 @@ struct DocEstimateNewView: View {
                             Text(doc.kind.short).font(.caption.weight(.bold)).padding(.horizontal, 10).padding(.vertical, 6)
                                 .background(Theme.accentTint, in: Capsule()).foregroundStyle(Theme.orange)
                         }
-                        Button { docs.removeAll { $0.id == doc.id } } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.muted) }
+                        Button { docs.removeAll { $0.id == doc.id } } label: { Image(systemName: "xmark.circle.fill").accessibilityLabel("Очистить").foregroundStyle(Theme.muted) }
                     }
                     .padding(12).panelCard(16)
                 }

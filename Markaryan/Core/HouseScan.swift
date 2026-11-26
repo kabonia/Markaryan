@@ -251,11 +251,21 @@ struct HouseScanManifest: Codable {
             sectors = (-4...4).map { (current + $0 + HouseCoverage.sectors) % HouseCoverage.sectors }
         }
         guard !sectors.isEmpty else { return }
+        // Недоступной может быть одна‑две стороны, не весь дом: за раз — не больше 9 секторов (90°) у человека,
+        // всего — не больше трети кольца, иначе макет «достраивается» из ничего.
+        if sectors.count > 9, let current = coverage.current {
+            sectors = (-4...4).map { (current + $0 + HouseCoverage.sectors) % HouseCoverage.sectors }
+        }
+        let room = max(0, HouseCoverage.sectors / 3 - coverage.blocked.count)
+        guard room > 0 else { blockedLimitReached = true; return }
+        sectors = Array(sectors.filter { !coverage.blocked.contains($0) }.prefix(room))
         coverage.blocked.formUnion(sectors)
         hasBlocked = true
         Haptics.success()
     }
     @Published private(set) var hasBlocked = false
+    /// Закрыто уже треть кольца — больше нельзя (подсказка на экране).
+    @Published private(set) var blockedLimitReached = false
 
     // MARK: ARSessionDelegate
 

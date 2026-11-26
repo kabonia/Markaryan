@@ -680,7 +680,7 @@ struct AIAssistantView: View {
                     .accessibilityLabel("Прикрепить фото к вопросу")
                 }
                 TextField(attachedPhoto == nil ? "Напишите вопрос" : "Что спросить про фото?", text: $prompt, axis: .vertical).lineLimit(1...4).focused($inputFocused).padding(12).panelCard(15).disabled(isLoading)
-                Button { send(prompt) } label: { Image(systemName: "arrow.up").font(.headline).frame(width: 46, height: 46).foregroundStyle(Theme.onAccent).background(Theme.orange, in: Circle()) }
+                Button { send(prompt) } label: { Image(systemName: "arrow.up").accessibilityLabel("Отправить").font(.headline).frame(width: 46, height: 46).foregroundStyle(Theme.onAccent).background(Theme.orange, in: Circle()) }
                     .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     .accessibilityLabel("Отправить вопрос")
             }.padding(16).background(Theme.background)

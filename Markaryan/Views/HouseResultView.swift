@@ -127,6 +127,13 @@ struct HouseResultView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                ForEach(Array((result.warnings ?? []).enumerated()), id: \.offset) { _, warning in
+                    if let text = warning.text {
+                        Label(text.tr, systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(Theme.ink)
+                            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
                 model
                 dimensions
                 roof

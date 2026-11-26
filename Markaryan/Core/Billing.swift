@@ -177,8 +177,10 @@ struct BillingView: View {
     /// Russia: the App Store takes no payments, so plans and credits are paid on the website by the account number.
     private var russiaCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("ОПЛАТА В РОССИИ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
-            Text("Тарифы и кредиты оплачиваются на сайте СметаПро через СБП или банковской картой. Укажите там номер аккаунта — кредиты появятся здесь сразу после оплаты.")
+            // Правило App Store 3.1.1/3.1.3(b): внутри приложения не указываем, где и как оплатить мимо App Store —
+            // только номер аккаунта (кредиты, купленные в других местах, появляются здесь сами).
+            Text("ВАШ АККАУНТ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
+            Text("Номер аккаунта — для поддержки и для входа на другом устройстве. Баланс и подписка обновляются здесь автоматически.")
                 .font(.subheadline).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Text(billing.me?.code ?? "—").font(.system(.title3, design: .monospaced, weight: .bold)).foregroundStyle(Theme.ink)

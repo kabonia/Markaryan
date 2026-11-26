@@ -111,6 +111,9 @@ struct HouseResult: Codable, Equatable {
         var footprintLatLon: [[Double]]?
     }
 
+    struct Warning: Codable, Equatable { var code: String?; var text: String? }
+    /// Что настораживает в скане: снято в помещении, мало стен, контур неполный.
+    var warnings: [Warning]?
     var footprint: Footprint?
     var eaveHeight: HouseMeasure?
     var roof: Roof?

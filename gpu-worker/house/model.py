@@ -28,6 +28,7 @@ class Plane:
 def extract_planes(cloud: o3d.geometry.PointCloud, max_planes: int = 16, distance: float = 0.03,
                    min_points: int = 150) -> list[Plane]:
     """Последовательный RANSAC; каждая плоскость дополнительно режется на связные куски (DBSCAN)."""
+    o3d.utility.random.seed(7)  # один и тот же скан — всегда одни и те же размеры
     rest = cloud
     planes: list[Plane] = []
     for _ in range(max_planes * 2):
@@ -250,6 +251,8 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
     else:
         ground_y = float(min(np.percentile(w.points[:, 1], 1) for w in walls))
 
+    ceilings = [g for g in grounds if np.median(g.points[:, 1]) - ground_y > 1.9 and g.size > 300]
+    indoor = bool(ceilings)
     theta = _dominant_axis(walls)
     u = np.array([math.cos(theta), 0.0, math.sin(theta)])   # ось A
     v = np.array([-math.sin(theta), 0.0, math.cos(theta)])  # ось B
@@ -291,8 +294,14 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
         return [float(np.percentile(w.points[:, 1], 98) - ground_y) for w in group]
 
     tops_a, tops_b = tops(groups["A"]), tops(groups["B"])
+    warnings: list[dict] = []
+    if not groups["A"] or not groups["B"]:
+        warnings.append({"code": "few_walls", "text": "Сняты стены только одного направления — размеры поперёк достроены. Обойдите дом со всех сторон."})
     # Фронтонные стены выше карнизных: по ним определяем направление конька.
-    gable_axis = "A" if max(tops_a) > max(tops_b) + 0.3 else "B" if max(tops_b) > max(tops_a) + 0.3 else None
+    if tops_a and tops_b:
+        gable_axis = "A" if max(tops_a) > max(tops_b) + 0.3 else "B" if max(tops_b) > max(tops_a) + 0.3 else None
+    else:
+        gable_axis = None
     # Без фронтонов (вальмовая, плоская) — все стены карнизные.
     eave_group = walls if gable_axis is None else (groups["B"] if gable_axis == "A" else groups["A"])
     eave_tops = [float(np.percentile(w.points[:, 1], 99) - ground_y) for w in eave_group]
@@ -406,13 +415,25 @@ def build_house(planes: list[Plane], cloud: o3d.geometry.PointCloud | None = Non
     a_lo, a_hi = ext_a[1][0], ext_a[2][0]
     b_lo, b_hi = ext_b[1][0], ext_b[2][0]
     corners = [(u * a + v * b) for a, b in ((a_lo, b_lo), (a_hi, b_lo), (a_hi, b_hi), (a_lo, b_hi))]
+    # Потолок над большей частью плана — помещение; навес или подшитый свес столько не закрывают.
+    # Облако прорежено с шагом ~4 см → одна точка ≈ 0,0016 м².
+    ceiling_area = sum(c.size for c in ceilings) * 0.0016
+    indoor = indoor and ceiling_area > 0.4 * width_gable * length
+    if indoor:
+        warnings.append({"code": "indoor", "text": "Похоже, обмер сделан внутри помещения (лидар видит потолок). Для комнат используйте «Скан комнаты», для дома — обход снаружи."})
+    poly = _footprint_polygon(groups, u, v) if groups["A"] and groups["B"] else None
+    if poly and poly["area"] < 0.6 * width_gable * length:
+        # Контур противоречит габаритам (стены сняты частично) — не показываем его, чтобы не вводить в заблуждение.
+        warnings.append({"code": "outline", "text": "Контур дома собран не полностью — показаны габариты. Доснимите углы дома."})
+        poly = None
     return {
+        "warnings": warnings,
         "footprint": {
             "gableWidth": _side(width_gable, (ext_b if gable_axis == "A" else ext_a) if gable_axis else min(ext_a, ext_b, key=lambda e: e[0])),
             "length": _side(length, (ext_a if gable_axis == "A" else ext_b) if gable_axis else max(ext_a, ext_b, key=lambda e: e[0])),
             "corners": [[round(float(c[0]), 3), round(float(c[2]), 3)] for c in corners],
             "axisDeg": round(math.degrees(theta), 2),
-            "polygon": _footprint_polygon(groups, u, v),
+            "polygon": poly,
         },
         "groundY": round(ground_y, 3),
         "eaveHeight": house_eave or _value(eave, "measured", sigma=eave_sigma + 0.01),
