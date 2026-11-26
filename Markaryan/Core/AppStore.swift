@@ -373,16 +373,16 @@ enum VisualizationError: LocalizedError {
 
     init() {
         favorites = Self.read("favorites") ?? []
-        calculations = Self.read("calculations") ?? []
+        calculations = Self.readList("calculations") ?? []
         passport = Self.read("passport") ?? ObjectPassport()
         checklistDone = Self.read("checklistDone") ?? []
-        diary = Self.read("diary") ?? []
-        milestones = Self.read("milestones") ?? ProjectMilestone.defaults
-        budgetItems = Self.read("budgetItems") ?? ProjectBudgetItem.defaults
-        projectPhotos = Self.read("projectPhotos") ?? []
-        projectTasks = Self.read("projectTasks") ?? []
+        diary = Self.readList("diary") ?? []
+        milestones = Self.readList("milestones") ?? ProjectMilestone.defaults
+        budgetItems = Self.readList("budgetItems") ?? ProjectBudgetItem.defaults
+        projectPhotos = Self.readList("projectPhotos") ?? []
+        projectTasks = Self.readList("projectTasks") ?? []
         lastInputs = Self.read("lastInputs") ?? [:]
-        floorPlans = Self.read("floorPlans") ?? []
+        floorPlans = Self.readList("floorPlans") ?? []
         aiPreference = AIPreference(rawValue: UserDefaults.standard.string(forKey: "aiPreference") ?? "") ?? .auto
         claudeModel = ClaudeModel(rawValue: UserDefaults.standard.string(forKey: "claudeModel") ?? "") ?? .sonnet
         designModel = AIModelChoice.design(UserDefaults.standard.string(forKey: AIModelChoice.designKey))
@@ -398,7 +398,7 @@ enum VisualizationError: LocalizedError {
         lastPriceSync = UserDefaults.standard.object(forKey: "lastPriceSync") as? Date
         HelperCenter.shared.store = self
 
-        if let savedWorkspaces: [ProjectWorkspace] = Self.read("projectWorkspaces"), !savedWorkspaces.isEmpty {
+        if let savedWorkspaces: [ProjectWorkspace] = Self.readList("projectWorkspaces"), !savedWorkspaces.isEmpty {
             projectWorkspaces = savedWorkspaces
             let savedID = UserDefaults.standard.string(forKey: "activeProjectID").flatMap(UUID.init(uuidString:))
             let selected = savedWorkspaces.first(where: { $0.id == savedID }) ?? savedWorkspaces[0]
@@ -444,7 +444,7 @@ enum VisualizationError: LocalizedError {
     }
 
     /// Списки (комнаты, расчёты, фото…) читаются поштучно: одна испорченная запись не обнуляет весь список.
-    private static func read<E: Decodable>(_ key: String) -> [E]? {
+    private static func readList<E: Decodable>(_ key: String) -> [E]? {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         if let all = try? JSONDecoder().decode([E].self, from: data) { return all }
         guard let items = try? JSONDecoder().decode([LossyItem<E>].self, from: data) else {
