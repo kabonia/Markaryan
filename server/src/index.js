@@ -18,12 +18,14 @@ import * as market from './market.js';
 import * as house from './house.js';
 import * as metal from './metal.js';
 import * as reports from './reports.js';
+import * as support from './support.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
 import { xlsxToText } from './xlsx.js';
 import * as materials from './materials.js';
 import * as roof from './roof.js';
 import * as houseScans from './house-scans.js';
+import { metered } from './costs.js';
 
 const INSTALL_ID = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -109,7 +111,7 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/create') return send(res, 200, await payments.createYookassa(await readBody(req, 64 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
-  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
+  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
   if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
@@ -120,6 +122,13 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/billing/apple') return send(res, 200, { ...payments.appleSync(installId, await readBody(req, 1024 * 1024)), me: billing.me(installId) });
   if (req.method === 'POST' && url.pathname === '/v1/billing/autopay') { billing.setAutopay(installId, (await readBody(req, 4096)).on); return send(res, 200, billing.me(installId)); }
   if (url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
+
+  // Поддержка: обращения к менеджеру (ответы приходят из Telegram).
+  if (req.method === 'GET' && url.pathname === '/v1/support/tickets') return send(res, 200, support.list(installId));
+  if (req.method === 'POST' && url.pathname === '/v1/support/tickets') return send(res, 200, await support.create(installId, await readBody(req, 2_200_000)));
+  const ticketPath = /^\/v1\/support\/tickets\/([0-9a-f-]{36})\/messages$/.exec(url.pathname);
+  if (req.method === 'POST' && ticketPath) return send(res, 200, await support.reply(installId, ticketPath[1], await readBody(req, 2_200_000)));
+  if (url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
@@ -152,10 +161,16 @@ async function handle(req, res) {
   const scanPath = url.pathname.match(/^\/v1\/ai\/house\/scans(?:\/([0-9a-f-]{36}))?(?:\/(parts\/(\d+)|complete|model\.obj))?$/);
   if (scanPath) {
     const [, id, action, part] = scanPath;
-    if (req.method === 'POST' && !id) return send(res, 200, houseScans.create(await readBody(req, 256 * 1024), installId));
+    if (req.method === 'POST' && !id) {
+      // 3D‑обмер платный (когда оплата включена): кредиты списываются при создании, при неудачной обработке — возврат.
+      const input = await readBody(req, 256 * 1024);
+      const credits = consume('json', installId, ip, undefined, 'houseScan');
+      try { return send(res, 200, houseScans.create(input, installId, { credits })); } catch (error) { refund('json', installId, ip, credits); throw error; }
+    }
     if (req.method === 'PUT' && id && part !== undefined) return send(res, 200, await houseScans.putPart(req, id, Number(part), installId));
     if (req.method === 'POST' && id && action === 'complete') return send(res, 200, await houseScans.complete(id, installId));
     if (req.method === 'GET' && id && !action) return send(res, 200, houseScans.status(id, installId));
+    if (req.method === 'DELETE' && id && !action) return send(res, 200, houseScans.remove(id, installId));
     if (req.method === 'GET' && !id) return send(res, 200, houseScans.list(installId));
     if (req.method === 'GET' && id && action === 'model.obj') {
       // 3D-модель (OBJ, 5–10 МБ текста) — сжатой: приложение разжимает само.
@@ -181,14 +196,14 @@ async function handle(req, res) {
     const paid = consume(kind, installId, ip, undefined, kind === 'vision' ? 'vision' : body.tier === 'helper' ? 'helper' : 'chat');
     const params = { system: String(body.system || '').slice(0, 40_000), messages, maxTokens: Number(body.maxTokens) || 2000, tier: body.tier === 'helper' ? 'helper' : undefined };
     if (!body.stream) {
-      try { return send(res, 200, { text: await ai.chat(params) }); } catch (error) { refund(kind, installId, ip, paid); throw error; }
+      try { return send(res, 200, { text: await metered(kind === 'vision' ? 'vision' : params.tier === 'helper' ? 'helper' : 'chat', paid, () => ai.chat(params)) }); } catch (error) { refund(kind, installId, ip, paid); throw error; }
     }
     // Server‑sent events: data: {"delta":"…"} … data: {"done":true}
     res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     const heartbeat = setInterval(() => res.write(': ping\n\n'), 15_000);
     let started = false;
     try {
-      await ai.chat({ ...params, onDelta: (delta) => { started = true; res.write(`data: ${JSON.stringify({ delta })}\n\n`); } });
+      await metered(params.tier === 'helper' ? 'helper' : 'chat', paid, () => ai.chat({ ...params, onDelta: (delta) => { started = true; res.write(`data: ${JSON.stringify({ delta })}\n\n`); } }));
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     } catch (error) {
       if (!started) refund(kind, installId, ip, paid);
@@ -203,7 +218,7 @@ async function handle(req, res) {
   if (url.pathname === '/v1/ai/price-estimate') {
     const items = Math.min(40, Array.isArray(body.items) ? body.items.length : 0);
     const paid = consume('chat', installId, ip, { items }, 'priceEstimate');
-    try { return send(res, 200, await estimate.priceEstimate(body)); } catch (error) { refund('chat', installId, ip, paid); throw error; }
+    try { return send(res, 200, await metered('priceEstimate', paid, () => estimate.priceEstimate(body))); } catch (error) { refund('chat', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/json') {
@@ -215,7 +230,7 @@ async function handle(req, res) {
     const meta = {};
     const model = typeof body.model === 'string' ? body.model.slice(0, 120) : undefined;
     try {
-      const result = await ai.json({ system: String(body.system || ''), messages, schema: body.schema, name: String(body.name || 'result').replace(/[^A-Za-z0-9_]/g, '_'), description: String(body.description || ''), maxTokens: Number(body.maxTokens) || 8000, model, meta });
+      const result = await metered(kind === 'vision' ? 'vision' : 'json', paid, () => ai.json({ system: String(body.system || ''), messages, schema: body.schema, name: String(body.name || 'result').replace(/[^A-Za-z0-9_]/g, '_'), description: String(body.description || ''), maxTokens: Number(body.maxTokens) || 8000, model, meta }));
       return send(res, 200, { json: result, model: meta.model || meta.provider || null });
     } catch (error) { refund(kind, installId, ip, paid); throw error; }
   }
@@ -223,13 +238,13 @@ async function handle(req, res) {
   if (url.pathname === '/v1/ai/material-identify') {
     if (typeof body.image !== 'string' || body.image.length < 1000) throw new ApiError(400, 'Нет изображения.');
     const paid = consume('vision', installId, ip, undefined, 'material');
-    try { return send(res, 200, await materials.identify(body)); } catch (error) { refund('vision', installId, ip, paid); throw error; }
+    try { return send(res, 200, await metered('material', paid, () => materials.identify(body))); } catch (error) { refund('vision', installId, ip, paid); throw error; }
   }
 
   // «Дом снаружи», этап 0: крыша по 3–5 фото (тип, детали, уклон, конёк, метки достоверности).
   if (url.pathname === '/v1/ai/house/roof') {
     const paid = consume('vision', installId, ip, undefined, 'houseRoof');
-    try { return send(res, 200, await roof.analyze(body)); } catch (error) { refund('vision', installId, ip, paid); throw error; }
+    try { return send(res, 200, await metered('houseRoof', paid, () => roof.analyze(body))); } catch (error) { refund('vision', installId, ip, paid); throw error; }
   }
 
   if (url.pathname === '/v1/ai/image-edit') {
@@ -243,7 +258,7 @@ async function handle(req, res) {
     try {
       const references = (Array.isArray(body.references) ? body.references : []).filter((r) => typeof r === 'string' && r.length > 1000).slice(0, 4);
       const params = { image: body.image, prompt: String(body.prompt || ''), size: body.size, aspectRatio: aspectRatio(body.aspectRatio), references };
-      const { image, engine } = await renderWithFallback(engines, params);
+      const { image, engine } = await metered('imageEdit', paid, () => renderWithFallback(engines, params));
       return send(res, 200, { image, engine: engine.id, title: engine.title });
     } catch (error) { refund('imageEdit', installId, ip, paid); throw error; }
   }
@@ -256,7 +271,7 @@ async function handle(req, res) {
       const engines = preferredEngines(body.prefer);
       if (engines.length > 0) {
         try {
-          const { image, engine } = await renderWithFallback(engines, { prompt, aspectRatio: aspectRatio(body.aspectRatio) });
+          const { image, engine } = await metered('image', paid, () => renderWithFallback(engines, { prompt, aspectRatio: aspectRatio(body.aspectRatio) }));
           return send(res, 200, { image, engine: engine.id, title: engine.title });
         } catch (error) {
           if (!ai.canGenerateImages()) throw error;
@@ -453,4 +468,5 @@ server.headersTimeout = 60_000;
 server.listen(config.port, () => console.log(`АртСтрой server on :${config.port}, AI: ${ai.activeProviders().join(', ') || 'нет ключей'}; pictures: ${imageEngines().map((e) => e.title).join(', ') || 'нет'}; hh.ru: ${hh.hhEnabled() ? 'настроен' : 'нет'}; Avito: ${avito.avitoEnabled() ? 'настроен' : 'нет'}`));
 // «Дом снаружи»: вернуть в очередь сканы, прерванные перезапуском; уборка старых пакетов раз в 6 часов.
 houseScans.resume();
+support.startPolling();
 setInterval(() => houseScans.cleanup(), 6 * 3600_000).unref();

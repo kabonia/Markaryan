@@ -23,7 +23,7 @@ button{margin-top:20px;width:100%;border:0;border-radius:14px;padding:16px;font:
 
 export function payPage() {
   const plans = PRODUCTS.map((p, i) => `<label class="plan"><span><input type="radio" name="product" value="${p.id}"${i === 0 ? ' checked' : ''}><b>${esc(p.title)}</b>
-<small>${p.plan ? `${p.credits} кредитов${p.id === 'pro_year' ? ' каждый месяц' : ''} · все функции` : 'кредиты не сгорают'}</small></span><b>${rub(p.rub)}</b></label>`).join('');
+<small>${p.includes ? `${esc(p.includes)} · не сгорает` : p.plan ? `${p.credits} кредитов${p.id === 'pro_year' ? ' каждый месяц' : ''} · все функции` : 'кредиты не сгорают'}</small></span><b>${rub(p.rub)}</b></label>`).join('');
   return layout('Оплата СметаПро', `<div class="eyebrow">СметаПро</div><h1>Тарифы и кредиты</h1>
 <p class="muted">Номер аккаунта — в приложении: Профиль → «Тарифы и баланс». Кредиты появятся в приложении сразу после оплаты.</p>
 <form class="card" id="f"><label for="code">Номер аккаунта</label><input id="code" name="code" placeholder="SP-XXXX-XXXX" autocomplete="off" required>

@@ -11,6 +11,8 @@ struct HouseScansView: View {
     @State private var loaded = false
     /// Сканы, которые были в обработке при прошлом опросе: стали готовы — сообщаем.
     @State private var waiting: Set<String> = []
+    @State private var editing = false
+    @State private var toDelete: HouseScanUploader.Remote?
 
     var body: some View {
         NavigationStack {
@@ -21,11 +23,22 @@ struct HouseScansView: View {
                         InfoNote(text: "Обмеров пока нет. Обойдите дом в разделе «3D‑обмер дома» — макет появится здесь через пару минут.")
                     }
                     ForEach(scans) { scan in
-                        if scan.status == "ready", scan.result != nil {
-                            NavigationLink { HouseResultView(scan: scan) } label: { HouseScanRow(scan: scan) }
-                                .buttonStyle(PremiumCardPressStyle())
-                        } else {
-                            HouseScanRow(scan: scan)
+                        HStack(spacing: 10) {
+                            if editing {
+                                Button { toDelete = scan } label: {
+                                    Image(systemName: "minus.circle.fill").font(.title2).foregroundStyle(Theme.danger)
+                                }
+                                .accessibilityLabel("Удалить")
+                            }
+                            if scan.status == "ready", scan.result != nil, !editing {
+                                NavigationLink { HouseResultView(scan: scan) } label: { HouseScanRow(scan: scan) }
+                                    .buttonStyle(PremiumCardPressStyle())
+                            } else {
+                                HouseScanRow(scan: scan)
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) { toDelete = scan } label: { Label("Удалить обмер", systemImage: "trash") }
                         }
                     }
                     if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
@@ -35,7 +48,16 @@ struct HouseScansView: View {
             .background(Theme.background)
             .navigationTitle("Мои обмеры")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if !scans.isEmpty { Button(editing ? "Готово" : "Изменить") { withAnimation { editing.toggle() } } }
+                }
+                ToolbarItem(placement: .topBarTrailing) { Button("Закрыть") { dismiss() } }
+            }
+            .confirmationDialog("Удалить обмер? Макет и 3D‑модель удалятся с сервера.", isPresented: Binding(get: { toDelete != nil }, set: { if !$0 { toDelete = nil } }), titleVisibility: .visible) {
+                Button("Удалить", role: .destructive) { if let scan = toDelete { Task { await delete(scan) } } }
+                Button("Отмена", role: .cancel) { toDelete = nil }
+            }
             .refreshable { await refresh() }
             .task {
                 BackgroundAI.askForNotificationsOnce()
@@ -46,6 +68,18 @@ struct HouseScansView: View {
                     try? await Task.sleep(for: .seconds(busy ? 10 : 60))
                 }
             }
+        }
+    }
+
+    private func delete(_ scan: HouseScanUploader.Remote) async {
+        toDelete = nil
+        guard let uploader = HouseScanUploader() else { return }
+        do {
+            try await uploader.delete(scan.id)
+            withAnimation { scans.removeAll { $0.id == scan.id } }
+            Haptics.success()
+        } catch {
+            self.error = error.localizedDescription
         }
     }
 
@@ -193,11 +227,6 @@ struct HouseResultView: View {
             MeasureRow(title: result.roof?.type == "gable" ? "Ширина торца" : "Ширина дома", measure: result.footprint?.gableWidth, unit: "м")
             MeasureRow(title: "Длина дома", measure: result.footprint?.length, unit: "м")
             MeasureRow(title: "Высота до карниза", measure: result.eaveHeight, unit: "м")
-            MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
-            if result.hasOverhangs {
-                MeasureRow(title: "Свес по карнизу", measure: result.roof?.overhangEave, unit: "м")
-                MeasureRow(title: "Свес по фронтону", measure: result.roof?.overhangGable, unit: "м")
-            }
             if let control = result.control, let tape = control.tape, let delta = control.deltaCm {
                 HStack {
                     Image(systemName: abs(delta) <= 3 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
@@ -230,20 +259,28 @@ struct HouseResultView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("КРЫША").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             Text(result.roofTitle).font(.system(.title3, design: .serif, weight: .bold))
+            Text("Входит в этот обмер: высота и уклон — по стенам и фото обхода, кровля и детали — по снимкам крыши.")
+                .font(.footnote).foregroundStyle(Theme.muted)
+            MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
             MeasureRow(title: "Уклон", measure: result.roof?.pitchDeg, unit: "°", digits: 1)
             if let left = result.roof?.pitchLeftDeg, let right = result.roof?.pitchRightDeg, result.roof?.symmetric == false {
                 Text("Скаты разные: \(ParcelRules.format(left, digits: 1))° и \(ParcelRules.format(right, digits: 1))°").font(.footnote).foregroundStyle(Theme.muted)
             }
+            if result.hasOverhangs {
+                MeasureRow(title: "Свес по карнизу", measure: result.roof?.overhangEave, unit: "м")
+                MeasureRow(title: "Свес по фронтону", measure: result.roof?.overhangGable, unit: "м")
+            }
+            if let a = result.roofArea { infoLine(result.hasOverhangs ? "Площадь кровли (со свесами)" : "Площадь кровли", Units.area(a)) }
             if let photo = result.roof?.byPhoto {
-                if let covering = photo.covering, !covering.isEmpty { infoLine("Покрытие", covering) }
+                if let covering = photo.covering, !covering.isEmpty { infoLine("Кровля", covering) }
                 if let color = photo.color, !color.isEmpty { infoLine("Цвет", color) }
                 let details = (photo.details ?? []).compactMap { d -> String? in
                     guard let ru = d.ru, !ru.isEmpty else { return nil }
                     let count = (d.count ?? 0) > 1 ? " ×\(Int(d.count ?? 0))" : ""
                     return d.seen == false ? "\(ru)\(count) (предположение)" : "\(ru)\(count)"
                 }
-                if !details.isEmpty { infoLine("Детали", details.joined(separator: ", ")) }
-                if let hidden = photo.hidden, !hidden.isEmpty { infoLine("Не видно", hidden.joined(separator: "; ")) }
+                if !details.isEmpty { infoLine("На крыше", details.joined(separator: ", ")) }
+                if let hidden = photo.hidden, !hidden.isEmpty { infoLine("Не попало в кадр", hidden.joined(separator: "; ")) }
             }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)

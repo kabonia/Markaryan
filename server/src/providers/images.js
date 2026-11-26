@@ -3,7 +3,7 @@
 // and OpenAI or Black Forest Labs directly. Every address is configurable, so calls can go through a proxy abroad.
 // Engine ids look like "openrouter:google/gemini-3-pro-image", "openai:gpt-image-2.6-sunburst", "bfl:flux-3-image".
 import { config } from '../config.js';
-import { ApiError, request, readJSON, sleep } from '../util.js';
+import { ApiError, request, readJSON, sleep, addCost } from '../util.js';
 
 const TITLES = {
   'gemini-3-pro-image': 'Nano Banana Pro',
@@ -91,6 +91,12 @@ async function download(url, name) {
 
 // MARK: OpenRouter Image API (https://openrouter.ai/docs/guides/overview/multimodal/image-generation)
 
+/** Прайс кадра, $ (OpenRouter, 2K), — если ответ не содержит стоимости. */
+const IMAGE_PRICE_USD = {
+  'google/gemini-3-pro-image': 0.134, 'google/gemini-nano-banana-2.1': 0.04, 'google/gemini-3.1-flash-image': 0.039,
+  'openai/gpt-image-2.6-sunburst': 0.17, 'bytedance-seed/seedream-5-0-pro': 0.05, 'black-forest-labs/flux-3-image': 0.06,
+};
+
 async function openrouterImage(model, { image, prompt, aspectRatio, references = [] }) {
   const vendor = model.split('/')[0];
   const body = { model, prompt: String(prompt).slice(0, 30_000), n: 1, aspect_ratio: aspectRatio };
@@ -105,6 +111,9 @@ async function openrouterImage(model, { image, prompt, aspectRatio, references =
   }, 300_000);
   const result = await readJSON(response);
   if (!response.ok) throw failure(title(model), response.status, result);
+  // Стоимость кадра: точная из ответа, если OpenRouter её прислал, иначе — по прайсу модели (пометка «оценка»).
+  if (Number.isFinite(Number(result?.usage?.cost))) addCost(result.usage);
+  else addCost({ cost: IMAGE_PRICE_USD[model] ?? 0.15 }, { estimated: true });
   const first = result?.data?.[0];
   if (first?.b64_json) return first.b64_json;
   if (first?.url) return download(first.url, title(model));

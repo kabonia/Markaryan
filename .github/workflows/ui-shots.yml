@@ -4,7 +4,7 @@ name: UI‑аудит — скриншоты в ветку
 # посмотреть без скачивания артефактов. Запуск: изменить .github/ui-shots.request (список маршрутов через пробел).
 on:
   push:
-    branches: [audit-2026-11]
+    branches: [audit-2026-11, ui-audit-2026-11]
     paths: ['.github/ui-shots.request']
   workflow_dispatch:
 

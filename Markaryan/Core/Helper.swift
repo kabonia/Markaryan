@@ -24,6 +24,8 @@ struct HelperMessage: Identifiable {
     @Published private(set) var isThinking = false
     /// Short apology shown on top of any screen after an error.
     @Published var notice: String?
+    /// Последняя ошибка — нехватка кредитов: в сообщении кнопка «Пополнить».
+    @Published var needsTopUp = false
     /// Tour: nil — off, -1 — the offer, 0… — steps.
     @Published var tourStep: Int?
     weak var store: AppStore?
@@ -135,6 +137,9 @@ struct HelperMessage: Identifiable {
     private func handleFailure(description: String, action: String?) {
         if description.lowercased().contains("отмен") || description.lowercased().contains("cancel") { return }
         let text = apology(description: description, action: action)
+        // Кончились кредиты — в сообщении сразу кнопка «Пополнить», а не только текст «зайдите в Профиль…».
+        let lower = description.lowercased()
+        needsTopUp = lower.contains("кредит") && (lower.contains("недостаточно") || lower.contains("пополните"))
         notice = text
         messages.append(HelperMessage(role: .helper, text: text))
         send(description: description, action: action, autoFixed: false)
@@ -230,11 +235,35 @@ struct HelperButton: View {
 /// Apology after an error; tap to open the helper.
 struct HelperNoticeBanner: View {
     @ObservedObject var helper = HelperCenter.shared
+    @State private var showBilling = false
+    @State private var showSupport = false
     var body: some View {
+        // Окна — снаружи плашки: она исчезает при нажатии, а окно должно остаться.
+        ZStack { banner }
+            .sheet(isPresented: $showBilling) { NavigationStack { BillingView() } }
+            .sheet(isPresented: $showSupport) { NavigationStack { SupportView(presetTopic: "broken", presetFeature: nil) } }
+    }
+
+    @ViewBuilder private var banner: some View {
         if let notice = helper.notice {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "sparkles").foregroundStyle(Theme.orange)
-                Text(notice).font(.footnote).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                Image(systemName: helper.needsTopUp ? "creditcard.fill" : "sparkles").foregroundStyle(Theme.orange)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(notice).font(.footnote).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
+                    if helper.needsTopUp {
+                        Button { helper.notice = nil; showBilling = true } label: {
+                            Label("Пополнить баланс", systemImage: "plus.circle.fill").font(.footnote.weight(.semibold))
+                                .padding(.horizontal, 12).padding(.vertical, 8).foregroundStyle(Theme.onAccent)
+                                .background(Theme.orange, in: Capsule())
+                        }
+                    } else {
+                        Button { helper.notice = nil; showSupport = true } label: {
+                            Label("Написать в поддержку", systemImage: "bubble.left.and.bubble.right.fill").font(.footnote.weight(.semibold))
+                                .padding(.horizontal, 12).padding(.vertical, 8).foregroundStyle(Theme.orange)
+                                .background(Theme.accentTint, in: Capsule())
+                        }
+                    }
+                }
                 Spacer(minLength: 0)
                 Button { helper.notice = nil } label: { Image(systemName: "xmark").font(.caption.weight(.bold)).foregroundStyle(Theme.muted).padding(4) }
                     .accessibilityLabel("Скрыть")
@@ -242,7 +271,7 @@ struct HelperNoticeBanner: View {
             .padding(14)
             .panelCard(18)
             .padding(.horizontal, 16)
-            .onTapGesture { helper.notice = nil; helper.isOpen = true }
+            .onTapGesture { helper.notice = nil; if !helper.needsTopUp { helper.isOpen = true } }
             .transition(.move(edge: .top).combined(with: .opacity))
             .task(id: notice) { try? await Task.sleep(for: .seconds(9)); if helper.notice == notice { withAnimation { helper.notice = nil } } }
         }

@@ -7,7 +7,13 @@ import StoreKit
 struct BillingMe: Decodable {
     struct Plan: Decodable { var id: String; var until: String }
     struct Autopay: Decodable { var on: Bool; var title: String? }
-    struct Item: Decodable, Identifiable { var id: String; var title: String; var titleEn: String?; var plan: String?; var credits: Int; var rub: Double; var usd: Double; var apple: String?; var days: Int? }
+    struct Item: Decodable, Identifiable {
+        var id: String; var title: String; var titleEn: String?; var plan: String?; var credits: Int; var rub: Double; var usd: Double
+        var apple: String?; var days: Int?
+        /// Пакет функций: сколько единиц каждой функции даёт (nil — обычные кредиты или подписка).
+        var grants: [String: Int]?
+        var includes: String?
+    }
     var enabled: Bool
     var code: String
     var credits: Int
@@ -17,6 +23,8 @@ struct BillingMe: Decodable {
     var helperFreePerDay: Int?
     var products: [Item]
     var payUrl: String?
+    /// Остатки купленных пакетов: вид функции → единиц.
+    var packs: [String: Int]?
 }
 
 @MainActor
@@ -130,7 +138,8 @@ struct BillingView: View {
     private let priceNames: [(String, String)] = [
         ("smeta", "Смета по документам, до 2 листов"), ("smetaPage", "…каждый следующий лист"), ("json", "Дизайн‑проект комнаты"),
         ("imageEdit", "Визуализация, 1 кадр"), ("vision", "Счёт по фото"), ("chat", "Вопрос сильной модели"),
-        ("priceEstimateItem", "Цена позиции по рынку"), ("material", "Распознать свой материал"), ("helper", "Помощник сверх бесплатных"),
+        ("priceEstimate10", "Цены по рынку, за 10 позиций"), ("material", "Распознать свой материал"), ("helper", "Помощник сверх бесплатных"),
+        ("houseScan", "3D‑обмер дома: стены, окна, крыша"),
     ]
 
     var body: some View {
@@ -140,9 +149,15 @@ struct BillingView: View {
                 if let me = billing.me, !me.enabled {
                     InfoNote(text: "Сейчас все функции бесплатны. Когда включится оплата, баланс и тарифы будут здесь.")
                 }
+                packsCard
                 if billing.russia { russiaCard } else { storeCard }
                 if let message = billing.message { Text(message.tr).font(.footnote).foregroundStyle(Theme.muted) }
                 pricesCard
+                NavigationLink { SupportView(presetTopic: "paid") } label: {
+                    AppTabRow(icon: "bubble.left.and.exclamationmark.bubble.right.fill", title: "Списались кредиты, а результата нет?",
+                              subtitle: "Напишите в поддержку — проверим и вернём кредиты")
+                }
+                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
@@ -230,6 +245,24 @@ struct BillingView: View {
                 .font(.caption2).foregroundStyle(Theme.muted)
         }
         .padding(18).panelCard(20)
+    }
+
+    /// Остатки купленных пакетов: пока они есть, функции не тратят кредиты.
+    @ViewBuilder private var packsCard: some View {
+        if let packs = billing.me?.packs, !packs.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("ВАШИ ПАКЕТЫ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
+                ForEach(priceNames.filter { (packs[$0.0] ?? 0) > 0 }, id: \.0) { key, title in
+                    HStack {
+                        Text(title.tr).font(.subheadline).foregroundStyle(Theme.ink)
+                        Spacer()
+                        Text("осталось \(packs[key] ?? 0)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.orange)
+                    }
+                }
+                Text("Пока в пакете есть единицы, функции не тратят кредиты. Если ИИ не справился — единица возвращается.").font(.caption).foregroundStyle(Theme.muted)
+            }
+            .padding(18).panelCard(20)
+        }
     }
 
     private var pricesCard: some View {

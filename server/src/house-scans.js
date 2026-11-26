@@ -78,7 +78,7 @@ const view = (meta) => ({
 });
 
 /** Новый скан: { bytes, sha256, manifest: {frames, device, lidar, …} } → id и размер части. */
-export function create(body, installId) {
+export function create(body, installId, { credits = 0 } = {}) {
   const bytes = Number(body?.bytes);
   if (!(bytes > 0) || bytes > MAX_SCAN_BYTES) throw new ApiError(400, `Скан слишком большой (больше ${Math.round(MAX_SCAN_BYTES / 1024 / 1024)} МБ).`);
   if (usedBytes() + bytes > MAX_TOTAL_BYTES) throw new ApiError(503, 'Хранилище сканов заполнено. Попробуйте позже.', { retryable: true });
@@ -92,7 +92,7 @@ export function create(body, installId) {
   fs.mkdirSync(dir(id), { recursive: true });
   const manifest = body?.manifest && typeof body.manifest === 'object' ? body.manifest : {};
   const meta = {
-    id, installId, status: 'uploading', bytes, parts: Math.ceil(bytes / PART_BYTES), received: [],
+    id, installId, status: 'uploading', bytes, parts: Math.ceil(bytes / PART_BYTES), received: [], credits,
     sha256: typeof body?.sha256 === 'string' ? body.sha256.slice(0, 64) : null,
     summary: { frames: Number(manifest.frames) || 0, device: String(manifest.device || '').slice(0, 60), lidar: Boolean(manifest.lidar), kind: String(manifest.kind || 'house').slice(0, 20) },
     createdAt: new Date().toISOString(),
@@ -176,4 +176,13 @@ export function modelPath(id, installId) {
   const file = path.join(dir(id), 'result', 'house.obj');
   if (meta.status !== 'ready' || !fs.existsSync(file)) throw new ApiError(404, 'Модель ещё не готова.');
   return file;
+}
+
+/** Удаление скана владельцем: пакет, результат, модель. Идущую обработку не трогаем — сначала пусть закончится. */
+export function remove(id, installId) {
+  const meta = load(id, installId);
+  if (meta.status === 'processing') throw new ApiError(409, 'Скан сейчас обрабатывается — удалите его через пару минут.');
+  fs.rmSync(dir(id), { recursive: true, force: true });
+  console.log(`[house] скан ${id} удалён владельцем`);
+  return { id, deleted: true };
 }
