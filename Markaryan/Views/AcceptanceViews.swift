@@ -278,16 +278,24 @@ struct FlatnessScanView: View {
                 RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.85), style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
                     .padding(.horizontal, 50).padding(.vertical, 170).allowsHitTesting(false)
             }
-            VStack(spacing: 12) {
-                HStack {
-                    Text("РОВНОСТЬ ЛИДАРОМ").font(.headline).tracking(2).foregroundStyle(.white)
-                    Spacer()
-                    Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
-                }
-                .padding(.horizontal, 20).padding(.top, 10)
-                Spacer()
-                if let result { resultCard(result) } else { controls }
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                if let result {
+                    ScrollView { resultCard(result) }.frame(maxHeight: 560).scrollBounceBehavior(.basedOnSize)
+                } else { controls }
             }
+        }
+        // Крестик всегда на месте — сверху поверх камеры и результата.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            HStack {
+                Text("РОВНОСТЬ ЛИДАРОМ").font(.headline).tracking(2).foregroundStyle(.white).shadow(radius: 4)
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark").font(.headline).foregroundStyle(.white).padding(12).background(.black.opacity(0.45), in: Circle())
+                }
+                .accessibilityLabel("Закрыть")
+            }
+            .padding(.horizontal, 20).padding(.top, 6)
         }
     }
 
@@ -314,7 +322,7 @@ struct FlatnessScanView: View {
     private func resultCard(_ r: FlatnessResult) -> some View {
         let ok = r.okFlat && r.okSlope
         return VStack(alignment: .leading, spacing: 10) {
-            Image(uiImage: r.image).resizable().scaledToFit().frame(maxHeight: 260).clipShape(RoundedRectangle(cornerRadius: 14))
+            Image(uiImage: r.image).resizable().scaledToFit().frame(maxHeight: 220).clipShape(RoundedRectangle(cornerRadius: 14))
             Label(ok ? "В норме" : "Есть отклонения от нормы", systemImage: ok ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                 .font(.headline).foregroundStyle(ok ? Theme.success : Theme.danger)
             Text("Неровность (просвет): \(fmt(r.spanMM)) мм при норме до \(fmt(surface.flatnessMM)) мм · горб \(fmt(r.bumpMM)) мм, яма \(fmt(r.dipMM)) мм")

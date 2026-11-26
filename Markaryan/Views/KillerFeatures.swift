@@ -376,7 +376,7 @@ struct PhotoRoomView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var photos: [UIImage] = []
+    @State private var photos: [UIImage]
     @State private var reading: PhotoRoomReading?
     @State private var length = ""
     @State private var width = ""
@@ -384,6 +384,8 @@ struct PhotoRoomView: View {
     @State private var name = "Комната"
     @State private var busy = false
     @State private var error: String?
+
+    init(initialPhotos: [UIImage] = []) { _photos = State(initialValue: initialPhotos) }
 
     var body: some View {
         ScrollView {
@@ -408,7 +410,7 @@ struct PhotoRoomView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Ремонт по фото").navigationBarTitleDisplayMode(.inline).featureIntro(.photoRoom)
+        .navigationTitle("Размеры по фото").navigationBarTitleDisplayMode(.inline).featureIntro(.photoRoom)
         .onChange(of: pickerItems) { _, items in
             Task {
                 var loaded: [UIImage] = []

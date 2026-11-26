@@ -70,24 +70,6 @@ struct RoomScanView: View {
             }
             #endif
             VStack {
-                HStack {
-                    Text(title.tr).font(.headline).tracking(2)
-                    Spacer()
-                    if phase == .scanning {
-                        Button { voice.enabled.toggle() } label: {
-                            Image(systemName: voice.enabled ? "speaker.wave.2.fill" : "speaker.slash.fill").padding(12).background(.ultraThinMaterial, in: Circle())
-                        }
-                        .accessibilityLabel(voice.enabled ? "Выключить голос" : "Включить голос")
-                        TorchButton()
-                    }
-                    if phase != .scanning {
-                        Button { showHelp = true } label: { Image(systemName: "questionmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
-                            .accessibilityLabel("Как пользоваться")
-                    }
-                    // Closing after some rooms keeps them and opens what was scanned.
-                    Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
-                }
-                .padding(.horizontal, 20).padding(.top, 12)
                 // While scanning, the controls stay at the top: the bottom of the screen shows the growing 3D model.
                 if phase == .scanning {
                     VStack(spacing: 10) {
@@ -139,6 +121,26 @@ struct RoomScanView: View {
                 }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).padding(12).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12)).padding(.bottom, 20) }
             }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+                    HStack {
+                        Text(title.tr).font(.headline).tracking(2)
+                        Spacer()
+                        if phase == .scanning {
+                            Button { voice.enabled.toggle() } label: {
+                                Image(systemName: voice.enabled ? "speaker.wave.2.fill" : "speaker.slash.fill").padding(12).background(.ultraThinMaterial, in: Circle())
+                            }
+                            .accessibilityLabel(voice.enabled ? "Выключить голос" : "Включить голос")
+                            TorchButton()
+                        }
+                        if phase != .scanning {
+                            Button { showHelp = true } label: { Image(systemName: "questionmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
+                                .accessibilityLabel("Как пользоваться")
+                        }
+                        // Closing after some rooms keeps them and opens what was scanned.
+                        Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
         }
         .preferredColorScheme(.light)
     }

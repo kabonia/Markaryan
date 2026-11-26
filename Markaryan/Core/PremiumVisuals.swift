@@ -123,7 +123,7 @@ extension FeatureIntro {
         case .project: .project
         case .billing: .billing
         case .houseScan, .acceptance: .house
-        case .tryOn, .photoRoom: .design
+        case .photoRoom: .design
         case .quoteCheck, .receipt: .documents
         case .roomScan, .roomMaterials, .apartment: .design
         case .purchase: .project

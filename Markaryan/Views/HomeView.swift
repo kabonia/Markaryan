@@ -6,7 +6,6 @@ struct HomeView: View {
     @State private var appeared = false
     @State private var visible = true
     @State private var liveOpen: LiveExample?
-    @State private var showTryOn = false
     @State private var unsentScans = 0
 
     private var greeting: String {
@@ -89,30 +88,18 @@ struct HomeView: View {
                         NavigationLink { FullEstimateHubView() } label: {
                             HomeToolCard(icon: "house.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Theme.orange)
                         }
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
-                        HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    Button { showTryOn = true } label: {
-                        HomeWideToolCard(icon: "arkit", title: "Примерка ремонта в AR", text: "Наведите iPhone на комнату — новая плитка, ламинат или краска вживую на ваших стенах и полу. Сфотографируйте плитку в магазине — сразу увидите её у себя.")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    NavigationLink { AcceptanceView() } label: {
-                        HomeWideToolCard(icon: "checkmark.seal.fill", title: "Приёмка без приёмщика", text: "Лидар меряет ровность стен и пола по нормам СП, ИИ находит дефекты на фото — готовый акт для застройщика или бригады.")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    NavigationLink { PhotoRoomView() } label: {
-                        HomeWideToolCard(icon: "camera.aperture", title: "Ремонт по фото комнаты", text: "Без лидара: размеры по снимку → материалы, цены со ссылками и картинка с новой отделкой.")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    NavigationLink { QuoteCheckView() } label: {
-                        HomeWideToolCard(icon: "checkmark.shield.fill", title: "Проверить смету подрядчика", text: "Фото или PDF сметы → сверка с ценами города со ссылками: где завышено, сколько переплата и что забыли.")
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
-                    NavigationLink { ReceiptScanView() } label: {
-                        HomeWideToolCard(icon: "receipt.fill", title: "Чек → в бюджет", text: "Сфотографируйте чек — сумма сама попадёт в траты объекта, перерасход виден сразу.")
+                        NavigationLink { AcceptanceView() } label: {
+                            HomeToolCard(icon: "checkmark.seal.fill", title: "Приёмка ремонта", text: "Лидар меряет ровность стен и пола по нормам, ИИ находит дефекты — готовый акт.", accent: Theme.success, badge: "НОВОЕ")
+                        }
+                        NavigationLink { QuoteCheckView() } label: {
+                            HomeToolCard(icon: "checkmark.shield.fill", title: "Проверка сметы", text: "Фото сметы подрядчика → где завышено, переплата и что забыли.", accent: Theme.sky, badge: "НОВОЕ")
+                        }
+                        NavigationLink { ReceiptScanView() } label: {
+                            HomeToolCard(icon: "receipt.fill", title: "Чек → в бюджет", text: "Фото чека — сумма сама в траты объекта, перерасход виден сразу.", accent: Theme.gold, badge: "НОВОЕ")
+                        }
+                        NavigationLink { AIVisionStudioView(initialStyle: .object) } label: {
+                            HomeToolCard(icon: "building.2.fill", title: "Фасад и участок", text: "Визуализация дома снаружи: фасад, крыша, забор, ландшафт.", accent: Theme.sage)
+                        }
                     }
                     .buttonStyle(PremiumCardPressStyle())
                 }
@@ -168,7 +155,6 @@ struct HomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .helperScreen("Главная").featureIntro(.home)
         .refreshable { await store.refreshPriceBook(silent: true) }
-        .fullScreenCover(isPresented: $showTryOn) { ARTryOnView() }
         .navigationDestination(item: $liveOpen) { example in
             switch example {
             case .documents: DocEstimateHubView()
