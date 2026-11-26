@@ -428,6 +428,9 @@ struct FloorPlanDetailView: View {
     @State private var savedPictures = false
     @State private var editPlan = false
     @State private var furnitureTarget: FurnitureTarget?
+    /// Расчёт материалов раскрыт прямо на странице комнаты.
+    @AppStorage("roomMaterialsOpen") private var materialsOpen = true
+    @State private var movingToObject = false
 
     /// The concept whose furniture is being moved by hand.
     struct FurnitureTarget: Identifiable { let id: UUID }
@@ -468,6 +471,15 @@ struct FloorPlanDetailView: View {
                 .presentationDetents([.large])
         }
         .sheet(item: $shareFile) { file in ActivityShareSheet(items: [file.url]) }
+        .sheet(isPresented: $movingToObject) {
+            NavigationStack {
+                ObjectPickerSheet(title: "В какой объект", current: store.inObject ? store.activeProjectID : nil) { target in
+                    store.moveFloorPlan(planID, to: target)
+                    dismiss()
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
         .sheet(item: $openedPhoto) { item in NavigationStack { RenderResultView(image: item.image, title: proposal?.title ?? plan?.name ?? "Интерьер") } }
         .sheet(item: $comparison) { item in NavigationStack { EngineComparisonView(comparison: item) } }
         .sheet(isPresented: $showModels) { NavigationStack { AIModelsView() }.presentationDetents([.large]) }
@@ -542,24 +554,28 @@ struct FloorPlanDetailView: View {
             PlanStat(value: "\(CalculationEngine.format((plan.perimeter * 10).rounded() / 10)) м", title: "Периметр")
             PlanStat(value: "\(CalculationEngine.format((plan.ceilingHeight * 100).rounded() / 100)) м", title: "Потолок")
         }
-        // Главное после обмера — что купить: материалы по точным размерам комнаты.
-        NavigationLink { RoomMaterialsView(plan: plan) } label: {
+        // Главное после обмера — что купить: материалы, цены и картинка с этой отделкой — здесь же, без переходов.
+        Button { withAnimation(.snappy) { materialsOpen.toggle() } } label: {
             HStack(spacing: 14) {
                 Image(systemName: "shippingbox.fill").font(.title2).foregroundStyle(Theme.goldLight)
                     .frame(width: 50, height: 50).background(Theme.heroGradient, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Расчёт материалов").font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
-                    Text("Плитка по раскладке, клей, затирка, маяки, штукатурка, стяжка, гидроизоляция, краска — с упаковками и ценами")
+                    Text("Материалы, цены и визуализация").font(.system(.headline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
+                    Text("Плитка по раскладке, клей, маяки, штукатурка, стяжка, краска — цены со ссылками и картинка комнаты с этой отделкой")
                         .font(.caption).foregroundStyle(Theme.muted).multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right").foregroundStyle(Theme.gold)
+                Image(systemName: materialsOpen ? "chevron.up" : "chevron.down").foregroundStyle(Theme.gold)
             }
             .padding(14)
             .background(Theme.panel, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.goldHairline, lineWidth: 1))
         }
         .buttonStyle(PremiumCardPressStyle())
+        if materialsOpen {
+            RoomMaterialsView(plan: plan, embedded: true)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+        }
         HStack(spacing: 10) {
             NavigationLink { PlanMeasurementsView(plan: plan) } label: { SecondaryActionLabel(title: "Все обмеры", icon: "list.bullet.rectangle") }
                 .buttonStyle(PremiumPressStyle())
@@ -797,6 +813,7 @@ struct FloorPlanDetailView: View {
     private var moreMenu: some View {
         Menu {
             Button { newName = plan?.name ?? ""; showRename = true } label: { Label("Переименовать", systemImage: "pencil") }
+            Button { movingToObject = true } label: { Label(store.inObject ? "Перенести в другой объект" : "Сохранить в объект", systemImage: "folder.badge.plus") }
             Button { show3D = true } label: { Label("3D‑просмотр комнаты", systemImage: "rotate.3d") }
             if let plan {
                 Button { sharePlan(plan) } label: { Label("Поделиться планом", systemImage: "square.and.arrow.up") }

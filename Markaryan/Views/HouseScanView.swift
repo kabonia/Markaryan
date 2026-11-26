@@ -145,9 +145,8 @@ struct HouseScanView: View {
                 }
                 .font(.subheadline)
                 parcelCard
-                Button { showScans = true } label: { SecondaryActionLabel(title: "Мои обмеры", icon: "square.stack.3d.up") }
-                    .buttonStyle(PremiumPressStyle())
                 if HouseScanRecorder.isSupported {
+                    PaidNote(kind: "houseScan")
                     PrimaryButton(title: "Начать обход", icon: "viewfinder") {
                         error = nil
                         recorder.parcel = ParcelStore.load()
@@ -160,6 +159,7 @@ struct HouseScanView: View {
                 }
                 if !pending.isEmpty { pendingList }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+                HouseScansInline()
             }
             .padding(24)
         }
@@ -442,7 +442,9 @@ struct HouseScanView: View {
             Image(systemName: "checkmark.seal.fill").font(.system(size: 54)).foregroundStyle(Theme.success)
             Text("Скан на обработке").font(.system(.title, design: .serif, weight: .bold))
             Text(resultText ?? "Макет будет готов через несколько минут.").foregroundStyle(Theme.muted)
-            PrimaryButton(title: "Следить за обработкой", icon: "square.stack.3d.up") { showScans = true }
+            Text("Можно не уходить: как только макет будет готов, он откроется здесь — с размерами, сметой и визуализацией.")
+                .font(.footnote).foregroundStyle(Theme.muted)
+            HouseScansInline()
             Button("Закрыть") { dismiss() }.font(.subheadline).frame(maxWidth: .infinity)
             Spacer()
         }

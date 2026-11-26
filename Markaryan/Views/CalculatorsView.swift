@@ -392,6 +392,9 @@ struct CalculatorView: View {
     @State private var saved = false
     @State private var exportFile: SharedFile?
     @State private var didLoad = false
+    @State private var cityPrices: MarketEstimate?
+    @State private var pricing = false
+    @State private var priceError: String?
     @FocusState private var focusedField: String?
     init(kind: CalculationKind, initialValues: [String: String] = [:], measurementNote: String? = nil) {
         self.measurementNote = measurementNote
@@ -425,6 +428,7 @@ struct CalculatorView: View {
         values[id] = text
         saved = false
         error = nil
+        cityPrices = nil
         // Live result: show numbers as soon as the input is valid, without pressing the button.
         withAnimation(.snappy) { result = try? CalculationEngine.calculate(kind, values: values) }
     }
@@ -471,6 +475,7 @@ struct CalculatorView: View {
                         Button { exportPDF(result) } label: { SecondaryActionLabel(title: "PDF", icon: "doc.richtext") }.buttonStyle(PremiumPressStyle())
                         ShareLink(item: snapshot.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
                     }
+                    cityPricesCard(result)
                     NavigationLink { AIAssistantView(context: assistantContext(for: result)) } label: { SecondaryActionLabel(title: "Спросить ИИ", icon: "sparkles") }.buttonStyle(PremiumPressStyle())
                     PartnerOfferSection(category: kind.category.rawValue, summary: "Здравствуйте! Посчитал в приложении \(Brand.name): «\(kind.title)».\n" + result.lines.map { "\($0.label): \($0.formatted)" }.joined(separator: "\n") + "\nПодскажите вашу цену за эти работы?")
                 }
@@ -501,6 +506,53 @@ struct CalculatorView: View {
                 store.track("calculator_\(kind.rawValue)")
             }
     }
+    /// Цены материалов из расчёта в городе пользователя — с ссылками на предложения.
+    @ViewBuilder private func cityPricesCard(_ result: CalculationResult) -> some View {
+        if let cityPrices {
+            let total = cityPrices.items.reduce(0) { $0 + $1.total }
+            VStack(alignment: .leading, spacing: 10) {
+                Text("ЦЕНЫ · \(cityPrices.city.uppercased())").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+                Text(CalculationEngine.money(total)).font(.system(.title2, design: .serif, weight: .bold)).monospacedDigit()
+                ForEach(cityPrices.items) { row in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(row.name).font(.footnote)
+                        Spacer()
+                        Text(row.hasPrice ? CalculationEngine.money(row.total) : "—").font(.footnote.weight(.semibold).monospacedDigit())
+                    }
+                    PriceSourceLinks(sources: row.sources ?? [], hasPrice: row.hasPrice)
+                }
+                ShareLink(item: (snapshot?.report ?? "") + "\n\nЦЕНЫ · \(cityPrices.city)\n" + cityPrices.items.map { "• \($0.name): \($0.hasPrice ? CalculationEngine.money($0.total) : "нет цены")\($0.sources?.first.map { " — " + $0.url } ?? "")" }.joined(separator: "\n") + "\nИтого: \(CalculationEngine.money(total))") {
+                    SecondaryActionLabel(title: "Отправить расчёт с ценами", icon: "square.and.arrow.up")
+                }
+                .buttonStyle(PremiumPressStyle())
+                Text("Реальные предложения магазинов вашего города; без ссылки — ориентир.").font(.caption).foregroundStyle(Theme.muted)
+            }
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)
+        } else if store.usesAIServer {
+            Button { Task { await findPrices(result) } } label: {
+                SecondaryActionLabel(title: pricing ? "Ищем цены…" : "Цены в вашем городе — со ссылками", icon: "rublesign.circle")
+            }
+            .buttonStyle(PremiumPressStyle()).disabled(pricing)
+            PaidNote(kind: "priceEstimate10")
+            if let priceError { Label(priceError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
+        }
+    }
+
+    private func findPrices(_ result: CalculationResult) async {
+        guard let base = AIServerConfig.marketURL else { return }
+        pricing = true; priceError = nil
+        defer { pricing = false }
+        let items = result.lines.filter { !$0.unit.isEmpty && $0.value > 0 && !["%", "м²", "м", "мм", "°"].contains($0.unit) }
+            .map { MarketEstimateRequestItem(name: "\(kind.title): \($0.label)", kind: "material", unit: $0.unit, quantity: ($0.value * 10).rounded() / 10) }
+        guard !items.isEmpty else { priceError = "В этом расчёте нет материалов для поиска цен."; return }
+        do {
+            cityPrices = try await ServerAIClient(base: base).priceEstimate(city: store.projectCity, items: Array(items.prefix(20)))
+            Haptics.success()
+        } catch {
+            priceError = error.localizedDescription
+        }
+    }
+
     private func resetToDefaults() {
         values = Dictionary(uniqueKeysWithValues: kind.fields.map { ($0.id, $0.initial) })
         result = try? CalculationEngine.calculate(kind, values: values)
@@ -549,6 +601,7 @@ struct SavedCalculationView: View {
             DisclosureGroup("Полный текст ведомости") { Text(item.report).font(.footnote).textSelection(.enabled).padding(.top, 8).frame(maxWidth: .infinity, alignment: .leading) }.tint(Theme.orange)
             NavigationLink { CalculatorView(kind: item.kind, initialValues: item.values, measurementNote: item.measurementNote) } label: { SecondaryActionLabel(title: "Пересчитать с новыми размерами", icon: "arrow.triangle.2.circlepath") }.buttonStyle(PremiumPressStyle())
             ShareLink(item: item.report) { SecondaryActionLabel(title: "Отправить", icon: "square.and.arrow.up") }.buttonStyle(PremiumPressStyle())
+            SaveToObjectButton(kind: .calculation, id: item.id.uuidString, title: item.kind.title, subtitle: item.result.lines.first.map { "\($0.label): \($0.formatted)" })
         }.padding(20) }.background(Theme.background).navigationTitle(item.object).helperScreen(item.object).navigationBarTitleDisplayMode(.inline)
     }
 }

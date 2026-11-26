@@ -135,11 +135,18 @@ struct BillingView: View {
     @ObservedObject private var billing = BillingCenter.shared
     @State private var copied = false
 
-    private let priceNames: [(String, String)] = [
-        ("smeta", "Смета по документам, до 2 листов"), ("smetaPage", "…каждый следующий лист"), ("json", "Дизайн‑проект комнаты"),
-        ("imageEdit", "Визуализация, 1 кадр"), ("vision", "Счёт по фото"), ("chat", "Вопрос сильной модели"),
-        ("priceEstimate10", "Цены по рынку, за 10 позиций"), ("material", "Распознать свой материал"), ("helper", "Помощник сверх бесплатных"),
-        ("houseScan", "3D‑обмер дома: стены, окна, крыша"),
+    /// Платные функции: ключ прайса, название, пояснение, значок.
+    static let functions: [(key: String, title: String, note: String, icon: String)] = [
+        ("houseScan", "3D‑обмер дома", "стены, окна, двери и крыша по фото", "house.lodge.fill"),
+        ("json", "Дизайн‑проект комнаты", "стиль, мебель, отделка по скану", "paintpalette.fill"),
+        ("imageEdit", "Визуализация", "1 фотореалистичный кадр", "photo.fill"),
+        ("vision", "Счёт по фото", "сколько штук на фото, разбор фото", "camera.viewfinder"),
+        ("smeta", "Смета по документам", "до 2 листов чертежей", "doc.text.fill"),
+        ("smetaPage", "…каждый следующий лист", "сверх двух листов", "doc.on.doc.fill"),
+        ("priceEstimate10", "Цены по рынку", "за каждые 10 позиций, со ссылками", "rublesign.circle.fill"),
+        ("chat", "Вопрос сильной модели", "сложный вопрос ИИ", "sparkles"),
+        ("material", "Свой материал", "распознать плитку, обои по фото", "square.grid.3x3.fill"),
+        ("helper", "Помощник", "сверх бесплатных в день", "bubble.left.fill"),
     ]
 
     var body: some View {
@@ -175,6 +182,8 @@ struct BillingView: View {
                 Text("\(billing.me?.credits ?? 0)").font(.system(size: 44, weight: .bold, design: .serif)).foregroundStyle(.white).monospacedDigit()
                 Text("кредитов").font(.headline).foregroundStyle(.white.opacity(0.8))
             }
+            Text("1 кредит ≈ \(billing.money(1, exact: true)) · на балансе \(billing.money(billing.me?.credits ?? 0))")
+                .font(.caption.weight(.semibold)).foregroundStyle(Theme.goldLight)
             if let plan = billing.me?.plan {
                 Text("\(plan.id == "business" ? "Бизнес" : "Про") до \(String(plan.until.prefix(10)))").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.goldLight)
             } else {
@@ -227,9 +236,10 @@ struct BillingView: View {
             ForEach(billing.storeProducts, id: \.id) { product in
                 Button { Task { await billing.buy(product) } } label: {
                     HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ProductBadge(item: billing.me?.products.first { $0.apple == product.id })
                             Text(product.displayName).font(.system(.subheadline, design: .serif, weight: .bold)).foregroundStyle(Theme.ink)
-                            Text(product.description).font(.caption).foregroundStyle(Theme.muted).lineLimit(2)
+                            Text(billing.me?.products.first { $0.apple == product.id }?.includes ?? product.description).font(.caption).foregroundStyle(Theme.muted).lineLimit(3)
                         }
                         Spacer()
                         Text(product.displayPrice).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.onAccent)
@@ -252,11 +262,12 @@ struct BillingView: View {
         if let packs = billing.me?.packs, !packs.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 Text("ВАШИ ПАКЕТЫ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
-                ForEach(priceNames.filter { (packs[$0.0] ?? 0) > 0 }, id: \.0) { key, title in
-                    HStack {
-                        Text(title.tr).font(.subheadline).foregroundStyle(Theme.ink)
+                ForEach(BillingView.functions.filter { (packs[$0.key] ?? 0) > 0 }, id: \.key) { item in
+                    HStack(spacing: 10) {
+                        Image(systemName: item.icon).font(.subheadline).foregroundStyle(Theme.orange).frame(width: 26)
+                        Text(item.title.tr).font(.subheadline).foregroundStyle(Theme.ink)
                         Spacer()
-                        Text("осталось \(packs[key] ?? 0)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.orange)
+                        PackTag(count: packs[item.key] ?? 0)
                     }
                 }
                 Text("Пока в пакете есть единицы, функции не тратят кредиты. Если ИИ не справился — единица возвращается.").font(.caption).foregroundStyle(Theme.muted)
@@ -268,12 +279,24 @@ struct BillingView: View {
     private var pricesCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("СКОЛЬКО СТОИТ").font(.caption.weight(.semibold)).tracking(1.6).foregroundStyle(Theme.gold)
-            ForEach(priceNames, id: \.0) { key, title in
-                if let credits = billing.me?.prices[key] {
-                    HStack { Text(title.tr).font(.subheadline).foregroundStyle(Theme.ink); Spacer(); HStack(spacing: 5) { Text("\(credits)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.ink); CreditCoin(size: 15, shine: false) } }
+            ForEach(BillingView.functions, id: \.key) { item in
+                if let credits = billing.me?.prices[item.key] {
+                    HStack(spacing: 12) {
+                        Image(systemName: item.icon).font(.subheadline).foregroundStyle(Theme.orange)
+                            .frame(width: 32, height: 32).background(Theme.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 9))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title.tr).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                            Text(item.note.tr).font(.caption2).foregroundStyle(Theme.muted)
+                        }
+                        Spacer(minLength: 6)
+                        CreditTag(credits: credits)
+                    }
+                    if item.key != BillingView.functions.last?.key { Divider().padding(.leading, 44) }
                 }
             }
-            Text("Калькуляторы, AR‑рулетка, типовые сметы и проекты — бесплатно. Если ИИ не справился, кредиты возвращаются.").font(.caption).foregroundStyle(Theme.muted)
+            Label("Бесплатно: калькуляторы, AR‑рулетка, скан комнаты, расчёт материалов, сметы по ценам города, проекты", systemImage: "gift.fill")
+                .font(.caption).foregroundStyle(Theme.success)
+            Text("Если ИИ не справился — кредиты возвращаются сами. Купленный пакет тратится раньше кредитов.").font(.caption).foregroundStyle(Theme.muted)
         }
         .padding(18).panelCard(20)
     }
@@ -301,3 +324,93 @@ struct BalanceChip: View {
         .task { if billing.me == nil { await billing.refresh() } }
     }
 }
+
+// MARK: - Понятные цены: значок кредита, сумма в деньгах, значок пакета
+
+extension BillingCenter {
+    /// Сколько стоит 1 кредит в самом маленьком наборе (100 кредитов) — для подписи «≈ 48 ₽».
+    private var creditPrice: (rub: Double, usd: Double) {
+        guard let p = me?.products.first(where: { $0.id == "credits_100" }), p.credits > 0 else { return (11.9, 0.15) }
+        return (p.rub / Double(p.credits), p.usd / Double(p.credits))
+    }
+    /// «≈ 107 ₽» / «≈ $1.35» за столько кредитов.
+    func money(_ credits: Int, exact: Bool = false) -> String {
+        if russia || AppLanguage.isRussian {
+            let rub = Double(credits) * creditPrice.rub
+            let text = exact ? String(format: "%.1f", rub).replacingOccurrences(of: ".", with: ",") : CalculationEngine.format(rub.rounded())
+            return (exact ? "" : "≈ ") + text + " ₽"
+        }
+        return (exact ? "" : "≈ ") + String(format: "$%.2f", Double(credits) * creditPrice.usd)
+    }
+    /// Цена функции в кредитах (nil — бесплатно или оплата выключена).
+    func credits(for kind: String) -> Int? {
+        guard let me, me.enabled, let price = me.prices[kind], price > 0 else { return nil }
+        return price
+    }
+}
+
+/// Значок цены: золотая монета, число кредитов и сумма в деньгах.
+struct CreditTag: View {
+    @ObservedObject private var billing = BillingCenter.shared
+    let credits: Int
+    var showMoney = true
+    var body: some View {
+        HStack(spacing: 6) {
+            HStack(spacing: 4) {
+                CreditCoin(size: 15, shine: false)
+                Text("\(credits)").font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(Theme.ink)
+            }
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(Theme.goldTint, in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.goldHairline, lineWidth: 0.8))
+            if showMoney { Text(billing.money(credits)).font(.caption.weight(.semibold)).monospacedDigit().foregroundStyle(Theme.muted) }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(credits) кредитов, \(billing.money(credits))")
+    }
+}
+
+/// Сколько осталось в пакете: значок коробки и «× 3».
+struct PackTag: View {
+    let count: Int
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "shippingbox.fill").font(.caption)
+            Text("× \(count)").font(.subheadline.weight(.bold)).monospacedDigit()
+        }
+        .foregroundStyle(Theme.orange)
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .background(Theme.accentTint, in: Capsule())
+        .accessibilityLabel("В пакете осталось \(count)")
+    }
+}
+
+/// Над названием товара: «ПАКЕТ», «ПОДПИСКА» или «◎ 100 кредитов».
+struct ProductBadge: View {
+    let item: BillingMe.Item?
+    var body: some View {
+        if let item {
+            if item.grants != nil {
+                Label("ПАКЕТ · не сгорает", systemImage: "shippingbox.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.orange)
+            } else if item.plan != nil {
+                Label("ПОДПИСКА · \(item.credits) кредитов в месяц", systemImage: "crown.fill").font(.caption2.weight(.bold)).foregroundStyle(Theme.gold)
+            } else {
+                HStack(spacing: 4) { CreditCoin(size: 12, shine: false); Text("\(item.credits) КРЕДИТОВ").font(.caption2.weight(.bold)).foregroundStyle(Theme.gold) }
+            }
+        }
+    }
+}
+
+/// Под платной кнопкой: «Стоит ◎ 4 ≈ 48 ₽» (или «из пакета»); при выключенной оплате ничего не показывает.
+struct PaidNote: View {
+    @ObservedObject private var billing = BillingCenter.shared
+    let kind: String
+    var body: some View {
+        if let packs = billing.me?.packs?[kind], packs > 0, billing.me?.enabled == true {
+            HStack(spacing: 6) { Text("Из пакета").font(.caption).foregroundStyle(Theme.muted); PackTag(count: packs) }
+        } else if let credits = billing.credits(for: kind) {
+            HStack(spacing: 6) { Text("Стоит").font(.caption).foregroundStyle(Theme.muted); CreditTag(credits: credits) }
+        }
+    }
+}
+

@@ -63,3 +63,35 @@ test('чужое обращение и чужой чат не принимают
   await assert.rejects(support.create(ID, { topic: 'other', text: 'шестой' }), (e) => e.status === 429);
   await assert.rejects(support.create(ID, { text: '' }), (e) => e.status === 400);
 });
+
+test('ссылка для подрядчика: страница открывается, картинки отдаются, мусор отклоняется', async () => {
+  const shares = await import('../src/shares.js');
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(200, 1)]).toString('base64');
+  const made = shares.create(ID, { title: 'Дача <b>', text: 'СМЕТА · СОЧИ\nИтого 100 ₽ https://example.com/x', images: [jpeg, 'bm90LWpwZWc='] });
+  assert.match(made.id, /^[A-Za-z0-9_-]{12}$/);
+  const page = shares.page(made.id);
+  assert.match(page, /Дача &lt;b&gt;/);
+  assert.match(page, /<h2>СМЕТА · СОЧИ<\/h2>/);
+  assert.match(page, /href="https:\/\/example.com\/x"/);
+  assert.ok(shares.image(made.id, 0));
+  assert.equal(shares.image(made.id, 1), null); // не JPEG — не сохранён
+  assert.equal(shares.page('../../etc/pa'), null);
+  assert.throws(() => shares.create(ID, { text: '' }), (e) => e.status === 400);
+});
+
+test('совместный доступ: код, вход второго человека, конфликт версий, выход', async () => {
+  const sync = await import('../src/object-sync.js');
+  const OTHER = '00000000-0000-4000-8000-000000000099';
+  const made = sync.share(ID, { workspace: { id: 'w1', tasks: [] } });
+  assert.match(made.code, /^[A-HJ-NP-Z2-9]{8}$/);
+  const joined = sync.get(OTHER, made.code);
+  assert.equal(joined.version, 1);
+  assert.equal(joined.members, 2);
+  assert.equal(sync.put(OTHER, made.code, { baseVersion: 1, workspace: { id: 'w1', tasks: [{ id: 't' }] } }).version, 2);
+  const stale = sync.put(ID, made.code, { baseVersion: 1, workspace: { id: 'w1', tasks: [] } });
+  assert.equal(stale.conflict, true);
+  assert.equal(stale.workspace.tasks.length, 1);
+  assert.throws(() => sync.put('00000000-0000-4000-8000-000000000098', made.code, { baseVersion: 2, workspace: { id: 'w1' } }), (e) => e.status === 403);
+  assert.throws(() => sync.get(ID, 'BAD'), (e) => e.status === 404);
+  assert.equal(sync.leave(ID, made.code).deleted, true);
+});

@@ -273,7 +273,13 @@ struct DocEstimateNewView: View {
 struct DocEstimateResultLoader: View {
     let id: String
     var body: some View {
-        if let result = DocEstimateCenter.shared.result(id) { DocEstimateResultView(result: result) }
+        if let result = DocEstimateCenter.shared.result(id) {
+            DocEstimateResultView(result: result)
+                .safeAreaInset(edge: .bottom) {
+                    SaveToObjectButton(kind: .docEstimate, id: id, title: result.title, subtitle: CalculationEngine.money(result.totals.typical.total))
+                        .padding(.horizontal, 20).padding(.vertical, 8).background(.ultraThinMaterial)
+                }
+        }
         else { ContentUnavailableView("Смета не найдена", systemImage: "doc.questionmark") }
     }
 }
@@ -306,6 +312,12 @@ struct DocEstimateResultView: View {
                     Button { if let url = DocEstimateExport.csv(result) { shareFile = SharedFile(url: url) } } label: { SecondaryActionLabel(title: "Excel", icon: "tablecells") }
                 }
                 .buttonStyle(PremiumPressStyle())
+                VariantsRow(low: result.totals.low.total, typical: t.total, high: result.totals.high.total)
+                EstimateToObjectButtons(result: result)
+                ContractorLinkButton(title: result.title, text: {
+                    (["СМЕТА · \(result.city.uppercased())", "\(result.title)", "Итого: \(CalculationEngine.money(t.total))", ""]
+                     + result.sections.map { "\($0.title): \(CalculationEngine.money($0.total))" }).joined(separator: "\n")
+                })
                 PartnerOfferSection(category: "house", summary: "Здравствуйте! Смета «\(result.title)» по рыночным ценам: \(CalculationEngine.money(t.total)). Подскажите вашу цену?")
             }
             .padding(20)

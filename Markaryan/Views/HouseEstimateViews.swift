@@ -179,6 +179,8 @@ struct HouseEstimateParamsView: View {
                     Text("ИИ‑сметчик пересчитает дом по описанию с поиском цен под ваш объект — за кредиты, 10–30 минут. Результат появится в «Смета по документам».")
                         .font(.caption).foregroundStyle(Theme.muted)
                 }
+                // Как будет выглядеть дом с выбранными фасадом и кровлей — здесь же.
+                HouseVisualCard(params: p)
             }
             .padding(20)
         }
@@ -293,7 +295,7 @@ struct OptionChips: View {
                 ForEach(options, id: \.0) { option in
                     let on = selection == option.0
                     Button { withAnimation(.snappy) { selection = option.0 }; Haptics.tap() } label: {
-                        Text(option.1).font(.subheadline.weight(on ? .semibold : .regular))
+                        Text(option.1.tr).font(.subheadline.weight(on ? .semibold : .regular))
                             .padding(.horizontal, 14).padding(.vertical, 9)
                             .foregroundStyle(on ? Theme.onAccent : Theme.ink)
                             .background(on ? AnyShapeStyle(Theme.orange) : AnyShapeStyle(Theme.panelRaised.opacity(0.6)), in: Capsule())

@@ -518,6 +518,89 @@ enum VisualizationError: LocalizedError {
         return workspace.id
     }
 
+    // MARK: Совместный доступ: снимок и замена объекта целиком
+
+    /// Текущее состояние объекта (с последними правками).
+    func workspaceSnapshot(_ id: UUID) -> ProjectWorkspace? {
+        if id == activeProjectID { persistActiveWorkspace() }
+        return projectWorkspaces.first { $0.id == id }
+    }
+
+    /// Объект пришёл с сервера (правки другого человека): заменить и, если он открыт, показать.
+    func replaceWorkspace(_ workspace: ProjectWorkspace) {
+        if let index = projectWorkspaces.firstIndex(where: { $0.id == workspace.id }) {
+            projectWorkspaces[index] = workspace
+        } else {
+            projectWorkspaces.append(workspace)
+        }
+        scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+        if workspace.id == activeProjectID { restoreWorkspace(workspace) }
+    }
+
+    // MARK: Объекты по желанию: работа «без объекта», перенос в объект, удаление
+
+    /// Рабочее место «Без объекта»: всё, что сделано с главной, пока объект не выбран.
+    static let looseWorkID = UUID(uuidString: "00000000-0000-4000-8000-0000000000AA")!
+    /// Настоящие объекты (без «Без объекта»).
+    var objects: [ProjectWorkspace] { projectWorkspaces.filter { $0.id != Self.looseWorkID } }
+    var inObject: Bool { activeProjectID != Self.looseWorkID }
+
+    /// Работать без объекта: результаты сохраняются в «Без объекта», их можно потом перенести в любой объект.
+    func workWithoutObject() {
+        if !projectWorkspaces.contains(where: { $0.id == Self.looseWorkID }) {
+            persistActiveWorkspace()
+            var passport = ObjectPassport()
+            passport.name = "Без объекта"
+            projectWorkspaces.append(ProjectWorkspace(id: Self.looseWorkID, passport: passport, milestones: [], budgetItems: []))
+            scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+        }
+        selectProject(Self.looseWorkID)
+    }
+
+    /// Новый объект без переключения на него (для «Сохранить в новый объект»).
+    @discardableResult
+    func addObject(name: String) -> UUID {
+        persistActiveWorkspace()
+        var passport = ObjectPassport()
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        passport.name = clean.isEmpty ? "Новый объект" : clean
+        let workspace = ProjectWorkspace(passport: passport)
+        projectWorkspaces.append(workspace)
+        scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+        return workspace.id
+    }
+
+    /// Удалить объект целиком: планы, бюджет, фото, задачи. Обмеры, сметы и расчёты остаются — только без объекта.
+    func deleteObject(_ id: UUID) {
+        guard id != Self.looseWorkID, let target = projectWorkspaces.first(where: { $0.id == id }) else { return }
+        if id == activeProjectID {
+            if let next = objects.first(where: { $0.id != id }) { selectProject(next.id) } else { workWithoutObject() }
+        }
+        for plan in target.floorPlans {
+            if let url = planModelURL(plan) { try? FileManager.default.removeItem(at: url) }
+        }
+        projectWorkspaces.removeAll { $0.id == id }
+        ObjectLinks.shared.removeAll(object: id)
+        scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+    }
+
+    func objectName(_ id: UUID?) -> String? {
+        guard let id, id != Self.looseWorkID else { return nil }
+        let name = projectWorkspaces.first { $0.id == id }?.passport.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "Мой объект" : name
+    }
+
+    /// Перенести план комнаты (со всеми концепциями и рендерами) в другой объект.
+    func moveFloorPlan(_ planID: FloorPlan.ID, to target: UUID) {
+        guard target != activeProjectID, let plan = floorPlans.first(where: { $0.id == planID }),
+              projectWorkspaces.contains(where: { $0.id == target }) else { return }
+        floorPlans.removeAll { $0.id == planID }
+        if let index = projectWorkspaces.firstIndex(where: { $0.id == target }) {
+            projectWorkspaces[index].floorPlans.append(plan)
+        }
+        scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+    }
+
     private func restoreWorkspace(_ workspace: ProjectWorkspace) {
         isRestoringWorkspace = true
         passport = workspace.passport

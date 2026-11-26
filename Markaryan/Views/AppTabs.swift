@@ -4,8 +4,8 @@ import StoreKit
 struct ProjectsTabView: View {
     @EnvironmentObject private var store: AppStore
     @State private var showNewProject = false
+    @State private var objectToDelete: ProjectWorkspace?
 
-    private var openTasks: Int { store.projectTasks.filter { $0.status != .done }.count }
 
     var body: some View {
         ScrollView {
@@ -22,10 +22,13 @@ struct ProjectsTabView: View {
                         }
                         .buttonStyle(PremiumPressStyle())
                     }
-                    if store.projectWorkspaces.count > 1 {
+                    if !store.inObject {
+                        InfoNote(text: "Сейчас вы работаете без объекта: сканы, расчёты и картинки сохраняются в «Без объекта». Выберите объект ниже или создайте новый — и всё дальше будет в нём. Сделанное раньше можно перенести кнопкой «Сохранить в объект».")
+                    }
+                    if !store.objects.isEmpty || !store.inObject {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
-                                ForEach(store.projectWorkspaces) { workspace in
+                                ForEach(store.objects) { workspace in
                                     Button {
                                         withAnimation(.snappy) { store.selectProject(workspace.id) }
                                         Haptics.tap()
@@ -34,53 +37,50 @@ struct ProjectsTabView: View {
                                             .frame(width: 250)
                                     }
                                     .buttonStyle(PremiumCardPressStyle())
+                                    .contextMenu {
+                                        Button(role: .destructive) { objectToDelete = workspace } label: { Label("Удалить объект", systemImage: "trash") }
+                                    }
+                                }
+                                if store.inObject {
+                                    Button { withAnimation(.snappy) { store.workWithoutObject() }; Haptics.tap() } label: {
+                                        Label("Без объекта", systemImage: "tray").font(.subheadline.weight(.semibold))
+                                            .padding(16).frame(height: 90).panelCard(18)
+                                    }
+                                    .buttonStyle(PremiumCardPressStyle())
                                 }
                             }
                             .padding(.horizontal, 20)
                         }
                         .padding(.horizontal, -20)
                     }
-                    NavigationLink { ProjectHubView() } label: {
-                        HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
+                    if store.inObject {
+                        NavigationLink { ProjectHubView() } label: {
+                            HomeProjectCard(name: store.projectDisplayName, stage: store.passport.stage, progress: store.projectProgress, next: store.nextMilestone?.title, planned: store.budgetPlanned, actual: store.budgetActual)
+                        }
+                        .buttonStyle(PremiumCardPressStyle())
+                        .contextMenu {
+                            if let active = store.activeWorkspace { Button(role: .destructive) { objectToDelete = active } label: { Label("Удалить объект", systemImage: "trash") } }
+                        }
+                        if store.objects.count > 0 { Text("Долгое нажатие на объект — удалить.").font(.caption2).foregroundStyle(Theme.muted) }
                     }
-                    .buttonStyle(PremiumCardPressStyle())
+                }
+                .confirmationDialog("Удалить объект «\(objectToDelete?.passport.name ?? "")»? Удалятся его планы комнат, бюджет, фото и задачи. Обмеры дома, сметы и расчёты останутся — без объекта.",
+                                    isPresented: Binding(get: { objectToDelete != nil }, set: { if !$0 { objectToDelete = nil } }), titleVisibility: .visible) {
+                    Button("Удалить объект", role: .destructive) {
+                        if let id = objectToDelete?.id { withAnimation { store.deleteObject(id) }; Haptics.success() }
+                        objectToDelete = nil
+                    }
+                    Button("Отмена", role: .cancel) { objectToDelete = nil }
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    HomeSectionHeader(eyebrow: "Работы", title: "План и команда")
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        NavigationLink { ProjectPlanView() } label: {
-                            ProjectStatTile(icon: "flag.checkered", title: "Этапы", value: "\(store.milestones.filter(\.completed).count)/\(store.milestones.count)", caption: "готовность \(Int(store.projectProgress * 100))%", accent: Theme.orange)
-                        }
-                        NavigationLink { ProjectTasksView() } label: {
-                            ProjectStatTile(icon: "checklist", title: "Задачи", value: "\(openTasks)", caption: openTasks == 0 ? "нет открытых" : "открыто", accent: Theme.sky)
-                        }
-                        NavigationLink { ProjectBudgetTrackerView() } label: {
-                            ProjectStatTile(icon: "rublesign.circle.fill", title: "Бюджет", value: store.budgetPlanned > 0 ? CalculationEngine.money(store.budgetPlanned) : "—", caption: store.budgetPlanned > 0 ? "потрачено \(CalculationEngine.money(store.budgetActual))" : "план и факт", accent: Theme.success)
-                        }
-                        NavigationLink { ChecklistView() } label: {
-                            ProjectStatTile(icon: "checkmark.shield.fill", title: "Контроль", value: "\(store.checklistDone.count)", caption: "пунктов отмечено", accent: Theme.orangeSoft)
-                        }
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
+                if store.inObject {
+                    ObjectDashboard()
+                } else {
+                    // Без объекта: всё равно можно вести бюджет и задачи, а голосом — сразу.
+                    VoiceCommandCard()
+                    ObjectToolsSection()
+                    ObjectShareCard()
                 }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    HomeSectionHeader(eyebrow: "Документы", title: "История объекта")
-                    NavigationLink { ProjectPhotoDiaryView() } label: {
-                        AppTabRow(icon: "photo.stack.fill", title: "Фото‑дневник", subtitle: store.projectPhotos.isEmpty ? "Скрытые работы и этапы на фото" : "Фото: \(store.projectPhotos.count)")
-                    }
-                    NavigationLink { ConstructionDiaryView() } label: {
-                        AppTabRow(icon: "text.book.closed.fill", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Договорённости, даты, комментарии" : "Записей: \(store.diary.count)")
-                    }
-                    NavigationLink { ObjectPassportView() } label: {
-                        AppTabRow(icon: "list.clipboard.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
-                    }
-                    Button { store.tab = 2 } label: {
-                        AppTabRow(icon: "square.grid.3x3.square", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, обмеры и рендеры — во вкладке «Дизайн»" : "Помещений: \(store.floorPlans.count) — во вкладке «Дизайн»")
-                    }
-                }
-                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }

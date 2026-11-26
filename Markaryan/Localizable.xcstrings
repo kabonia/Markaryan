@@ -679,6 +679,28 @@
         }
       }
     },
+    "%lld КРЕДИТОВ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld CREDITS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld CRÉDITOS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 积分"
+          }
+        }
+      }
+    },
     "%lld из %lld": {
       "localizations": {
         "en": {
@@ -1245,6 +1267,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "每 1 m³ 砂浆 0.9 公斤"
+          }
+        }
+      }
+    },
+    "1 кредит ≈ %@ · на балансе %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 credit ≈ %@ · balance %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 crédito ≈ %@ · saldo %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 积分 ≈ %@ · 余额 %@"
+          }
+        }
+      }
+    },
+    "1 фотореалистичный кадр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 photorealistic image"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 imagen fotorrealista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1张写实效果图"
           }
         }
       }
@@ -2143,6 +2209,28 @@
         }
       }
     },
+    "3D‑обмеры дома": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3D house measurements"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediciones 3D de casas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "房屋3D测量"
+          }
+        }
+      }
+    },
     "3D‑планировка": {
       "extractionState": "manual",
       "localizations": {
@@ -2619,6 +2707,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "7. 地面向地漏找坡 1–2 %;Ø50 排水管坡度不小于 2 %,Ø110 为 1–2 %。"
+          }
+        }
+      }
+    },
+    "8 букв и цифр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 letters and digits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8 letras y cifras"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8位字母和数字"
           }
         }
       }
@@ -3763,6 +3873,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "20___年______________月____日"
+          }
+        }
+      }
+    },
+    "«Бюджет полтора миллиона» · «Потратил 20 тысяч на плитку» · «Задача купить клей»": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Budget 50,000\" · \"Spent 2,000 on tiles\" · \"Task buy adhesive\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Presupuesto 50 000» · «Gasté 2000 en azulejos» · «Tarea comprar adhesivo»"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“预算 50000” · “瓷砖花了 2000” · “任务 买胶”"
           }
         }
       }
@@ -5478,6 +5610,28 @@
         }
       }
     },
+    "БЛИЖАЙШИЕ ЗАДАЧИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPCOMING TASKS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRÓXIMAS TAREAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近期任务"
+          }
+        }
+      }
+    },
     "БЫЛО": {
       "localizations": {
         "en": {
@@ -5843,6 +5997,28 @@
         }
       }
     },
+    "Бежевые": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beige"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beige"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "米色"
+          }
+        }
+      }
+    },
     "Без границы участка проверятся категория земли и ВРИ. Отступы дома от границ — после привязки по углам участка.": {
       "localizations": {
         "en": {
@@ -5929,6 +6105,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "不做装饰线条，家具背后的墙面用鼠尾草绿点缀"
+          }
+        }
+      }
+    },
+    "Без объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未归入项目"
           }
         }
       }
@@ -6114,6 +6312,28 @@
         }
       }
     },
+    "Белые": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blancas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "白色"
+          }
+        }
+      }
+    },
     "Белые стены, светлое дерево, текстиль из льна и шерсти, много дневного света.": {
       "extractionState": "manual",
       "localizations": {
@@ -6179,6 +6399,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "凉亭"
+          }
+        }
+      }
+    },
+    "Бесплатно: калькуляторы, AR‑рулетка, скан комнаты, расчёт материалов, сметы по ценам города, проекты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free: calculators, AR tape measure, room scan, materials calculation, estimates at city prices, projects"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gratis: calculadoras, cinta métrica AR, escaneo de habitaciones, cálculo de materiales, presupuestos con precios de la ciudad, proyectos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "免费：计算器、AR卷尺、房间扫描、材料计算、按城市价格估算、项目"
           }
         }
       }
@@ -7304,6 +7546,50 @@
         }
       }
     },
+    "В бюджет объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To the project budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al presupuesto del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加入项目预算"
+          }
+        }
+      }
+    },
+    "В какой объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En qué proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存到哪个项目"
+          }
+        }
+      }
+    },
     "В калькулятор": {
       "localizations": {
         "en": {
@@ -7552,6 +7838,28 @@
         }
       }
     },
+    "В этом расчёте нет материалов для поиска цен.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This calculation has no materials to price."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este cálculo no tiene materiales para buscar precios."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此计算中没有可查询价格的材料。"
+          }
+        }
+      }
+    },
     "В/Ц": {
       "extractionState": "manual",
       "localizations": {
@@ -7780,6 +8088,28 @@
         }
       }
     },
+    "ВЕСЬ ОБЪЕКТ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHOLE PROJECT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODO EL PROYECTO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整个项目"
+          }
+        }
+      }
+    },
     "ВИЗУАЛИЗАТОР ОБЪЕКТА": {
       "localizations": {
         "en": {
@@ -7798,6 +8128,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "项目可视化"
+          }
+        }
+      }
+    },
+    "ВИЗУАЛИЗАЦИЯ С ЭТИМИ МАТЕРИАЛАМИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VISUALIZATION WITH THESE MATERIALS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VISUALIZACIÓN CON ESTOS MATERIALES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "采用这些材料的效果图"
           }
         }
       }
@@ -8875,6 +9227,28 @@
         }
       }
     },
+    "Вид плитки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tile look"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspecto del azulejo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瓷砖样式"
+          }
+        }
+      }
+    },
     "Вид разрешённого использования": {
       "localizations": {
         "en": {
@@ -8939,6 +9313,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "项目效果图生成器"
+          }
+        }
+      }
+    },
+    "Визуализации": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizations"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizaciones"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "效果图"
           }
         }
       }
@@ -10171,6 +10567,28 @@
         }
       }
     },
+    "Всё, что вы сделаете дальше, сохранится в этот объект.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything you do next will be saved to this project."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo lo que haga a continuación se guardará en este proyecto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "之后所做的一切都会保存到该项目。"
+          }
+        }
+      }
+    },
     "Второй круг — дальше от дома, камеру поднимите на крышу и фронтоны. Подсказка скажет, если что‑то пропущено.": {
       "extractionState": "manual",
       "localizations": {
@@ -10805,6 +11223,28 @@
         }
       }
     },
+    "Выключить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
     "Выключить голос": {
       "extractionState": "manual",
       "localizations": {
@@ -10846,6 +11286,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "关闭手电筒"
+          }
+        }
+      }
+    },
+    "Выполнить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejecutar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "执行"
           }
         }
       }
@@ -12176,6 +12638,28 @@
         }
       }
     },
+    "Готовим ссылку…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the link…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando el enlace…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在生成链接……"
+          }
+        }
+      }
+    },
     "Готовим сцену по скану…": {
       "extractionState": "manual",
       "localizations": {
@@ -12195,6 +12679,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在根据扫描生成场景…"
+          }
+        }
+      }
+    },
+    "Готовим…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备中……"
+          }
+        }
+      }
+    },
+    "Готовность": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completion level"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nivel de acabado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成程度"
           }
         }
       }
@@ -12466,6 +12994,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "查询俄罗斯不动产登记局的地块边界、面积和许可用途（ВРИ），并核查建筑退界距离。"
+          }
+        }
+      }
+    },
+    "Графит": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graphite"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grafito"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "石墨色"
           }
         }
       }
@@ -12767,6 +13317,28 @@
         }
       }
     },
+    "ДЕНЬГИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MONEY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DINERO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "资金"
+          }
+        }
+      }
+    },
     "ДИЗАЙН‑ПРОЕКТ ИНТЕРЬЕРА": {
       "extractionState": "manual",
       "localizations": {
@@ -12790,6 +13362,28 @@
         }
       }
     },
+    "ДОБАВЛЕНО В ОБЪЕКТ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ADDED TO THE PROJECT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AÑADIDO AL PROYECTO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已添加到项目"
+          }
+        }
+      }
+    },
     "ДОКУМЕНТЫ": {
       "localizations": {
         "en": {
@@ -12808,6 +13402,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件"
+          }
+        }
+      }
+    },
+    "ДОМ С ЭТОЙ ОТДЕЛКОЙ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "THE HOUSE WITH THIS FINISH"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LA CASA CON ESTE ACABADO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "采用此装修的房屋"
           }
         }
       }
@@ -13216,6 +13832,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "拖动滑块对比：左侧是原图，右侧是改造效果。轻点两下可全屏查看。所有方案均已保存到「我的照片改造方案」。"
+          }
+        }
+      }
+    },
+    "Двигайте шторку: слева 3D‑вид из скана, справа — с отделкой. Нажмите «Открыть», чтобы увеличить.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the slider: the 3D view from the scan on the left, with the finish on the right. Tap \"Open\" to enlarge."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueva la cortina: a la izquierda la vista 3D del escaneo, a la derecha con el acabado. Toque «Abrir» para ampliar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动滑块：左侧为扫描的3D视图，右侧为装修效果。点击“打开”可放大。"
           }
         }
       }
@@ -13722,6 +14360,28 @@
         }
       }
     },
+    "Диапазон рынка: %@ – %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Market range: %@ – %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rango de mercado: %@ – %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "市场区间：%@ – %@"
+          }
+        }
+      }
+    },
     "Диван": {
       "extractionState": "manual",
       "localizations": {
@@ -13854,6 +14514,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "设计与 AI"
+          }
+        }
+      }
+    },
+    "Дизайн и визуализация": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Design and visualization"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diseño y visualización"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设计和效果图"
           }
         }
       }
@@ -15314,6 +15996,28 @@
         }
       }
     },
+    "Долгое нажатие на объект — удалить.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-press a project to delete it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantenga pulsado un proyecto para eliminarlo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长按项目即可删除。"
+          }
+        }
+      }
+    },
     "Должность": {
       "extractionState": "manual",
       "localizations": {
@@ -15356,6 +16060,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "房屋"
+          }
+        }
+      }
+    },
+    "Дом %@ × %@ м, %lld эт., кровля %lld° — из обмера. Выберите материалы:": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "House %@ × %@ m, %lld fl., roof %lld° — from the measurement. Choose the materials:"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casa de %@ × %@ m, %lld pl., cubierta %lld°, según la medición. Elija los materiales:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "房屋 %@ × %@ 米，%lld 层，屋顶 %lld°——来自测量。请选择材料："
           }
         }
       }
@@ -16411,6 +17137,28 @@
         }
       }
     },
+    "Если ИИ не справился — кредиты возвращаются сами. Купленный пакет тратится раньше кредитов.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the AI fails, the credits come back automatically. A purchased pack is used before credits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si la IA falla, los créditos se devuelven solos. El paquete comprado se usa antes que los créditos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果AI失败，积分会自动退回。已购买的套餐优先于积分使用。"
+          }
+        }
+      }
+    },
     "Если ИИ не справился, кредиты возвращаются автоматически.": {
       "extractionState": "manual",
       "localizations": {
@@ -16587,6 +17335,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "再生成一个方案"
+          }
+        }
+      }
+    },
+    "Ещё: фото‑дневник, журнал, контроль, паспорт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More: photo diary, log, control, passport"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más: diario de fotos, registro, control, ficha"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多：照片日志、记录、检查、档案"
           }
         }
       }
@@ -17518,6 +18288,28 @@
         }
       }
     },
+    "Закупка объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project shopping list"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compras del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目采购"
+          }
+        }
+      }
+    },
     "Заменить логотип": {
       "localizations": {
         "en": {
@@ -17947,6 +18739,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "防护与涂装"
+          }
+        }
+      }
+    },
+    "Зелёная": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绿色"
           }
         }
       }
@@ -19262,6 +20076,28 @@
         }
       }
     },
+    "Из пакета": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From the pack"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Del paquete"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从套餐扣除"
+          }
+        }
+      }
+    },
     "Известковая штукатурка": {
       "extractionState": "manual",
       "localizations": {
@@ -19599,6 +20435,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "所选方案下房间精确 3D 模型的等轴测图"
+          }
+        }
+      }
+    },
+    "Или напишите команду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or type a command"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O escriba un comando"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "或输入命令"
           }
         }
       }
@@ -21966,6 +22824,28 @@
         }
       }
     },
+    "Картинки, планы, размеры, материалы, сметы и бюджет — одним файлом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pictures, plans, dimensions, materials, estimates and budget in one file"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imágenes, planos, medidas, materiales, presupuestos y presupuesto general en un solo archivo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片、平面图、尺寸、材料、估算和预算——一个文件"
+          }
+        }
+      }
+    },
     "Касание пустого места — добавить метку, касание метки — убрать.": {
       "localizations": {
         "en": {
@@ -22945,6 +23825,50 @@
         }
       }
     },
+    "Код вам пришлёт владелец объекта.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The project owner will send you the code."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El propietario del proyecto le enviará el código."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目所有者会把代码发给您。"
+          }
+        }
+      }
+    },
+    "Код объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目代码"
+          }
+        }
+      }
+    },
     "Кожа": {
       "extractionState": "manual",
       "localizations": {
@@ -23310,6 +24234,28 @@
         }
       }
     },
+    "Комплект объекта (PDF)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project kit (PDF)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier del proyecto (PDF)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目资料包（PDF）"
+          }
+        }
+      }
+    },
     "Контакты": {
       "localizations": {
         "en": {
@@ -23374,6 +24320,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "检查"
+          }
+        }
+      }
+    },
+    "Контроль качества": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quality control"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control de calidad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "质量检查"
           }
         }
       }
@@ -23648,6 +24616,28 @@
         }
       }
     },
+    "Коричневая": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brown"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marrón"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "棕色"
+          }
+        }
+      }
+    },
     "Коробка": {
       "extractionState": "manual",
       "localizations": {
@@ -23896,6 +24886,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "墙面涂料刷两遍（约 0.12 L/m²）"
+          }
+        }
+      }
+    },
+    "Красная": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roja"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "红色"
           }
         }
       }
@@ -24630,6 +25642,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "建议多买 10%"
+          }
+        }
+      }
+    },
+    "Куплено %lld из %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bought %lld of %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprado %lld de %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已购买 %lld / %lld"
           }
         }
       }
@@ -26077,6 +27111,28 @@
         }
       }
     },
+    "МОИ ОБМЕРЫ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MY MEASUREMENTS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIS MEDICIONES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的测量"
+          }
+        }
+      }
+    },
     "МОИ ОБРАЩЕНИЯ": {
       "localizations": {
         "en": {
@@ -26737,6 +27793,28 @@
         }
       }
     },
+    "Материалы всех комнат и расчётов одним списком, с ценами и отметкой «куплено»": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materials from all rooms and calculations in one list, with prices and a \"bought\" tick"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materiales de todas las habitaciones y cálculos en una lista, con precios y marca de «comprado»"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有房间和计算的材料汇成一个清单，含价格和“已购买”标记"
+          }
+        }
+      }
+    },
     "Материалы и смета": {
       "localizations": {
         "en": {
@@ -26755,6 +27833,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "材料与工程估算"
+          }
+        }
+      }
+    },
+    "Материалы из всех комнат объекта (где открыт «Расчёт материалов») и из расчётов, добавленных в объект. Одинаковое сложено. Отмечайте купленное.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materials from all rooms of the project (where \"Materials calculation\" was opened) and from calculations added to the project. Identical items are combined. Tick what you've bought."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materiales de todas las habitaciones del proyecto (donde se abrió «Cálculo de materiales») y de los cálculos añadidos al proyecto. Lo igual se suma. Marque lo comprado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自项目所有房间（已打开“材料计算”的）以及添加到项目的计算的材料。相同的已合并。请勾选已购买的。"
           }
         }
       }
@@ -26891,6 +27991,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "材料、条件或备注"
+          }
+        }
+      }
+    },
+    "Материалы, цены и визуализация": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materials, prices and visualization"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Materiales, precios y visualización"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "材料、价格和效果图"
           }
         }
       }
@@ -27711,6 +28833,28 @@
         }
       }
     },
+    "Микрофон занят.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The microphone is busy."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El micrófono está ocupado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风被占用。"
+          }
+        }
+      }
+    },
     "Микроцемент": {
       "extractionState": "manual",
       "localizations": {
@@ -27985,6 +29129,28 @@
         }
       }
     },
+    "Можно не уходить: как только макет будет готов, он откроется здесь — с размерами, сметой и визуализацией.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No need to leave: as soon as the model is ready, it will open here with dimensions, an estimate and a visualization."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hace falta salir: en cuanto el modelo esté listo, se abrirá aquí con medidas, presupuesto y visualización."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需离开：模型一准备好就会在这里打开，包含尺寸、估算和效果图。"
+          }
+        }
+      }
+    },
     "Можно спросить": {
       "localizations": {
         "en": {
@@ -28093,6 +29259,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "我的测算"
+          }
+        }
+      }
+    },
+    "Мой бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的预算"
+          }
+        }
+      }
+    },
+    "Мой бюджет на объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My project budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi presupuesto del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的项目预算"
           }
         }
       }
@@ -29306,6 +30516,28 @@
         }
       }
     },
+    "Нажмите на задачу — она отметится выполненной.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a task to mark it done."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque una tarea para marcarla como hecha."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击任务即可标记为完成。"
+          }
+        }
+      }
+    },
     "Нажмите на комнату, чтобы открыть её план, дизайн и чертежи.": {
       "localizations": {
         "en": {
@@ -30004,6 +31236,28 @@
         }
       }
     },
+    "Например, 1 500 000": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example, 1,500,000"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por ejemplo, 1 500 000"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如 1,500,000"
+          }
+        }
+      }
+    },
     "Например, 9,42": {
       "localizations": {
         "en": {
@@ -30044,6 +31298,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "例如：客厅"
+          }
+        }
+      }
+    },
+    "Например, дача": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example, cottage"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por ejemplo, casa de campo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如：别墅"
           }
         }
       }
@@ -30355,6 +31631,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "例如:鼠尾草绿柜门、仿石台面、开放式层架"
+          }
+        }
+      }
+    },
+    "Нарисовать заново": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draw again"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujar de nuevo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新绘制"
+          }
+        }
+      }
+    },
+    "Нарисуем ваш дом по 3D‑модели — с фасадом и кровлей из сметы. Поверните модель выше, чтобы выбрать ракурс.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll draw your house from the 3D model with the facade and roofing from the estimate. Rotate the model above to pick the angle."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujaremos su casa a partir del modelo 3D con la fachada y la cubierta del presupuesto. Gire el modelo de arriba para elegir el ángulo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们将根据3D模型，用估算中的外墙和屋面绘制您的房屋。旋转上方的模型以选择视角。"
+          }
+        }
+      }
+    },
+    "Нарисуем дом по размерам обмера — с фасадом и кровлей из сметы.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll draw the house from the measured dimensions with the facade and roofing from the estimate."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujaremos la casa con las medidas tomadas y la fachada y cubierta del presupuesto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们将按测量尺寸，用估算中的外墙和屋面绘制房屋。"
           }
         }
       }
@@ -30857,6 +32199,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "发送失败，请重试。"
+          }
+        }
+      }
+    },
+    "Не получилось построить вид комнаты.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't build a view of the room."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo crear la vista de la habitación."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法生成房间视图。"
+          }
+        }
+      }
+    },
+    "Не получилось сделать ссылку.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create the link."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo crear el enlace."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法生成链接。"
           }
         }
       }
@@ -31787,6 +33173,28 @@
         }
       }
     },
+    "Нет интернета.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No internet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin internet."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无网络。"
+          }
+        }
+      }
+    },
     "Нет надёжных рыночных данных — уточните цену у продавца.": {
       "localizations": {
         "en": {
@@ -32254,6 +33662,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "新项目"
+          }
+        }
+      }
+    },
+    "Новый объект, например «Дача»": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New project, e.g. \"Cottage\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proyecto nuevo, p. ej. «Casa de campo»"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新项目，例如“别墅”"
           }
         }
       }
@@ -33661,6 +35091,50 @@
         }
       }
     },
+    "Объект не найден.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project not found."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proyecto no encontrado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到项目。"
+          }
+        }
+      }
+    },
+    "Объект открыт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project opened"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proyecto abierto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目已打开"
+          }
+        }
+      }
+    },
     "Объект целиком": {
       "extractionState": "manual",
       "localizations": {
@@ -34315,6 +35789,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "单坡"
+          }
+        }
+      }
+    },
+    "Однотонная": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plain"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纯色"
           }
         }
       }
@@ -35091,6 +36587,28 @@
         }
       }
     },
+    "Остановить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止"
+          }
+        }
+      }
+    },
     "Остаток": {
       "localizations": {
         "en": {
@@ -35478,6 +36996,28 @@
         }
       }
     },
+    "Откроется в браузере без приложения: размеры, смета и картинки. Действует 30 дней.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens in a browser without the app: dimensions, estimate and pictures. Valid for 30 days."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se abre en el navegador sin la app: medidas, presupuesto e imágenes. Válido 30 días."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需应用即可在浏览器中打开：尺寸、估算和图片。有效期30天。"
+          }
+        }
+      }
+    },
     "Откройте «Мои обмеры», чтобы посмотреть размеры и 3D‑модель.": {
       "extractionState": "manual",
       "localizations": {
@@ -35569,6 +37109,50 @@
         }
       }
     },
+    "Открытых задач нет. Добавьте вручную, голосом или из сметы → «План работ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No open tasks. Add them manually, by voice or from an estimate → \"Work plan\"."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay tareas abiertas. Añádalas a mano, por voz o desde un presupuesto → «Plan de obra»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有未完成的任务。可手动、语音或从估算 →“施工计划”添加。"
+          }
+        }
+      }
+    },
+    "Открыть": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开"
+          }
+        }
+      }
+    },
     "Открыть PDF": {
       "extractionState": "manual",
       "localizations": {
@@ -35637,6 +37221,28 @@
         }
       }
     },
+    "Открыть картинку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the picture"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir la imagen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开图片"
+          }
+        }
+      }
+    },
     "Открыть контур в AR": {
       "extractionState": "manual",
       "localizations": {
@@ -35678,6 +37284,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开设置"
+          }
+        }
+      }
+    },
+    "Открыть объект по коду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a project by code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir un proyecto por código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过代码打开项目"
+          }
+        }
+      }
+    },
+    "Открыть по коду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open by code"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir por código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过代码打开"
           }
         }
       }
@@ -36042,6 +37692,28 @@
         }
       }
     },
+    "Отправить картинку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the picture"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar la imagen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送图片"
+          }
+        }
+      }
+    },
     "Отправить на обработку": {
       "extractionState": "manual",
       "localizations": {
@@ -36088,6 +37760,72 @@
         }
       }
     },
+    "Отправить размеры": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the dimensions"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar las medidas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送尺寸"
+          }
+        }
+      }
+    },
+    "Отправить размеры и смету": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the dimensions and estimate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar las medidas y el presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送尺寸和估算"
+          }
+        }
+      }
+    },
+    "Отправить расчёт с ценами": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the calculation with prices"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar el cálculo con precios"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送含价格的计算"
+          }
+        }
+      }
+    },
     "Отправить смету": {
       "extractionState": "manual",
       "localizations": {
@@ -36107,6 +37845,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "发送预算"
+          }
+        }
+      }
+    },
+    "Отправить список": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the list"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar la lista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送清单"
           }
         }
       }
@@ -36428,6 +38188,28 @@
         }
       }
     },
+    "ПАКЕТ · не сгорает": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PACK · never expires"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PAQUETE · no caduca"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "套餐 · 永不过期"
+          }
+        }
+      }
+    },
     "ПАЛИТРА": {
       "extractionState": "manual",
       "localizations": {
@@ -36603,6 +38385,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "工地天气 · 索契"
+          }
+        }
+      }
+    },
+    "ПОДПИСКА · %lld кредитов в месяц": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SUBSCRIPTION · %lld credits a month"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SUSCRIPCIÓN · %lld créditos al mes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "订阅 · 每月 %lld 积分"
           }
         }
       }
@@ -37144,6 +38948,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "楼板与圈梁"
+          }
+        }
+      }
+    },
+    "Перенести в другой объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to another project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mover a otro proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移到其他项目"
           }
         }
       }
@@ -37806,6 +39632,28 @@
         }
       }
     },
+    "План работ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work plan"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan de obra"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "施工计划"
+          }
+        }
+      }
+    },
     "План расстановки кухонной мебели и техники": {
       "extractionState": "manual",
       "localizations": {
@@ -38444,6 +40292,28 @@
         }
       }
     },
+    "Плитка на полу": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Floor tiles"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azulejos del suelo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "地砖"
+          }
+        }
+      }
+    },
     "Плитка на стены": {
       "extractionState": "manual",
       "localizations": {
@@ -38509,6 +40379,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "按排砖方案算瓷砖用量，另算瓷砖胶、填缝剂、标筋、抹灰、找平、防水和涂料的用料，含包装数量和价格"
+          }
+        }
+      }
+    },
+    "Плитка по раскладке, клей, маяки, штукатурка, стяжка, краска — цены со ссылками и картинка комнаты с этой отделкой": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiles by layout, adhesive, guides, plaster, screed, paint — prices with links and a picture of the room with this finish"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azulejos según el despiece, adhesivo, guías, yeso, recrecido, pintura: precios con enlaces y una imagen de la habitación con este acabado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按排版计算瓷砖、胶粘剂、标筋、抹灰、找平、涂料——含链接的价格以及采用该装修的房间效果图"
           }
         }
       }
@@ -39721,6 +41613,28 @@
         }
       }
     },
+    "Под бетон": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concrete look"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efecto hormigón"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仿混凝土"
+          }
+        }
+      }
+    },
     "Под гарнитуром — тоже плитка": {
       "extractionState": "manual",
       "localizations": {
@@ -39740,6 +41654,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "橱柜下方也铺砖"
+          }
+        }
+      }
+    },
+    "Под дерево": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wood look"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efecto madera"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仿木"
+          }
+        }
+      }
+    },
+    "Под камень": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stone look"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efecto piedra"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仿石"
           }
         }
       }
@@ -40267,6 +42225,28 @@
         }
       }
     },
+    "Подробная смета по позициям": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detailed itemized estimate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto detallado por partidas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐项详细估算"
+          }
+        }
+      }
+    },
     "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.": {
       "extractionState": "manual",
       "localizations": {
@@ -40584,6 +42564,28 @@
         }
       }
     },
+    "Пока пусто. Откройте «Материалы, цены и визуализация» в комнате или добавьте расчёт калькулятора в объект.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty for now. Open \"Materials, prices and visualization\" in a room or add a calculator result to the project."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vacío por ahora. Abra «Materiales, precios y visualización» en una habitación o añada un cálculo al proyecto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂无内容。请在房间中打开“材料、价格和效果图”，或将计算器结果添加到项目。"
+          }
+        }
+      }
+    },
     "Пока список доступен на этом iPhone; синхронизация с участниками ещё не подключена.": {
       "localizations": {
         "en": {
@@ -40624,6 +42626,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "开工之前，\n先看效果。"
+          }
+        }
+      }
+    },
+    "Покажем вашу комнату — точные стены, окна и двери из скана — с отделкой из расчёта. Цвета можно поменять.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll show your room — the exact walls, windows and doors from the scan — with the finish from the calculation. You can change the colors."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostraremos su habitación, con las paredes, ventanas y puertas exactas del escaneo, con el acabado del cálculo. Puede cambiar los colores."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们将展示您的房间——扫描得到的精确墙体、窗户和门——并采用计算中的装修。颜色可以更改。"
           }
         }
       }
@@ -40692,6 +42716,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "开始"
+          }
+        }
+      }
+    },
+    "Показать дом с этой отделкой": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the house with this finish"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar la casa con este acabado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示采用此装修的房屋"
+          }
+        }
+      }
+    },
+    "Показать комнату с этой отделкой": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the room with this finish"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar la habitación con este acabado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示采用此装修的房间"
           }
         }
       }
@@ -42129,6 +44197,28 @@
         }
       }
     },
+    "Посчитать смету": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculate the estimate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calcular el presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计算估算"
+          }
+        }
+      }
+    },
     "Посчитать смету по рынку": {
       "extractionState": "manual",
       "localizations": {
@@ -42262,6 +44352,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "已花费"
+          }
+        }
+      }
+    },
+    "Потрачено (факт)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent (actual)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gastado (real)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已花费（实际）"
           }
         }
       }
@@ -42559,6 +44671,28 @@
         }
       }
     },
+    "Премиум": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premium"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premium"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高端"
+          }
+        }
+      }
+    },
     "Прервать": {
       "localizations": {
         "en": {
@@ -42644,6 +44778,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "设备"
+          }
+        }
+      }
+    },
+    "Пригласить супруга или прораба": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite a spouse or site manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invitar a su pareja o jefe de obra"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邀请配偶或工长"
           }
         }
       }
@@ -44485,6 +46641,28 @@
         }
       }
     },
+    "Работа и техника": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Labor and equipment"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mano de obra y maquinaria"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人工和机械"
+          }
+        }
+      }
+    },
     "Работа: ": {
       "extractionState": "manual",
       "localizations": {
@@ -45598,6 +47776,28 @@
         }
       }
     },
+    "Распознавание речи сейчас недоступно.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition is unavailable right now."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reconocimiento de voz no está disponible ahora."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音识别暂不可用。"
+          }
+        }
+      }
+    },
     "Распознать свой материал": {
       "extractionState": "manual",
       "localizations": {
@@ -46102,6 +48302,28 @@
         }
       }
     },
+    "Расчёты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculations"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cálculos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计算"
+          }
+        }
+      }
+    },
     "Расчёты и сметы": {
       "extractionState": "manual",
       "localizations": {
@@ -46143,6 +48365,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "计算结果、工程估价单、项目、平面布局、照片和日志仅保存在您的 iPhone 上。删除应用会一并删除这些数据。"
+          }
+        }
+      }
+    },
+    "Реальные предложения магазинов вашего города; без ссылки — ориентир.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Real offers from stores in your city; no link means an estimate."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas reales de tiendas de su ciudad; sin enlace, es una estimación."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自您所在城市商店的真实报价；无链接的为参考价。"
           }
         }
       }
@@ -46598,6 +48842,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "米纸"
+          }
+        }
+      }
+    },
+    "Рисуем дом… около 1–2 минут": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drawing the house… about 1–2 minutes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujando la casa… unos 1–2 minutos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在绘制房屋……约1–2分钟"
+          }
+        }
+      }
+    },
+    "Рисуем комнату… около 1–2 минут": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drawing the room… about 1–2 minutes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujando la habitación… unos 1–2 minutos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在绘制房间……约1–2分钟"
           }
         }
       }
@@ -47424,6 +49712,28 @@
         }
       }
     },
+    "СМЕТА ПО ЭТИМ РАЗМЕРАМ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ESTIMATE FOR THESE DIMENSIONS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRESUPUESTO CON ESTAS MEDIDAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按此尺寸估算"
+          }
+        }
+      }
+    },
     "СМЕТАПРО · СТРОИТЕЛЬНЫЙ РАСЧЁТ": {
       "extractionState": "manual",
       "localizations": {
@@ -47443,6 +49753,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "SmetaPro · 建筑工程计算"
+          }
+        }
+      }
+    },
+    "СОВМЕСТНЫЙ ДОСТУП": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SHARED ACCESS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ACCESO COMPARTIDO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共享访问"
           }
         }
       }
@@ -48449,6 +50781,28 @@
         }
       }
     },
+    "Светлый": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浅色"
+          }
+        }
+      }
+    },
     "Светлый ясень": {
       "extractionState": "manual",
       "localizations": {
@@ -48491,6 +50845,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "工程量汇总表"
+          }
+        }
+      }
+    },
+    "Свой материал": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your own material"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Material propio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自有材料"
           }
         }
       }
@@ -48677,6 +51053,28 @@
         }
       }
     },
+    "Сейчас без объекта — бюджет и задачи попадут в «Без объекта». Выберите объект на главной.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No project selected — the budget and tasks will go to \"No project\". Pick a project on the Home screen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin proyecto: el presupuesto y las tareas irán a «Sin proyecto». Elija un proyecto en la pantalla principal."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前未选择项目——预算和任务将进入“未归入项目”。请在首页选择项目。"
+          }
+        }
+      }
+    },
     "Сейчас в шапке «%@». Впишите свою компанию — оформление останется тем же.": {
       "localizations": {
         "en": {
@@ -48718,6 +51116,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "目前所有功能均免费。启用付费后，可在此查看余额和套餐。"
+          }
+        }
+      }
+    },
+    "Сейчас вы работаете без объекта: сканы, расчёты и картинки сохраняются в «Без объекта». Выберите объект ниже или создайте новый — и всё дальше будет в нём. Сделанное раньше можно перенести кнопкой «Сохранить в объект».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're working without a project: scans, calculations and pictures are saved to \"No project\". Pick a project below or create a new one, and everything from now on will go there. Earlier work can be moved with \"Save to project\"."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Está trabajando sin proyecto: los escaneos, cálculos e imágenes se guardan en «Sin proyecto». Elija un proyecto abajo o cree uno nuevo y todo lo siguiente irá allí. Lo anterior se puede mover con «Guardar en proyecto»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您当前未归入项目：扫描、计算和图片保存在“未归入项目”中。请在下方选择或新建项目，之后的内容都会保存到该项目。之前的内容可以通过“保存到项目”移动。"
           }
         }
       }
@@ -49109,6 +51529,28 @@
         }
       }
     },
+    "Серые": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grey"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grises"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "灰色"
+          }
+        }
+      }
+    },
     "Сетка (серпянка) и шкурка": {
       "extractionState": "manual",
       "localizations": {
@@ -49315,6 +51757,72 @@
         }
       }
     },
+    "Синхронизировано": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synced"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已同步"
+          }
+        }
+      }
+    },
+    "Синхронизировать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步"
+          }
+        }
+      }
+    },
+    "Синхронизируем…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在同步……"
+          }
+        }
+      }
+    },
     "Системы хранения": {
       "extractionState": "manual",
       "localizations": {
@@ -49357,6 +51865,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "请说明你已准备好提供帮助。"
+          }
+        }
+      }
+    },
+    "Скажите или напишите": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say or type"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diga o escriba"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说出或输入"
+          }
+        }
+      }
+    },
+    "Сказать команду": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say a command"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decir un comando"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说出命令"
           }
         }
       }
@@ -49675,6 +52227,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "整捆点数"
+          }
+        }
+      }
+    },
+    "Сколько вы готовы потратить. Сравним со сметой и тратами.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How much you're ready to spend. We'll compare it with the estimate and expenses."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuánto está dispuesto a gastar. Lo compararemos con el presupuesto y los gastos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您准备花费多少。我们将与估算和支出进行比较。"
           }
         }
       }
@@ -50089,6 +52663,28 @@
         }
       }
     },
+    "Слушаю…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在聆听……"
+          }
+        }
+      }
+    },
     "Сменить город": {
       "localizations": {
         "en": {
@@ -50129,6 +52725,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "预算"
+          }
+        }
+      }
+    },
+    "Смета (план)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate (plan)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto (plan)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算（计划）"
           }
         }
       }
@@ -50265,6 +52883,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有图纸等资料？输入尺寸、选择材料，即可按当地实际价格估算房屋或金属结构造价。"
+          }
+        }
+      }
+    },
+    "Смета и бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate and budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto y gastos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算和预算"
           }
         }
       }
@@ -51189,6 +53829,28 @@
         }
       }
     },
+    "Совместный доступ выключен": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared access is off"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceso compartido desactivado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共享访问已关闭"
+          }
+        }
+      }
+    },
     "Совпадение со сканом: %lld %%": {
       "localizations": {
         "en": {
@@ -51615,6 +54277,28 @@
         }
       }
     },
+    "Сохранить в объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar en proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存到项目"
+          }
+        }
+      }
+    },
     "Сохранить запись": {
       "localizations": {
         "en": {
@@ -51655,6 +54339,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "保存为平面图"
+          }
+        }
+      }
+    },
+    "Сохранить картинку в объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the picture to a project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar la imagen en un proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将图片保存到项目"
           }
         }
       }
@@ -52157,6 +54863,28 @@
         }
       }
     },
+    "Средний": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中等"
+          }
+        }
+      }
+    },
     "Средний слой": {
       "extractionState": "manual",
       "localizations": {
@@ -52315,6 +55043,28 @@
         }
       }
     },
+    "Ссылка для подрядчика": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link for a contractor"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enlace para el contratista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发给承包商的链接"
+          }
+        }
+      }
+    },
     "Ставрополь": {
       "extractionState": "manual",
       "localizations": {
@@ -52403,6 +55153,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "之后"
+          }
+        }
+      }
+    },
+    "Статьи и траты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Items and expenses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partidas y gastos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预算项和支出"
           }
         }
       }
@@ -53113,6 +55885,28 @@
         }
       }
     },
+    "Стоит": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Costs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuesta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "费用"
+          }
+        }
+      }
+    },
     "Стол": {
       "extractionState": "manual",
       "localizations": {
@@ -53589,6 +56383,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "条形基础总长按轴线计算,交叉处不得重复计入。截面恒定,无台阶和加宽。模板为两侧全高侧模。"
+          }
+        }
+      }
+    },
+    "Супруг или прораб видят смету, бюджет, задачи и комнаты и вносят свои правки. Фото остаются у каждого в телефоне.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your spouse or site manager see the estimate, budget, tasks and rooms and can make changes. Photos stay on each person's phone."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su pareja o el jefe de obra ven el presupuesto, los gastos, las tareas y las habitaciones y pueden hacer cambios. Las fotos se quedan en cada teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配偶或工长可以查看估算、预算、任务和房间并进行修改。照片保留在各自的手机上。"
           }
         }
       }
@@ -55557,6 +58373,72 @@
         }
       }
     },
+    "Тёмные": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuras"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "深色"
+          }
+        }
+      }
+    },
+    "Тёмный": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "深色"
+          }
+        }
+      }
+    },
+    "Тёплые": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cálidas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暖色"
+          }
+        }
+      }
+    },
     "Тёплый минимализм": {
       "extractionState": "manual",
       "localizations": {
@@ -55711,6 +58593,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "移除 Workspace ID"
+          }
+        }
+      }
+    },
+    "Убрать из объекта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from the project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar del proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从项目移除"
           }
         }
       }
@@ -55962,6 +58866,28 @@
         }
       }
     },
+    "Удалить объект": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete project"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar proyecto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除项目"
+          }
+        }
+      }
+    },
     "Удалить план": {
       "localizations": {
         "en": {
@@ -56158,6 +59084,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "填写面积、层数和预留量。"
+          }
+        }
+      }
+    },
+    "Укажите свой бюджет — покажем, укладывается ли смета.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set your budget and we'll show whether the estimate fits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indique su presupuesto y le mostraremos si el cálculo encaja."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置预算，我们会显示估算是否在预算内。"
           }
         }
       }
@@ -58169,6 +61117,28 @@
         }
       }
     },
+    "ЦЕНЫ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRICES · %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRECIOS · %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "价格 · %@"
+          }
+        }
+      }
+    },
     "Цвет": {
       "extractionState": "manual",
       "localizations": {
@@ -58211,6 +61181,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "十六进制色值，例如 #E8DFD3"
+          }
+        }
+      }
+    },
+    "Цвет кровли": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roof color"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color de la cubierta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屋面颜色"
+          }
+        }
+      }
+    },
+    "Цвет стен": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wall color"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color de las paredes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "墙面颜色"
           }
         }
       }
@@ -58651,6 +61665,28 @@
         }
       }
     },
+    "Цены в вашем городе — со ссылками": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prices in your city — with links"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios en su ciudad, con enlaces"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您所在城市的价格（含链接）"
+          }
+        }
+      }
+    },
     "Цены для: %@": {
       "localizations": {
         "en": {
@@ -58853,6 +61889,28 @@
         }
       }
     },
+    "Цены — реальные предложения магазинов и маркетплейсов вашего города: ссылка под каждой позицией. «Ориентир» — проверенного предложения не нашлось, цена примерная. «Отправить» перешлёт расчёт с ценами и ссылками.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prices are real offers from stores and marketplaces in your city, with a link under each item. \"Estimate\" means no verified offer was found and the price is approximate. \"Send\" shares the calculation with prices and links."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los precios son ofertas reales de tiendas y marketplaces de su ciudad, con un enlace bajo cada partida. «Estimación» significa que no se encontró una oferta verificada y el precio es aproximado. «Enviar» comparte el cálculo con precios y enlaces."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "价格来自您所在城市商店和电商平台的真实报价，每项下方附有链接。“参考价”表示未找到经核实的报价，价格为估计值。“发送”会分享含价格和链接的计算。"
+          }
+        }
+      }
+    },
     "Цены — рыночные предложения магазинов, маркетплейсов и подрядчиков города на дату расчёта (ссылки — в приложении). Объёмы сняты с документов ИИ‑агентами и сверены двумя независимыми чтениями. Смета не заменяет проектно‑сметную документацию по ГрК РФ.": {
       "extractionState": "manual",
       "localizations": {
@@ -58894,6 +61952,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "价格:%@"
+          }
+        }
+      }
+    },
+    "Цены: %lld из %lld позиций — реальные предложения %@, остальные — ориентир": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prices: %lld of %lld items are real offers in %@, the rest are estimates"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios: %lld de %lld partidas son ofertas reales en %@, el resto son estimaciones"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "价格：%lld/%lld 项为 %@ 的真实报价，其余为参考价"
           }
         }
       }
@@ -59983,6 +63063,28 @@
         }
       }
     },
+    "Шалфей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sage"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvia"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鼠尾草绿"
+          }
+        }
+      }
+    },
     "Шерсть": {
       "extractionState": "manual",
       "localizations": {
@@ -60649,6 +63751,28 @@
         }
       }
     },
+    "ЭТАПЫ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STAGES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ETAPAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阶段"
+          }
+        }
+      }
+    },
     "Эко": {
       "extractionState": "manual",
       "localizations": {
@@ -60668,6 +63792,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "生态风"
+          }
+        }
+      }
+    },
+    "Эконом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Económico"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "经济"
           }
         }
       }
@@ -62115,6 +65261,28 @@
         }
       }
     },
+    "вносите траты в «Статьи и траты» или голосом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "log expenses in \"Items and expenses\" or by voice"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "registre gastos en «Partidas y gastos» o por voz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“预算项和支出”中或用语音记录支出"
+          }
+        }
+      }
+    },
     "водонагрев": {
       "extractionState": "manual",
       "localizations": {
@@ -63011,6 +66179,28 @@
         }
       }
     },
+    "до 2 листов чертежей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "up to 2 drawing sheets"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hasta 2 hojas de planos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最多2张图纸"
+          }
+        }
+      }
+    },
     "до потолка": {
       "extractionState": "manual",
       "localizations": {
@@ -63075,6 +66265,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "复核时新增"
+          }
+        }
+      }
+    },
+    "добавьте смету или материалы в бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "add an estimate or materials to the budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "añada un presupuesto o materiales"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将估算或材料加入预算"
           }
         }
       }
@@ -63236,6 +66448,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "淋浴间"
+          }
+        }
+      }
+    },
+    "за каждые 10 позиций, со ссылками": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "per 10 items, with links"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "por cada 10 partidas, con enlaces"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每10项，含链接"
           }
         }
       }
@@ -66151,6 +69385,28 @@
         }
       }
     },
+    "ориентир — без ссылки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "estimate — no link"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "estimación, sin enlace"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "参考价——无链接"
+          }
+        }
+      }
+    },
     "ответить": {
       "extractionState": "manual",
       "localizations": {
@@ -67622,6 +70878,28 @@
         }
       }
     },
+    "распознать плитку, обои по фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "recognize tiles or wallpaper from a photo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reconocer azulejos o papel pintado por foto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过照片识别瓷砖、壁纸"
+          }
+        }
+      }
+    },
     "рейс": {
       "extractionState": "manual",
       "localizations": {
@@ -67965,6 +71243,50 @@
         }
       }
     },
+    "сверх бесплатных в день": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "beyond the free ones per day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "además de las gratuitas diarias"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超出每日免费次数"
+          }
+        }
+      }
+    },
+    "сверх двух листов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "beyond two sheets"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a partir de dos hojas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超过两张"
+          }
+        }
+      }
+    },
     "светильн": {
       "extractionState": "manual",
       "localizations": {
@@ -68237,6 +71559,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "仓库/工作间"
+          }
+        }
+      }
+    },
+    "сколько штук на фото, разбор фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "count items in a photo, photo analysis"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "contar piezas en una foto, análisis de foto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片计数、照片分析"
+          }
+        }
+      }
+    },
+    "сложный вопрос ИИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a complex AI question"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "una pregunta compleja a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复杂的AI问题"
           }
         }
       }
@@ -68536,6 +71902,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "墙面"
+          }
+        }
+      }
+    },
+    "стены, окна, двери и крыша по фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "walls, windows, doors and roof from photos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "muros, ventanas, puertas y tejado por fotos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "墙体、窗户、门以及照片识别屋顶"
+          }
+        }
+      }
+    },
+    "стиль, мебель, отделка по скану": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "style, furniture, finishes from the scan"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "estilo, muebles y acabados según el escaneo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根据扫描的风格、家具和装修"
           }
         }
       }
@@ -69340,6 +72750,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "洗手间"
+          }
+        }
+      }
+    },
+    "указать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "set"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "indicar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
           }
         }
       }
