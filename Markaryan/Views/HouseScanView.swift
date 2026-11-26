@@ -185,7 +185,7 @@ struct HouseScanView: View {
 
     private var parcelTitle: String {
         guard let parcel = ParcelStore.load() else { return "Участок по кадастру" }
-        return "Участок \(parcel.cadNumber)"
+        return String(localized: "Участок \(parcel.cadNumber)")
     }
 
     private var accuracyNote: some View {

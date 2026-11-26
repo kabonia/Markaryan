@@ -45,6 +45,10 @@ enum AIServerConfig {
     /// The OpenRouter key built into the app (OPENROUTER_API_KEY in AIServer.plist, which is not in git):
     /// chat, design and pictures work without a server and without asking the user for a key.
     static var openRouterKey: String? {
+        // В релизной сборке ключа ИИ в приложении быть не может: его достанут из файла приложения (аудит 2.8).
+        #if !DEBUG
+        return nil
+        #endif
         guard let raw = (plist["OPENROUTER_API_KEY"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
               raw.hasPrefix("sk-or-"), raw.count > 20 else { return nil }
         return raw

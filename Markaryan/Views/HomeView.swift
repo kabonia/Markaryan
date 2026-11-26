@@ -6,6 +6,7 @@ struct HomeView: View {
     @State private var appeared = false
     @State private var visible = true
     @State private var liveOpen: LiveExample?
+    @State private var unsentScans = 0
 
     private var greeting: String {
         switch Calendar.current.component(.hour, from: .now) {
@@ -19,6 +20,11 @@ struct HomeView: View {
     private let quickCalculators: [CalculationKind] = [.concreteMix, .tiles, .paint, .screed, .masonry, .rebar, .plaster, .drywall, .roof, .fence]
 
     var body: some View {
+        content
+            .task { unsentScans = HouseScanStore.pending().filter { $0.state.status == "local" || $0.state.status == "uploading" }.count }
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
@@ -27,6 +33,18 @@ struct HomeView: View {
                 NavigationLink { PhotoDesignView() } label: { HomeHeroCard(greeting: greeting) }
                     .buttonStyle(PremiumCardPressStyle())
                     .reveal(appeared, delay: 0.05)
+
+                // Скан дома, который не дошёл до сервера (оборвалась связь) — не теряем: напоминаем и продолжаем загрузку.
+                if unsentScans > 0 {
+                    Button { store.showHouseScan = true } label: {
+                        Label(unsentScans == 1 ? "Скан дома не отправлен — продолжить загрузку" : "Есть неотправленные сканы дома — продолжить загрузку",
+                              systemImage: "icloud.and.arrow.up")
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.goldTint, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(PremiumPressStyle())
+                }
 
                 VStack(alignment: .leading, spacing: 14) {
                     HomeSectionHeader(eyebrow: "Смотрите вживую", title: "Что можно сделать")

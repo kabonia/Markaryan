@@ -804,7 +804,7 @@ enum VisualizationError: LocalizedError {
             let ms = Int(Date().timeIntervalSince(started) * 1000)
             guard let http = response as? HTTPURLResponse else { return "Сервер не ответил." }
             return (200...299).contains(http.statusCode) ? "Сервер доступен · \(ms) мс" : "Сервер ответил с кодом \(http.statusCode)"
-        } catch { return "Нет связи: \(error.localizedDescription)" }
+        } catch { return String(localized: "Нет связи: \(error.localizedDescription)") }
     }
 
     private func postJSON(_ url: URL, body: Data, timeout: TimeInterval) async throws -> (Data, HTTPURLResponse?) {
@@ -918,7 +918,7 @@ enum VisualizationError: LocalizedError {
         guard let claude = claudeClient else { return "ИИ не подключён: впишите OPENROUTER_API_KEY в AIServer.plist и пересоберите приложение." }
         do {
             let answer = try await claude.complete(system: "Отвечай одним коротким предложением по-русски.", turns: [ClaudeTurn(role: .user, text: "Скажи, что ты готов помогать.")], maxTokens: 60)
-            return "Работает: \(answer)"
+            return String(localized: "Работает: \(answer)")
         } catch { return error.localizedDescription }
     }
     private static func turns(history: [(question: String, answer: String)], question: String, image: UIImage?) -> [ClaudeTurn] {
