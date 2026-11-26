@@ -31,8 +31,8 @@ export const PRICES = {
   json: 25,           // дизайн‑концепция комнаты (обычно 27 ₽, худшая 50 ₽) — ценная функция, ×5
   smeta: 200,         // смета по документам до 2 листов / 6 000 знаков (обычно 45–180 ₽, худшая 450 ₽) — ×8
   smetaPage: 40,      // каждый следующий лист (обычно 20–75 ₽)
-  houseRoof: 3,       // крыша по 3–5 фото (обычно 2,7 ₽, худшая 5,4 ₽)
-  houseScan: 25,      // 3D‑обмер дома: обработка + крыша по фото (сейчас ≈1 ₽, с GPU ≈24 ₽); при неудаче — возврат
+  houseRoof: 3,       // только прямой вызов API: в приложении крыша по фото входит в «3D‑обмер дома» (обычно 2,7 ₽, худшая 5,4 ₽)
+  houseScan: 25,      // 3D‑обмер дома: обработка + замер крыши по фото (сейчас ≈1 ₽, с GPU ≈24 ₽); при неудаче — возврат
 };
 export const SMETA_MAX_PAGES = 100;
 export const TEXT_PER_PAGE = 6000;
@@ -63,8 +63,8 @@ export const PRODUCTS = [
  */
 export const PACKS = [
   { id: 'pack_house', title: '3D‑обмер дома', titleEn: '3D house measurement', rub: 990, usd: 9.99, apple: 'smetapro.pack.house',
-    grants: { houseScan: 1, houseRoof: 2, imageEdit: 6, chat: 3 },
-    includes: '1 обмер дома, 2 разбора крыши по фото, 6 визуализаций фасада, 3 вопроса ИИ' },
+    grants: { houseScan: 1, imageEdit: 6, chat: 3 },
+    includes: '1 3D‑обмер дома (стены, окна и двери, крыша: тип, уклон, высота конька), 6 визуализаций фасада, 3 вопроса ИИ' },
   { id: 'pack_room', title: 'Дизайн комнаты', titleEn: 'Room design', rub: 1790, usd: 17.99, apple: 'smetapro.pack.room',
     grants: { json: 3, imageEdit: 10, priceEstimateItem: 30, material: 5 },
     includes: '3 дизайн‑концепции, 10 фотореалистичных кадров, цены рынка на 30 позиций, 5 своих материалов' },
