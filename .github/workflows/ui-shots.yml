@@ -1,0 +1,76 @@
+name: UI‑аудит — скриншоты в ветку
+
+# Снимает экраны на симуляторе (русский и английский) и кладёт JPEG в ветку ui-shots, чтобы их можно было
+# посмотреть без скачивания артефактов. Запуск: изменить .github/ui-shots.request (список маршрутов через пробел).
+on:
+  push:
+    branches: [audit-2026-11]
+    paths: ['.github/ui-shots.request']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Заглушка AIServer.plist
+        run: |
+          cat > Markaryan/AIServer.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>AI_SERVER_URL</key><string>https://ai.example.ru</string>
+          <key>MARKET_SERVER_URL</key><string>https://ai.example.ru</string>
+          <key>APP_TOKEN</key><string></string>
+          </dict></plist>
+          PLIST
+      - name: Симулятор iPhone
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['devices']
+          phones=[x for r,l in d.items() if 'iOS' in r for x in l if x['name'].startswith('iPhone') and 'Pro' in x['name'] and 'Max' not in x['name']]
+          phones=phones or [x for r,l in d.items() if 'iOS' in r for x in l if x['name'].startswith('iPhone')]
+          print(phones[-1]['udid'])")
+          echo "UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+      - name: Сборка
+        run: |
+          set -o pipefail
+          xcodebuild -project Markaryan.xcodeproj -scheme Markaryan -configuration Debug \
+            -destination "id=$UDID" -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build | tail -5
+      - name: Скриншоты (RU и EN)
+        run: |
+          ROUTES=$(cat .github/ui-shots.request | grep -v '^#' | tr '\n' ' ')
+          APP=$(ls -d dd/Build/Products/Debug-iphonesimulator/*.app | head -1)
+          BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 || true
+          xcrun simctl privacy "$UDID" grant location "$BID" || true
+          mkdir -p shots
+          for lang in ru en; do
+            LOC=$([ "$lang" = ru ] && echo ru_RU || echo en_US)
+            for r in $ROUTES; do
+              xcrun simctl terminate "$UDID" "$BID" 2>/dev/null || true
+              xcrun simctl launch "$UDID" "$BID" -AppleLanguages "($lang)" -AppleLocale "$LOC" -onboardingCompleted YES -screenshotRoute "$r"
+              sleep 6
+              xcrun simctl io "$UDID" screenshot "shots/$lang-$(echo $r | tr ':' '-').png"
+            done
+          done
+          for f in shots/*.png; do sips -s format jpeg -s formatOptions 55 -Z 900 "$f" --out "${f%.png}.jpg" >/dev/null; rm "$f"; done
+          ls shots | head -80
+      - name: В ветку ui-shots
+        run: |
+          cd shots
+          git init -q
+          git config user.name "ui-shots-bot"
+          git config user.email "ui-shots-bot@users.noreply.github.com"
+          git checkout -q -b ui-shots
+          git add .
+          git commit -q -m "Скриншоты UI‑аудита: ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ui-shots

@@ -1,0 +1,23 @@
+# Экраны для UI‑аудита (маршруты ScreenshotRoutes.swift), по одному в строке
+root
+home
+calcs
+calc:tiles
+calc:concreteMix
+design
+projects
+profile
+billing
+estimate
+metal
+docs
+photocount
+photodesign
+assistant
+housescan
+housescans
+parcel
+intro:houseScan
+intro:design
+kp
+about
