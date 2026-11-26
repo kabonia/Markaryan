@@ -10,6 +10,7 @@ struct RoomMaterialsView: View {
     @State private var estimate: MarketEstimate?
     @State private var pricing = false
     @State private var priceError: String?
+    @State private var addedToBudget = false
 
     private static let floorFormats = ["200×200", "300×300", "300×600", "600×600", "600×1200", "800×800"]
     private static let wallFormats = ["200×200", "200×400", "250×400", "300×600", "600×600", "600×1200"]
@@ -227,6 +228,20 @@ struct RoomMaterialsView: View {
         }
     }
 
+    /// Сумма материалов — в плановый бюджет объекта, статья «Отделка» (раздел «Проект»).
+    private func addToBudget(_ total: Double) {
+        guard total > 0 else { return }
+        if let index = store.budgetItems.firstIndex(where: { $0.title == "Отделка" }) {
+            store.budgetItems[index].planned += total.rounded()
+        } else {
+            var item = ProjectBudgetItem(id: "budget-\(UUID().uuidString)", title: "Отделка")
+            item.planned = total.rounded()
+            store.budgetItems.append(item)
+        }
+        addedToBudget = true
+        Haptics.success()
+    }
+
     private func priceSection(_ estimate: MarketEstimate) -> some View {
         let total = estimate.items.reduce(0) { $0 + $1.total }
         return VStack(alignment: .leading, spacing: 10) {
@@ -242,6 +257,13 @@ struct RoomMaterialsView: View {
                     Text(row.hasPrice ? CalculationEngine.money(row.total) : "—").font(.footnote.weight(.semibold).monospacedDigit())
                 }
             }
+            Button {
+                addToBudget(total)
+            } label: {
+                SecondaryActionLabel(title: addedToBudget ? "Добавлено в бюджет «Отделка»" : "В бюджет объекта", icon: addedToBudget ? "checkmark" : "plus.circle")
+            }
+            .buttonStyle(PremiumPressStyle())
+            .disabled(addedToBudget || total <= 0)
             Text("Цены из магазинов вашего города; нажмите «Отправить», чтобы переслать список.").font(.caption).foregroundStyle(Theme.muted)
         }
         .padding(16).panelCard(16)

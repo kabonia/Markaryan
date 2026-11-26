@@ -73,7 +73,9 @@ struct CountPart: Identifiable {
     }
 
     func add(_ image: UIImage, store: AppStore) {
-        let part = CountPart(image: image)
+        // Снимок камеры (~12 Мп, ~48 МБ в памяти) уменьшаем до 2 400 px: точки нормированы, ИИ получает 1 568 px —
+        // точность та же, а 10–15 частей большой кучи больше не роняют приложение по памяти.
+        let part = CountPart(image: Self.fitted(image, maxSide: 2400))
         parts.append(part)
         selectedID = part.id
         count(part.id, store: store)
@@ -94,6 +96,16 @@ struct CountPart: Identifiable {
     }
 
     func reset() { parts = []; selectedID = nil; detectedName = "" }
+
+    static func fitted(_ image: UIImage, maxSide: CGFloat) -> UIImage {
+        let side = max(image.size.width, image.size.height)
+        guard side > maxSide else { return image }
+        let scale = maxSide / side
+        let size = CGSize(width: (image.size.width * scale).rounded(), height: (image.size.height * scale).rounded())
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+    }
 
     private func count(_ id: UUID, store: AppStore) {
         guard let image = parts.first(where: { $0.id == id })?.image else { return }
