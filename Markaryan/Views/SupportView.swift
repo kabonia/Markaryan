@@ -40,6 +40,7 @@ struct SupportView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Поддержка")
+        .featureIntro(.support)
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await support.refresh() }
         .task { await support.refresh() }

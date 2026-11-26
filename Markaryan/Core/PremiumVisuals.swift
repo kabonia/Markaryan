@@ -125,6 +125,11 @@ extension FeatureIntro {
         case .houseScan, .acceptance: .house
         case .tryOn, .photoRoom: .design
         case .quoteCheck, .receipt: .documents
+        case .roomScan, .roomMaterials, .apartment: .design
+        case .purchase: .project
+        case .houseEstimate, .metalEstimate: .documents
+        case .houseResult, .parcel: .house
+        case .support: .billing
         }
     }
 }

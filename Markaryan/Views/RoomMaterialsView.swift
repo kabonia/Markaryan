@@ -48,6 +48,7 @@ struct RoomMaterialsView: View {
             ScrollView { panel.padding(20) }
                 .background(Theme.background)
                 .navigationTitle("Расчёт материалов")
+                .featureIntro(.roomMaterials)
                 .navigationBarTitleDisplayMode(.inline)
         }
     }

@@ -107,7 +107,7 @@ struct ApartmentView: View {
             else { ContentUnavailableView("Квартира удалена", systemImage: "trash") }
         }
         .background(Theme.background)
-        .navigationTitle(apartment?.name ?? "Квартира").helperScreen(apartment?.name ?? "Квартира")
+        .navigationTitle(apartment?.name ?? "Квартира").helperScreen(apartment?.name ?? "Квартира").featureIntro(.apartment)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

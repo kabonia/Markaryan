@@ -114,7 +114,7 @@ struct MetalEstimateParamsView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Металлоконструкции").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Металлоконструкции").navigationBarTitleDisplayMode(.inline).featureIntro(.metalEstimate)
         .helperScreen("Смета металлоконструкций", details: "\(MetalOptions.type.first { $0.0 == p.type }?.1 ?? ""): \(CalculationEngine.format(p.length))×\(CalculationEngine.format(p.width))×\(CalculationEngine.format(p.height)) м")
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } } }
         .navigationDestination(item: $result) { r in DocEstimateResultView(result: r) }

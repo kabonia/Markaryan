@@ -106,7 +106,7 @@ struct ObjectPurchaseView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Закупка объекта").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Закупка объекта").navigationBarTitleDisplayMode(.inline).featureIntro(.purchase)
         .onAppear { bought = Set(UserDefaults.standard.stringArray(forKey: key) ?? []) }
     }
 
