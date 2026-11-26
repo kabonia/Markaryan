@@ -23,6 +23,7 @@ struct RoomMaterialsView: View {
     @State private var render: UIImage?
     @State private var renderError: String?
     @State private var openedRender = false
+    @State private var before: UIImage?
 
     init(plan: FloorPlan, embedded: Bool = false) {
         self.plan = plan
@@ -66,7 +67,7 @@ struct RoomMaterialsView: View {
             if let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: "roomWorks.\(plan.id.uuidString)") }
             estimate = nil
         }
-        .onAppear { if render == nil { render = RoomLookStore.load(plan.id) } }
+        .onAppear { if render == nil { render = RoomLookStore.load(plan.id); before = RoomLookStore.loadBase(plan.id) } }
         .sheet(isPresented: $openedRender) {
             if let render { NavigationStack { RenderResultView(image: render, title: plan.name) } }
         }
@@ -321,10 +322,16 @@ struct RoomMaterialsView: View {
             if works.floorTiles || works.wallTiles { OptionChips(RoomLook.tileLooks, selection: $look.tileLook, title: "Вид плитки") }
             OptionChips(RoomLook.wallColors, selection: $look.wallColor, title: "Цвет стен")
             if let render {
-                Button { openedRender = true } label: {
-                    Image(uiImage: render).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                if let before {
+                    BeforeAfterSlider(before: before, after: render).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    Text("Двигайте шторку: слева 3D‑вид из скана, справа — с отделкой. Нажмите «Открыть», чтобы увеличить.").font(.caption2).foregroundStyle(Theme.muted)
+                    Button("Открыть картинку") { openedRender = true }.font(.caption.weight(.semibold))
+                } else {
+                    Button { openedRender = true } label: {
+                        Image(uiImage: render).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                 }
-                .buttonStyle(PremiumCardPressStyle())
                 ShareLink(item: Image(uiImage: render), preview: SharePreview(plan.name, image: Image(uiImage: render))) {
                     SecondaryActionLabel(title: "Отправить картинку", icon: "square.and.arrow.up")
                 }
@@ -351,7 +358,9 @@ struct RoomMaterialsView: View {
         do {
             let result = try await store.photorealRender(base, prompt: look.prompt(works: works, room: room))
             render = result.image
+            before = base
             RoomLookStore.save(result.image, for: plan.id)
+            RoomLookStore.saveBase(base, for: plan.id)
             Haptics.success()
         } catch {
             renderError = error.localizedDescription
@@ -429,4 +438,9 @@ enum RoomLookStore {
     }
     static func load(_ id: UUID) -> UIImage? { url(id).flatMap { try? Data(contentsOf: $0) }.flatMap(UIImage.init(data:)) }
     static func save(_ image: UIImage, for id: UUID) { if let url = url(id), let data = image.jpegData(compressionQuality: 0.85) { try? data.write(to: url) } }
+    /// «До»: 3D‑вид комнаты из скана, по которому рисовали.
+    static func loadBase(_ id: UUID) -> UIImage? { url(id).map { $0.deletingPathExtension().appendingPathExtension("base.jpg") }.flatMap { try? Data(contentsOf: $0) }.flatMap(UIImage.init(data:)) }
+    static func saveBase(_ image: UIImage, for id: UUID) {
+        if let url = url(id)?.deletingPathExtension().appendingPathExtension("base.jpg"), let data = image.jpegData(compressionQuality: 0.8) { try? data.write(to: url) }
+    }
 }

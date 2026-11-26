@@ -1,17 +1,10 @@
 {
   "sourceLanguage": "ru",
-  "version": "1.0",
   "strings": {
     "CFBundleDisplayName": {
       "comment": "Название под значком",
       "extractionState": "manual",
       "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "СметаПро"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -22,6 +15,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Estimate 3D"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СметаПро"
           }
         },
         "zh-Hans": {
@@ -36,12 +35,6 @@
       "comment": "Название приложения",
       "extractionState": "manual",
       "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "СметаПро"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -52,6 +45,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Estimate 3D"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СметаПро"
           }
         },
         "zh-Hans": {
@@ -65,12 +64,6 @@
     "NSCameraUsageDescription": {
       "extractionState": "manual",
       "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -81,6 +74,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "La cámara se usa para medir distancias y áreas con RA, escanear tu casa en 3D, colocar modelos en el terreno y tomar fotos de tu obra."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера нужна для AR-замеров расстояний и площади, размещения макета на площадке и съёмки фото объекта."
           }
         },
         "zh-Hans": {
@@ -94,12 +93,6 @@
     "NSLocationWhenInUseUsageDescription": {
       "extractionState": "manual",
       "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -112,6 +105,12 @@
             "value": "Tu ubicación se usa para aplicar precios locales a los presupuestos y situar el escaneo de tu casa en el mapa y respecto al sol."
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местоположение нужно, чтобы подставить в смету цены вашего региона, найти ваш участок на кадастровой карте и привязать скан дома к карте и солнцу."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -120,15 +119,38 @@
         }
       }
     },
-    "NSPhotoLibraryAddUsageDescription": {
+    "NSMicrophoneUsageDescription": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The microphone is used for voice commands: \"add to project…\", tasks, expenses and notes."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El micrófono se usa para comandos de voz: «añadir al proyecto…», tareas, gastos y notas."
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото."
+            "value": "Микрофон нужен для голосовых команд: «добавь в объект…», задачи, траты и записи."
           }
         },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风用于语音命令：“添加到项目……”、任务、支出和记录。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
@@ -141,6 +163,12 @@
             "value": "Se necesita permiso para guardar las visualizaciones terminadas en Fotos."
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешение нужно, чтобы сохранять готовые визуализации в приложении Фото."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -148,6 +176,36 @@
           }
         }
       }
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition turns a voice command into a task, expense or project note."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reconocimiento de voz convierte un comando de voz en una tarea, un gasto o una nota del proyecto."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание речи превращает голосовую команду в задачу, трату или запись объекта."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音识别会将语音命令转换为项目的任务、支出或记录。"
+          }
+        }
+      }
     }
-  }
+  },
+  "version": "1.0"
 }

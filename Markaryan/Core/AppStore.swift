@@ -518,6 +518,25 @@ enum VisualizationError: LocalizedError {
         return workspace.id
     }
 
+    // MARK: Совместный доступ: снимок и замена объекта целиком
+
+    /// Текущее состояние объекта (с последними правками).
+    func workspaceSnapshot(_ id: UUID) -> ProjectWorkspace? {
+        if id == activeProjectID { persistActiveWorkspace() }
+        return projectWorkspaces.first { $0.id == id }
+    }
+
+    /// Объект пришёл с сервера (правки другого человека): заменить и, если он открыт, показать.
+    func replaceWorkspace(_ workspace: ProjectWorkspace) {
+        if let index = projectWorkspaces.firstIndex(where: { $0.id == workspace.id }) {
+            projectWorkspaces[index] = workspace
+        } else {
+            projectWorkspaces.append(workspace)
+        }
+        scheduleSave(projectWorkspaces, key: "projectWorkspaces")
+        if workspace.id == activeProjectID { restoreWorkspace(workspace) }
+    }
+
     // MARK: Объекты по желанию: работа «без объекта», перенос в объект, удаление
 
     /// Рабочее место «Без объекта»: всё, что сделано с главной, пока объект не выбран.

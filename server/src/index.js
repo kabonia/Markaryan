@@ -20,6 +20,7 @@ import * as metal from './metal.js';
 import * as reports from './reports.js';
 import * as support from './support.js';
 import * as shares from './shares.js';
+import * as objectSync from './object-sync.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
 import { xlsxToText } from './xlsx.js';
@@ -124,7 +125,7 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/create') return send(res, 200, await payments.createYookassa(await readBody(req, 64 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
-  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/') && url.pathname !== '/v1/share') return send(res, 404, { error: 'Не найдено' });
+  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/') && url.pathname !== '/v1/share' && !url.pathname.startsWith('/v1/objects')) return send(res, 404, { error: 'Не найдено' });
   if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
@@ -143,6 +144,13 @@ async function handle(req, res) {
   if (req.method === 'POST' && ticketPath) return send(res, 200, await support.reply(installId, ticketPath[1], await readBody(req, 2_200_000)));
   if (url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
   if (req.method === 'POST' && url.pathname === '/v1/share') return send(res, 200, shares.create(installId, await readBody(req, 8_000_000)));
+  // Совместный доступ к объекту по коду.
+  if (req.method === 'POST' && url.pathname === '/v1/objects') return send(res, 200, objectSync.share(installId, await readBody(req, 6_000_000)));
+  const objectPath = /^\/v1\/objects\/([A-Z0-9]{8})(\/leave)?$/.exec(url.pathname);
+  if (objectPath && req.method === 'GET') return send(res, 200, objectSync.get(installId, objectPath[1]));
+  if (objectPath && req.method === 'PUT') return send(res, 200, objectSync.put(installId, objectPath[1], await readBody(req, 6_000_000)));
+  if (objectPath?.[2] && req.method === 'POST') return send(res, 200, objectSync.leave(installId, objectPath[1]));
+  if (url.pathname.startsWith('/v1/objects')) return send(res, 404, { error: 'Не найдено' });
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();

@@ -201,6 +201,7 @@ struct HouseVisualCard: View {
     @State private var drawing = false
     @State private var pictureError: String?
     @State private var openedPicture = false
+    @State private var before: UIImage?
 
     var body: some View {
         visualCard
@@ -219,10 +220,15 @@ struct HouseVisualCard: View {
             OptionChips(HouseLook.wallColors, selection: $look.wallColor, title: "Цвет стен")
             if params.roof != "flat" { OptionChips(HouseLook.roofColors, selection: $look.roofColor, title: "Цвет кровли") }
             if let picture {
-                Button { openedPicture = true } label: {
-                    Image(uiImage: picture).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                if let before {
+                    BeforeAfterSlider(before: before, after: picture).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    Button("Открыть картинку") { openedPicture = true }.font(.caption.weight(.semibold))
+                } else {
+                    Button { openedPicture = true } label: {
+                        Image(uiImage: picture).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                 }
-                .buttonStyle(PremiumCardPressStyle())
                 ShareLink(item: Image(uiImage: picture), preview: SharePreview("Дом", image: Image(uiImage: picture))) {
                     SecondaryActionLabel(title: "Отправить картинку", icon: "square.and.arrow.up")
                 }
@@ -248,6 +254,7 @@ struct HouseVisualCard: View {
         do {
             if let base = snapshotter?.image() {
                 picture = try await store.photorealRender(base, prompt: prompt).image
+                before = base
             } else {
                 let size = "A \(params.floors)-storey house \(CalculationEngine.format(params.length)) by \(CalculationEngine.format(params.width)) m. "
                 picture = try await store.pictureByDescription(size + prompt)

@@ -6,7 +6,6 @@ struct ProjectsTabView: View {
     @State private var showNewProject = false
     @State private var objectToDelete: ProjectWorkspace?
 
-    private var openTasks: Int { store.projectTasks.filter { $0.status != .done }.count }
 
     var body: some View {
         ScrollView {
@@ -62,8 +61,6 @@ struct ProjectsTabView: View {
                         .contextMenu {
                             if let active = store.activeWorkspace { Button(role: .destructive) { objectToDelete = active } label: { Label("Удалить объект", systemImage: "trash") } }
                         }
-                        ObjectLinkedItems()
-                        ObjectToolsSection()
                         if store.objects.count > 0 { Text("Долгое нажатие на объект — удалить.").font(.caption2).foregroundStyle(Theme.muted) }
                     }
                 }
@@ -76,41 +73,14 @@ struct ProjectsTabView: View {
                     Button("Отмена", role: .cancel) { objectToDelete = nil }
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    HomeSectionHeader(eyebrow: "Работы", title: "План и команда")
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        NavigationLink { ProjectPlanView() } label: {
-                            ProjectStatTile(icon: "flag.checkered", title: "Этапы", value: "\(store.milestones.filter(\.completed).count)/\(store.milestones.count)", caption: "готовность \(Int(store.projectProgress * 100))%", accent: Theme.orange)
-                        }
-                        NavigationLink { ProjectTasksView() } label: {
-                            ProjectStatTile(icon: "checklist", title: "Задачи", value: "\(openTasks)", caption: openTasks == 0 ? "нет открытых" : "открыто", accent: Theme.sky)
-                        }
-                        NavigationLink { ProjectBudgetTrackerView() } label: {
-                            ProjectStatTile(icon: "rublesign.circle.fill", title: "Бюджет", value: store.budgetPlanned > 0 ? CalculationEngine.money(store.budgetPlanned) : "—", caption: store.budgetPlanned > 0 ? "потрачено \(CalculationEngine.money(store.budgetActual))" : "план и факт", accent: Theme.success)
-                        }
-                        NavigationLink { ChecklistView() } label: {
-                            ProjectStatTile(icon: "checkmark.shield.fill", title: "Контроль", value: "\(store.checklistDone.count)", caption: "пунктов отмечено", accent: Theme.orangeSoft)
-                        }
-                    }
-                    .buttonStyle(PremiumCardPressStyle())
+                if store.inObject {
+                    ObjectDashboard()
+                } else {
+                    // Без объекта: всё равно можно вести бюджет и задачи, а голосом — сразу.
+                    VoiceCommandCard()
+                    ObjectToolsSection()
+                    ObjectShareCard()
                 }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    HomeSectionHeader(eyebrow: "Документы", title: "История объекта")
-                    NavigationLink { ProjectPhotoDiaryView() } label: {
-                        AppTabRow(icon: "photo.stack.fill", title: "Фото‑дневник", subtitle: store.projectPhotos.isEmpty ? "Скрытые работы и этапы на фото" : "Фото: \(store.projectPhotos.count)")
-                    }
-                    NavigationLink { ConstructionDiaryView() } label: {
-                        AppTabRow(icon: "text.book.closed.fill", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Договорённости, даты, комментарии" : "Записей: \(store.diary.count)")
-                    }
-                    NavigationLink { ObjectPassportView() } label: {
-                        AppTabRow(icon: "list.clipboard.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
-                    }
-                    Button { store.tab = 2 } label: {
-                        AppTabRow(icon: "square.grid.3x3.square", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, обмеры и рендеры — во вкладке «Дизайн»" : "Помещений: \(store.floorPlans.count) — во вкладке «Дизайн»")
-                    }
-                }
-                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }
