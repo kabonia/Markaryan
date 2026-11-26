@@ -94,6 +94,10 @@ struct HomeView: View {
                         HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
                     }
                     .buttonStyle(PremiumCardPressStyle())
+                    NavigationLink { AcceptanceView() } label: {
+                        HomeWideToolCard(icon: "checkmark.seal.fill", title: "Приёмка без приёмщика", text: "Лидар меряет ровность стен и пола по нормам СП, ИИ находит дефекты на фото — готовый акт для застройщика или бригады.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                     NavigationLink { PhotoRoomView() } label: {
                         HomeWideToolCard(icon: "camera.aperture", title: "Ремонт по фото комнаты", text: "Без лидара: размеры по снимку → материалы, цены со ссылками и картинка с новой отделкой.")
                     }

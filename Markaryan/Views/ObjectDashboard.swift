@@ -181,8 +181,21 @@ struct ObjectDashboard: View {
             Step(id: "estimate", title: "Смета и бюджет", detail: planned > 0 ? "План \(CalculationEngine.money(planned))" + (estimates > 0 ? " · смет: \(estimates)" : "") : "Смета дома, по документам или материалы → «В бюджет»", done: planned > 0, icon: "rublesign.circle.fill"),
             Step(id: "design", title: "Дизайн и визуализация", detail: pictures > 0 ? "Готово картинок и концепций: \(pictures)" : "Стиль комнаты или «Показать с этой отделкой»", done: pictures > 0, icon: "paintpalette.fill"),
             Step(id: "purchase", title: "Закупка", detail: purchase.isEmpty ? "Появится после расчёта материалов" : "Куплено \(bought) из \(purchase.count)", done: !purchase.isEmpty && bought == purchase.count, icon: "cart.fill"),
+            Step(id: "acceptance", title: "Приёмка работ", detail: acceptanceDetail, done: acceptanceDone, icon: "checkmark.seal.fill"),
             Step(id: "works", title: "Работы", detail: store.projectTasks.isEmpty ? "Смета → «План работ» или задачи вручную" : "Готово \(doneTasks) из \(store.projectTasks.count) задач", done: !store.projectTasks.isEmpty && doneTasks == store.projectTasks.count, icon: "hammer.fill"),
         ]
+    }
+
+    private var acceptanceChecks: [AcceptanceCheck] {
+        let key = "acceptance.\(store.inObject ? store.activeProjectID?.uuidString ?? "loose" : "loose")"
+        return UserDefaults.standard.data(forKey: key).flatMap { try? JSONDecoder().decode([AcceptanceCheck].self, from: $0) } ?? []
+    }
+    private var acceptanceDone: Bool { let c = acceptanceChecks; return !c.isEmpty && c.allSatisfy { $0.ok || $0.fixed } }
+    private var acceptanceDetail: String {
+        let c = acceptanceChecks
+        if c.isEmpty { return "Ровность лидаром и дефекты по фото → акт" }
+        let open = c.filter { !$0.ok && !$0.fixed }.count
+        return open == 0 ? "Проверок \(c.count), замечаний нет" : "Замечаний: \(open) из \(c.count) проверок"
     }
 
     private var stepsCard: some View {
@@ -221,6 +234,7 @@ struct ObjectDashboard: View {
         case "materials", "design": Button { if let plan = store.floorPlans.first { store.planToOpen = plan.id }; store.tab = 2 } label: { label() }.buttonStyle(.plain)
         case "estimate": NavigationLink { FullEstimateHubView() } label: { label() }.buttonStyle(.plain)
         case "purchase": NavigationLink { ObjectPurchaseView() } label: { label() }.buttonStyle(.plain)
+        case "acceptance": NavigationLink { AcceptanceView() } label: { label() }.buttonStyle(.plain)
         default: NavigationLink { ProjectTasksView() } label: { label() }.buttonStyle(.plain)
         }
     }
