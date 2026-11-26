@@ -423,7 +423,7 @@ struct ARMeasureView: View {
                 Menu { ForEach(ARBlueprintPreset.allCases) { preset in Button(preset.title) { model.apply(preset) } } } label: { Label("Готовый макет", systemImage: "square.grid.2x2").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack { dimension("Длина, м", $model.lengthText); dimension("Ширина, м", $model.widthText); dimension("Высота, м", $model.heightText) }
             } else {
-                Text(model.mode == .distance ? (model.points.count == 2 ? "≈ \(CalculationEngine.format(model.distance)) м" : "Отметьте две точки") : (model.points.count >= 3 ? "≈ \(CalculationEngine.format(model.area)) м²" : "Отметьте углы пола"))
+                Text(model.mode == .distance ? (model.points.count == 2 ? "≈ " + Units.length(model.distance) : "Отметьте две точки".tr) : (model.points.count >= 3 ? "≈ " + Units.area(model.area, digits: 2) : "Отметьте углы пола".tr))
                     .font(.title.bold()).monospacedDigit().contentTransition(.numericText())
                 Text(model.mode == .area ? "Одна горизонтальная поверхность. Углы по периметру." : "Наведите центр на поверхность и добавьте точку.").font(.caption).multilineTextAlignment(.center)
             }
