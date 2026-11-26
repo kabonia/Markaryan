@@ -15,24 +15,25 @@ export const HELPER_FREE_PER_DAY = Number(process.env.BILLING_HELPER_FREE || 20)
 const WELCOME_PER_IP = 3;
 
 /**
- * Credits per use. 1 credit is sold for 10–12 ₽ / $0.10–0.13; every price is ≥ 3× the WORST AI cost of the call
- * (the most expensive model, retries, the longest answer), so no usage pattern can make a loss.
+ * Credits per use. Правило владельца (26.11): отдельная функция — наценка 230–250 % к обычной себестоимости,
+ * пакеты — 170–230 %. Считаем на 1 кредит ≈ 10 ₽ чистыми (сайт; App Store при комиссии 15 % — так же, цены в $ выровнены).
+ * Наценка = чистая выручка / обычная себестоимость − 1. Себестоимость: docs/audit/ECONOMICS-2026-11.md.
+ * Худший случай (самая дорогая модель, длинный ответ, повтор) у чата, фото и сметы может быть дороже цены — смотрите
+ * data/costs.log (`node scripts/cost-report.mjs 7`) и поднимайте цену, если средняя себестоимость вырастет.
  */
 export const PRICES = {
-  // Правило (аудит 26.11): цена ≥ 3× обычной себестоимости и ≥ 1,3× худшей — даже при самом дешёвом кредите
-  // (5,40 ₽: App Store, комиссия 30 %); ценные функции — 4–8×. Себестоимость: docs/audit/ECONOMICS-2026-11.md.
-  helper: 1,          // помощник после HELPER_FREE_PER_DAY бесплатных (обычно 0,05 ₽, худшая 0,3 ₽)
-  chat: 12,           // вопрос сильной модели (обычно 6 ₽, худшая 43 ₽)
-  material: 3,        // «свой материал» (обычно 2,5 ₽, худшая 9 ₽)
-  priceEstimateItem: 1, // цена одной строки с поиском (обычно 0,3 ₽, худшая 2,5 ₽)
-  imageEdit: 8,       // фотореалистичный кадр (обычно 13 ₽, худшая 30 ₽ — резервный движок + повтор)
-  image: 8,
-  vision: 14,         // счёт и анализ по фото (обычно 12 ₽, худшая 58 ₽)
-  json: 25,           // дизайн‑концепция комнаты (обычно 27 ₽, худшая 50 ₽) — ценная функция, ×5
-  smeta: 200,         // смета по документам до 2 листов / 6 000 знаков (обычно 45–180 ₽, худшая 450 ₽) — ×8
-  smetaPage: 40,      // каждый следующий лист (обычно 20–75 ₽)
-  houseRoof: 3,       // только прямой вызов API: в приложении крыша по фото входит в «3D‑обмер дома» (обычно 2,7 ₽, худшая 5,4 ₽)
-  houseScan: 25,      // 3D‑обмер дома: обработка + замер крыши по фото (сейчас ≈1 ₽, с GPU ≈24 ₽); при неудаче — возврат
+  helper: 1,          // помощник после HELPER_FREE_PER_DAY бесплатных (0,05 ₽; меньше 1 кредита нельзя)
+  chat: 2,            // вопрос сильной модели: 6 ₽ → 20 ₽, +233 % (худшая 43 ₽)
+  material: 1,        // «свой материал»: 2,5 ₽ → 10 ₽, +300 % (меньше 1 кредита нельзя)
+  priceEstimate10: 1, // цены по рынку, за каждые 10 строк (0,3 ₽ строка → 3 ₽ → 10 ₽, +233 %)
+  imageEdit: 4,       // фотореалистичный кадр: 12 ₽ → 40 ₽, +233 % (худшая 30 ₽)
+  image: 4,
+  vision: 4,          // счёт и анализ по фото: 12 ₽ → 40 ₽, +233 % (худшая 58 ₽)
+  json: 9,            // дизайн‑концепция комнаты: 27 ₽ → 90 ₽, +233 % (худшая 50 ₽)
+  smeta: 30,          // смета по документам до 2 листов / 6 000 знаков: ≈ 90 ₽ → 300 ₽, +233 % (худшая 450 ₽)
+  smetaPage: 14,      // каждый следующий лист: ≈ 40 ₽ → 140 ₽, +250 %
+  houseRoof: 1,       // только прямой вызов API: в приложении крыша по фото входит в «3D‑обмер дома» (2,7 ₽)
+  houseScan: 9,       // 3D‑обмер дома с крышей по фото: с GPU ≈ 26 ₽ → 90 ₽, +246 % (без GPU ≈ 3 ₽); при неудаче — возврат
 };
 export const SMETA_MAX_PAGES = 100;
 export const TEXT_PER_PAGE = 6000;
@@ -43,7 +44,7 @@ export function price(kind, units = {}) {
     const sheets = Math.min(units.pages || 0, SMETA_MAX_PAGES) + Math.ceil((units.textChars || 0) / TEXT_PER_PAGE);
     return PRICES.smeta + Math.max(0, sheets - 2) * PRICES.smetaPage;
   }
-  if (kind === 'priceEstimate') return Math.max(3, (units.items || 0) * PRICES.priceEstimateItem);
+  if (kind === 'priceEstimate') return Math.max(1, Math.ceil((units.items || 0) / 10)) * PRICES.priceEstimate10;
   return PRICES[kind] ?? 0;
 }
 
@@ -52,32 +53,32 @@ export const PRODUCTS = [
   { id: 'pro_month', title: 'СметаПро Про — 1 месяц', titleEn: 'SmetaPro Pro — monthly', plan: 'pro', days: 31, credits: 80, rub: 990, usd: 12.99, apple: 'smetapro.pro.monthly' },
   { id: 'pro_year', title: 'СметаПро Про — 1 год', titleEn: 'SmetaPro Pro — yearly', plan: 'pro', days: 366, credits: 80, monthly: true, rub: 9490, usd: 119.99, apple: 'smetapro.pro.yearly' },
   { id: 'business_month', title: 'СметаПро Бизнес — 1 месяц', titleEn: 'SmetaPro Business — monthly', plan: 'business', days: 31, credits: 350, rub: 3490, usd: 44.99, apple: 'smetapro.business.monthly' },
-  { id: 'credits_100', title: '100 кредитов', titleEn: '100 credits', credits: 100, rub: 1190, usd: 11.99, apple: 'smetapro.credits.100' },
-  { id: 'credits_500', title: '500 кредитов', titleEn: '500 credits', credits: 500, rub: 5490, usd: 54.99, apple: 'smetapro.credits.500' },
-  { id: 'credits_1500', title: '1500 кредитов', titleEn: '1500 credits', credits: 1500, rub: 14990, usd: 149.99, apple: 'smetapro.credits.1500' },
+  { id: 'credits_100', title: '100 кредитов', titleEn: '100 credits', credits: 100, rub: 1190, usd: 14.99, apple: 'smetapro.credits.100' },
+  { id: 'credits_500', title: '500 кредитов', titleEn: '500 credits', credits: 500, rub: 5490, usd: 69.99, apple: 'smetapro.credits.500' },
+  { id: 'credits_1500', title: '1500 кредитов', titleEn: '1500 credits', credits: 1500, rub: 14990, usd: 189.99, apple: 'smetapro.credits.1500' },
 ];
 /**
  * Пакеты функций: человек покупает набор под задачу, а не кредиты. Пока в пакете есть единицы функции — кредиты не
- * тратятся; ИИ не справился — единица возвращается. Наценка ≥ 200 % к обычной себестоимости даже в App Store (30 %),
- * для покупателя — на 25–40 % дешевле, чем те же функции за кредиты. Расчёт: docs/audit/ECONOMICS-2026-11.md.
+ * тратятся; ИИ не справился — единица возвращается. Наценка 170–230 % к обычной себестоимости (сайт и App Store 15 %),
+ * для покупателя — на 12–25 % дешевле, чем те же функции за кредиты. Расчёт: docs/audit/ECONOMICS-2026-11.md.
  */
 export const PACKS = [
-  { id: 'pack_house', title: '3D‑обмер дома', titleEn: '3D house measurement', rub: 990, usd: 9.99, apple: 'smetapro.pack.house',
+  { id: 'pack_house', title: '3D‑обмер дома', titleEn: '3D house measurement', rub: 390, usd: 5.49, apple: 'smetapro.pack.house',
     grants: { houseScan: 1, imageEdit: 6, chat: 3 },
     includes: '1 3D‑обмер дома (стены, окна и двери, крыша: тип, уклон, высота конька), 6 визуализаций фасада, 3 вопроса ИИ' },
-  { id: 'pack_room', title: 'Дизайн комнаты', titleEn: 'Room design', rub: 1790, usd: 17.99, apple: 'smetapro.pack.room',
+  { id: 'pack_room', title: 'Дизайн комнаты', titleEn: 'Room design', rub: 790, usd: 10.99, apple: 'smetapro.pack.room',
     grants: { json: 3, imageEdit: 10, priceEstimateItem: 30, material: 5 },
     includes: '3 дизайн‑концепции, 10 фотореалистичных кадров, цены рынка на 30 позиций, 5 своих материалов' },
-  { id: 'pack_smeta', title: 'Смета по проекту', titleEn: 'Project estimate', rub: 4990, usd: 49.99, apple: 'smetapro.pack.smeta',
+  { id: 'pack_smeta', title: 'Смета по проекту', titleEn: 'Project estimate', rub: 1390, usd: 19.99, apple: 'smetapro.pack.smeta',
     grants: { smeta: 1, smetaPage: 8, priceEstimateItem: 40 },
     includes: '1 смета по документам до 10 листов, цены рынка на 40 позиций' },
-  { id: 'pack_smeta3', title: '3 сметы по проектам', titleEn: '3 project estimates', rub: 12990, usd: 129.99, apple: 'smetapro.pack.smeta3',
+  { id: 'pack_smeta3', title: '3 сметы по проектам', titleEn: '3 project estimates', rub: 3890, usd: 54.99, apple: 'smetapro.pack.smeta3',
     grants: { smeta: 3, smetaPage: 24, priceEstimateItem: 120 },
     includes: '3 сметы по документам до 10 листов, цены рынка на 120 позиций' },
-  { id: 'pack_renovation', title: 'Ремонт квартиры', titleEn: 'Apartment renovation', rub: 5990, usd: 59.99, apple: 'smetapro.pack.renovation',
+  { id: 'pack_renovation', title: 'Ремонт квартиры', titleEn: 'Apartment renovation', rub: 2490, usd: 34.99, apple: 'smetapro.pack.renovation',
     grants: { json: 6, imageEdit: 20, priceEstimateItem: 100, smeta: 1, smetaPage: 4, vision: 5 },
     includes: '6 дизайн‑концепций, 20 кадров, цены на 100 позиций, 1 смета до 6 листов, 5 разборов фото' },
-  { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 3490, usd: 34.99, apple: 'smetapro.pack.foreman',
+  { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 1290, usd: 18.99, apple: 'smetapro.pack.foreman',
     grants: { vision: 20, chat: 20, material: 10, helper: 300 },
     includes: '20 счётов и разборов по фото, 20 вопросов ИИ, 10 своих материалов, 300 вопросов помощнику' },
 ];
@@ -186,7 +187,7 @@ function usePack(acc, kind, units = {}) {
     const items = units.items || 0;
     const covered = Math.min(items, packs.priceEstimateItem || 0);
     if (!covered) return null;
-    return { used: { priceEstimateItem: covered }, credits: (items - covered) * PRICES.priceEstimateItem };
+    return { used: { priceEstimateItem: covered }, credits: Math.ceil((items - covered) / 10) * PRICES.priceEstimate10 };
   }
   return packs[kind] > 0 ? { used: { [kind]: 1 }, credits: 0 } : null;
 }
@@ -276,6 +277,32 @@ export function setAutopay(installId, on) {
   if (acc.autopay) acc.autopay.on = Boolean(on);
   save();
   return acc;
+}
+
+/** Последние операции аккаунта из журнала (для поддержки): списания, возвраты, покупки. Читает только хвост файла. */
+export function history(installId, limit = 5) {
+  try {
+    const fd = fs.openSync(ledgerFile(), 'r');
+    const size = fs.fstatSync(fd).size, length = Math.min(size, 2_000_000);
+    const buffer = Buffer.alloc(length);
+    fs.readSync(fd, buffer, 0, length, size - length);
+    fs.closeSync(fd);
+    return buffer.toString('utf8').split('\n').reverse().flatMap((line) => {
+      if (!line.includes(installId)) return [];
+      try { const e = JSON.parse(line); return e.installId === installId ? [e] : []; } catch { return []; }
+    }).slice(0, limit);
+  } catch { return []; }
+}
+
+/** Компенсация от поддержки: кредиты на баланс (работает и при выключенной оплате). */
+export function compensate(installId, credits, ref) {
+  const n = Math.max(0, Math.min(5000, Math.floor(Number(credits) || 0)));
+  if (!n) return 0;
+  const acc = account(installId);
+  acc.credits += n;
+  log({ installId, type: 'support', credits: n, ref, balance: acc.credits });
+  save();
+  return n;
 }
 
 export function allAccounts() { return Object.entries(load().accounts); }

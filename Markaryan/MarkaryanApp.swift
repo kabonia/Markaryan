@@ -22,7 +22,7 @@ import StoreKit
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { store.flush() }
-            if phase == .active { Task { await store.refreshPriceBook(silent: true) }; DocEstimateCenter.shared.resumeAll() }
+            if phase == .active { Task { await store.refreshPriceBook(silent: true) }; Task { await SupportCenter.shared.refresh() }; DocEstimateCenter.shared.resumeAll() }
         }
     }
 }
@@ -163,6 +163,7 @@ struct InfoNote: View {
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
     @ObservedObject private var helper = HelperCenter.shared
+    @ObservedObject private var support = SupportCenter.shared
     @Environment(\.requestReview) private var requestReview
 
     var body: some View {
@@ -181,6 +182,7 @@ struct RootView: View {
                 .tag(3)
             NavigationStack { ProfileTabView() }
                 .tabItem { Label("Профиль", systemImage: "person.crop.circle") }
+                .badge(support.unread)
                 .tag(4)
         }
         .tint(Theme.orange)

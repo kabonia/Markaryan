@@ -18,6 +18,7 @@ import * as market from './market.js';
 import * as house from './house.js';
 import * as metal from './metal.js';
 import * as reports from './reports.js';
+import * as support from './support.js';
 import * as estimate from './estimate.js';
 import * as smeta from './smeta.js';
 import { xlsxToText } from './xlsx.js';
@@ -110,7 +111,7 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/create') return send(res, 200, await payments.createYookassa(await readBody(req, 64 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/yookassa/webhook') return send(res, 200, await payments.yookassaWebhook(await readBody(req, 256 * 1024)));
   if (req.method === 'POST' && url.pathname === '/v1/pay/apple/notify') return send(res, 200, payments.appleNotification(await readBody(req, 512 * 1024)));
-  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
+  if (!url.pathname.startsWith('/v1/ai/') && !url.pathname.startsWith('/v1/billing/') && !url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
   if (config.appToken && !sameToken(req.headers['x-app-token'], config.appToken)) return send(res, 401, { error: 'Нет доступа.' });
   const installId = String(req.headers['x-install-id'] || '');
   if (!INSTALL_ID.test(installId)) return send(res, 400, { error: 'Обновите приложение.' });
@@ -121,6 +122,13 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/v1/billing/apple') return send(res, 200, { ...payments.appleSync(installId, await readBody(req, 1024 * 1024)), me: billing.me(installId) });
   if (req.method === 'POST' && url.pathname === '/v1/billing/autopay') { billing.setAutopay(installId, (await readBody(req, 4096)).on); return send(res, 200, billing.me(installId)); }
   if (url.pathname.startsWith('/v1/billing/')) return send(res, 404, { error: 'Не найдено' });
+
+  // Поддержка: обращения к менеджеру (ответы приходят из Telegram).
+  if (req.method === 'GET' && url.pathname === '/v1/support/tickets') return send(res, 200, support.list(installId));
+  if (req.method === 'POST' && url.pathname === '/v1/support/tickets') return send(res, 200, await support.create(installId, await readBody(req, 2_200_000)));
+  const ticketPath = /^\/v1\/support\/tickets\/([0-9a-f-]{36})\/messages$/.exec(url.pathname);
+  if (req.method === 'POST' && ticketPath) return send(res, 200, await support.reply(installId, ticketPath[1], await readBody(req, 2_200_000)));
+  if (url.pathname.startsWith('/v1/support/')) return send(res, 404, { error: 'Не найдено' });
 
   if (req.method === 'GET' && url.pathname === '/v1/ai/capabilities') {
     const providers = ai.activeProviders();
@@ -460,4 +468,5 @@ server.headersTimeout = 60_000;
 server.listen(config.port, () => console.log(`АртСтрой server on :${config.port}, AI: ${ai.activeProviders().join(', ') || 'нет ключей'}; pictures: ${imageEngines().map((e) => e.title).join(', ') || 'нет'}; hh.ru: ${hh.hhEnabled() ? 'настроен' : 'нет'}; Avito: ${avito.avitoEnabled() ? 'настроен' : 'нет'}`));
 // «Дом снаружи»: вернуть в очередь сканы, прерванные перезапуском; уборка старых пакетов раз в 6 часов.
 houseScans.resume();
+support.startPolling();
 setInterval(() => houseScans.cleanup(), 6 * 3600_000).unref();

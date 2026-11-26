@@ -138,7 +138,7 @@ struct BillingView: View {
     private let priceNames: [(String, String)] = [
         ("smeta", "Смета по документам, до 2 листов"), ("smetaPage", "…каждый следующий лист"), ("json", "Дизайн‑проект комнаты"),
         ("imageEdit", "Визуализация, 1 кадр"), ("vision", "Счёт по фото"), ("chat", "Вопрос сильной модели"),
-        ("priceEstimateItem", "Цена позиции по рынку"), ("material", "Распознать свой материал"), ("helper", "Помощник сверх бесплатных"),
+        ("priceEstimate10", "Цены по рынку, за 10 позиций"), ("material", "Распознать свой материал"), ("helper", "Помощник сверх бесплатных"),
         ("houseScan", "3D‑обмер дома: стены, окна, крыша"),
     ]
 
@@ -153,6 +153,11 @@ struct BillingView: View {
                 if billing.russia { russiaCard } else { storeCard }
                 if let message = billing.message { Text(message.tr).font(.footnote).foregroundStyle(Theme.muted) }
                 pricesCard
+                NavigationLink { SupportView(presetTopic: "paid") } label: {
+                    AppTabRow(icon: "bubble.left.and.exclamationmark.bubble.right.fill", title: "Списались кредиты, а результата нет?",
+                              subtitle: "Напишите в поддержку — проверим и вернём кредиты")
+                }
+                .buttonStyle(PremiumCardPressStyle())
             }
             .padding(20)
         }

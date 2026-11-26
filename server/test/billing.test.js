@@ -13,18 +13,29 @@ const billing = await import('../src/billing.js');
 const payments = await import('../src/payments.js');
 const ID = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
-test('every price is at least 3× the worst AI cost (no usage can make a loss)', () => {
-  const worstRub = { helper: 0.3, chat: 36, material: 6, priceEstimateItem: 2.5, imageEdit: 25, image: 25, vision: 30, json: 60, smeta: 600, smetaPage: 75 };
-  const cheapestCreditRub = Math.min(...billing.PRODUCTS.map((p) => p.rub / p.credits)); // the biggest pack
-  for (const [kind, worst] of Object.entries(worstRub)) assert.ok(billing.PRICES[kind] * cheapestCreditRub >= worst * 3, kind);
+test('наценка: отдельные функции 230–250 %, пакеты 170–230 % (сайт и App Store 15 %)', () => {
+  // Обычная себестоимость, ₽ (docs/audit/ECONOMICS-2026-11.md); 1 кредит ≈ 10 ₽ чистыми.
+  const cost = { chat: 6, vision: 12, json: 27, imageEdit: 12, image: 12, smeta: 90, smetaPage: 40, houseScan: 26, priceEstimate10: 3 };
+  for (const [kind, rub] of Object.entries(cost)) {
+    const markup = (billing.PRICES[kind] * 10) / rub - 1;
+    assert.ok(markup >= 2.3 && markup <= 2.5, `${kind}: ${Math.round(markup * 100)} %`);
+  }
+  const unit = { ...cost, material: 2.5, helper: 0.05, priceEstimateItem: 0.3 };
+  for (const pack of billing.PACKS) {
+    const packCost = Object.entries(pack.grants).reduce((sum, [kind, n]) => sum + unit[kind] * n, 0);
+    const site = (pack.rub * 0.905) / packCost - 1, apple = (pack.usd * 82.13 * 0.85 * 0.94) / packCost - 1;
+    for (const m of [site, apple]) assert.ok(m >= 1.7 && m <= 2.3, `${pack.id}: ${Math.round(site * 100)} % / ${Math.round(apple * 100)} %`);
+  }
 });
 
 test('estimates from documents are paid per sheet and per 6 000 characters; 100 sheets max', () => {
-  assert.equal(billing.price('smeta', { pages: 2 }), 200);
-  assert.equal(billing.price('smeta', { pages: 100 }), 200 + 98 * 40);
-  assert.equal(billing.price('smeta', { pages: 500 }), 200 + 98 * 40);
-  assert.equal(billing.price('smeta', { textChars: 60_000 }), 200 + 8 * 40);
-  assert.equal(billing.price('priceEstimate', { items: 20 }), 20);
+  assert.equal(billing.price('smeta', { pages: 2 }), 30);
+  assert.equal(billing.price('smeta', { pages: 100 }), 30 + 98 * 14);
+  assert.equal(billing.price('smeta', { pages: 500 }), 30 + 98 * 14);
+  assert.equal(billing.price('smeta', { textChars: 60_000 }), 30 + 8 * 14);
+  assert.equal(billing.price('priceEstimate', { items: 20 }), 2);
+  assert.equal(billing.price('priceEstimate', { items: 21 }), 3);
+  assert.equal(billing.price('priceEstimate', { items: 0 }), 1);
 });
 
 test('credits are taken before the work; a short balance stops it with 402; a failure gives them back', () => {
@@ -32,9 +43,9 @@ test('credits are taken before the work; a short balance stops it with 402; a fa
   const id = ID(1);
   billing.account(id, '1.1.1.1');
   assert.equal(billing.account(id).credits, 10);
-  assert.equal(billing.charge(id, 'imageEdit'), 8);
-  assert.throws(() => billing.charge(id, 'imageEdit'), (e) => e.status === 402 && /Недостаточно кредитов/.test(e.message));
-  billing.refund(id, 'imageEdit', 8);
+  assert.equal(billing.charge(id, 'json'), 9);
+  assert.throws(() => billing.charge(id, 'json'), (e) => e.status === 402 && /Недостаточно кредитов/.test(e.message));
+  billing.refund(id, 'json', 9);
   assert.equal(billing.account(id).credits, 10);
 });
 
@@ -60,7 +71,7 @@ test('a purchase counts once (repeated webhook / sync); a refund takes the credi
   assert.equal(billing.grant(id, 'credits_100', 'yookassa', 'yk:1').duplicate, false);
   assert.equal(billing.grant(id, 'credits_100', 'yookassa', 'yk:1').duplicate, true);
   assert.equal(billing.account(id).credits, 110);
-  assert.throws(() => billing.charge(id, 'smeta', { pages: 2 }), (e) => e.status === 402); // 200 > 110
+  assert.throws(() => billing.charge(id, 'smeta', { pages: 100 }), (e) => e.status === 402); // 1402 > 110
 });
 
 test('refund below zero blocks further use', () => {
@@ -68,8 +79,8 @@ test('refund below zero blocks further use', () => {
   const id = ID(4);
   billing.account(id, '4.4.4.4');
   billing.grant(id, 'credits_100', 'yookassa', 'yk:2');
-  // 10 приветственных + 100 − 4 × 25 (дизайн‑концепция) = 10.
-  billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json'); billing.charge(id, 'json');
+  // 10 приветственных + 100 − смета на 7 листов (30 + 5 × 14 = 100) = 10.
+  billing.charge(id, 'smeta', { pages: 7 });
   assert.equal(billing.account(id).credits, 10);
   billing.revoke('yk:2', 'yookassa');
   assert.equal(billing.account(id).credits, -90);
@@ -157,10 +168,10 @@ test('пакеты функций: сначала пакет, потом кре�
   assert.equal(acc.credits, 10); // кредиты не тронуты
   billing.refund(id, 'json', 0);
   assert.equal(acc.packs.json, 3); // ИИ не справился — единица вернулась
-  assert.equal(billing.charge(id, 'priceEstimate', { items: 35 }), 5); // 30 из пакета + 5 кредитами
+  assert.equal(billing.charge(id, 'priceEstimate', { items: 35 }), 1); // 30 из пакета + 5 строк = 1 кредит
   assert.equal(acc.packs.priceEstimateItem, 0);
   billing.grant(id, 'pack_smeta', 'yookassa', 'yk:pack2');
-  // 12 листов: 2 входят в смету, 8 — листы пакета, 2 сверх — 80 кредитов, а на балансе 5 → отказ, пакет не тронут.
+  // 12 листов: 2 входят в смету, 8 — листы пакета, 2 сверх — 28 кредитов, а на балансе 9 → отказ, пакет не тронут.
   assert.throws(() => billing.charge(id, 'smeta', { pages: 12 }), (e) => e.status === 402);
   assert.equal(billing.account(id).packs.smeta, 1);
   assert.equal(billing.charge(id, 'smeta', { pages: 10 }), 0);

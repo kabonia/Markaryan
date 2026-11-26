@@ -343,6 +343,7 @@ private struct NewProjectTaskSheet: View {
 
 struct ProfileTabView: View {
     @EnvironmentObject private var store: AppStore
+    @ObservedObject private var support = SupportCenter.shared
     @Environment(\.requestReview) private var requestReview
     /// Server and price settings for the owner and the developers: five taps on the version show them.
     @AppStorage("developerTools") private var developerTools = false
@@ -368,6 +369,17 @@ struct ProfileTabView: View {
 
                 NavigationLink { BillingView() } label: {
                     AppTabRow(icon: "creditcard.fill", title: "Тарифы и баланс", subtitle: "Кредиты, подписка и цены функций")
+                }
+                .buttonStyle(PremiumCardPressStyle())
+                NavigationLink { SupportView() } label: {
+                    AppTabRow(icon: "bubble.left.and.bubble.right.fill", title: "Поддержка",
+                              subtitle: support.unread > 0 ? "Менеджер ответил — откройте обращение" : "Не работает, не разобрались или оплатили и не получили — напишите менеджеру")
+                        .overlay(alignment: .topTrailing) {
+                            if support.unread > 0 {
+                                Text("\(support.unread)").font(.caption2.weight(.bold)).foregroundStyle(.white)
+                                    .padding(.horizontal, 7).padding(.vertical, 3).background(Theme.danger, in: Capsule()).padding(8)
+                            }
+                        }
                 }
                 .buttonStyle(PremiumCardPressStyle())
                 Button { HelperCenter.shared.startTour() } label: {

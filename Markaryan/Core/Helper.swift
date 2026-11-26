@@ -236,7 +236,15 @@ struct HelperButton: View {
 struct HelperNoticeBanner: View {
     @ObservedObject var helper = HelperCenter.shared
     @State private var showBilling = false
+    @State private var showSupport = false
     var body: some View {
+        // Окна — снаружи плашки: она исчезает при нажатии, а окно должно остаться.
+        ZStack { banner }
+            .sheet(isPresented: $showBilling) { NavigationStack { BillingView() } }
+            .sheet(isPresented: $showSupport) { NavigationStack { SupportView(presetTopic: "broken", presetFeature: nil) } }
+    }
+
+    @ViewBuilder private var banner: some View {
         if let notice = helper.notice {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: helper.needsTopUp ? "creditcard.fill" : "sparkles").foregroundStyle(Theme.orange)
@@ -247,6 +255,12 @@ struct HelperNoticeBanner: View {
                             Label("Пополнить баланс", systemImage: "plus.circle.fill").font(.footnote.weight(.semibold))
                                 .padding(.horizontal, 12).padding(.vertical, 8).foregroundStyle(Theme.onAccent)
                                 .background(Theme.orange, in: Capsule())
+                        }
+                    } else {
+                        Button { helper.notice = nil; showSupport = true } label: {
+                            Label("Написать в поддержку", systemImage: "bubble.left.and.bubble.right.fill").font(.footnote.weight(.semibold))
+                                .padding(.horizontal, 12).padding(.vertical, 8).foregroundStyle(Theme.orange)
+                                .background(Theme.accentTint, in: Capsule())
                         }
                     }
                 }
@@ -259,7 +273,6 @@ struct HelperNoticeBanner: View {
             .padding(.horizontal, 16)
             .onTapGesture { helper.notice = nil; if !helper.needsTopUp { helper.isOpen = true } }
             .transition(.move(edge: .top).combined(with: .opacity))
-            .sheet(isPresented: $showBilling) { NavigationStack { BillingView() } }
             .task(id: notice) { try? await Task.sleep(for: .seconds(9)); if helper.notice == notice { withAnimation { helper.notice = nil } } }
         }
     }

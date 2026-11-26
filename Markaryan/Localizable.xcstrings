@@ -1066,6 +1066,28 @@
         }
       }
     },
+    "+%lld кредитов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld credits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld créditos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld 积分"
+          }
+        }
+      }
+    },
     ", готово": {
       "extractionState": "manual",
       "localizations": {
@@ -9560,6 +9582,28 @@
         }
       }
     },
+    "Вопрос ИИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI question"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregunta a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI 提问"
+          }
+        }
+      }
+    },
     "Вопрос помощнику": {
       "extractionState": "manual",
       "localizations": {
@@ -16435,6 +16479,28 @@
         }
       }
     },
+    "Есть ответ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answered"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respondido"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已回复"
+          }
+        }
+      }
+    },
     "Есть сохранённые размеры": {
       "localizations": {
         "en": {
@@ -16590,6 +16656,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "等待 GPU 处理"
+          }
+        }
+      }
+    },
+    "Ждёт ответа": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Awaiting reply"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esperando respuesta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待回复"
           }
         }
       }
@@ -17320,6 +17408,28 @@
         }
       }
     },
+    "Закрыто": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Closed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已关闭"
+          }
+        }
+      }
+    },
     "Закрыть": {
       "localizations": {
         "en": {
@@ -17426,6 +17536,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "更换标志"
+          }
+        }
+      }
+    },
+    "Заменить снимок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace screenshot"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reemplazar captura"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "替换截图"
           }
         }
       }
@@ -21012,6 +21144,28 @@
         }
       }
     },
+    "Как с вами связаться": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to contact you"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo contactarle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "联系方式"
+          }
+        }
+      }
+    },
     "Как сделать хорошее фото для дизайна?": {
       "extractionState": "manual",
       "localizations": {
@@ -21467,6 +21621,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "计算器"
+          }
+        }
+      }
+    },
+    "Калькуляторы и сметы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculators and estimates"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculadoras y presupuestos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计算器和估算"
           }
         }
       }
@@ -25901,6 +26077,28 @@
         }
       }
     },
+    "МОИ ОБРАЩЕНИЯ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MY REQUESTS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIS SOLICITUDES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的请求"
+          }
+        }
+      }
+    },
     "МОИ СМЕТЫ": {
       "localizations": {
         "en": {
@@ -27079,6 +27277,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "请将螺母、螺栓等小件单层铺开，选用与物品反差明显的背景。"
+          }
+        }
+      }
+    },
+    "Менеджер": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客服经理"
+          }
+        }
+      }
+    },
+    "Менеджер видит ваши списания — проверит и вернёт кредиты, если результат не получен.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The manager sees your charges and will return the credits if you didn't get the result."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El gestor ve sus cargos: lo revisará y le devolverá los créditos si no recibió el resultado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客服经理可以看到您的扣费记录，如未获得结果将核实并退还积分。"
+          }
+        }
+      }
+    },
+    "Менеджер ответил — откройте обращение": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The manager replied — open the request"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El gestor respondió: abra la solicitud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客服经理已回复——请打开请求"
           }
         }
       }
@@ -29606,6 +29870,50 @@
         }
       }
     },
+    "Написать в поддержку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contact support"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribir a soporte"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "联系客服"
+          }
+        }
+      }
+    },
+    "Напишите в поддержку — проверим и вернём кредиты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write to support — we'll check and return the credits"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escriba a soporte: lo revisaremos y le devolveremos los créditos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "联系客服——我们会核实并退还积分"
+          }
+        }
+      }
+    },
     "Напишите вопрос": {
       "localizations": {
         "en": {
@@ -29624,6 +29932,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "输入您的问题"
+          }
+        }
+      }
+    },
+    "Напишите менеджеру": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write to a manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escriba a un gestor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "联系客服经理"
           }
         }
       }
@@ -30396,6 +30726,28 @@
         }
       }
     },
+    "Не выбрана": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not selected"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin seleccionar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未选择"
+          }
+        }
+      }
+    },
     "Не закрывайте приложение до конца загрузки. Если связь пропадёт — продолжим с того же места.": {
       "localizations": {
         "en": {
@@ -30487,6 +30839,28 @@
         }
       }
     },
+    "Не получилось отправить. Попробуйте ещё раз.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't send. Please try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo enviar. Inténtelo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送失败，请重试。"
+          }
+        }
+      }
+    },
     "Не попало в кадр": {
       "localizations": {
         "en": {
@@ -30505,6 +30879,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "未拍到"
+          }
+        }
+      }
+    },
+    "Не работает функция": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A feature doesn't work"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una función no funciona"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "某功能无法使用"
+          }
+        }
+      }
+    },
+    "Не работает, не разобрались или оплатили и не получили — напишите менеджеру": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something broken, unclear, or paid with no result — write to a manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si algo no funciona, no lo entiende o pagó sin resultado, escriba a un gestor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功能故障、不会使用或付款未得结果——请联系客服经理"
+          }
+        }
+      }
+    },
+    "Не разобрался, как пользоваться": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not sure how to use it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No entiendo cómo usarlo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不知道如何使用"
           }
         }
       }
@@ -31168,6 +31608,50 @@
         }
       }
     },
+    "Необязательно. Снимок экрана помогает понять, что пошло не так.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. A screenshot helps us see what went wrong."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Una captura nos ayuda a ver qué falló."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选。截图有助于我们了解问题所在。"
+          }
+        }
+      }
+    },
+    "Необязательно: ответ в любом случае придёт сюда, в «Поддержку».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional: the reply will arrive here in Support anyway."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional: la respuesta llegará aquí, a Soporte, de todos modos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选：回复无论如何都会显示在“客服支持”中。"
+          }
+        }
+      }
+    },
     "Неоклассика": {
       "extractionState": "manual",
       "localizations": {
@@ -31281,6 +31765,28 @@
         }
       }
     },
+    "Нет интернета — сообщение не отправлено.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No internet — the message wasn't sent."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin internet: el mensaje no se envió."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无网络——消息未发送。"
+          }
+        }
+      }
+    },
     "Нет надёжных рыночных данных — уточните цену у продавца.": {
       "localizations": {
         "en": {
@@ -31299,6 +31805,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "暂无可靠的市场数据，请向卖家确认价格。"
+          }
+        }
+      }
+    },
+    "Нет связи с сервером.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No connection to the server."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión con el servidor."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接服务器。"
           }
         }
       }
@@ -31551,6 +32079,28 @@
         }
       }
     },
+    "Новое обращение": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New request"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva solicitud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建请求"
+          }
+        }
+      }
+    },
     "Новое окно": {
       "localizations": {
         "en": {
@@ -31708,6 +32258,28 @@
         }
       }
     },
+    "Новый ответ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New reply"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva respuesta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新回复"
+          }
+        }
+      }
+    },
     "Новый стиль комнаты за минуту": {
       "extractionState": "manual",
       "localizations": {
@@ -31771,6 +32343,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "编号 %@ 已复制——粘贴到地图搜索中"
+          }
+        }
+      }
+    },
+    "Номер обращения — %lld. Менеджер ответит здесь, в «Поддержке».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request number: %lld. The manager will reply here in Support."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número de solicitud: %lld. El gestor responderá aquí, en Soporte."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求编号：%lld。客服经理将在“客服支持”中回复。"
           }
         }
       }
@@ -32701,6 +33295,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "处理中…"
+          }
+        }
+      }
+    },
+    "Обращение отправлено": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request sent"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solicitud enviada"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求已发送"
+          }
+        }
+      }
+    },
+    "Обращение №%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request #%lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solicitud n.º %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld 号请求"
+          }
+        }
+      }
+    },
+    "Обращений пока нет. Обычно отвечаем в течение часа в рабочее время.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No requests yet. We usually reply within an hour during business hours."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay solicitudes. Normalmente respondemos en una hora en horario laboral."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂无请求。工作时间内我们通常在一小时内回复。"
           }
         }
       }
@@ -34001,6 +34661,28 @@
         }
       }
     },
+    "Описание": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Description"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descripción"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "描述"
+          }
+        }
+      }
+    },
     "Описание интерьера для фотореалистичной визуализации, 1–3 предложения": {
       "extractionState": "manual",
       "localizations": {
@@ -34066,6 +34748,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "描述您的想法，\n查看效果"
+          }
+        }
+      }
+    },
+    "Опишите: что делали, что ожидали и что получилось": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe what you did, what you expected and what happened"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describa qué hizo, qué esperaba y qué pasó"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请描述：您做了什么、预期结果以及实际结果"
+          }
+        }
+      }
+    },
+    "Оплата и баланс": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payment and balance"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pago y saldo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "付款和余额"
+          }
+        }
+      }
+    },
+    "Оплата и возврат": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payment and refund"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pago y reembolso"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "付款和退款"
+          }
+        }
+      }
+    },
+    "Оплатил, но не получил результат": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paid but got no result"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagué y no recibí el resultado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已付款但未获得结果"
           }
         }
       }
@@ -39089,6 +39859,28 @@
         }
       }
     },
+    "Поддержка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soporte"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "客服支持"
+          }
+        }
+      }
+    },
     "Поделиться": {
       "localizations": {
         "en": {
@@ -40724,6 +41516,28 @@
         }
       }
     },
+    "Помощник": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistant"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asistente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "助手"
+          }
+        }
+      }
+    },
     "Помощник видит параметры текущего расчёта и объясняет объёмы, смету и порядок работ. Он не заменяет проектировщика для несущих конструкций.": {
       "localizations": {
         "en": {
@@ -41965,6 +42779,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "建房装修都能用：按项目做预算、做室内设计、算材料用量，还能用相机测量。"
+          }
+        }
+      }
+    },
+    "Приложить снимок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attach a picture"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjuntar imagen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "附上图片"
+          }
+        }
+      }
+    },
+    "Приложить снимок экрана": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attach a screenshot"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjuntar captura de pantalla"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "附上截图"
           }
         }
       }
@@ -50533,6 +51391,28 @@
         }
       }
     },
+    "Сообщение менеджеру": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Message to the manager"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensaje al gestor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发给客服经理的消息"
+          }
+        }
+      }
+    },
     "Состав работ по разделам": {
       "extractionState": "manual",
       "localizations": {
@@ -51049,6 +51929,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Спецтехника-Инфо,РенТэк 广告(CAT D6N/D6R,索契)"
+          }
+        }
+      }
+    },
+    "Списались кредиты, а результата нет?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Credits charged but no result?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Se cobraron créditos y no hay resultado?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扣了积分却没有结果？"
           }
         }
       }
@@ -53551,6 +54453,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "手机过热，请到阴凉处暂停一分钟"
+          }
+        }
+      }
+    },
+    "Телефон, Telegram или e‑mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phone, Telegram or email"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teléfono, Telegram o correo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电话、Telegram 或电子邮件"
+          }
+        }
+      }
+    },
+    "Тема": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topic"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题"
           }
         }
       }
@@ -56995,6 +57941,28 @@
         }
       }
     },
+    "Функция": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feature"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Función"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功能"
+          }
+        }
+      }
+    },
     "ХИТ": {
       "extractionState": "manual",
       "localizations": {
@@ -57129,6 +58097,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天适合室外施工"
+          }
+        }
+      }
+    },
+    "Хорошо": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De acuerdo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好的"
           }
         }
       }
@@ -57796,6 +58786,50 @@
         }
       }
     },
+    "Цены по рынку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Market prices"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios de mercado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "市场价格"
+          }
+        }
+      }
+    },
+    "Цены по рынку, за 10 позиций": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Market prices, per 10 items"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios de mercado, por 10 partidas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "市场价格，每 10 项"
+          }
+        }
+      }
+    },
     "Цены синхронизируются с сервером": {
       "extractionState": "manual",
       "localizations": {
@@ -58176,6 +59210,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "车里雅宾斯克州"
+          }
+        }
+      }
+    },
+    "Чем подробнее, тем быстрее поможем.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The more detail, the faster we can help."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuanto más detalle, más rápido le ayudaremos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "描述越详细，我们处理越快。"
           }
         }
       }
@@ -58589,6 +59645,28 @@
         }
       }
     },
+    "Что случилось": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What happened"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué pasó"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发生了什么"
+          }
+        }
+      }
+    },
     "Что спросить про фото?": {
       "localizations": {
         "en": {
@@ -58718,6 +59796,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "类型"
+          }
+        }
+      }
+    },
+    "Что‑то не работает, оплатили функцию и не получили результат или не разобрались — опишите, что случилось. Менеджер видит ваш аккаунт и списания, ответ придёт сюда. Если функция сломалась по нашей вине — вернём кредиты.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something doesn't work, you paid for a feature and got no result, or you're not sure how to use it — tell us what happened. The manager sees your account and charges, and the reply will arrive here. If a feature failed on our side, we'll return your credits."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si algo no funciona, pagó una función y no recibió el resultado o no sabe cómo usarla, cuéntenos qué pasó. El gestor ve su cuenta y sus cargos, y la respuesta llegará aquí. Si la función falló por nuestra culpa, le devolveremos los créditos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果某些功能无法使用、付款后未获得结果或不知道如何使用，请描述发生了什么。客服经理可以看到您的账户和扣费记录，回复会显示在这里。如果是我们的问题导致功能失败，我们会退还积分。"
           }
         }
       }
@@ -69548,6 +70648,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件编号"
+          }
+        }
+      }
+    },
+    "№%lld · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "#%lld · %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N.º %lld · %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld 号 · %@"
           }
         }
       }
