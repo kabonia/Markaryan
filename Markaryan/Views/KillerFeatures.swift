@@ -447,7 +447,7 @@ struct PhotoRoomView: View {
     private func create() {
         let l = Float(value(length)), w = Float(value(width))
         let points: [SIMD3<Float>] = [SIMD3(0, 0, 0), SIMD3(l, 0, 0), SIMD3(l, 0, w), SIMD3(0, 0, w)]
-        guard let plan = FloorPlan.fromContour(points, name: name.trimmingCharacters(in: .whitespaces).isEmpty ? "Комната" : name, ceilingHeight: value(height)) else { return }
+        guard let plan = FloorPlanBuilder.fromContour(points, name: name.trimmingCharacters(in: .whitespaces).isEmpty ? "Комната" : name, ceilingHeight: value(height)) else { return }
         store.floorPlans.append(plan)
         store.track("photo_room_created")
         Haptics.success()
