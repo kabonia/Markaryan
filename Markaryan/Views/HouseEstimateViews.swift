@@ -179,6 +179,8 @@ struct HouseEstimateParamsView: View {
                     Text("ИИ‑сметчик пересчитает дом по описанию с поиском цен под ваш объект — за кредиты, 10–30 минут. Результат появится в «Смета по документам».")
                         .font(.caption).foregroundStyle(Theme.muted)
                 }
+                // Как будет выглядеть дом с выбранными фасадом и кровлей — здесь же.
+                HouseVisualCard(params: p)
             }
             .padding(20)
         }

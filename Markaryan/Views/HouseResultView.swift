@@ -155,6 +155,7 @@ struct HouseResultView: View {
     @State private var modelError: String?
     /// Единицы: м или футы (по стране iPhone, можно переключить).
     @State private var imperial = Units.imperial
+    @State private var snapshotter = SceneSnapshotter()
 
     private var result: HouseResult { scan.result ?? HouseResult() }
 
@@ -169,6 +170,7 @@ struct HouseResultView: View {
                     }
                 }
                 model
+                HouseNextSteps(result: result, snapshotter: snapshotter, hasModel: scan.hasModel)
                 dimensions
                 roof
                 openings
@@ -197,7 +199,7 @@ struct HouseResultView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(red: 0.13, green: 0.17, blue: 0.16))
             if let modelURL {
-                HouseModelView(url: modelURL).clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                HouseModelView(url: modelURL, snapshotter: snapshotter).clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             } else if let modelError {
                 Text(modelError).font(.footnote).foregroundStyle(.white.opacity(0.8)).padding()
             } else {
@@ -410,6 +412,7 @@ struct Legend: View {
 /// 3D‑модель дома (OBJ из обработчика) в SceneKit: вращение и масштаб пальцами.
 struct HouseModelView: UIViewRepresentable {
     let url: URL
+    var snapshotter: SceneSnapshotter? = nil
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -420,6 +423,7 @@ struct HouseModelView: UIViewRepresentable {
         let (scene, camera) = Self.scene(from: url)
         view.scene = scene
         view.pointOfView = camera
+        snapshotter?.view = view
         return view
     }
 
