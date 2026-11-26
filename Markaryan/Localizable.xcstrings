@@ -6064,6 +6064,28 @@
         }
       }
     },
+    "Без лидара: размеры по снимку → материалы, цены со ссылками и картинка с новой отделкой.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No LiDAR: size from a photo → materials, prices with links and a picture with the new finish."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin LiDAR: medidas por foto → materiales, precios con enlaces e imagen con el nuevo acabado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需激光雷达：照片估算尺寸 → 材料、含链接的价格以及新装修效果图。"
+          }
+        }
+      }
+    },
     "Без лидара: точность ±2–5 %": {
       "localizations": {
         "en": {
@@ -8218,6 +8240,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "注意：资料未提供索契按吨计的报价，仅提供按混凝土体积计的报价（每 m³）。低位、常见和高位价格均为测算值。"
+          }
+        }
+      }
+    },
+    "ВОЗМОЖНО, ЗАБЫЛИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POSSIBLY MISSING"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POSIBLEMENTE OLVIDADO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可能遗漏"
           }
         }
       }
@@ -11059,6 +11103,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "从相册选择照片"
+          }
+        }
+      }
+    },
+    "Выбрать фото комнаты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose room photos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir fotos de la habitación"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择房间照片"
           }
         }
       }
@@ -15453,6 +15519,28 @@
         }
       }
     },
+    "До 4 страниц. Лучше ровно, при хорошем свете.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to 4 pages. Best straight-on and in good light."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hasta 4 páginas. Mejor de frente y con buena luz."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最多4页。请正对拍摄并保证光线充足。"
+          }
+        }
+      }
+    },
     "До стены": {
       "extractionState": "manual",
       "localizations": {
@@ -15494,6 +15582,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "添加"
+          }
+        }
+      }
+    },
+    "Добавить в «Потрачено»": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to \"Spent\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a «Gastado»"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加入“已花费”"
           }
         }
       }
@@ -16605,6 +16715,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "定位权限已关闭。请从列表中选择城市，或在“设置”中允许访问。"
+          }
+        }
+      }
+    },
+    "Другие фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other photos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otras fotos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他照片"
           }
         }
       }
@@ -20094,6 +20226,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "从套餐扣除"
+          }
+        }
+      }
+    },
+    "Из фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From photos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desde fotos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从相册"
           }
         }
       }
@@ -30626,6 +30780,28 @@
         }
       }
     },
+    "Название": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称"
+          }
+        }
+      }
+    },
     "Название и район подставятся в сметы, PDF и чертежи. Данные хранятся на вашем iPhone.": {
       "localizations": {
         "en": {
@@ -32158,6 +32334,28 @@
         }
       }
     },
+    "Не переплачивайте подрядчику": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't overpay your contractor"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pague de más al contratista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "别多付承包商的钱"
+          }
+        }
+      }
+    },
     "Не получилось": {
       "extractionState": "manual",
       "localizations": {
@@ -33191,6 +33389,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "无网络。"
+          }
+        }
+      }
+    },
+    "Нет лидара — не беда. Сфотографируйте комнату из угла (1–3 фото, чтобы были видны пол, потолок и дверь). ИИ оценит размеры по двери и потолку, вы поправите цифры — и получите материалы, цены и визуализацию.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No LiDAR? No problem. Photograph the room from a corner (1–3 photos showing the floor, ceiling and a door). The AI estimates the size from the door and ceiling, you adjust the numbers, and get materials, prices and a visualization."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Sin LiDAR? No pasa nada. Fotografíe la habitación desde una esquina (1–3 fotos con suelo, techo y puerta). La IA estimará las medidas por la puerta y el techo, usted las ajusta y obtiene materiales, precios y visualización."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有激光雷达也没关系。从角落拍摄房间（1–3张，需拍到地面、天花板和门）。AI会根据门和天花板估算尺寸，您修正数字后即可获得材料、价格和效果图。"
           }
         }
       }
@@ -37760,6 +37980,28 @@
         }
       }
     },
+    "Отправить разбор": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the review"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar la revisión"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送核查结果"
+          }
+        }
+      }
+    },
     "Отправить размеры": {
       "localizations": {
         "en": {
@@ -38030,6 +38272,28 @@
         }
       }
     },
+    "Оцениваем размеры…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimating the size…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimando medidas…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在估算尺寸……"
+          }
+        }
+      }
+    },
     "Оценить приложение": {
       "extractionState": "manual",
       "localizations": {
@@ -38049,6 +38313,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "给应用评分"
+          }
+        }
+      }
+    },
+    "Оценить размеры": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimate the size"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimar medidas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算尺寸"
           }
         }
       }
@@ -38541,6 +38827,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "附件 1"
+          }
+        }
+      }
+    },
+    "ПРОВЕРКА СМЕТЫ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUOTE CHECK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REVISIÓN DEL PRESUPUESTO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估价单核查"
           }
         }
       }
@@ -45277,6 +45585,28 @@
         }
       }
     },
+    "Проверить другую смету": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check another quote"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar otro presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核查其他估价单"
+          }
+        }
+      }
+    },
     "Проверить объёмы, материалы и работы": {
       "extractionState": "manual",
       "localizations": {
@@ -45342,6 +45672,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "核查完工质量和相关资料"
+          }
+        }
+      }
+    },
+    "Проверить смету": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the quote"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar el presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核查估价单"
+          }
+        }
+      }
+    },
+    "Проверить смету подрядчика": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check a contractor's quote"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar el presupuesto del contratista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核查承包商估价单"
           }
         }
       }
@@ -46165,6 +46539,28 @@
         }
       }
     },
+    "Прочитать чек": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the receipt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer el ticket"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "识别小票"
+          }
+        }
+      }
+    },
     "Проём": {
       "localizations": {
         "en": {
@@ -46526,6 +46922,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "尺寸"
+          }
+        }
+      }
+    },
+    "РАЗМЕРЫ ПО ФОТО": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIZE FROM PHOTO"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MEDIDAS POR FOTO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片估算尺寸"
           }
         }
       }
@@ -48639,6 +49057,50 @@
         }
       }
     },
+    "Ремонт по фото": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renovation from a photo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reforma por foto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按照片装修"
+          }
+        }
+      }
+    },
+    "Ремонт по фото комнаты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renovation from a room photo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reforma por foto de la habitación"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按房间照片装修"
+          }
+        }
+      }
+    },
     "Рендеры и PDF": {
       "extractionState": "manual",
       "localizations": {
@@ -49734,6 +50196,28 @@
         }
       }
     },
+    "СМЕТА ПОДРЯДЧИКА": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONTRACTOR'S QUOTE"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRESUPUESTO DEL CONTRATISTA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "承包商估价单"
+          }
+        }
+      }
+    },
     "СМЕТАПРО · СТРОИТЕЛЬНЫЙ РАСЧЁТ": {
       "extractionState": "manual",
       "localizations": {
@@ -50525,6 +51009,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "斯维尔德洛夫斯克州"
+          }
+        }
+      }
+    },
+    "Сверка — ориентир по открытым предложениям магазинов и мастеров. Цена бригады зависит от сложности, сроков и гарантии.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The check is a guide based on public offers from stores and tradespeople. A crew's price depends on complexity, timing and warranty."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La revisión es orientativa, según ofertas públicas de tiendas y profesionales. El precio de una cuadrilla depende de la complejidad, plazos y garantía."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核查仅供参考，基于商店和师傅的公开报价。施工队价格取决于难度、工期和保修。"
           }
         }
       }
@@ -53716,6 +54222,28 @@
         }
       }
     },
+    "Снять чек": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photograph receipt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotografiar ticket"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍摄小票"
+          }
+        }
+      }
+    },
     "Собираем PDF‑презентацию…": {
       "extractionState": "manual",
       "localizations": {
@@ -53982,6 +54510,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "生成效果图"
+          }
+        }
+      }
+    },
+    "Создать комнату и посчитать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create the room and calculate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear la habitación y calcular"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建房间并计算"
           }
         }
       }
@@ -54707,6 +55257,28 @@
         }
       }
     },
+    "Спросите подрядчика: входит ли это в цену или будет доплатой потом.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask the contractor whether this is included or will be charged extra later."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregunte al contratista si está incluido o se cobrará aparte."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "问问承包商：这是否已包含在价格中，还是之后另外收费。"
+          }
+        }
+      }
+    },
     "Спросите что угодно…": {
       "localizations": {
         "en": {
@@ -55175,6 +55747,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "预算项和支出"
+          }
+        }
+      }
+    },
+    "Статья бюджета": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget item"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partida"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预算项"
           }
         }
       }
@@ -56591,6 +57185,28 @@
         }
       }
     },
+    "Сфотографируйте смету или загрузите PDF. Сверим каждую строку с ценами вашего города — со ссылками на предложения — и покажем, где завышено и что забыли.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photograph the quote or upload a PDF. We'll check every line against prices in your city, with links to offers, and show what's overpriced and what's missing."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotografíe el presupuesto o suba un PDF. Compararemos cada línea con los precios de su ciudad, con enlaces a ofertas, y mostraremos qué está inflado y qué falta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍摄估价单或上传PDF。我们会将每一项与您所在城市的价格（附报价链接）对比，指出哪些偏高、哪些遗漏。"
+          }
+        }
+      }
+    },
     "Сфотографируйте торцы арматуры, труб, досок или бруса — ИИ посчитает штуки в пачке.": {
       "extractionState": "manual",
       "localizations": {
@@ -56633,6 +57249,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "拍下端面，AI 帮你统计钢筋和管材。"
+          }
+        }
+      }
+    },
+    "Сфотографируйте чек из магазина — сумма сама попадёт в «Потрачено» нужной статьи бюджета объекта. Перерасход будет виден сразу.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photograph a store receipt and the total goes into \"Spent\" for the right budget item. Overspending shows up right away."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotografíe el ticket de la tienda y el importe irá a «Gastado» de la partida correcta. El sobrecoste se verá al instante."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍下商店小票，金额会自动记入相应预算项的“已花费”。超支一目了然。"
+          }
+        }
+      }
+    },
+    "Сфотографируйте чек — сумма сама попадёт в траты объекта, перерасход виден сразу.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photograph a receipt and the total goes into the project's expenses; overspending shows right away."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotografíe el ticket y el importe irá a los gastos del proyecto; el sobrecoste se ve al instante."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍下小票，金额自动计入项目支出，超支一目了然。"
           }
         }
       }
@@ -58527,6 +59187,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "每个价格都附有商品示例和来源链接。"
+          }
+        }
+      }
+    },
+    "У подрядчика": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contractor"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contratista"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "承包商报价"
           }
         }
       }
@@ -60526,6 +61208,28 @@
         }
       }
     },
+    "Фото или PDF сметы → сверка с ценами города со ссылками: где завышено, сколько переплата и что забыли.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quote photo or PDF → checked against city prices with links: what's overpriced, how much you'd overpay and what's missing."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foto o PDF del presupuesto → comparación con precios de la ciudad con enlaces: qué está inflado, cuánto pagaría de más y qué falta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估价单照片或PDF → 与城市价格（含链接）对比：哪里偏高、多付多少、遗漏了什么。"
+          }
+        }
+      }
+    },
     "Фото листа 1": {
       "extractionState": "manual",
       "localizations": {
@@ -60635,6 +61339,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "带标注照片:%lld"
+          }
+        }
+      }
+    },
+    "Фото сметы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quote photo"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foto del presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估价单照片"
           }
         }
       }
@@ -61687,6 +62413,28 @@
         }
       }
     },
+    "Цены в рынке — переплаты не нашли": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prices are at market level — no overpayment found"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios de mercado: no hay sobrecoste"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "价格符合市场——未发现多付"
+          }
+        }
+      }
+    },
     "Цены для: %@": {
       "localizations": {
         "en": {
@@ -62181,6 +62929,50 @@
         }
       }
     },
+    "Чек → в бюджет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receipt → budget"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket → presupuesto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小票 → 预算"
+          }
+        }
+      }
+    },
+    "Чек → в траты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receipt → expenses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket → gastos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小票 → 支出"
+          }
+        }
+      }
+    },
     "Чек-лист контроля": {
       "localizations": {
         "en": {
@@ -62495,6 +63287,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "简洁线条，暖色灯光"
+          }
+        }
+      }
+    },
+    "Читаем чек…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the receipt…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leyendo el ticket…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在识别小票……"
           }
         }
       }
@@ -64387,6 +65201,28 @@
         }
       }
     },
+    "Это оценка ±5–10 %. Для точной закупки измерьте рулеткой одну стену и поправьте цифру.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is an estimate within ±5–10%. For exact purchasing, measure one wall with a tape and correct the number."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es una estimación de ±5–10 %. Para comprar con exactitud, mida una pared con cinta y corrija la cifra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是±5–10%的估算。如需精确采购，请用卷尺量一面墙并修正数字。"
+          }
+        }
+      }
+    },
     "Этого проёма уже нет на плане.": {
       "extractionState": "manual",
       "localizations": {
@@ -65027,6 +65863,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "精品店"
+          }
+        }
+      }
+    },
+    "в рынке": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "market"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "de mercado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "市场价"
           }
         }
       }
@@ -68994,6 +69852,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有内置证书"
+          }
+        }
+      }
+    },
+    "нет данных": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no data"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sin datos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无数据"
           }
         }
       }

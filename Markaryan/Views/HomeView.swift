@@ -94,6 +94,18 @@ struct HomeView: View {
                         HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
                     }
                     .buttonStyle(PremiumCardPressStyle())
+                    NavigationLink { PhotoRoomView() } label: {
+                        HomeWideToolCard(icon: "camera.aperture", title: "Ремонт по фото комнаты", text: "Без лидара: размеры по снимку → материалы, цены со ссылками и картинка с новой отделкой.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                    NavigationLink { QuoteCheckView() } label: {
+                        HomeWideToolCard(icon: "checkmark.shield.fill", title: "Проверить смету подрядчика", text: "Фото или PDF сметы → сверка с ценами города со ссылками: где завышено, сколько переплата и что забыли.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
+                    NavigationLink { ReceiptScanView() } label: {
+                        HomeWideToolCard(icon: "receipt.fill", title: "Чек → в бюджет", text: "Сфотографируйте чек — сумма сама попадёт в траты объекта, перерасход виден сразу.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                 }
                 .reveal(appeared, delay: 0.1)
 
