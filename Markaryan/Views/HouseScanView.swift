@@ -48,10 +48,9 @@ struct HouseScanView: View {
             if showsCamera {
                 HouseARContainer(recorder: recorder).ignoresSafeArea()
             }
-            VStack(spacing: 0) {
-                header
-                phaseView
-            }
+            phaseView
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .safeAreaInset(edge: .top, spacing: 0) { header }
         }
         // На уровне всего экрана: «Мои сканы» открываются и со вступления, и после отправки.
         .sheet(isPresented: $showScans) { HouseScansView() }

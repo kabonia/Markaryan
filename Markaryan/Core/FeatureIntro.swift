@@ -5,7 +5,7 @@ import AVFoundation
 
 enum FeatureIntro: String, CaseIterable, Identifiable {
     case home, estimates, docEstimate, fullEstimate, calculators, calculator, design, photoDesign, facade, ar, photoCount, project, billing, marketEstimate, houseScan
-    case acceptance, tryOn, quoteCheck, receipt, photoRoom
+    case acceptance, quoteCheck, receipt, photoRoom
     case roomScan, roomMaterials, purchase, houseEstimate, metalEstimate, houseResult, parcel, apartment, support
     var id: String { rawValue }
 
@@ -26,7 +26,6 @@ enum FeatureIntro: String, CaseIterable, Identifiable {
         case .marketEstimate: "chart.bar.doc.horizontal"
         case .houseScan: "house.lodge"
         case .acceptance: "checkmark.seal.fill"
-        case .tryOn: "arkit"
         case .quoteCheck: "checkmark.shield.fill"
         case .receipt: "receipt.fill"
         case .photoRoom: "camera.aperture"
@@ -60,10 +59,9 @@ enum FeatureIntro: String, CaseIterable, Identifiable {
         case .marketEstimate: "Смета по рыночным ценам"
         case .houseScan: "3D‑обмер дома"
         case .acceptance: "Приёмка без приёмщика"
-        case .tryOn: "Примерка ремонта в AR"
         case .quoteCheck: "Проверка сметы подрядчика"
         case .receipt: "Чек → в бюджет"
-        case .photoRoom: "Ремонт по фото комнаты"
+        case .photoRoom: "Размеры и материалы по фото"
         case .roomScan: "Скан комнаты"
         case .roomMaterials: "Материалы, цены и визуализация"
         case .purchase: "Закупка объекта"
@@ -94,7 +92,6 @@ enum FeatureIntro: String, CaseIterable, Identifiable {
         case .marketEstimate: "Стоимость дизайн‑проекта по реальным ценам магазинов и мастеров вашего города: материалы и работы с вилкой цен."
         case .houseScan: "Обойдите дом с iPhone — получите 3D‑модель с точными размерами стен и крыши, площади кровли и фасадов для сметы и проверку дома по границам участка из Росреестра."
         case .acceptance: "Проверьте ремонт или новостройку сами: лидар меряет ровность по нормам СП, ИИ находит дефекты на фото, в конце — акт осмотра."
-        case .tryOn: "Новая плитка, ламинат или краска вживую на ваших стенах и полу — до покупки и без ремонта."
         case .quoteCheck: "Сфотографируйте смету подрядчика — сверим каждую строку с ценами города и покажем переплату и забытое."
         case .receipt: "Сфотографируйте чек — сумма сама попадёт в траты объекта, перерасход виден сразу."
         case .photoRoom: "Нет лидара — размеры комнаты по фото, дальше материалы, цены и визуализация."
@@ -134,7 +131,6 @@ enum FeatureIntro: String, CaseIterable, Identifiable {
         ]
         case .marketEstimate: ["Смета считается по материалам и площадям вашей концепции.", "У каждой цены — пример товара и ссылки на источники.", "«Обычно» — типичная цена; вилка — от недорогих до дорогих предложений.", "Отправьте смету или запросите цену у партнёров."]
         case .acceptance: ["Впишите комнату и выберите, что проверяете: стену, пол или потолок.", "Встаньте в метре, держите телефон неподвижно и нажмите «Измерить» — появится цветная карта.", "Зелёное — в норме, красное — горб, синее — яма. Цифры в мм рядом с нормой.", "Снимите подозрительные места — ИИ отметит дефекты на фото.", "«Акт осмотра» — PDF для застройщика или бригады; замечания станут задачами."]
-        case .tryOn: ["Медленно поводите телефоном по полу и стенам — появятся поверхности.", "Выберите «Пол» или «Стены» и коснитесь материала внизу.", "Сфотографируйте плитку в магазине — она сразу ляжет на ваш пол.", "Или опишите словами — ИИ нарисует материал.", "Внизу — сколько купить. Кнопка камеры — снимок в объект."]
         case .quoteCheck: ["Сфотографируйте смету подрядчика или загрузите PDF — до 4 страниц.", "Нажмите «Проверить смету» — ИИ перепишет строки и найдёт цены города.", "Красное — завышено, зелёное — в рынке; сверху — сумма переплаты.", "«Возможно, забыли» — что спросить у подрядчика. «Отправить разбор» — для торга."]
         case .receipt: ["Нажмите «Снять чек» и сфотографируйте его целиком.", "«Прочитать чек» — ИИ найдёт магазин, сумму и статью бюджета.", "Проверьте статью и нажмите «Добавить в „Потрачено“» — бюджет объекта обновится."]
         case .photoRoom: ["Снимите комнату из угла, чтобы были видны пол, потолок и дверь.", "«Оценить размеры» — ИИ посчитает длину, ширину и высоту.", "Поправьте цифры, если мерили рулеткой, и нажмите «Создать комнату».", "Откроется комната с материалами, ценами и визуализацией."]

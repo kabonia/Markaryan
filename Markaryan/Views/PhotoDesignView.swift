@@ -219,6 +219,13 @@ struct PhotoDesignView: View {
             if let missingChoice, !isLoading {
                 Label(missingChoice, systemImage: "hand.point.up.left.fill").font(.caption).foregroundStyle(Theme.sky)
             }
+            // Ремонт по этому же фото: размеры комнаты → материалы, цены, смета (без лидара).
+            if let source {
+                NavigationLink { PhotoRoomView(initialPhotos: [source]) } label: {
+                    SecondaryActionLabel(title: "Размеры и материалы по этому фото", icon: "ruler")
+                }
+                .buttonStyle(PremiumPressStyle())
+            }
         }
     }
 
