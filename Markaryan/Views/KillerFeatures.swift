@@ -79,7 +79,7 @@ struct QuoteCheckView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Проверка сметы").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Проверка сметы").navigationBarTitleDisplayMode(.inline).featureIntro(.quoteCheck)
         .onChange(of: pickerItems) { _, items in Task { await loadPhotos(items) } }
         .fileImporter(isPresented: $importingPDF, allowedContentTypes: [.pdf]) { result in
             if case .success(let url) = result { loadPDF(url) }
@@ -299,7 +299,7 @@ struct ReceiptScanView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Чек → в бюджет").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Чек → в бюджет").navigationBarTitleDisplayMode(.inline).featureIntro(.receipt)
         .onChange(of: pickerItem) { _, item in Task { if let data = try? await item?.loadTransferable(type: Data.self) { photo = UIImage(data: data); reading = nil; added = false } } }
         .fullScreenCover(isPresented: $showCamera) { CameraCaptureView(image: $photo).ignoresSafeArea() }
         .onChange(of: photo) { _, _ in reading = nil; added = false }
@@ -408,7 +408,7 @@ struct PhotoRoomView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Ремонт по фото").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Ремонт по фото").navigationBarTitleDisplayMode(.inline).featureIntro(.photoRoom)
         .onChange(of: pickerItems) { _, items in
             Task {
                 var loaded: [UIImage] = []

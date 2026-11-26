@@ -186,7 +186,7 @@ struct HouseEstimateParamsView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background)
-        .navigationTitle("Смета дома").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Смета дома").navigationBarTitleDisplayMode(.inline).featureIntro(.houseEstimate)
         .helperScreen("Смета дома", details: p.description)
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Готово") { focused = nil } } }
         .navigationDestination(item: $result) { r in DocEstimateResultView(result: r) }

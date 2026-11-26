@@ -38,6 +38,7 @@ struct ParcelView: View {
             }
             .background(Theme.background)
             .navigationTitle("Участок")
+            .featureIntro(.parcel)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
             .sheet(item: $mapURL) { url in

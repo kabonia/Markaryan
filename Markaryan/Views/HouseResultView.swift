@@ -184,6 +184,7 @@ struct HouseResultView: View {
         }
         .background(Theme.background)
         .navigationTitle("Макет дома")
+        .featureIntro(.houseResult)
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadModel() }
         .toolbar {

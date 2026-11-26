@@ -22,6 +22,7 @@ struct RoomScanView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @State private var phase: Phase = .intro
+    @State private var showHelp = false
     @State private var command = ScanCommand(action: .run, token: 0)
     @State private var error: String?
     /// Set when the user goes on to a next room: every room of this scan shares it.
@@ -46,6 +47,18 @@ struct RoomScanView: View {
     }
 
     var body: some View {
+        scanBody
+            .sheet(isPresented: $showHelp) { FeatureIntroSheet(intro: .roomScan).preferredColorScheme(.light) }
+            .task {
+                let intro = FeatureIntro.roomScan
+                guard !intro.hidden, !FeatureIntro.seenThisLaunch.contains(intro.rawValue) else { return }
+                FeatureIntro.seenThisLaunch.insert(intro.rawValue)
+                try? await Task.sleep(for: .milliseconds(500))
+                showHelp = true
+            }
+    }
+
+    @ViewBuilder private var scanBody: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
             #if canImport(RoomPlan)
@@ -66,6 +79,10 @@ struct RoomScanView: View {
                         }
                         .accessibilityLabel(voice.enabled ? "Выключить голос" : "Включить голос")
                         TorchButton()
+                    }
+                    if phase != .scanning {
+                        Button { showHelp = true } label: { Image(systemName: "questionmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
+                            .accessibilityLabel("Как пользоваться")
                     }
                     // Closing after some rooms keeps them and opens what was scanned.
                     Button { if saved.isEmpty { dismiss() } else { finish() } } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }.accessibilityLabel("Закрыть")
