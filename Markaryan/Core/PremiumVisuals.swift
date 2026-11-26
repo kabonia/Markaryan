@@ -131,10 +131,12 @@ extension FeatureIntro {
 struct FeatureScene: View {
     let kind: FeatureSceneKind
     var paused = false
+    /// Кадров в секунду: подсказки — 30, карточки на главной — 15 (рядом крутятся и другие анимации).
+    var fps: Double = 30
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion || paused)) { context in
+        TimelineView(.animation(minimumInterval: 1 / fps, paused: reduceMotion || paused)) { context in
             let t = reduceMotion ? 2.6 : context.date.timeIntervalSinceReferenceDate
             ZStack {
                 SceneBackdrop(t: t)

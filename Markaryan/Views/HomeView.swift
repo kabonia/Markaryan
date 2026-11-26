@@ -76,9 +76,6 @@ struct HomeView: View {
                         Button { store.tab = 2 } label: {
                             HomeToolCard(icon: "cube.transparent", title: "Дизайн комнаты", text: "Скан лидаром, обмеры, стиль и фотореалистичный рендер по точной геометрии.", accent: Theme.orange, badge: "ХИТ")
                         }
-                        NavigationLink { PhotoDesignView() } label: {
-                            HomeToolCard(icon: "camera.aperture", title: "Дизайн по фото", text: "Сфотографируйте кухню или санузел — ИИ покажет новый дизайн за минуту.", accent: Theme.sky, badge: "LIVE")
-                        }
                         Button { store.showAR = true } label: {
                             HomeToolCard(icon: "viewfinder", title: "AR‑рулетка", text: "Длины, площадь и периметр камерой телефона — без рулетки.", accent: Theme.success)
                         }
@@ -89,7 +86,7 @@ struct HomeView: View {
                             HomeToolCard(icon: "sparkles", title: "ИИ‑помощник", text: "Подскажет нормы и расход, разберёт смету или фото, покажет, что где.", accent: Theme.gold)
                         }
                         NavigationLink { FullEstimateHubView() } label: {
-                            HomeToolCard(icon: "house.and.flag.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Theme.orange)
+                            HomeToolCard(icon: "house.fill", title: "Смета дома", text: "Работы и материалы по рыночным ценам вашего города с вилкой цен.", accent: Theme.orange)
                         }
                     }
                     .buttonStyle(PremiumCardPressStyle())
@@ -779,7 +776,7 @@ struct LiveExamplesCard: View {
         let item = items[index]
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
-                FeatureScene(kind: item.scene, paused: paused)
+                FeatureScene(kind: item.scene, paused: paused, fps: 20)
                     .id(item)
                     .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 1.03)), removal: .opacity))
                 HStack(spacing: 6) {
@@ -857,7 +854,7 @@ struct HouseScanHomeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
-                FeatureScene(kind: .house, paused: paused).frame(height: 190)
+                FeatureScene(kind: .house, paused: paused, fps: 15).frame(height: 190)
                 Text("НОВОЕ").font(.caption2.weight(.heavy)).tracking(1.2).foregroundStyle(Theme.ink)
                     .padding(.horizontal, 9).padding(.vertical, 4).background(Lux.goldGradient, in: Capsule())
                     .padding(14)

@@ -171,7 +171,7 @@ struct RootView: View {
                 .tabItem { Label("Главная", systemImage: "square.grid.2x2.fill") }
                 .tag(0)
             NavigationStack { CalculatorsView() }
-                .tabItem { Label("Смета", systemImage: "function") }
+                .tabItem { Label("Смета", systemImage: "doc.text.fill") }
                 .tag(1)
             NavigationStack { FloorPlansView() }
                 .tabItem { Label("Дизайн", systemImage: "cube.transparent.fill") }

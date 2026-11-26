@@ -74,10 +74,10 @@ struct ProjectsTabView: View {
                         AppTabRow(icon: "text.book.closed.fill", title: "Журнал решений", subtitle: store.diary.isEmpty ? "Договорённости, даты, комментарии" : "Записей: \(store.diary.count)")
                     }
                     NavigationLink { ObjectPassportView() } label: {
-                        AppTabRow(icon: "house.and.flag.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
+                        AppTabRow(icon: "list.clipboard.fill", title: "Паспорт объекта", subtitle: "Адрес, площадь, этап и заметки")
                     }
                     Button { store.tab = 2 } label: {
-                        AppTabRow(icon: "cube.transparent", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, обмеры и рендеры — во вкладке «Дизайн»" : "Помещений: \(store.floorPlans.count) — во вкладке «Дизайн»")
+                        AppTabRow(icon: "square.grid.3x3.square", title: "Планировки и дизайн", subtitle: store.floorPlans.isEmpty ? "Скан комнаты, обмеры и рендеры — во вкладке «Дизайн»" : "Помещений: \(store.floorPlans.count) — во вкладке «Дизайн»")
                     }
                 }
                 .buttonStyle(PremiumCardPressStyle())
