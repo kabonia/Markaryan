@@ -21,7 +21,10 @@ struct HomeView: View {
 
     var body: some View {
         content
-            .task { unsentScans = HouseScanStore.pending().filter { $0.state.status == "local" || $0.state.status == "uploading" }.count }
+            .task {
+                unsentScans = HouseScanStore.pending().count
+                await Task.detached(priority: .background) { HouseScanStore.cleanupUploaded() }.value
+            }
     }
 
     private var content: some View {

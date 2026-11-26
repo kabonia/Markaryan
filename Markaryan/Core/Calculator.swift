@@ -161,20 +161,32 @@ struct CalculationFailure: Error, LocalizedError {
     var errorDescription: String? { message }
 }
 enum CalculationEngine {
+    /// Язык чисел и валюта: по умолчанию русские («1 234,5», ₽); приложение при запуске ставит страну пользователя.
+    static var locale = Locale(identifier: "ru_RU") { didSet { formatter = makeFormatter() } }
+    static var currencySymbol = "₽"
     /// NumberFormatter is expensive to create; long estimates format hundreds of values per render.
-    private static let formatter: NumberFormatter = {
+    private static var formatter: NumberFormatter = makeFormatter()
+    private static func makeFormatter() -> NumberFormatter {
         let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = locale
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 3
         return formatter
-    }()
-    /// Whole rubles for money values.
-    static func money(_ value: Double) -> String {
-        "\(formatter.string(from: NSNumber(value: value.rounded())) ?? String(Int(value.rounded()))) ₽"
     }
+    /// Whole units of money: «12 500 ₽» / «12,500 $».
+    static func money(_ value: Double) -> String {
+        "\(formatter.string(from: NSNumber(value: value.rounded())) ?? String(Int(value.rounded()))) \(currencySymbol)"
+    }
+    /// Число из поля ввода: «1 234,5», «1234.5», «1,234.5» (американский разделитель тысяч), «1.234,5».
     static func parse(_ text: String) -> Double? {
-        let clean = text.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "\u{00a0}", with: "").replacingOccurrences(of: "\u{202f}", with: "").replacingOccurrences(of: ",", with: ".")
+        var clean = text.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "\u{00a0}", with: "").replacingOccurrences(of: "\u{202f}", with: "")
+        if let comma = clean.lastIndex(of: ","), let dot = clean.lastIndex(of: ".") {
+            // Оба знака: последний — дробный, первый — разделитель тысяч.
+            if comma > dot { clean = clean.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".") }
+            else { clean = clean.replacingOccurrences(of: ",", with: "") }
+        } else {
+            clean = clean.replacingOccurrences(of: ",", with: ".")
+        }
         guard let value = Double(clean), value.isFinite else { return nil }
         return value
     }

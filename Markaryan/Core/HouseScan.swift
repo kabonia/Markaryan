@@ -672,11 +672,27 @@ enum HouseScanStore {
         var id: URL { folder }
     }
 
-    /// Готовые к отправке, но ещё не обработанные сканы (новые сверху).
+    /// Удаляет кадры, глубину и архив отправленного скана, оставляя запись о нём.
+    static func removeData(in folder: URL) {
+        let items = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        for item in items where item.lastPathComponent != "state.json" { try? FileManager.default.removeItem(at: item) }
+    }
+
+    /// При запуске: у уже отправленных сканов удаляем кадры и архив (освобождаем память iPhone).
+    static func cleanupUploaded() {
+        let folders = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+        for folder in folders {
+            guard let state = state(of: folder), state.status != "local", state.status != "uploading" else { continue }
+            let items = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+            if items.contains(where: { $0 != "state.json" }) { removeData(in: folder) }
+        }
+    }
+
+    /// Сканы, которые ещё не дошли до сервера (новые сверху); отправленные смотрим в «Мои обмеры».
     static func pending() -> [Pending] {
         let folders = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
         return folders.compactMap { folder in state(of: folder).map { Pending(folder: folder, state: $0) } }
-            .filter { $0.state.status != "ready" }
+            .filter { $0.state.status == "local" || $0.state.status == "uploading" }
             .sorted { $0.state.createdAt > $1.state.createdAt }
     }
 }
@@ -887,7 +903,9 @@ struct HouseScanUploader {
         state.status = final.status
         state.message = final.message
         HouseScanStore.save(state, in: folder)
-        // Пакет на сервере — локальную копию кадров можно не держать, но до готового макета оставляем (на случай повтора).
+        // Пакет целиком на сервере (SHA‑256 сошёлся) — кадры, глубину и архив с iPhone удаляем:
+        // это сотни мегабайт на каждый обмер. Остаётся только запись о скане (state.json).
+        if final.status != "uploading" { HouseScanStore.removeData(in: folder) }
         return final
     }
 
