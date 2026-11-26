@@ -808,6 +808,17 @@ struct HouseScanUploader {
 
     func status(_ id: String) async throws -> Remote { try await call(request("v1/ai/house/scans/\(id)", method: "GET")) }
 
+    /// Удалить скан на сервере (пакет, макет, модель) и скачанную модель на iPhone.
+    func delete(_ id: String) async throws {
+        let (data, response) = try await URLSession.shared.data(for: request("v1/ai/house/scans/\(id)", method: "DELETE"))
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 || status == 404 else {
+            let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw ClaudeError.api(message ?? "Не удалось удалить скан.")
+        }
+        try? FileManager.default.removeItem(at: HouseScanStore.root.appendingPathComponent("models/\(id).obj"))
+    }
+
     /// 3D‑модель готового макета (OBJ) — скачивается один раз и хранится в телефоне.
     func model(_ id: String) async throws -> URL {
         let folder = HouseScanStore.root.appendingPathComponent("models", isDirectory: true)

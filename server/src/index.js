@@ -156,6 +156,7 @@ async function handle(req, res) {
     if (req.method === 'PUT' && id && part !== undefined) return send(res, 200, await houseScans.putPart(req, id, Number(part), installId));
     if (req.method === 'POST' && id && action === 'complete') return send(res, 200, await houseScans.complete(id, installId));
     if (req.method === 'GET' && id && !action) return send(res, 200, houseScans.status(id, installId));
+    if (req.method === 'DELETE' && id && !action) return send(res, 200, houseScans.remove(id, installId));
     if (req.method === 'GET' && !id) return send(res, 200, houseScans.list(installId));
     if (req.method === 'GET' && id && action === 'model.obj') {
       // 3D-модель (OBJ, 5–10 МБ текста) — сжатой: приложение разжимает само.

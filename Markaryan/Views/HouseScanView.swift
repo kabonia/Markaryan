@@ -218,7 +218,14 @@ struct HouseScanView: View {
                     }
                 }
                 .padding(14).panelCard(14)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        try? FileManager.default.removeItem(at: item.folder)
+                        pending = HouseScanStore.pending()
+                    } label: { Label("Удалить скан с iPhone", systemImage: "trash") }
+                }
             }
+            if !pending.isEmpty { Text("Долгое нажатие на скан — удалить.").font(.caption2).foregroundStyle(Theme.muted) }
         }
     }
 

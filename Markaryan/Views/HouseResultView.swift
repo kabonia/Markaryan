@@ -11,6 +11,8 @@ struct HouseScansView: View {
     @State private var loaded = false
     /// Сканы, которые были в обработке при прошлом опросе: стали готовы — сообщаем.
     @State private var waiting: Set<String> = []
+    @State private var editing = false
+    @State private var toDelete: HouseScanUploader.Remote?
 
     var body: some View {
         NavigationStack {
@@ -21,11 +23,22 @@ struct HouseScansView: View {
                         InfoNote(text: "Обмеров пока нет. Обойдите дом в разделе «3D‑обмер дома» — макет появится здесь через пару минут.")
                     }
                     ForEach(scans) { scan in
-                        if scan.status == "ready", scan.result != nil {
-                            NavigationLink { HouseResultView(scan: scan) } label: { HouseScanRow(scan: scan) }
-                                .buttonStyle(PremiumCardPressStyle())
-                        } else {
-                            HouseScanRow(scan: scan)
+                        HStack(spacing: 10) {
+                            if editing {
+                                Button { toDelete = scan } label: {
+                                    Image(systemName: "minus.circle.fill").font(.title2).foregroundStyle(Theme.danger)
+                                }
+                                .accessibilityLabel("Удалить")
+                            }
+                            if scan.status == "ready", scan.result != nil, !editing {
+                                NavigationLink { HouseResultView(scan: scan) } label: { HouseScanRow(scan: scan) }
+                                    .buttonStyle(PremiumCardPressStyle())
+                            } else {
+                                HouseScanRow(scan: scan)
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) { toDelete = scan } label: { Label("Удалить обмер", systemImage: "trash") }
                         }
                     }
                     if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
@@ -35,7 +48,16 @@ struct HouseScansView: View {
             .background(Theme.background)
             .navigationTitle("Мои обмеры")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if !scans.isEmpty { Button(editing ? "Готово" : "Изменить") { withAnimation { editing.toggle() } } }
+                }
+                ToolbarItem(placement: .topBarTrailing) { Button("Закрыть") { dismiss() } }
+            }
+            .confirmationDialog("Удалить обмер? Макет и 3D‑модель удалятся с сервера.", isPresented: Binding(get: { toDelete != nil }, set: { if !$0 { toDelete = nil } }), titleVisibility: .visible) {
+                Button("Удалить", role: .destructive) { if let scan = toDelete { Task { await delete(scan) } } }
+                Button("Отмена", role: .cancel) { toDelete = nil }
+            }
             .refreshable { await refresh() }
             .task {
                 BackgroundAI.askForNotificationsOnce()
@@ -46,6 +68,18 @@ struct HouseScansView: View {
                     try? await Task.sleep(for: .seconds(busy ? 10 : 60))
                 }
             }
+        }
+    }
+
+    private func delete(_ scan: HouseScanUploader.Remote) async {
+        toDelete = nil
+        guard let uploader = HouseScanUploader() else { return }
+        do {
+            try await uploader.delete(scan.id)
+            withAnimation { scans.removeAll { $0.id == scan.id } }
+            Haptics.success()
+        } catch {
+            self.error = error.localizedDescription
         }
     }
 
