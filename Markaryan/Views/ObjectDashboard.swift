@@ -84,6 +84,11 @@ struct ObjectDashboard: View {
                 Spacer()
                 NavigationLink { ProjectBudgetTrackerView() } label: { Text("Статьи и траты").font(.caption.weight(.semibold)) }
             }
+            HStack(spacing: 8) {
+                NavigationLink { ReceiptScanView() } label: { Label("Чек → в траты", systemImage: "receipt").font(.caption.weight(.semibold)).padding(.horizontal, 10).padding(.vertical, 6).background(Theme.accentTint, in: Capsule()) }
+                NavigationLink { QuoteCheckView() } label: { Label("Проверить смету подрядчика", systemImage: "checkmark.shield").font(.caption.weight(.semibold)).padding(.horizontal, 10).padding(.vertical, 6).background(Theme.accentTint, in: Capsule()) }
+            }
+            .foregroundStyle(Theme.orange)
             moneyRow("Мой бюджет", limit, color: Theme.ink, action: { limitText = limit > 0 ? CalculationEngine.format(limit) : ""; editingLimit = true },
                      hint: limit > 0 ? nil : "указать")
             moneyRow("Смета (план)", planned, color: Theme.orange, hint: planned > 0 ? nil : "добавьте смету или материалы в бюджет")
