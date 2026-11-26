@@ -40,4 +40,8 @@ test('server: скан дома частями с докачкой', async (t) =
   assert.equal(done.status, 'queued');
   const other = await fetch(`${base}/${scan.id}`, { headers: { ...headers, 'X-Install-ID': 'ffffffffffffffffffff' } });
   assert.equal(other.status, 404);
+  // Чужой не удалит, владелец — удалит.
+  assert.equal((await fetch(`${base}/${scan.id}`, { method: 'DELETE', headers: { ...headers, 'X-Install-ID': 'ffffffffffffffffffff' } })).status, 404);
+  assert.equal((await fetch(`${base}/${scan.id}`, { method: 'DELETE', headers })).status, 200);
+  assert.equal((await fetch(`${base}/${scan.id}`, { headers })).status, 404);
 });

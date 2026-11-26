@@ -202,6 +202,7 @@ extension Color {
 
 struct FloorPlansView: View {
     @EnvironmentObject private var store: AppStore
+    @State private var planToDelete: FloorPlan?
 
     var body: some View {
         ScrollView {
@@ -242,13 +243,21 @@ struct FloorPlansView: View {
                         ForEach(store.floorPlans.filter { $0.apartmentID == nil }) { plan in
                             NavigationLink { FloorPlanDetailView(planID: plan.id) } label: { FloorPlanRow(plan: plan) }
                                 .buttonStyle(PremiumCardPressStyle())
+                                .contextMenu {
+                                    Button(role: .destructive) { planToDelete = plan } label: { Label("Удалить комнату", systemImage: "trash") }
+                                }
                         }
                     }
+                    Text("Долгое нажатие на комнату — удалить.").font(.caption2).foregroundStyle(Theme.muted)
                 }
             }
             .padding(20)
         }
         .background(Theme.background)
+        .confirmationDialog("Удалить комнату со всеми дизайнами и чертежами?", isPresented: Binding(get: { planToDelete != nil }, set: { if !$0 { planToDelete = nil } }), titleVisibility: .visible) {
+            Button("Удалить", role: .destructive) { if let plan = planToDelete { withAnimation { store.deletePlan(plan) } }; planToDelete = nil }
+            Button("Отмена", role: .cancel) { planToDelete = nil }
+        }
         .navigationTitle("Дизайн").helperScreen("Дизайн").featureIntro(.design)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $store.planToOpen) { id in FloorPlanDetailView(planID: id) }

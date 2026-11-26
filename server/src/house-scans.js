@@ -177,3 +177,12 @@ export function modelPath(id, installId) {
   if (meta.status !== 'ready' || !fs.existsSync(file)) throw new ApiError(404, 'Модель ещё не готова.');
   return file;
 }
+
+/** Удаление скана владельцем: пакет, результат, модель. Идущую обработку не трогаем — сначала пусть закончится. */
+export function remove(id, installId) {
+  const meta = load(id, installId);
+  if (meta.status === 'processing') throw new ApiError(409, 'Скан сейчас обрабатывается — удалите его через пару минут.');
+  fs.rmSync(dir(id), { recursive: true, force: true });
+  console.log(`[house] скан ${id} удалён владельцем`);
+  return { id, deleted: true };
+}
