@@ -227,11 +227,6 @@ struct HouseResultView: View {
             MeasureRow(title: result.roof?.type == "gable" ? "Ширина торца" : "Ширина дома", measure: result.footprint?.gableWidth, unit: "м")
             MeasureRow(title: "Длина дома", measure: result.footprint?.length, unit: "м")
             MeasureRow(title: "Высота до карниза", measure: result.eaveHeight, unit: "м")
-            MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
-            if result.hasOverhangs {
-                MeasureRow(title: "Свес по карнизу", measure: result.roof?.overhangEave, unit: "м")
-                MeasureRow(title: "Свес по фронтону", measure: result.roof?.overhangGable, unit: "м")
-            }
             if let control = result.control, let tape = control.tape, let delta = control.deltaCm {
                 HStack {
                     Image(systemName: abs(delta) <= 3 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
@@ -264,20 +259,28 @@ struct HouseResultView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("КРЫША").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
             Text(result.roofTitle).font(.system(.title3, design: .serif, weight: .bold))
+            Text("Входит в этот обмер: высота и уклон — по стенам и фото обхода, кровля и детали — по снимкам крыши.")
+                .font(.footnote).foregroundStyle(Theme.muted)
+            MeasureRow(title: "Высота конька", measure: result.roof?.ridgeHeight, unit: "м")
             MeasureRow(title: "Уклон", measure: result.roof?.pitchDeg, unit: "°", digits: 1)
             if let left = result.roof?.pitchLeftDeg, let right = result.roof?.pitchRightDeg, result.roof?.symmetric == false {
                 Text("Скаты разные: \(ParcelRules.format(left, digits: 1))° и \(ParcelRules.format(right, digits: 1))°").font(.footnote).foregroundStyle(Theme.muted)
             }
+            if result.hasOverhangs {
+                MeasureRow(title: "Свес по карнизу", measure: result.roof?.overhangEave, unit: "м")
+                MeasureRow(title: "Свес по фронтону", measure: result.roof?.overhangGable, unit: "м")
+            }
+            if let a = result.roofArea { infoLine(result.hasOverhangs ? "Площадь кровли (со свесами)" : "Площадь кровли", Units.area(a)) }
             if let photo = result.roof?.byPhoto {
-                if let covering = photo.covering, !covering.isEmpty { infoLine("Покрытие", covering) }
+                if let covering = photo.covering, !covering.isEmpty { infoLine("Кровля", covering) }
                 if let color = photo.color, !color.isEmpty { infoLine("Цвет", color) }
                 let details = (photo.details ?? []).compactMap { d -> String? in
                     guard let ru = d.ru, !ru.isEmpty else { return nil }
                     let count = (d.count ?? 0) > 1 ? " ×\(Int(d.count ?? 0))" : ""
                     return d.seen == false ? "\(ru)\(count) (предположение)" : "\(ru)\(count)"
                 }
-                if !details.isEmpty { infoLine("Детали", details.joined(separator: ", ")) }
-                if let hidden = photo.hidden, !hidden.isEmpty { infoLine("Не видно", hidden.joined(separator: "; ")) }
+                if !details.isEmpty { infoLine("На крыше", details.joined(separator: ", ")) }
+                if let hidden = photo.hidden, !hidden.isEmpty { infoLine("Не попало в кадр", hidden.joined(separator: "; ")) }
             }
         }
         .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(16)

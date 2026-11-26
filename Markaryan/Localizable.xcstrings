@@ -2099,6 +2099,28 @@
         }
       }
     },
+    "3D‑обмер дома: стены, окна, крыша": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3D house measurement: walls, windows, roof"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medición 3D de la casa: muros, ventanas, tejado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "房屋3D测量：墙体、窗户、屋顶"
+          }
+        }
+      }
+    },
     "3D‑планировка": {
       "extractionState": "manual",
       "localizations": {
@@ -10146,6 +10168,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "第二圈离房屋远一些，抬高镜头拍摄屋顶和山墙。"
+          }
+        }
+      }
+    },
+    "Входит в этот обмер: высота и уклон — по стенам и фото обхода, кровля и детали — по снимкам крыши.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part of this measurement: height and pitch come from the walls and walk-around photos, roofing and details from the roof shots."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluido en esta medición: altura y pendiente, a partir de los muros y las fotos del recorrido; cubierta y detalles, de las fotos del tejado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含在本次测量中：高度和坡度依据墙体和环绕拍摄的照片，屋面材料和细节依据屋顶照片。"
           }
         }
       }
@@ -28542,6 +28586,28 @@
         }
       }
     },
+    "На крыше": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the roof"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el tejado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屋顶上"
+          }
+        }
+      }
+    },
     "На плане нет дверей и окон. Добавьте их, чтобы мебель не закрывала проходы и окна.": {
       "localizations": {
         "en": {
@@ -30417,6 +30483,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "失败"
+          }
+        }
+      }
+    },
+    "Не попало в кадр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in the shots"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No captado en las fotos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未拍到"
           }
         }
       }
@@ -38153,6 +38241,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "结构面积，m²"
+          }
+        }
+      }
+    },
+    "Площадь кровли": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roof area"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie de cubierta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屋面面积"
+          }
+        }
+      }
+    },
+    "Площадь кровли (со свесами)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roof area (with overhangs)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie de cubierta (con aleros)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屋面面积（含挑檐）"
           }
         }
       }
