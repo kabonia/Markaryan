@@ -56,6 +56,33 @@ export const PRODUCTS = [
   { id: 'credits_500', title: '500 кредитов', titleEn: '500 credits', credits: 500, rub: 5490, usd: 54.99, apple: 'smetapro.credits.500' },
   { id: 'credits_1500', title: '1500 кредитов', titleEn: '1500 credits', credits: 1500, rub: 14990, usd: 149.99, apple: 'smetapro.credits.1500' },
 ];
+/**
+ * Пакеты функций: человек покупает набор под задачу, а не кредиты. Пока в пакете есть единицы функции — кредиты не
+ * тратятся; ИИ не справился — единица возвращается. Наценка ≥ 200 % к обычной себестоимости даже в App Store (30 %),
+ * для покупателя — на 25–40 % дешевле, чем те же функции за кредиты. Расчёт: docs/audit/ECONOMICS-2026-11.md.
+ */
+export const PACKS = [
+  { id: 'pack_house', title: '3D‑обмер дома', titleEn: '3D house measurement', rub: 990, usd: 9.99, apple: 'smetapro.pack.house',
+    grants: { houseScan: 1, houseRoof: 2, imageEdit: 6, chat: 3 },
+    includes: '1 обмер дома, 2 разбора крыши по фото, 6 визуализаций фасада, 3 вопроса ИИ' },
+  { id: 'pack_room', title: 'Дизайн комнаты', titleEn: 'Room design', rub: 1790, usd: 17.99, apple: 'smetapro.pack.room',
+    grants: { json: 3, imageEdit: 10, priceEstimateItem: 30, material: 5 },
+    includes: '3 дизайн‑концепции, 10 фотореалистичных кадров, цены рынка на 30 позиций, 5 своих материалов' },
+  { id: 'pack_smeta', title: 'Смета по проекту', titleEn: 'Project estimate', rub: 4990, usd: 49.99, apple: 'smetapro.pack.smeta',
+    grants: { smeta: 1, smetaPage: 8, priceEstimateItem: 40 },
+    includes: '1 смета по документам до 10 листов, цены рынка на 40 позиций' },
+  { id: 'pack_smeta3', title: '3 сметы по проектам', titleEn: '3 project estimates', rub: 12990, usd: 129.99, apple: 'smetapro.pack.smeta3',
+    grants: { smeta: 3, smetaPage: 24, priceEstimateItem: 120 },
+    includes: '3 сметы по документам до 10 листов, цены рынка на 120 позиций' },
+  { id: 'pack_renovation', title: 'Ремонт квартиры', titleEn: 'Apartment renovation', rub: 5990, usd: 59.99, apple: 'smetapro.pack.renovation',
+    grants: { json: 6, imageEdit: 20, priceEstimateItem: 100, smeta: 1, smetaPage: 4, vision: 5 },
+    includes: '6 дизайн‑концепций, 20 кадров, цены на 100 позиций, 1 смета до 6 листов, 5 разборов фото' },
+  { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 3490, usd: 34.99, apple: 'smetapro.pack.foreman',
+    grants: { vision: 20, chat: 20, material: 10, helper: 300 },
+    includes: '20 счётов и разборов по фото, 20 вопросов ИИ, 10 своих материалов, 300 вопросов помощнику' },
+];
+for (const pack of PACKS) PRODUCTS.push({ ...pack, credits: 0 });
+
 export const product = (id) => PRODUCTS.find((p) => p.id === id || p.apple === id);
 
 // ---------- storage ----------
@@ -122,7 +149,19 @@ export function charge(installId, kind, units = {}, ip = '') {
     acc.helperUsed += 1;
     if (acc.helperUsed <= HELPER_FREE_PER_DAY) { save(); return 0; }
   }
-  const amount = price(kind, units);
+  const fromPack = usePack(acc, kind, units);
+  const amount = fromPack ? fromPack.credits : price(kind, units);
+  if (fromPack) {
+    // Остаток (например, листы сметы сверх пакета) — кредитами; если их не хватает, единицы пакета не тратятся.
+    if (acc.credits < amount) throw new ApiError(402, `Недостаточно кредитов: нужно ${amount} сверх пакета, на балансе ${acc.credits}.`);
+    for (const [k, n] of Object.entries(fromPack.used)) acc.packs[k] -= n;
+    (acc.packUses ||= []).push({ kind, used: fromPack.used, at: Date.now() });
+    if (acc.packUses.length > 20) acc.packUses.shift();
+    acc.credits -= amount;
+    log({ installId, type: 'pack', kind, used: fromPack.used, credits: -amount, balance: acc.credits });
+    save();
+    return amount;
+  }
   if (!amount) return 0;
   if (acc.credits < amount) {
     throw new ApiError(402, `Недостаточно кредитов: нужно ${amount}, на балансе ${acc.credits}. Пополните баланс в Профиле → «Тарифы и баланс».`);
@@ -133,10 +172,37 @@ export function charge(installId, kind, units = {}, ip = '') {
   return amount;
 }
 
-/** Gives the credits back when the AI failed. */
+/** Сколько единиц пакета покроет вызов: {used: {вид: n}, credits: остаток кредитами} или null — пакета нет. */
+function usePack(acc, kind, units = {}) {
+  const packs = acc.packs || {};
+  if (kind === 'smeta') {
+    if (!(packs.smeta > 0)) return null;
+    const sheets = Math.min(units.pages || 0, SMETA_MAX_PAGES) + Math.ceil((units.textChars || 0) / TEXT_PER_PAGE);
+    const extra = Math.max(0, sheets - 2);
+    const pages = Math.min(extra, packs.smetaPage || 0);
+    return { used: pages ? { smeta: 1, smetaPage: pages } : { smeta: 1 }, credits: (extra - pages) * PRICES.smetaPage };
+  }
+  if (kind === 'priceEstimate') {
+    const items = units.items || 0;
+    const covered = Math.min(items, packs.priceEstimateItem || 0);
+    if (!covered) return null;
+    return { used: { priceEstimateItem: covered }, credits: (items - covered) * PRICES.priceEstimateItem };
+  }
+  return packs[kind] > 0 ? { used: { [kind]: 1 }, credits: 0 } : null;
+}
+
+/** Gives the credits back when the AI failed; единицы пакета последнего такого вызова — тоже. */
 export function refund(installId, kind, amount) {
-  if (!enabled() || !amount) return;
+  if (!enabled()) return;
   const acc = account(installId);
+  const uses = acc.packUses || [];
+  const index = uses.map((u) => u.kind).lastIndexOf(kind);
+  if (index >= 0 && Date.now() - uses[index].at < 3_600_000) {
+    const [use] = uses.splice(index, 1);
+    for (const [k, n] of Object.entries(use.used)) acc.packs[k] = (acc.packs[k] || 0) + n;
+    log({ installId, type: 'pack-refund', kind, used: use.used, balance: acc.credits });
+  }
+  if (!amount) { save(); return; }
   acc.credits += amount;
   log({ installId, type: 'refund', kind, credits: amount, balance: acc.credits });
   save();
@@ -155,6 +221,10 @@ export function grant(installId, productId, source, ref, { until } = {}) {
   if (s.refs[ref]) return { duplicate: true, account: s.accounts[installId] };
   const acc = account(installId);
   acc.credits += p.credits;
+  if (p.grants) {
+    acc.packs ||= {};
+    for (const [kind, count] of Object.entries(p.grants)) acc.packs[kind] = (acc.packs[kind] || 0) + count;
+  }
   if (p.plan) {
     const from = acc.plan && Date.parse(acc.plan.until) > Date.now() && acc.plan.id === p.plan ? Date.parse(acc.plan.until) : Date.now();
     const end = until ? Date.parse(until) : from + p.days * 86_400_000;
@@ -176,6 +246,7 @@ export function revoke(ref, source) {
   entry.revoked = new Date().toISOString();
   if (acc && p) {
     acc.credits -= p.credits;
+    if (p.grants && acc.packs) for (const [kind, count] of Object.entries(p.grants)) acc.packs[kind] = Math.max(0, (acc.packs[kind] || 0) - count);
     if (p.plan && acc.plan?.product === p.id) acc.plan.until = new Date().toISOString();
     log({ installId: entry.installId, type: 'revoke', ref, source, credits: -p.credits, balance: acc.credits });
   }
@@ -218,7 +289,9 @@ export function me(installId) {
   return {
     enabled: enabled(), code: acc.code, credits: acc.credits, plan: active,
     autopay: acc.autopay ? { on: acc.autopay.on, title: acc.autopay.title } : null,
-    prices: PRICES, helperFreePerDay: HELPER_FREE_PER_DAY, smetaMaxPages: SMETA_MAX_PAGES, textPerPage: TEXT_PER_PAGE, products: PRODUCTS.map(({ id, title, titleEn, plan, credits, rub, usd, apple, days }) => ({ id, title, titleEn, plan: plan || null, credits, rub, usd, apple, days: days || null })),
+    packs: Object.fromEntries(Object.entries(acc.packs || {}).filter(([, n]) => n > 0)),
+    prices: PRICES, helperFreePerDay: HELPER_FREE_PER_DAY, smetaMaxPages: SMETA_MAX_PAGES, textPerPage: TEXT_PER_PAGE,
+    products: PRODUCTS.map(({ id, title, titleEn, plan, credits, rub, usd, apple, days, grants, includes }) => ({ id, title, titleEn, plan: plan || null, credits, rub, usd, apple, days: days || null, grants: grants || null, includes: includes || null })),
     payUrl: process.env.PAY_PAGE_URL || null,
   };
 }

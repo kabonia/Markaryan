@@ -144,3 +144,25 @@ test('App Store: only transactions signed by the Apple chain count; forged ones 
   assert.equal(billing.account(id).credits, 110);
   assert.throws(() => payments.applyAppleTransaction(ID(8), payload), (e) => e.status === 403); // another person's purchase
 });
+
+test('пакеты функций: сначала пакет, потом кредиты; возврат единицы при сбое; остаток листов сметы — кредитами', () => {
+  billing.reset();
+  const id = ID(9);
+  billing.account(id, '9.9.9.9');
+  billing.grant(id, 'pack_room', 'yookassa', 'yk:pack1');
+  const acc = billing.account(id);
+  assert.equal(acc.packs.json, 3);
+  assert.equal(billing.charge(id, 'json'), 0);
+  assert.equal(acc.packs.json, 2);
+  assert.equal(acc.credits, 10); // кредиты не тронуты
+  billing.refund(id, 'json', 0);
+  assert.equal(acc.packs.json, 3); // ИИ не справился — единица вернулась
+  assert.equal(billing.charge(id, 'priceEstimate', { items: 35 }), 5); // 30 из пакета + 5 кредитами
+  assert.equal(acc.packs.priceEstimateItem, 0);
+  billing.grant(id, 'pack_smeta', 'yookassa', 'yk:pack2');
+  // 12 листов: 2 входят в смету, 8 — листы пакета, 2 сверх — 80 кредитов, а на балансе 5 → отказ, пакет не тронут.
+  assert.throws(() => billing.charge(id, 'smeta', { pages: 12 }), (e) => e.status === 402);
+  assert.equal(billing.account(id).packs.smeta, 1);
+  assert.equal(billing.charge(id, 'smeta', { pages: 10 }), 0);
+  assert.equal(billing.account(id).packs.smeta, 0);
+});
