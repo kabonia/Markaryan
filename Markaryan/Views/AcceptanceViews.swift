@@ -415,12 +415,12 @@ struct AcceptanceView: View {
                 tools
                 if finding { HStack(spacing: 10) { ProgressView(); Text("Ищем дефекты…").foregroundStyle(Theme.muted) }.frame(maxWidth: .infinity) }
                 if let error { Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Theme.danger) }
-                if !acceptance.checks.isEmpty { summary; checksList; actions }
+                if acceptance.checks.isEmpty { howTo } else { summary; checksList; actions }
             }
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("Приёмка").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Приёмка").navigationBarTitleDisplayMode(.inline).featureIntro(.acceptance)
         .onAppear { acceptance.load(object: store.inObject ? store.activeProjectID : nil) }
         .fullScreenCover(isPresented: $scanning) {
             FlatnessScanView { check, image in acceptance.add(check, image: image) }
@@ -460,6 +460,17 @@ struct AcceptanceView: View {
             .buttonStyle(PremiumPressStyle())
             PaidNote(kind: "vision")
         }
+    }
+
+    private var howTo: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("КАК ПРОВЕРИТЬ").font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(Theme.gold)
+            Label("Впишите комнату и измерьте лидаром каждую стену, пол и потолок — по одному замеру на участок 1–1,5 м", systemImage: "1.circle.fill")
+            Label("Снимите вблизи всё подозрительное: швы плитки, углы, окна, двери, стыки — ИИ отметит дефекты на фото", systemImage: "2.circle.fill")
+            Label("Нажмите «Акт осмотра» — PDF с фото, мм и пунктами норм. Замечания одной кнопкой станут задачами бригаде", systemImage: "3.circle.fill")
+        }
+        .font(.footnote).foregroundStyle(Theme.ink)
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).panelCard(18)
     }
 
     private var summary: some View {

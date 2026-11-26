@@ -122,7 +122,9 @@ extension FeatureIntro {
         case .photoCount: .count
         case .project: .project
         case .billing: .billing
-        case .houseScan: .house
+        case .houseScan, .acceptance: .house
+        case .tryOn, .photoRoom: .design
+        case .quoteCheck, .receipt: .documents
         }
     }
 }

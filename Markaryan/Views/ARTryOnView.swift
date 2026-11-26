@@ -196,6 +196,7 @@ struct ARTryOnView: View {
     @State private var generating = false
     @State private var snap: Snap?
     @State private var error: String?
+    @State private var help = false
 
     private var all: [TryOnMaterial] { custom + TryOnMaterial.presets.filter { target == .floor ? $0.kind != .paint : true } }
     private var area: Double { target == .floor ? ar.floorArea : ar.wallArea }
@@ -210,6 +211,14 @@ struct ARTryOnView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $help) { FeatureIntroSheet(intro: .tryOn).preferredColorScheme(.light) }
+        .task {
+            let intro = FeatureIntro.tryOn
+            guard !intro.hidden, !FeatureIntro.seenThisLaunch.contains(intro.rawValue) else { return }
+            FeatureIntro.seenThisLaunch.insert(intro.rawValue)
+            try? await Task.sleep(for: .milliseconds(600))
+            help = true
+        }
         .onChange(of: pickerItem) { _, item in Task { if let data = try? await item?.loadTransferable(type: Data.self), let image = UIImage(data: data) { addPhoto(image) } } }
         .onChange(of: shot) { _, image in if let image { addPhoto(image); shot = nil } }
         .fullScreenCover(isPresented: $showCamera) { CameraCaptureView(image: $shot).ignoresSafeArea() }
@@ -243,6 +252,8 @@ struct ARTryOnView: View {
             Spacer()
             Button { ar.view?.snapshot(saveToHDR: false) { image in if let image { snap = Snap(image: image); Haptics.success() } } } label: { Image(systemName: "camera.shutter.button").padding(12).background(.ultraThinMaterial, in: Circle()) }
                 .accessibilityLabel("Снимок")
+            Button { help = true } label: { Image(systemName: "questionmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
+                .accessibilityLabel("Как пользоваться")
             Button { dismiss() } label: { Image(systemName: "xmark").padding(12).background(.ultraThinMaterial, in: Circle()) }
                 .accessibilityLabel("Закрыть")
         }
