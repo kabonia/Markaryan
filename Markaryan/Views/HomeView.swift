@@ -6,6 +6,7 @@ struct HomeView: View {
     @State private var appeared = false
     @State private var visible = true
     @State private var liveOpen: LiveExample?
+    @State private var showTryOn = false
     @State private var unsentScans = 0
 
     private var greeting: String {
@@ -94,6 +95,10 @@ struct HomeView: View {
                         HomeWideToolCard(icon: "wand.and.stars", title: "Визуализация дома и участка", text: "Фасад, крыша, забор, ландшафт — по фото участка или по описанию идеи.")
                     }
                     .buttonStyle(PremiumCardPressStyle())
+                    Button { showTryOn = true } label: {
+                        HomeWideToolCard(icon: "arkit", title: "Примерка ремонта в AR", text: "Наведите iPhone на комнату — новая плитка, ламинат или краска вживую на ваших стенах и полу. Сфотографируйте плитку в магазине — сразу увидите её у себя.")
+                    }
+                    .buttonStyle(PremiumCardPressStyle())
                     NavigationLink { AcceptanceView() } label: {
                         HomeWideToolCard(icon: "checkmark.seal.fill", title: "Приёмка без приёмщика", text: "Лидар меряет ровность стен и пола по нормам СП, ИИ находит дефекты на фото — готовый акт для застройщика или бригады.")
                     }
@@ -163,6 +168,7 @@ struct HomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .helperScreen("Главная").featureIntro(.home)
         .refreshable { await store.refreshPriceBook(silent: true) }
+        .fullScreenCover(isPresented: $showTryOn) { ARTryOnView() }
         .navigationDestination(item: $liveOpen) { example in
             switch example {
             case .documents: DocEstimateHubView()
