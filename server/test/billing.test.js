@@ -13,18 +13,18 @@ const billing = await import('../src/billing.js');
 const payments = await import('../src/payments.js');
 const ID = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
-test('наценка: отдельные функции 230–250 %, пакеты 170–230 % (сайт и App Store 15 %)', () => {
+test('цена = 3–4 × себестоимости: отдельные функции и пакеты (сайт и App Store 15 %)', () => {
   // Обычная себестоимость, ₽ (docs/audit/ECONOMICS-2026-11.md); 1 кредит ≈ 10 ₽ чистыми.
   const cost = { chat: 6, vision: 12, json: 27, imageEdit: 12, image: 12, smeta: 90, smetaPage: 40, houseScan: 26, priceEstimate10: 3 };
   for (const [kind, rub] of Object.entries(cost)) {
     const markup = (billing.PRICES[kind] * 10) / rub - 1;
-    assert.ok(markup >= 2.3 && markup <= 2.5, `${kind}: ${Math.round(markup * 100)} %`);
+    assert.ok(markup >= 2.0 && markup <= 3.0, `${kind}: ${Math.round(markup * 100)} %`);
   }
   const unit = { ...cost, material: 2.5, helper: 0.05, priceEstimateItem: 0.3 };
   for (const pack of billing.PACKS) {
     const packCost = Object.entries(pack.grants).reduce((sum, [kind, n]) => sum + unit[kind] * n, 0);
     const site = (pack.rub * 0.905) / packCost - 1, apple = (pack.usd * 82.13 * 0.85 * 0.94) / packCost - 1;
-    for (const m of [site, apple]) assert.ok(m >= 1.7 && m <= 2.3, `${pack.id}: ${Math.round(site * 100)} % / ${Math.round(apple * 100)} %`);
+    for (const m of [site, apple]) assert.ok(m >= 2.0 && m <= 3.0, `${pack.id}: ${Math.round(site * 100)} % / ${Math.round(apple * 100)} %`);
   }
 });
 

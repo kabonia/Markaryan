@@ -15,8 +15,8 @@ export const HELPER_FREE_PER_DAY = Number(process.env.BILLING_HELPER_FREE || 20)
 const WELCOME_PER_IP = 3;
 
 /**
- * Credits per use. Правило владельца (26.11): отдельная функция — наценка 230–250 % к обычной себестоимости,
- * пакеты — 170–230 %. Считаем на 1 кредит ≈ 10 ₽ чистыми (сайт; App Store при комиссии 15 % — так же, цены в $ выровнены).
+ * Credits per use. Правило владельца (26.11): цена = 3–4 × обычной себестоимости (отдельная функция ≈ 3,3×,
+ * пакеты 3,0–3,3×). Считаем на 1 кредит ≈ 10 ₽ чистыми (сайт; App Store при комиссии 15 % — так же, цены в $ выровнены).
  * Наценка = чистая выручка / обычная себестоимость − 1. Себестоимость: docs/audit/ECONOMICS-2026-11.md.
  * Худший случай (самая дорогая модель, длинный ответ, повтор) у чата, фото и сметы может быть дороже цены — смотрите
  * data/costs.log (`node scripts/cost-report.mjs 7`) и поднимайте цену, если средняя себестоимость вырастет.
@@ -59,7 +59,7 @@ export const PRODUCTS = [
 ];
 /**
  * Пакеты функций: человек покупает набор под задачу, а не кредиты. Пока в пакете есть единицы функции — кредиты не
- * тратятся; ИИ не справился — единица возвращается. Наценка 170–230 % к обычной себестоимости (сайт и App Store 15 %),
+ * тратятся; ИИ не справился — единица возвращается. Цена = 3–3,3 × обычной себестоимости (сайт и App Store 15 %),
  * для покупателя — на 12–25 % дешевле, чем те же функции за кредиты. Расчёт: docs/audit/ECONOMICS-2026-11.md.
  */
 export const PACKS = [
@@ -69,16 +69,16 @@ export const PACKS = [
   { id: 'pack_room', title: 'Дизайн комнаты', titleEn: 'Room design', rub: 790, usd: 10.99, apple: 'smetapro.pack.room',
     grants: { json: 3, imageEdit: 10, priceEstimateItem: 30, material: 5 },
     includes: '3 дизайн‑концепции, 10 фотореалистичных кадров, цены рынка на 30 позиций, 5 своих материалов' },
-  { id: 'pack_smeta', title: 'Смета по проекту', titleEn: 'Project estimate', rub: 1390, usd: 19.99, apple: 'smetapro.pack.smeta',
+  { id: 'pack_smeta', title: 'Смета по проекту', titleEn: 'Project estimate', rub: 1490, usd: 19.99, apple: 'smetapro.pack.smeta',
     grants: { smeta: 1, smetaPage: 8, priceEstimateItem: 40 },
     includes: '1 смета по документам до 10 листов, цены рынка на 40 позиций' },
-  { id: 'pack_smeta3', title: '3 сметы по проектам', titleEn: '3 project estimates', rub: 3890, usd: 54.99, apple: 'smetapro.pack.smeta3',
+  { id: 'pack_smeta3', title: '3 сметы по проектам', titleEn: '3 project estimates', rub: 4290, usd: 59.99, apple: 'smetapro.pack.smeta3',
     grants: { smeta: 3, smetaPage: 24, priceEstimateItem: 120 },
     includes: '3 сметы по документам до 10 листов, цены рынка на 120 позиций' },
   { id: 'pack_renovation', title: 'Ремонт квартиры', titleEn: 'Apartment renovation', rub: 2490, usd: 34.99, apple: 'smetapro.pack.renovation',
     grants: { json: 6, imageEdit: 20, priceEstimateItem: 100, smeta: 1, smetaPage: 4, vision: 5 },
     includes: '6 дизайн‑концепций, 20 кадров, цены на 100 позиций, 1 смета до 6 листов, 5 разборов фото' },
-  { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 1290, usd: 18.99, apple: 'smetapro.pack.foreman',
+  { id: 'pack_foreman', title: 'Прораб на месяц', titleEn: 'Site manager — month', rub: 1390, usd: 18.99, apple: 'smetapro.pack.foreman',
     grants: { vision: 20, chat: 20, material: 10, helper: 300 },
     includes: '20 счётов и разборов по фото, 20 вопросов ИИ, 10 своих материалов, 300 вопросов помощнику' },
 ];

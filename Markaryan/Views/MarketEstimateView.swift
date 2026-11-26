@@ -181,22 +181,7 @@ struct MarketEstimateRowCard: View {
                 if let example = row.example, !example.isEmpty {
                     Label(example, systemImage: "tag").font(.caption).foregroundStyle(Theme.ink).lineLimit(2)
                 }
-                if let sources = row.sources, !sources.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(sources, id: \.url) { source in
-                                if let url = URL(string: source.url) {
-                                    Link(destination: url) {
-                                        Label(source.title.isEmpty ? (url.host ?? "источник") : source.title, systemImage: "link")
-                                            .font(.caption2.weight(.semibold)).lineLimit(1)
-                                            .padding(.horizontal, 10).padding(.vertical, 6)
-                                            .background(Theme.accentTint, in: Capsule()).foregroundStyle(Theme.orange)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                PriceSourceLinks(sources: row.sources ?? [])
             } else {
                 Text("Нет надёжных рыночных данных — уточните цену у продавца.").font(.caption).foregroundStyle(Theme.muted)
             }
