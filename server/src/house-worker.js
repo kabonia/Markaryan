@@ -4,6 +4,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { record } from './costs.js';
 
 const PYTHON = () => process.env.HOUSE_WORKER_PYTHON || '/opt/smetapro-worker/venv/bin/python';
 const WORKER_DIR = () => process.env.HOUSE_WORKER_DIR || '/opt/smetapro-worker';
@@ -82,6 +83,7 @@ function next() {
     try { result = JSON.parse(fs.readFileSync(path.join(out, 'house.json'), 'utf8')); } catch { /* нет результата */ }
     if (code === 0 && result) {
       update(id, { status: 'ready', progress: 1, message: 'Макет готов', result, readyAt: new Date().toISOString(), seconds });
+      record({ kind: 'houseScan', usd: Number(result?.roof?.byPhoto?.cost || 0), calls: result?.roof?.byPhoto ? 1 : 0, credits: 0, ok: true, seconds });
       console.log(`[house] скан ${id} готов за ${seconds} с: ${result.footprint?.gableWidth?.value}×${result.footprint?.length?.value} м`);
     } else {
       const reason = failure || (code === 137 || code === null ? 'не хватило памяти сервера' : 'ошибка обработки');

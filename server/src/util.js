@@ -100,10 +100,11 @@ export async function mapLimit(list, limit, fn) {
 const costScope = new AsyncLocalStorage();
 export const newMeter = () => ({ total: 0, calls: 0, stage: 'start', stages: {} });
 export const withCost = (meter, fn) => costScope.run(meter, fn);
-export function addCost(usage) {
+export function addCost(usage, { estimated = false } = {}) {
   const meter = costScope.getStore();
   const cost = Number(usage?.cost);
   if (!meter || !Number.isFinite(cost)) return;
+  if (estimated) meter.estimated = true;
   meter.total += cost;
   meter.calls += 1;
   meter.stages[meter.stage] = (meter.stages[meter.stage] || 0) + cost;
